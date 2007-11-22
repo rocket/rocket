@@ -6,6 +6,8 @@
 
 const _TCHAR g_szClassName[] = _T("myWindowClass");
 
+const int topMarginHeight = 20;
+
 const int fontHeight = 16;
 const int fontWidth = 12;
 int scrollPosX;
@@ -26,14 +28,14 @@ void setupScrollBars(HWND hwnd)
 	SetScrollInfo(hwnd, SB_VERT, &si, TRUE);
 }
 
-void scroll(HWND hwnd, int dx, int dy)
+void setScrollPos(HWND hwnd, int newScrollPosX, int newScrollPosY)
 {
 	const int oldScrollPosX = scrollPosX;
 	const int oldScrollPosY = scrollPosY;
 
 	// update scrollPos
-	scrollPosX += dx;
-	scrollPosY += dy;
+	scrollPosX = newScrollPosX;
+	scrollPosY = newScrollPosY;
 
 	// clamp scrollPos
 	scrollPosX = max(scrollPosX, 0);
@@ -41,17 +43,76 @@ void scroll(HWND hwnd, int dx, int dy)
 
 	if (oldScrollPosX != scrollPosX || oldScrollPosY != scrollPosY)
 	{
+		int scrollX = oldScrollPosX - scrollPosX;
+		int scrollY = (oldScrollPosY - scrollPosY) * fontHeight;
+		
+		RECT clip;
+		GetClientRect(hwnd, &clip);
+		
+		clip.top = topMarginHeight; /* don't scroll the top line */
+		
 		ScrollWindowEx(
 			hwnd,
-			oldScrollPosX - scrollPosX,
-			(oldScrollPosY - scrollPosY) * fontHeight,
+			scrollX,
+			scrollY,
 			NULL,
-			NULL,
+			&clip,
 			NULL,
 			NULL,
 			SW_INVALIDATE
 		);
 		setupScrollBars(hwnd);
+	}
+}
+
+void paintTracks(HDC hdc, RECT rcTracks)
+{
+	char temp[256];
+
+	int firstLine = scrollPosY / fontHeight;
+	int lastLine  = scrollPosY + (rcTracks.bottom + fontHeight - 1) / fontHeight;
+
+	int trackLeft = -scrollPosX;
+	for (int x = 0; x < 10; ++x)
+	{
+		int trackWidth = fontWidth * 5;
+		
+		RECT topMargin;
+
+		topMargin.top = 0;
+		topMargin.bottom = topMarginHeight;
+
+		topMargin.left = trackLeft;
+		topMargin.right = trackLeft + trackWidth;
+		
+		FillRect( hdc, &topMargin, (HBRUSH)GetStockObject(LTGRAY_BRUSH));
+		/* format the text */
+		_snprintf_s(temp, 256, "track %d", x);
+		SetBkMode(hdc, TRANSPARENT);
+		TextOut(hdc,
+			trackLeft, 0,
+			temp, int(strlen(temp))
+		);
+
+//		PaintRect(hdc, &topMargin, GetColour(TXC_BACKGROUND));
+//		ExcludeClipRect(hdc, rcTracks.left, rcTracks.top, rcTracks.right, topMarginHeight);
+
+		SetBkMode(hdc, OPAQUE);
+//		SetBkColor(hdc, RGB(255, 0, 0));
+
+		for (int y = firstLine; y < lastLine; ++y)
+		{
+			int val = y | (x << 8);
+			
+			/* format the text */
+			_snprintf_s(temp, 256, "%04X ", val);
+			TextOut(hdc,
+				trackLeft,
+				topMarginHeight + (y - scrollPosY) * fontHeight,
+				temp, int(strlen(temp))
+			);
+		}
+		trackLeft += trackWidth;
 	}
 }
 
@@ -62,22 +123,19 @@ void paintWindow(HWND hwnd)
 	
 	SetBkMode(hdc, OPAQUE);
 //	SetBkColor(hdc, RGB(255, 0, 0));
+
+	/*
+	RECT margin = rect;
 	
-	int firstLine = scrollPosY + ps.rcPaint.top    / fontHeight;
-	int lastLine  = scrollPosY + (ps.rcPaint.bottom + fontHeight - 1) / fontHeight;
-	for (int x = 0; x < 10; ++x)
-	{
-		for (int y = firstLine; y < lastLine; ++y)
-		{
-			int val = y | (x << 8);
-			
-			/* format the text */
-			char temp[256];
-			_snprintf_s(temp, 256, "%04X ", val);
-			
-			TextOut(hdc, x * fontWidth * 5 - scrollPosX, (y - scrollPosY) * fontHeight, temp, int(strlen(temp)));
-		}
-	}
+	margin.left		= 0;
+	margin.right	= LeftMarginWidth();
+	rect.left	   += LeftMarginWidth();
+
+	PaintMargin(hdc, nLineNo, &margin);
+*/
+	
+	paintTracks(hdc, ps.rcPaint);
+	
 	EndPaint(hwnd, &ps);
 }
 
@@ -90,24 +148,40 @@ void onCreate(HWND hwnd)
 	setupScrollBars(hwnd);
 }
 
+int getScrollPos(HWND hwnd, int bar)
+{
+	SCROLLINFO si = { sizeof(si), SIF_TRACKPOS };
+	GetScrollInfo(hwnd, bar, &si);
+	return int(si.nTrackPos);
+}
+
 void onScroll(HWND hwnd, UINT sbCode, int newPos)
 {
 	switch (sbCode)
 	{
+	case SB_TOP:
+		setScrollPos(hwnd, scrollPosX, 0);
+	break;
+	
 	case SB_LINEUP:
-		scroll(hwnd, 0, -1);
+		setScrollPos(hwnd, scrollPosX, scrollPosY - 1);
 	break;
 	
 	case SB_LINEDOWN:
-		scroll(hwnd, 0,  1);
+		setScrollPos(hwnd, scrollPosX, scrollPosY + 1);
 	break;
 	
 	case SB_PAGEUP:
-		scroll(hwnd, 0, -windowLines);
+		setScrollPos(hwnd, scrollPosX, scrollPosY - windowLines);
 	break;
 	
 	case SB_PAGEDOWN:
-		scroll(hwnd, 0, windowLines);
+		setScrollPos(hwnd, scrollPosX, scrollPosY + windowLines);
+	break;
+
+	case SB_THUMBPOSITION:
+	case SB_THUMBTRACK:
+		setScrollPos(hwnd, scrollPosX, getScrollPos(hwnd, SB_VERT));
 	break;
 	}
 }
@@ -150,14 +224,7 @@ void onPaint(HWND hwnd)
 	paintWindow(hwnd);
 }
 
-int getScrollPos(HWND hwnd, int bar)
-{
-	SCROLLINFO si = { sizeof(si), SIF_TRACKPOS };
-	GetScrollInfo(hwnd, bar, &si);
-	return int(si.nTrackPos);
-}
-
-LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
+LRESULT CALLBACK windowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
 	switch(msg)
 	{
@@ -201,7 +268,7 @@ int _tmain(int argc, _TCHAR* argv[])
 	//Step 1: Registering the Window Class
 	wc.cbSize        = sizeof(WNDCLASSEX);
 	wc.style         = 0;
-	wc.lpfnWndProc   = WndProc;
+	wc.lpfnWndProc   = windowProc;
 	wc.cbClsExtra    = 0;
 	wc.cbWndExtra    = 0;
 	wc.hInstance     = hInstance;
@@ -222,9 +289,10 @@ int _tmain(int argc, _TCHAR* argv[])
 	hwnd = CreateWindowEx(
 		WS_EX_CLIENTEDGE,
 		g_szClassName,
-		_T("The title of my window"),
+		_T("SyncTracker 3000"),
 		WS_VSCROLL | WS_HSCROLL | WS_OVERLAPPEDWINDOW,
-		CW_USEDEFAULT, CW_USEDEFAULT, 240, 120,
+		CW_USEDEFAULT, CW_USEDEFAULT, // x, y
+		CW_USEDEFAULT, CW_USEDEFAULT, // width, height
 		NULL, NULL, hInstance, NULL
 	);
 	
