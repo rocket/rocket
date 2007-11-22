@@ -68,10 +68,10 @@ void setScrollPos(HWND hwnd, int newScrollPosX, int newScrollPosY)
 void paintTracks(HDC hdc, RECT rcTracks)
 {
 	char temp[256];
-
-	int firstLine = scrollPosY / fontHeight;
+	
+	int firstLine = scrollPosY + (rcTracks.top) / fontHeight;
 	int lastLine  = scrollPosY + (rcTracks.bottom + fontHeight - 1) / fontHeight;
-
+	
 	int trackLeft = -scrollPosX;
 	for (int x = 0; x < 10; ++x)
 	{
