@@ -10,6 +10,9 @@ const int topMarginHeight = 20;
 
 const int fontHeight = 16;
 const int fontWidth = 12;
+
+const int lines = 30;
+
 int scrollPosX;
 int scrollPosY;
 
@@ -24,7 +27,7 @@ void setupScrollBars(HWND hwnd)
 	si.nPos  = scrollPosY;
 	si.nPage = windowLines;
 	si.nMin  = 0;
-	si.nMax  = 0x80;
+	si.nMax  = lines - 1;
 	SetScrollInfo(hwnd, SB_VERT, &si, TRUE);
 	
 	si.fMask = SIF_POS | SIF_PAGE | SIF_RANGE | SIF_DISABLENOSCROLL;
@@ -78,6 +81,8 @@ void paintTracks(HDC hdc, RECT rcTracks)
 	
 	int firstLine = max((rcTracks.top - topMarginHeight) / fontHeight, 0);
 	int lastLine  = scrollPosY + ((rcTracks.bottom - topMarginHeight) + (fontHeight - 1)) / fontHeight;
+
+	lastLine = min(lastLine, lines);
 	
 	int trackLeft = -scrollPosX;
 	for (int x = 0; x < 16; ++x)
@@ -93,6 +98,7 @@ void paintTracks(HDC hdc, RECT rcTracks)
 		topMargin.right = trackLeft + trackWidth;
 		
 		FillRect( hdc, &topMargin, (HBRUSH)GetStockObject(LTGRAY_BRUSH));
+
 		/* format the text */
 		_snprintf_s(temp, 256, "track %d", x);
 		SetBkMode(hdc, TRANSPARENT);
@@ -137,11 +143,11 @@ void paintTracks(HDC hdc, RECT rcTracks)
 
 	/* right margin */
 	RECT rightMargin;
-	topMargin.top = topMarginHeight;
-	topMargin.bottom = rcTracks.bottom;
-	topMargin.left = trackLeft;
-	topMargin.right = rcTracks.right;
-	FillRect( hdc, &topMargin, (HBRUSH)GetStockObject(LTGRAY_BRUSH));
+	rightMargin.top    = topMarginHeight;
+	rightMargin.bottom = rcTracks.bottom;
+	rightMargin.left  = trackLeft;
+	rightMargin.right = rcTracks.right;
+	FillRect( hdc, &rightMargin, (HBRUSH)GetStockObject(LTGRAY_BRUSH));
 
 
 }
@@ -226,11 +232,11 @@ void onHScroll(HWND hwnd, UINT sbCode, int newPos)
 	// SB_RIGHT currently missing.
 	
 	case SB_LINELEFT:
-		setScrollPos(hwnd, scrollPosX - 1, scrollPosY);
+		setScrollPos(hwnd, scrollPosX - fontWidth, scrollPosY);
 	break;
 	
 	case SB_LINERIGHT:
-		setScrollPos(hwnd, scrollPosX + 1, scrollPosY);
+		setScrollPos(hwnd, scrollPosX + fontWidth, scrollPosY);
 	break;
 	
 	case SB_PAGELEFT:
@@ -256,7 +262,8 @@ void onSize(HWND hwnd, int width, int height)
 	windowWidth  = width;
 	windowHeight = height;
 
-	windowLines   = height / fontHeight;
+	windowLines   = (height - topMarginHeight) / fontHeight;
+//	windowLines   = min((height - topMarginHeight) / fontHeight, lines);
 	setupScrollBars(hwnd);
 }
 
