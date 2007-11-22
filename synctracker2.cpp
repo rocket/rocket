@@ -26,6 +26,13 @@ void setupScrollBars(HWND hwnd)
 	si.nMin  = 0;
 	si.nMax  = 0x80;
 	SetScrollInfo(hwnd, SB_VERT, &si, TRUE);
+	
+	si.fMask = SIF_POS | SIF_PAGE | SIF_RANGE | SIF_DISABLENOSCROLL;
+	si.nPos  = scrollPosX;
+	si.nPage = windowWidth;
+	si.nMin  = 0;
+	si.nMax  = windowWidth * 2; // 0x80;
+	SetScrollInfo(hwnd, SB_HORZ, &si, TRUE);
 }
 
 void setScrollPos(HWND hwnd, int newScrollPosX, int newScrollPosY)
@@ -49,7 +56,7 @@ void setScrollPos(HWND hwnd, int newScrollPosX, int newScrollPosY)
 		RECT clip;
 		GetClientRect(hwnd, &clip);
 		
-		clip.top = topMarginHeight; /* don't scroll the top line */
+		if (scrollX == 0) clip.top = topMarginHeight; /* don't scroll the top line */
 		
 		ScrollWindowEx(
 			hwnd,
@@ -69,8 +76,8 @@ void paintTracks(HDC hdc, RECT rcTracks)
 {
 	char temp[256];
 	
-	int firstLine = scrollPosY + (rcTracks.top) / fontHeight;
-	int lastLine  = scrollPosY + (rcTracks.bottom + fontHeight - 1) / fontHeight;
+	int firstLine = max((rcTracks.top - topMarginHeight) / fontHeight, 0);
+	int lastLine  = scrollPosY + ((rcTracks.bottom - topMarginHeight) + (fontHeight - 1)) / fontHeight;
 	
 	int trackLeft = -scrollPosX;
 	for (int x = 0; x < 10; ++x)
@@ -93,19 +100,24 @@ void paintTracks(HDC hdc, RECT rcTracks)
 			trackLeft, 0,
 			temp, int(strlen(temp))
 		);
+		ExcludeClipRect(hdc, topMargin.left, topMargin.top, topMargin.right, topMargin.bottom);
 
-//		PaintRect(hdc, &topMargin, GetColour(TXC_BACKGROUND));
-//		ExcludeClipRect(hdc, rcTracks.left, rcTracks.top, rcTracks.right, topMarginHeight);
-
-		SetBkMode(hdc, OPAQUE);
 //		SetBkColor(hdc, RGB(255, 0, 0));
 
 		for (int y = firstLine; y < lastLine; ++y)
 		{
 			int val = y | (x << 8);
 			
+			RECT patternDataRect;
+			patternDataRect.left = trackLeft;
+			patternDataRect.right = trackLeft + trackWidth;
+			patternDataRect.top = topMarginHeight + (y - scrollPosY) * fontHeight;
+			patternDataRect.bottom = patternDataRect.top + fontHeight;
+			FillRect( hdc, &patternDataRect, (HBRUSH)GetStockObject(WHITE_BRUSH));
+			
 			/* format the text */
-			_snprintf_s(temp, 256, "%04X ", val);
+			if (y % 16 != 0) _snprintf_s(temp, 256, "- - -", val);
+			else _snprintf_s(temp, 256, "%2.2f", (float(y) / 16));
 			TextOut(hdc,
 				trackLeft,
 				topMarginHeight + (y - scrollPosY) * fontHeight,
@@ -155,7 +167,7 @@ int getScrollPos(HWND hwnd, int bar)
 	return int(si.nTrackPos);
 }
 
-void onScroll(HWND hwnd, UINT sbCode, int newPos)
+void onVScroll(HWND hwnd, UINT sbCode, int newPos)
 {
 	switch (sbCode)
 	{
@@ -186,6 +198,38 @@ void onScroll(HWND hwnd, UINT sbCode, int newPos)
 	}
 }
 
+void onHScroll(HWND hwnd, UINT sbCode, int newPos)
+{
+	switch (sbCode)
+	{
+	case SB_LEFT:
+		setScrollPos(hwnd, 0, scrollPosY);
+	break;
+	// SB_RIGHT currently missing.
+	
+	case SB_LINELEFT:
+		setScrollPos(hwnd, scrollPosX - 1, scrollPosY);
+	break;
+	
+	case SB_LINERIGHT:
+		setScrollPos(hwnd, scrollPosX + 1, scrollPosY);
+	break;
+	
+	case SB_PAGELEFT:
+		setScrollPos(hwnd, scrollPosX - 20, scrollPosY);
+	break;
+	
+	case SB_PAGEDOWN:
+		setScrollPos(hwnd, scrollPosX + 20, scrollPosY);
+	break;
+
+	case SB_THUMBPOSITION:
+	case SB_THUMBTRACK:
+		setScrollPos(hwnd, getScrollPos(hwnd, SB_HORZ), scrollPosY);
+	break;
+	}
+}
+
 void onSize(HWND hwnd, int width, int height)
 {
 	const int oldWindowWidth = windowWidth;
@@ -196,27 +240,6 @@ void onSize(HWND hwnd, int width, int height)
 
 	windowLines   = height / fontHeight;
 	setupScrollBars(hwnd);
-/*
-	if (oldWindowWidth < windowWidth)
-	{
-		RECT rightRect;
-		rightRect.left  = oldWindowWidth;
-		rightRect.right = windowWidth;
-		InvalidateRect(hwnd, &rightRect, FALSE);
-	}
-*/
-/*
-	if (oldWindowHeight < windowHeight)
-	{
-		RECT bottomRect;
-		bottomRect.left   = 0;
-		bottomRect.right  = width;
-		bottomRect.top    = oldWindowHeight;
-		bottomRect.bottom = windowHeight;
-		printf("extending downwards! %d %d\n", bottomRect.top, bottomRect.bottom);
-		InvalidateRect(hwnd, &bottomRect, FALSE);
-	}
-*/
 }
 
 void onPaint(HWND hwnd)
@@ -245,7 +268,11 @@ LRESULT CALLBACK windowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 		break;
 		
 		case WM_VSCROLL:
-			onScroll(hwnd, LOWORD(wParam), getScrollPos(hwnd, SB_VERT));
+			onVScroll(hwnd, LOWORD(wParam), getScrollPos(hwnd, SB_VERT));
+		break;
+		
+		case WM_HSCROLL:
+			onHScroll(hwnd, LOWORD(wParam), getScrollPos(hwnd, SB_HORZ));
 		break;
 		
 		case WM_PAINT:
