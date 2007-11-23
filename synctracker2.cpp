@@ -144,8 +144,6 @@ void paintTracks(HDC hdc, RECT rcTracks)
 		int trackTop = topMarginHeight + (firstLine - scrollPosY) * fontHeight;
 		for (int y = firstLine; y < lastLine; ++y)
 		{
-			int val = y | (x << 8);
-			
 			RECT patternDataRect;
 			patternDataRect.left = trackLeft;
 			patternDataRect.right = trackLeft + trackWidth;
@@ -153,9 +151,12 @@ void paintTracks(HDC hdc, RECT rcTracks)
 			patternDataRect.bottom = patternDataRect.top + fontHeight;
 			FillRect( hdc, &patternDataRect, (HBRUSH)GetStockObject(WHITE_BRUSH));
 			
+			bool key = (y % 8 == 0);
+			float val = (float(y) / 16);
+			
 			/* format the text */
-			if (y % 16 != 0) _snprintf_s(temp, 256, "- - -", val);
-			else _snprintf_s(temp, 256, "%2.2f", (float(y) / 16));
+			if (!key) _snprintf_s(temp, 256, " - - -");
+			else _snprintf_s(temp, 256, "%2.2f", val);
 			TextOut(hdc,
 				trackLeft, trackTop,
 				temp, int(strlen(temp))
