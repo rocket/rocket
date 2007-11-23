@@ -7,11 +7,12 @@
 const _TCHAR g_szClassName[] = _T("myWindowClass");
 
 const int topMarginHeight = 20;
+const int leftMarginWidth = 70;
 
 const int fontHeight = 16;
 const int fontWidth = 12;
 
-const int lines = 30;
+const int lines = 0x80;
 
 int scrollPosX;
 int scrollPosY;
@@ -51,6 +52,8 @@ void setScrollPos(HWND hwnd, int newScrollPosX, int newScrollPosY)
 	scrollPosX = max(scrollPosX, 0);
 	scrollPosY = max(scrollPosY, 0);
 
+	scrollPosY = min(scrollPosY, (lines - 1) - windowLines);
+
 	if (oldScrollPosX != scrollPosX || oldScrollPosY != scrollPosY)
 	{
 		int scrollX = oldScrollPosX - scrollPosX;
@@ -59,7 +62,8 @@ void setScrollPos(HWND hwnd, int newScrollPosX, int newScrollPosY)
 		RECT clip;
 		GetClientRect(hwnd, &clip);
 		
-		if (scrollX == 0) clip.top = topMarginHeight; /* don't scroll the top line */
+		if (scrollX == 0) clip.top  = topMarginHeight; /* don't scroll the top line */
+		if (scrollY == 0) clip.left = leftMarginWidth; /* don't scroll the top line */
 		
 		ScrollWindowEx(
 			hwnd,
@@ -84,7 +88,28 @@ void paintTracks(HDC hdc, RECT rcTracks)
 
 	lastLine = min(lastLine, lines);
 	
-	int trackLeft = -scrollPosX;
+	SetBkMode(hdc, TRANSPARENT);
+
+	for (int y = firstLine; y < lastLine; ++y)
+	{
+		RECT leftMargin;
+		leftMargin.left = 0;
+		leftMargin.right = leftMarginWidth;
+		leftMargin.top = topMarginHeight + (y - scrollPosY) * fontHeight;
+		leftMargin.bottom = leftMargin.top + fontHeight;
+
+		FillRect(hdc, &leftMargin, (HBRUSH)GetStockObject(LTGRAY_BRUSH));
+
+		_snprintf_s(temp, 256, "%04Xh", y);
+		TextOut(hdc,
+			leftMargin.left, leftMargin.top,
+			temp, int(strlen(temp))
+		);
+
+		ExcludeClipRect(hdc, leftMargin.left, leftMargin.top, leftMargin.right, leftMargin.bottom);
+	}
+	
+	int trackLeft = leftMarginWidth - scrollPosX;
 	for (int x = 0; x < 16; ++x)
 	{
 		int trackWidth = fontWidth * 5;
@@ -101,7 +126,6 @@ void paintTracks(HDC hdc, RECT rcTracks)
 
 		/* format the text */
 		_snprintf_s(temp, 256, "track %d", x);
-		SetBkMode(hdc, TRANSPARENT);
 		TextOut(hdc,
 			topMargin.left, 0,
 			temp, int(strlen(temp))
@@ -109,7 +133,7 @@ void paintTracks(HDC hdc, RECT rcTracks)
 		ExcludeClipRect(hdc, topMargin.left, topMargin.top, topMargin.right, topMargin.bottom);
 
 //		SetBkColor(hdc, RGB(255, 0, 0));
-
+		int trackTop = topMarginHeight + (firstLine - scrollPosY) * fontHeight;
 		for (int y = firstLine; y < lastLine; ++y)
 		{
 			int val = y | (x << 8);
@@ -117,7 +141,7 @@ void paintTracks(HDC hdc, RECT rcTracks)
 			RECT patternDataRect;
 			patternDataRect.left = trackLeft;
 			patternDataRect.right = trackLeft + trackWidth;
-			patternDataRect.top = topMarginHeight + (y - scrollPosY) * fontHeight;
+			patternDataRect.top = trackTop;
 			patternDataRect.bottom = patternDataRect.top + fontHeight;
 			FillRect( hdc, &patternDataRect, (HBRUSH)GetStockObject(WHITE_BRUSH));
 			
@@ -125,11 +149,19 @@ void paintTracks(HDC hdc, RECT rcTracks)
 			if (y % 16 != 0) _snprintf_s(temp, 256, "- - -", val);
 			else _snprintf_s(temp, 256, "%2.2f", (float(y) / 16));
 			TextOut(hdc,
-				trackLeft,
-				topMarginHeight + (y - scrollPosY) * fontHeight,
+				trackLeft, trackTop,
 				temp, int(strlen(temp))
 			);
+			trackTop += fontHeight;
 		}
+
+		RECT bottomMargin;
+		bottomMargin.top = trackTop;
+		bottomMargin.bottom = rcTracks.bottom;
+		bottomMargin.left = trackLeft;
+		bottomMargin.right = trackLeft + trackWidth;
+		FillRect( hdc, &bottomMargin, (HBRUSH)GetStockObject(LTGRAY_BRUSH));
+
 		trackLeft += trackWidth;
 	}
 
