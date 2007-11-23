@@ -13,6 +13,7 @@ const int fontHeight = 16;
 const int fontWidth = 12;
 
 const int lines = 0x80;
+const int tracks = 16;
 
 int scrollPosX;
 int scrollPosY;
@@ -100,6 +101,11 @@ void paintTracks(HDC hdc, RECT rcTracks)
 
 		FillRect(hdc, &leftMargin, (HBRUSH)GetStockObject(LTGRAY_BRUSH));
 
+		if ((y % 16) == 0)      SetTextColor(hdc, RGB(0, 0, 0));
+		else if ((y % 8) == 0)  SetTextColor(hdc, RGB(32, 32, 32));
+		else if ((y % 4) == 0)  SetTextColor(hdc, RGB(64, 64, 64));
+		else                    SetTextColor(hdc, RGB(128, 128, 128));
+
 		_snprintf_s(temp, 256, "%04Xh", y);
 		TextOut(hdc,
 			leftMargin.left, leftMargin.top,
@@ -109,8 +115,10 @@ void paintTracks(HDC hdc, RECT rcTracks)
 		ExcludeClipRect(hdc, leftMargin.left, leftMargin.top, leftMargin.right, leftMargin.bottom);
 	}
 	
+	SetTextColor(hdc, RGB(0, 0, 0));
+	
 	int trackLeft = leftMarginWidth - scrollPosX;
-	for (int x = 0; x < 16; ++x)
+	for (int x = 0; x < tracks; ++x)
 	{
 		int trackWidth = fontWidth * 5;
 		
