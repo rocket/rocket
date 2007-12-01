@@ -60,7 +60,6 @@ void TrackView::paintTracks(HDC hdc, RECT rcTracks)
 	topLeftCorner.left = 0;
 	topLeftCorner.right = leftMarginWidth;
 	FillRect(hdc, &topLeftCorner, (HBRUSH)GetStockObject(GRAY_BRUSH));
-//	DrawEdge(hdc, &topLeftCorner, BDR_SUNKENINNER | BDR_RAISEDOUTER, BF_RIGHT | BF_BOTTOM);
 	ExcludeClipRect(hdc, topLeftCorner.left, topLeftCorner.top, topLeftCorner.right, topLeftCorner.bottom);
 
 	SetBkMode(hdc, TRANSPARENT);
@@ -106,13 +105,14 @@ void TrackView::paintTracks(HDC hdc, RECT rcTracks)
 		topMargin.left = trackLeft;
 		topMargin.right = trackLeft + trackWidth;
 		
-		DrawEdge(hdc, &topMargin, BDR_RAISEDINNER | BDR_RAISEDOUTER, BF_ADJUST | BF_LEFT | BF_RIGHT | BF_BOTTOM);
-		FillRect(hdc, &topMargin, (HBRUSH)GetStockObject(LTGRAY_BRUSH));
+		RECT fillRect = topMargin;
+		DrawEdge(hdc, &fillRect, BDR_RAISEDINNER | BDR_RAISEDOUTER, BF_ADJUST | BF_LEFT | BF_RIGHT | BF_BOTTOM);
+		FillRect(hdc, &fillRect, (HBRUSH)GetStockObject(LTGRAY_BRUSH));
 
 		/* format the text */
 		_snprintf_s(temp, 256, "track %d", x);
 		TextOut(hdc,
-			topMargin.left, 0,
+			fillRect.left, 0,
 			temp, int(strlen(temp))
 		);
 		ExcludeClipRect(hdc, topMargin.left, topMargin.top, topMargin.right, topMargin.bottom);
@@ -164,13 +164,14 @@ void TrackView::paintTracks(HDC hdc, RECT rcTracks)
 	FillRect( hdc, &topMargin, (HBRUSH)GetStockObject(LTGRAY_BRUSH));
 
 	/* pad left margin to the left edge */
+#if 0
 	RECT leftMargin;
 	leftMargin.top = trackTop;
 	leftMargin.bottom = rcTracks.bottom;
 	leftMargin.left = 0;
 	leftMargin.right = leftMarginWidth;
 	FillRect( hdc, &leftMargin, (HBRUSH)GetStockObject(LTGRAY_BRUSH));
-
+#endif
 
 	/* right margin */
 	RECT rightMargin;
@@ -178,6 +179,7 @@ void TrackView::paintTracks(HDC hdc, RECT rcTracks)
 	rightMargin.bottom = rcTracks.bottom;
 	rightMargin.left  = trackLeft;
 	rightMargin.right = rcTracks.right;
+//	DrawEdge(hdc, &rightMargin, BDR_SUNKENINNER | BDR_RAISEDOUTER, BF_ADJUST | BF_LEFT);
 	FillRect( hdc, &rightMargin, (HBRUSH)GetStockObject(LTGRAY_BRUSH));
 }
 

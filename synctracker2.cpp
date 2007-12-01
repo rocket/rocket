@@ -14,15 +14,13 @@ LRESULT CALLBACK mainWindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPara
 	switch(msg)
 	{
 		case WM_CREATE:
-		{
 			trackViewWin = createTrackViewWindow(GetModuleHandle(NULL), hwnd);
-		}
 		break;
 		
 		case WM_SIZE:
 		{
-			int width  = (short)LOWORD(lParam);
-			int height = (short)HIWORD(lParam);
+			int width  = LOWORD(lParam);
+			int height = HIWORD(lParam);
 			MoveWindow(trackViewWin, 0, 0, width, height, TRUE);
 		}
 		break;
