@@ -4,7 +4,7 @@
 #include "stdafx.h"
 #include <windows.h>
 
-const _TCHAR g_szClassName[] = _T("myWindowClass");
+const _TCHAR windowClassName[] = _T("myWindowClass");
 
 const int topMarginHeight = 20;
 const int leftMarginWidth = 70;
@@ -324,6 +324,21 @@ LRESULT CALLBACK windowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 		case WM_SIZE:
 			onSize(hwnd, LOWORD(lParam), HIWORD(lParam));
 		break;
+
+		case WM_GETMINMAXINFO:
+		{
+			RECT rect;
+			rect.left = 0;
+			rect.top = 0;
+			rect.right = leftMarginWidth;
+			rect.bottom = topMarginHeight;
+			AdjustWindowRectEx(&rect, WS_VSCROLL | WS_HSCROLL | WS_OVERLAPPEDWINDOW, FALSE, WS_EX_CLIENTEDGE);
+
+			MINMAXINFO *mm=(MINMAXINFO*)lParam;
+			mm->ptMinTrackSize.x = rect.right;
+			mm->ptMinTrackSize.y = rect.bottom - rect.top;
+		}
+		break;
 		
 		case WM_CLOSE:
 			DestroyWindow(hwnd);
@@ -351,14 +366,10 @@ LRESULT CALLBACK windowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	return 0;
 }
 
-int _tmain(int argc, _TCHAR* argv[])
+ATOM registerWindowClass(HINSTANCE hInstance)
 {
 	WNDCLASSEX wc;
-	HWND hwnd;
-	MSG Msg;
-	HINSTANCE hInstance = GetModuleHandle(NULL);
 	
-	//Step 1: Registering the Window Class
 	wc.cbSize        = sizeof(WNDCLASSEX);
 	wc.style         = 0;
 	wc.lpfnWndProc   = windowProc;
@@ -369,10 +380,20 @@ int _tmain(int argc, _TCHAR* argv[])
 	wc.hCursor       = LoadCursor(NULL, IDC_ARROW);
 	wc.hbrBackground = (HBRUSH)(COLOR_WINDOW+1);
 	wc.lpszMenuName  = NULL;
-	wc.lpszClassName = g_szClassName;
+	wc.lpszClassName = windowClassName;
 	wc.hIconSm       = LoadIcon(NULL, IDI_APPLICATION);
 	
-	if(!RegisterClassEx(&wc))
+	return RegisterClassEx(&wc);
+}
+
+int _tmain(int argc, _TCHAR* argv[])
+{
+	HWND hwnd;
+	MSG Msg;
+	HINSTANCE hInstance = GetModuleHandle(NULL);
+	
+	ATOM wc = registerWindowClass(hInstance);
+	if(!wc)
 	{
 		MessageBox(NULL, _T("Window Registration Failed!"), _T("Error!"), MB_ICONEXCLAMATION | MB_OK);
 		return 0;
@@ -381,7 +402,7 @@ int _tmain(int argc, _TCHAR* argv[])
 	// Step 2: Creating the Window
 	hwnd = CreateWindowEx(
 		WS_EX_CLIENTEDGE,
-		g_szClassName,
+		windowClassName,
 		_T("SyncTracker 3000"),
 		WS_VSCROLL | WS_HSCROLL | WS_OVERLAPPEDWINDOW,
 		CW_USEDEFAULT, CW_USEDEFAULT, // x, y
@@ -389,7 +410,7 @@ int _tmain(int argc, _TCHAR* argv[])
 		NULL, NULL, hInstance, NULL
 	);
 	
-	if(hwnd == NULL)
+	if (NULL == hwnd)
 	{
 		MessageBox(NULL, _T("Window Creation Failed!"), _T("Error!"), MB_ICONEXCLAMATION | MB_OK);
 		return 0;
@@ -405,5 +426,6 @@ int _tmain(int argc, _TCHAR* argv[])
 		DispatchMessage(&Msg);
 	}
 	
+	UnregisterClass(windowClassName, hInstance);
 	return int(Msg.wParam);
 }

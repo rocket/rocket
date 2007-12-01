@@ -182,6 +182,10 @@
 				RelativePath=".\synctracker2.cpp"
 				>
 			</File>
+			<File
+				RelativePath=".\trackview.cpp"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -190,6 +194,10 @@
 			>
 			<File
 				RelativePath=".\stdafx.h"
+				>
+			</File>
+			<File
+				RelativePath=".\trackview.h"
 				>
 			</File>
 		</Filter>
