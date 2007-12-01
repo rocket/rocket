@@ -2,6 +2,15 @@
 
 #include "trackview.h"
 
+static const int topMarginHeight = 20;
+static const int leftMarginWidth = 70;
+
+static const int fontHeight = 16;
+static const int fontWidth = 12;
+
+static const int lines = 0x80;
+static const int tracks = 16;
+
 void TrackView::onCreate(HWND hwnd)
 {
 	scrollPosX = 0;
@@ -271,6 +280,19 @@ void TrackView::onHScroll(HWND hwnd, UINT sbCode, int newPos)
 		setScrollPos(hwnd, getScrollPos(hwnd, SB_HORZ), scrollPosY);
 	break;
 	}
+}
+
+void TrackView::onGetMinMaxInfo(MINMAXINFO *mm)
+{
+	RECT rect;
+	rect.left = 0;
+	rect.top = 0;
+	rect.right = leftMarginWidth;
+	rect.bottom = topMarginHeight;
+	AdjustWindowRectEx(&rect, WS_VSCROLL | WS_HSCROLL | WS_OVERLAPPEDWINDOW, FALSE, WS_EX_CLIENTEDGE);
+
+	mm->ptMinTrackSize.x = rect.right;
+	mm->ptMinTrackSize.y = rect.bottom - rect.top;
 }
 
 void TrackView::onSize(HWND hwnd, int width, int height)
