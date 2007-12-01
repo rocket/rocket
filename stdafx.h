@@ -11,7 +11,8 @@
 
 #include <stdio.h>
 #include <tchar.h>
-
+#include <assert.h>
+#define ASSERT(x) assert(x)
 
 
 // TODO: reference additional headers your program requires here

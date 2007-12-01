@@ -2,6 +2,8 @@
 
 #include "trackview.h"
 
+const char *trackViewWindowClassName = "TrackView";
+
 static const int topMarginHeight = 20;
 static const int leftMarginWidth = 70;
 
@@ -51,7 +53,14 @@ void TrackView::paintTracks(HDC hdc, RECT rcTracks)
 	int lastLine  = scrollPosY + ((rcTracks.bottom - topMarginHeight) + (fontHeight - 1)) / fontHeight;
 
 	lastLine = min(lastLine, lines);
-	
+
+	RECT topLeftCorner;
+	topLeftCorner.top = 0;
+	topLeftCorner.bottom = topMarginHeight;
+	topLeftCorner.left = 0;
+	topLeftCorner.right = leftMarginWidth;
+	FillRect( hdc, &topLeftCorner, (HBRUSH)GetStockObject(LTGRAY_BRUSH));
+
 	SetBkMode(hdc, TRANSPARENT);
 
 	for (int y = firstLine; y < lastLine; ++y)
@@ -306,5 +315,105 @@ void TrackView::onSize(HWND hwnd, int width, int height)
 	windowLines   = (height - topMarginHeight) / fontHeight;
 //	windowLines   = min((height - topMarginHeight) / fontHeight, lines);
 	setupScrollBars(hwnd);
+}
+
+LRESULT CALLBACK trackViewWindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
+{
+	// Get the TrackView instance (if any)
+#pragma warning(suppress:4312) /* remove a pointless warning */
+	TrackView *trackView = (TrackView*)GetWindowLongPtr(hwnd, 0);
+	
+	switch(msg)
+	{
+		case WM_CREATE:
+			ASSERT(NULL == trackView);
+			
+			// allocate a TrackView instance
+			trackView = new TrackView();
+			
+			// Set the TrackView instance
+#pragma warning(suppress:4244) /* remove a pointless warning */
+			SetWindowLongPtr(hwnd, 0, (LONG_PTR)trackView);
+			
+			trackView->onCreate(hwnd);
+		break;
+		
+		case WM_CLOSE:
+			// free the TrackView instance
+			ASSERT(NULL != trackView);
+			delete trackView;
+			SetWindowLongPtr(hwnd, 0, (LONG_PTR)NULL);
+
+			DestroyWindow(hwnd);
+		break;
+		
+		case WM_DESTROY:
+			PostQuitMessage(0);
+		break;
+		
+		case WM_SIZE:
+			ASSERT(NULL != trackView);
+			trackView->onSize(hwnd, LOWORD(lParam), HIWORD(lParam));
+		break;
+
+		case WM_GETMINMAXINFO:
+			ASSERT(NULL != trackView);
+			trackView->onGetMinMaxInfo((MINMAXINFO*)lParam);
+		break;
+		
+		case WM_VSCROLL:
+			ASSERT(NULL != trackView);
+			trackView->onVScroll(hwnd, LOWORD(wParam), getScrollPos(hwnd, SB_VERT));
+		break;
+		
+		case WM_HSCROLL:
+			ASSERT(NULL != trackView);
+			trackView->onHScroll(hwnd, LOWORD(wParam), getScrollPos(hwnd, SB_HORZ));
+		break;
+		
+		case WM_PAINT:
+			ASSERT(NULL != trackView);
+			trackView->onPaint(hwnd);
+		break;
+		
+		default:
+			return DefWindowProc(hwnd, msg, wParam, lParam);
+	}
+	return 0;
+}
+
+ATOM registerTrackViewWindowClass(HINSTANCE hInstance)
+{
+	WNDCLASSEX wc;
+	
+	wc.cbSize        = sizeof(WNDCLASSEX);
+	wc.style         = 0;
+	wc.lpfnWndProc   = trackViewWindowProc;
+	wc.cbClsExtra    = 0;
+	wc.cbWndExtra    = sizeof(TrackView*);
+	wc.hInstance     = hInstance;
+	wc.hIcon         = 0;
+	wc.hCursor       = LoadCursor(NULL, IDC_IBEAM);
+	wc.hbrBackground = (HBRUSH)0;
+	wc.lpszMenuName  = NULL;
+	wc.lpszClassName = trackViewWindowClassName;
+	wc.hIconSm       = LoadIcon(NULL, IDI_APPLICATION);
+	
+	return RegisterClassEx(&wc);
+}
+
+HWND createTrackViewWindow(HINSTANCE hInstance, HWND hwndParent)
+{
+	HWND hwnd = CreateWindowEx(
+		WS_EX_CLIENTEDGE,
+		trackViewWindowClassName, _T(""),
+		WS_VSCROLL | WS_HSCROLL | WS_CHILD | WS_VISIBLE,
+		CW_USEDEFAULT, CW_USEDEFAULT, // x, y
+		CW_USEDEFAULT, CW_USEDEFAULT, // width, height
+		hwndParent, NULL, GetModuleHandle(NULL), NULL
+	);
+//	SetWindowLong(hwnd, 0, (LONG)0xdeadbeef);
+//	SetWindowLongPtr(hwnd, DWLP_USER, 0xdeadbeef);
+	return hwnd;
 }
 

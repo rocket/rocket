@@ -20,3 +20,6 @@ public:
 	int windowWidth, windowHeight;
 	int windowLines;
 };
+
+ATOM registerTrackViewWindowClass(HINSTANCE hInstance);
+HWND createTrackViewWindow(HINSTANCE hInstance, HWND hwndParent);
