@@ -11,7 +11,7 @@ static const int fontHeight = 16;
 static const int fontWidth = 12;
 
 static const int lines = 0x80;
-static const int tracks = 16;
+static const int tracks = 8;
 
 void TrackView::onCreate(HWND hwnd)
 {
@@ -49,8 +49,8 @@ void TrackView::paintTracks(HDC hdc, RECT rcTracks)
 {
 	char temp[256];
 	
-	int firstLine = max((rcTracks.top - topMarginHeight) / fontHeight, 0);
-	int lastLine  = scrollPosY + ((rcTracks.bottom - topMarginHeight) + (fontHeight - 1)) / fontHeight;
+	int firstLine = scrollPosY + max((rcTracks.top - topMarginHeight) / fontHeight, 0);
+	int lastLine  = scrollPosY + min(((rcTracks.bottom - topMarginHeight) + (fontHeight - 1)) / fontHeight, lines - 1);
 
 	lastLine = min(lastLine, lines);
 
@@ -126,7 +126,7 @@ void TrackView::paintTracks(HDC hdc, RECT rcTracks)
 			patternDataRect.right = trackLeft + trackWidth;
 			patternDataRect.top = trackTop;
 			patternDataRect.bottom = patternDataRect.top + fontHeight;
-
+			
 			if (y % 8 == 0) FillRect( hdc, &patternDataRect, (HBRUSH)GetStockObject(LTGRAY_BRUSH));
 			else FillRect( hdc, &patternDataRect, (HBRUSH)GetStockObject(WHITE_BRUSH));
 			
@@ -150,7 +150,7 @@ void TrackView::paintTracks(HDC hdc, RECT rcTracks)
 		bottomMargin.bottom = rcTracks.bottom;
 		bottomMargin.left = trackLeft;
 		bottomMargin.right = trackLeft + trackWidth;
-		FillRect( hdc, &bottomMargin, (HBRUSH)GetStockObject(LTGRAY_BRUSH));
+		FillRect( hdc, &bottomMargin, (HBRUSH)GetStockObject(WHITE_BRUSH));
 
 		trackLeft += trackWidth;
 	}
@@ -161,17 +161,17 @@ void TrackView::paintTracks(HDC hdc, RECT rcTracks)
 	topMargin.bottom = topMarginHeight;
 	topMargin.left = trackLeft;
 	topMargin.right = rcTracks.right;
-	FillRect( hdc, &topMargin, (HBRUSH)GetStockObject(LTGRAY_BRUSH));
+	DrawEdge(hdc, &topMargin, BDR_SUNKENINNER | BDR_RAISEDOUTER, BF_ADJUST | BF_LEFT);
+	FillRect(hdc, &topMargin, (HBRUSH)GetStockObject(LTGRAY_BRUSH));
 
 	/* pad left margin to the left edge */
-#if 0
 	RECT leftMargin;
 	leftMargin.top = trackTop;
 	leftMargin.bottom = rcTracks.bottom;
 	leftMargin.left = 0;
 	leftMargin.right = leftMarginWidth;
-	FillRect( hdc, &leftMargin, (HBRUSH)GetStockObject(LTGRAY_BRUSH));
-#endif
+	DrawEdge(hdc, &leftMargin, BDR_SUNKENINNER | BDR_RAISEDOUTER, BF_ADJUST | BF_RIGHT);
+	FillRect(hdc, &leftMargin, (HBRUSH)GetStockObject(GRAY_BRUSH));
 
 	/* right margin */
 	RECT rightMargin;
@@ -179,7 +179,7 @@ void TrackView::paintTracks(HDC hdc, RECT rcTracks)
 	rightMargin.bottom = rcTracks.bottom;
 	rightMargin.left  = trackLeft;
 	rightMargin.right = rcTracks.right;
-//	DrawEdge(hdc, &rightMargin, BDR_SUNKENINNER | BDR_RAISEDOUTER, BF_ADJUST | BF_LEFT);
+	DrawEdge(hdc, &rightMargin, BDR_SUNKENINNER | BDR_RAISEDOUTER, BF_ADJUST | BF_LEFT);
 	FillRect( hdc, &rightMargin, (HBRUSH)GetStockObject(LTGRAY_BRUSH));
 }
 
@@ -214,7 +214,7 @@ void TrackView::setScrollPos(HWND hwnd, int newScrollPosX, int newScrollPosY)
 	scrollPosX = max(scrollPosX, 0);
 	scrollPosY = max(scrollPosY, 0);
 
-	scrollPosY = min(scrollPosY, (lines - 1) - windowLines);
+	scrollPosY = min(scrollPosY, (lines) - windowLines);
 
 	if (oldScrollPosX != scrollPosX || oldScrollPosY != scrollPosY)
 	{
