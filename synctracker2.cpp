@@ -26,6 +26,10 @@ LRESULT CALLBACK mainWindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPara
 			MoveWindow(trackViewWin, 0, 0, width, height, TRUE);
 		}
 		break;
+		
+		case WM_SETFOCUS:
+			SetFocus(trackViewWin); // needed to forward keyboard input
+		break;
 
 		default:
 			return DefWindowProc(hwnd, msg, wParam, lParam);
@@ -45,7 +49,7 @@ ATOM registerMainWindowClass(HINSTANCE hInstance)
 	wc.hInstance     = hInstance;
 	wc.hIcon         = LoadIcon(NULL, IDI_APPLICATION);
 	wc.hCursor       = LoadCursor(NULL, IDC_ARROW);
-	wc.hbrBackground = (HBRUSH)(COLOR_WINDOW+1);
+	wc.hbrBackground = (HBRUSH)0;
 	wc.lpszMenuName  = NULL;
 	wc.lpszClassName = mainWindowClassName;
 	wc.hIconSm       = LoadIcon(NULL, IDI_APPLICATION);

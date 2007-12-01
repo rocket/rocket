@@ -5,7 +5,7 @@
 const char *trackViewWindowClassName = "TrackView";
 
 static const int topMarginHeight = 20;
-static const int leftMarginWidth = 70;
+static const int leftMarginWidth = 60;
 
 static const int fontHeight = 16;
 static const int fontWidth = 12;
@@ -59,7 +59,9 @@ void TrackView::paintTracks(HDC hdc, RECT rcTracks)
 	topLeftCorner.bottom = topMarginHeight;
 	topLeftCorner.left = 0;
 	topLeftCorner.right = leftMarginWidth;
-	FillRect( hdc, &topLeftCorner, (HBRUSH)GetStockObject(LTGRAY_BRUSH));
+	FillRect(hdc, &topLeftCorner, (HBRUSH)GetStockObject(GRAY_BRUSH));
+//	DrawEdge(hdc, &topLeftCorner, BDR_SUNKENINNER | BDR_RAISEDOUTER, BF_RIGHT | BF_BOTTOM);
+	ExcludeClipRect(hdc, topLeftCorner.left, topLeftCorner.top, topLeftCorner.right, topLeftCorner.bottom);
 
 	SetBkMode(hdc, TRANSPARENT);
 
@@ -72,12 +74,13 @@ void TrackView::paintTracks(HDC hdc, RECT rcTracks)
 		leftMargin.bottom = leftMargin.top + fontHeight;
 
 		FillRect(hdc, &leftMargin, (HBRUSH)GetStockObject(LTGRAY_BRUSH));
-
+		DrawEdge(hdc, &leftMargin, BDR_RAISEDINNER | BDR_RAISEDOUTER, BF_RIGHT | BF_BOTTOM | BF_TOP);
+//		Rectangle( hdc, leftMargin.left, leftMargin.top, leftMargin.right, leftMargin.bottom + 1);
 		if ((y % 16) == 0)      SetTextColor(hdc, RGB(0, 0, 0));
 		else if ((y % 8) == 0)  SetTextColor(hdc, RGB(32, 32, 32));
 		else if ((y % 4) == 0)  SetTextColor(hdc, RGB(64, 64, 64));
 		else                    SetTextColor(hdc, RGB(128, 128, 128));
-
+		
 		_snprintf_s(temp, 256, "%04Xh", y);
 		TextOut(hdc,
 			leftMargin.left, leftMargin.top,
@@ -90,6 +93,7 @@ void TrackView::paintTracks(HDC hdc, RECT rcTracks)
 	SetTextColor(hdc, RGB(0, 0, 0));
 	
 	int trackLeft = leftMarginWidth - scrollPosX;
+	int trackTop = 0;
 	for (int x = 0; x < tracks; ++x)
 	{
 		int trackWidth = fontWidth * 5;
@@ -102,7 +106,8 @@ void TrackView::paintTracks(HDC hdc, RECT rcTracks)
 		topMargin.left = trackLeft;
 		topMargin.right = trackLeft + trackWidth;
 		
-		FillRect( hdc, &topMargin, (HBRUSH)GetStockObject(LTGRAY_BRUSH));
+		DrawEdge(hdc, &topMargin, BDR_RAISEDINNER | BDR_RAISEDOUTER, BF_ADJUST | BF_LEFT | BF_RIGHT | BF_BOTTOM);
+		FillRect(hdc, &topMargin, (HBRUSH)GetStockObject(LTGRAY_BRUSH));
 
 		/* format the text */
 		_snprintf_s(temp, 256, "track %d", x);
@@ -113,7 +118,7 @@ void TrackView::paintTracks(HDC hdc, RECT rcTracks)
 		ExcludeClipRect(hdc, topMargin.left, topMargin.top, topMargin.right, topMargin.bottom);
 
 //		SetBkColor(hdc, RGB(255, 0, 0));
-		int trackTop = topMarginHeight + (firstLine - scrollPosY) * fontHeight;
+		trackTop = topMarginHeight + (firstLine - scrollPosY) * fontHeight;
 		for (int y = firstLine; y < lastLine; ++y)
 		{
 			RECT patternDataRect;
@@ -121,7 +126,11 @@ void TrackView::paintTracks(HDC hdc, RECT rcTracks)
 			patternDataRect.right = trackLeft + trackWidth;
 			patternDataRect.top = trackTop;
 			patternDataRect.bottom = patternDataRect.top + fontHeight;
-			FillRect( hdc, &patternDataRect, (HBRUSH)GetStockObject(WHITE_BRUSH));
+
+			if (y % 8 == 0) FillRect( hdc, &patternDataRect, (HBRUSH)GetStockObject(LTGRAY_BRUSH));
+			else FillRect( hdc, &patternDataRect, (HBRUSH)GetStockObject(WHITE_BRUSH));
+			
+//			if (y % 8 == 0) DrawEdge(hdc, &patternDataRect, BDR_RAISEDINNER | BDR_SUNKENOUTER, BF_TOP | BF_BOTTOM | BF_FLAT);
 			
 			bool key = (y % 8 == 0);
 			float val = (float(y) / 16);
@@ -153,6 +162,15 @@ void TrackView::paintTracks(HDC hdc, RECT rcTracks)
 	topMargin.left = trackLeft;
 	topMargin.right = rcTracks.right;
 	FillRect( hdc, &topMargin, (HBRUSH)GetStockObject(LTGRAY_BRUSH));
+
+	/* pad left margin to the left edge */
+	RECT leftMargin;
+	leftMargin.top = trackTop;
+	leftMargin.bottom = rcTracks.bottom;
+	leftMargin.left = 0;
+	leftMargin.right = leftMarginWidth;
+	FillRect( hdc, &leftMargin, (HBRUSH)GetStockObject(LTGRAY_BRUSH));
+
 
 	/* right margin */
 	RECT rightMargin;
@@ -291,17 +309,16 @@ void TrackView::onHScroll(HWND hwnd, UINT sbCode, int newPos)
 	}
 }
 
-void TrackView::onGetMinMaxInfo(MINMAXINFO *mm)
+void TrackView::onKeyDown(HWND hwnd, UINT keyCode, UINT flags)
 {
-	RECT rect;
-	rect.left = 0;
-	rect.top = 0;
-	rect.right = leftMarginWidth;
-	rect.bottom = topMarginHeight;
-	AdjustWindowRectEx(&rect, WS_VSCROLL | WS_HSCROLL | WS_OVERLAPPEDWINDOW, FALSE, WS_EX_CLIENTEDGE);
+	switch (keyCode)
+	{
+		case VK_UP:   setScrollPos(hwnd, scrollPosX, scrollPosY - 1); break;
+		case VK_DOWN: setScrollPos(hwnd, scrollPosX, scrollPosY + 1); break;
 
-	mm->ptMinTrackSize.x = rect.right;
-	mm->ptMinTrackSize.y = rect.bottom - rect.top;
+		case VK_PRIOR: setScrollPos(hwnd, scrollPosX, scrollPosY - windowLines); break;
+		case VK_NEXT:  setScrollPos(hwnd, scrollPosX, scrollPosY + windowLines); break;
+	}
 }
 
 void TrackView::onSize(HWND hwnd, int width, int height)
@@ -317,33 +334,15 @@ void TrackView::onSize(HWND hwnd, int width, int height)
 	setupScrollBars(hwnd);
 }
 
-LRESULT CALLBACK trackViewWindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
+LRESULT TrackView::windowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
-	// Get the TrackView instance (if any)
-#pragma warning(suppress:4312) /* remove a pointless warning */
-	TrackView *trackView = (TrackView*)GetWindowLongPtr(hwnd, 0);
-	
 	switch(msg)
 	{
 		case WM_CREATE:
-			ASSERT(NULL == trackView);
-			
-			// allocate a TrackView instance
-			trackView = new TrackView();
-			
-			// Set the TrackView instance
-#pragma warning(suppress:4244) /* remove a pointless warning */
-			SetWindowLongPtr(hwnd, 0, (LONG_PTR)trackView);
-			
-			trackView->onCreate(hwnd);
+			onCreate(hwnd);
 		break;
 		
 		case WM_CLOSE:
-			// free the TrackView instance
-			ASSERT(NULL != trackView);
-			delete trackView;
-			SetWindowLongPtr(hwnd, 0, (LONG_PTR)NULL);
-
 			DestroyWindow(hwnd);
 		break;
 		
@@ -352,32 +351,73 @@ LRESULT CALLBACK trackViewWindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM 
 		break;
 		
 		case WM_SIZE:
-			ASSERT(NULL != trackView);
-			trackView->onSize(hwnd, LOWORD(lParam), HIWORD(lParam));
-		break;
-
-		case WM_GETMINMAXINFO:
-			ASSERT(NULL != trackView);
-			trackView->onGetMinMaxInfo((MINMAXINFO*)lParam);
+			onSize(hwnd, LOWORD(lParam), HIWORD(lParam));
 		break;
 		
 		case WM_VSCROLL:
-			ASSERT(NULL != trackView);
-			trackView->onVScroll(hwnd, LOWORD(wParam), getScrollPos(hwnd, SB_VERT));
+			onVScroll(hwnd, LOWORD(wParam), getScrollPos(hwnd, SB_VERT));
 		break;
 		
 		case WM_HSCROLL:
-			ASSERT(NULL != trackView);
-			trackView->onHScroll(hwnd, LOWORD(wParam), getScrollPos(hwnd, SB_HORZ));
+			onHScroll(hwnd, LOWORD(wParam), getScrollPos(hwnd, SB_HORZ));
 		break;
 		
 		case WM_PAINT:
-			ASSERT(NULL != trackView);
-			trackView->onPaint(hwnd);
+			onPaint(hwnd);
+		break;
+		
+		case WM_KEYDOWN:
+			onKeyDown(hwnd, wParam, lParam);
 		break;
 		
 		default:
 			return DefWindowProc(hwnd, msg, wParam, lParam);
+	}
+	return FALSE;
+}
+
+LRESULT CALLBACK trackViewWindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
+{
+	// Get the TrackView instance (if any)
+#pragma warning(suppress:4312) /* remove a pointless warning */
+	TrackView *trackView = (TrackView*)GetWindowLongPtr(hwnd, 0);
+	
+	switch(msg)
+	{
+		case WM_NCCREATE:
+			ASSERT(NULL == trackView);
+			
+			// allocate a TrackView instance
+			trackView = new TrackView();
+			
+			// Set the TrackView instance
+#pragma warning(suppress:4244) /* remove a pointless warning */
+			SetWindowLongPtr(hwnd, 0, (LONG_PTR)trackView);
+
+			// call the proper window procedure
+			return trackView->windowProc(hwnd, msg, wParam, lParam);
+		break;
+		
+		case WM_NCDESTROY:
+		{
+			ASSERT(NULL != trackView);
+			
+			// call the window proc and store away the return code
+			LRESULT res = trackView->windowProc(hwnd, msg, wParam, lParam);
+
+			// free the TrackView instance
+			delete trackView;
+			trackView = NULL;
+			SetWindowLongPtr(hwnd, 0, (LONG_PTR)NULL);
+
+			// return the stored return code
+			return res;
+		}
+		break;
+		
+		default:
+			ASSERT(NULL != trackView);
+			return trackView->windowProc(hwnd, msg, wParam, lParam);
 	}
 	return 0;
 }
@@ -412,8 +452,6 @@ HWND createTrackViewWindow(HINSTANCE hInstance, HWND hwndParent)
 		CW_USEDEFAULT, CW_USEDEFAULT, // width, height
 		hwndParent, NULL, GetModuleHandle(NULL), NULL
 	);
-//	SetWindowLong(hwnd, 0, (LONG)0xdeadbeef);
-//	SetWindowLongPtr(hwnd, DWLP_USER, 0xdeadbeef);
 	return hwnd;
 }
 

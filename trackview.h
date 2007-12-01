@@ -9,8 +9,11 @@ public:
 	void onVScroll(HWND hwnd, UINT sbCode, int newPos);
 	void onHScroll(HWND hwnd, UINT sbCode, int newPos);
 	void onSize(HWND hwnd, int width, int height);
-	void onGetMinMaxInfo(MINMAXINFO *mm);
+	void onKeyDown(HWND hwnd, UINT keyCode, UINT flags);
 	
+	// the window procedure
+	LRESULT windowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
+
 	void paintTracks(HDC hdc, RECT rcTracks);
 	
 	void setupScrollBars(HWND hwnd);
