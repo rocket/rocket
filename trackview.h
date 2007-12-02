@@ -18,6 +18,8 @@ public:
 	
 	void setupScrollBars(HWND hwnd);
 	void setScrollPos(HWND hwnd, int newScrollPosX, int newScrollPosY);
+
+	int getScreenY(int line);
 	
 	int scrollPosX, scrollPosY;
 	int windowWidth, windowHeight;

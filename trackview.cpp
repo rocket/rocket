@@ -2,7 +2,7 @@
 
 #include "trackview.h"
 
-const char *trackViewWindowClassName = "TrackView";
+const TCHAR *trackViewWindowClassName = _T("TrackView");
 
 static const int topMarginHeight = 20;
 static const int leftMarginWidth = 60;
@@ -11,7 +11,13 @@ static const int fontHeight = 16;
 static const int fontWidth = 12;
 
 static const int lines = 0x80;
-static const int tracks = 8;
+static const int tracks = 16;
+
+int TrackView::getScreenY(int line)
+{
+	return topMarginHeight + (line - scrollPosY) * fontHeight;
+}
+
 
 void TrackView::onCreate(HWND hwnd)
 {
@@ -47,10 +53,13 @@ void TrackView::onPaint(HWND hwnd)
 
 void TrackView::paintTracks(HDC hdc, RECT rcTracks)
 {
-	char temp[256];
+	TCHAR temp[256];
 	
 	int firstLine = scrollPosY + max((rcTracks.top - topMarginHeight) / fontHeight, 0);
 	int lastLine  = scrollPosY + min(((rcTracks.bottom - topMarginHeight) + (fontHeight - 1)) / fontHeight, lines - 1);
+
+	int editLine = firstLine + (lastLine - firstLine) / 2;
+	HBRUSH editBrush = CreateSolidBrush(RGB(255, 255, 0));
 
 	lastLine = min(lastLine, lines);
 
@@ -64,26 +73,29 @@ void TrackView::paintTracks(HDC hdc, RECT rcTracks)
 
 	SetBkMode(hdc, TRANSPARENT);
 
-	for (int y = firstLine; y < lastLine; ++y)
+	for (int line = firstLine; line < lastLine; ++line)
 	{
 		RECT leftMargin;
-		leftMargin.left = 0;
+		leftMargin.left  = 0;
 		leftMargin.right = leftMarginWidth;
-		leftMargin.top = topMarginHeight + (y - scrollPosY) * fontHeight;
+		leftMargin.top    = getScreenY(line);
 		leftMargin.bottom = leftMargin.top + fontHeight;
 
+//		if (y == editLine) FillRect(hdc, &leftMargin, editBrush);
+//		else               
 		FillRect(hdc, &leftMargin, (HBRUSH)GetStockObject(LTGRAY_BRUSH));
+
 		DrawEdge(hdc, &leftMargin, BDR_RAISEDINNER | BDR_RAISEDOUTER, BF_RIGHT | BF_BOTTOM | BF_TOP);
 //		Rectangle( hdc, leftMargin.left, leftMargin.top, leftMargin.right, leftMargin.bottom + 1);
-		if ((y % 16) == 0)      SetTextColor(hdc, RGB(0, 0, 0));
-		else if ((y % 8) == 0)  SetTextColor(hdc, RGB(32, 32, 32));
-		else if ((y % 4) == 0)  SetTextColor(hdc, RGB(64, 64, 64));
+		if ((line % 16) == 0)      SetTextColor(hdc, RGB(0, 0, 0));
+		else if ((line % 8) == 0)  SetTextColor(hdc, RGB(32, 32, 32));
+		else if ((line % 4) == 0)  SetTextColor(hdc, RGB(64, 64, 64));
 		else                    SetTextColor(hdc, RGB(128, 128, 128));
 		
-		_snprintf_s(temp, 256, "%04Xh", y);
+		_sntprintf_s(temp, 256, _T("%04Xh"), line);
 		TextOut(hdc,
 			leftMargin.left, leftMargin.top,
-			temp, int(strlen(temp))
+			temp, int(_tcslen(temp))
 		);
 
 		ExcludeClipRect(hdc, leftMargin.left, leftMargin.top, leftMargin.right, leftMargin.bottom);
@@ -92,7 +104,6 @@ void TrackView::paintTracks(HDC hdc, RECT rcTracks)
 	SetTextColor(hdc, RGB(0, 0, 0));
 	
 	int trackLeft = leftMarginWidth - scrollPosX;
-	int trackTop = 0;
 	for (int x = 0; x < tracks; ++x)
 	{
 		int trackWidth = fontWidth * 5;
@@ -110,47 +121,46 @@ void TrackView::paintTracks(HDC hdc, RECT rcTracks)
 		FillRect(hdc, &fillRect, (HBRUSH)GetStockObject(LTGRAY_BRUSH));
 
 		/* format the text */
-		_snprintf_s(temp, 256, "track %d", x);
+		_sntprintf_s(temp, 256, _T("track %d"), x);
 		TextOut(hdc,
 			fillRect.left, 0,
-			temp, int(strlen(temp))
+			temp, int(_tcslen(temp))
 		);
 		ExcludeClipRect(hdc, topMargin.left, topMargin.top, topMargin.right, topMargin.bottom);
 
 //		SetBkColor(hdc, RGB(255, 0, 0));
-		trackTop = topMarginHeight + (firstLine - scrollPosY) * fontHeight;
-		for (int y = firstLine; y < lastLine; ++y)
+		for (int line = firstLine; line < lastLine; ++line)
 		{
 			RECT patternDataRect;
 			patternDataRect.left = trackLeft;
 			patternDataRect.right = trackLeft + trackWidth;
-			patternDataRect.top = trackTop;
+			patternDataRect.top = getScreenY(line);
 			patternDataRect.bottom = patternDataRect.top + fontHeight;
 			
-			if (y % 8 == 0) FillRect( hdc, &patternDataRect, (HBRUSH)GetStockObject(LTGRAY_BRUSH));
+			if (line % 8 == 0) FillRect( hdc, &patternDataRect, (HBRUSH)GetStockObject(LTGRAY_BRUSH));
 			else FillRect( hdc, &patternDataRect, (HBRUSH)GetStockObject(WHITE_BRUSH));
 			
 //			if (y % 8 == 0) DrawEdge(hdc, &patternDataRect, BDR_RAISEDINNER | BDR_SUNKENOUTER, BF_TOP | BF_BOTTOM | BF_FLAT);
 			
-			bool key = (y % 8 == 0);
-			float val = (float(y) / 16);
+			bool key = (line % 8 == 0);
+			float val = (float(line) / 16);
 			
 			/* format the text */
-			if (!key) _snprintf_s(temp, 256, " - - -");
-			else _snprintf_s(temp, 256, "%2.2f", val);
+			if (!key) _sntprintf_s(temp, 256, _T(" - - -"));
+			else _sntprintf_s(temp, 256, _T("%2.2f"), val);
 			TextOut(hdc,
-				trackLeft, trackTop,
-				temp, int(strlen(temp))
+				trackLeft, patternDataRect.top,
+				temp, int(_tcslen(temp))
 			);
-			trackTop += fontHeight;
 		}
 
 		RECT bottomMargin;
-		bottomMargin.top = trackTop;
+		bottomMargin.top = getScreenY(lines);
 		bottomMargin.bottom = rcTracks.bottom;
 		bottomMargin.left = trackLeft;
 		bottomMargin.right = trackLeft + trackWidth;
-		FillRect( hdc, &bottomMargin, (HBRUSH)GetStockObject(WHITE_BRUSH));
+		DrawEdge(hdc, &bottomMargin, BDR_SUNKENINNER | BDR_RAISEDOUTER, BF_ADJUST | BF_TOP);
+		FillRect(hdc, &bottomMargin, (HBRUSH)GetStockObject(WHITE_BRUSH));
 
 		trackLeft += trackWidth;
 	}
@@ -166,7 +176,7 @@ void TrackView::paintTracks(HDC hdc, RECT rcTracks)
 
 	/* pad left margin to the left edge */
 	RECT leftMargin;
-	leftMargin.top = trackTop;
+	leftMargin.top = getScreenY(lines);
 	leftMargin.bottom = rcTracks.bottom;
 	leftMargin.left = 0;
 	leftMargin.right = leftMarginWidth;
@@ -181,6 +191,8 @@ void TrackView::paintTracks(HDC hdc, RECT rcTracks)
 	rightMargin.right = rcTracks.right;
 	DrawEdge(hdc, &rightMargin, BDR_SUNKENINNER | BDR_RAISEDOUTER, BF_ADJUST | BF_LEFT);
 	FillRect( hdc, &rightMargin, (HBRUSH)GetStockObject(LTGRAY_BRUSH));
+
+	DeleteObject(editBrush);
 }
 
 void TrackView::setupScrollBars(HWND hwnd)
@@ -369,7 +381,7 @@ LRESULT TrackView::windowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 		break;
 		
 		case WM_KEYDOWN:
-			onKeyDown(hwnd, wParam, lParam);
+			onKeyDown(hwnd, (UINT)wParam, (UINT)lParam);
 		break;
 		
 		default:

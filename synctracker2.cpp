@@ -6,7 +6,7 @@
 
 #include "trackview.h"
 
-const char *mainWindowClassName = "MainWindow";
+const TCHAR *mainWindowClassName = _T("MainWindow");
 
 HWND trackViewWin;
 LRESULT CALLBACK mainWindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
