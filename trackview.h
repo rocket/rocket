@@ -34,7 +34,7 @@ public:
 
 	int scrollPosX, scrollPosY;
 	int windowWidth, windowHeight;
-	int windowLines;
+	int windowLines, windowTracks;
 	
 	HWND hwnd;
 

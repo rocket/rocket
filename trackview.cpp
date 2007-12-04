@@ -12,7 +12,7 @@ static const int fontWidth = 6;
 
 static const int trackWidth = fontWidth * 16;
 
-static const int lines = 0x80;
+static const int lines = 0x20;
 static const int tracks = 16;
 
 TrackView::TrackView(HWND hwnd)
@@ -54,19 +54,6 @@ void TrackView::onPaint()
 {
 	PAINTSTRUCT ps;
 	HDC hdc = BeginPaint(hwnd, &ps);
-	
-	SetBkMode(hdc, OPAQUE);
-//	SetBkColor(hdc, RGB(255, 0, 0));
-
-	/*
-	RECT margin = rect;
-	
-	margin.left		= 0;
-	margin.right	= LeftMarginWidth();
-	rect.left	   += LeftMarginWidth();
-
-	PaintMargin(hdc, nLineNo, &margin);
-*/
 	
 	paintTracks(hdc, ps.rcPaint);
 	
@@ -137,8 +124,12 @@ void TrackView::paintTracks(HDC hdc, RECT rcTracks)
 		topMargin.right = topMargin.left + trackWidth;
 		
 		RECT fillRect = topMargin;
+
+		HBRUSH bgBrush = (HBRUSH)GetStockObject(LTGRAY_BRUSH);
+		if (track == editTrack) bgBrush = editBrush;
+
 		DrawEdge(hdc, &fillRect, BDR_RAISEDINNER | BDR_RAISEDOUTER, BF_ADJUST | BF_LEFT | BF_RIGHT | BF_BOTTOM);
-		FillRect(hdc, &fillRect, (HBRUSH)GetStockObject(LTGRAY_BRUSH));
+		FillRect(hdc, &fillRect, bgBrush);
 
 		/* format the text */
 		_sntprintf_s(temp, 256, _T("track %d"), track);
@@ -176,19 +167,9 @@ void TrackView::paintTracks(HDC hdc, RECT rcTracks)
 				temp, int(_tcslen(temp))
 			);
 		}
-/*
-		RECT bottomMargin;
-		bottomMargin.top = getScreenY(lines);
-		bottomMargin.bottom = rcTracks.bottom;
-		bottomMargin.left = trackLeft;
-		bottomMargin.right = trackLeft + trackWidth;
-		DrawEdge(hdc, &bottomMargin, BDR_SUNKENINNER | BDR_RAISEDOUTER, BF_ADJUST | BF_TOP);
-		FillRect(hdc, &bottomMargin, (HBRUSH)GetStockObject(WHITE_BRUSH));
-*/
 	}
 
 	/* pad top margin to the left edge */
-
 	RECT topMargin;
 	topMargin.top = 0;
 	topMargin.bottom = topMarginHeight;
@@ -231,10 +212,10 @@ void TrackView::setupScrollBars()
 	SetScrollInfo(hwnd, SB_VERT, &si, TRUE);
 	
 	si.fMask = SIF_POS | SIF_PAGE | SIF_RANGE | SIF_DISABLENOSCROLL;
-	si.nPos  = scrollPosX;
-	si.nPage = windowWidth / 2;
+	si.nPos  = editTrack;
+	si.nPage = windowTracks;
 	si.nMin  = 0;
-	si.nMax  = windowWidth * 2; // 0x80;
+	si.nMax  = tracks - 1 + windowTracks - 1;
 	SetScrollInfo(hwnd, SB_HORZ, &si, TRUE);
 }
 
@@ -314,6 +295,8 @@ void TrackView::setEditTrack(int newEditTrack)
 	editTrack = min(editTrack, tracks - 1);
 
 	RECT trackRect;
+
+	/* dirty marker */
 	trackRect.top    = getScreenY(editLine);
 	trackRect.bottom = trackRect.top + fontHeight;
 
@@ -325,6 +308,27 @@ void TrackView::setEditTrack(int newEditTrack)
 	trackRect.right = trackRect.left + trackWidth;
 	InvalidateRect(hwnd, &trackRect, TRUE);
 
+	/* dirty track-marker */
+	trackRect.top    = 0;
+	trackRect.bottom = topMarginHeight;
+
+	trackRect.left  = getScreenX(oldEditTrack);
+	trackRect.right = trackRect.left + trackWidth;
+	InvalidateRect(hwnd, &trackRect, TRUE);
+
+	trackRect.left  = getScreenX(editTrack);
+	trackRect.right = trackRect.left + trackWidth;
+	InvalidateRect(hwnd, &trackRect, TRUE);
+
+	if (getScreenX(editTrack) < 0)
+	{
+		setScrollPos(scrollPosX - trackWidth, scrollPosY);
+	}
+	else if (getScreenX(editTrack) + trackWidth > windowWidth)
+	{
+		setScrollPos(scrollPosX + trackWidth, scrollPosY);
+	}
+	else setupScrollBars();
 }
 
 static int getScrollPos(HWND hwnd, int bar)
@@ -370,29 +374,32 @@ void TrackView::onHScroll(UINT sbCode, int newPos)
 	switch (sbCode)
 	{
 	case SB_LEFT:
-		setScrollPos(0, scrollPosY);
+		setEditTrack(0);
 	break;
-	// SB_RIGHT currently missing.
+	
+	case SB_RIGHT:
+		setEditTrack(tracks - 1);
+	break;
 	
 	case SB_LINELEFT:
-		setScrollPos(scrollPosX - fontWidth, scrollPosY);
+		setEditTrack(editTrack - 1);
 	break;
 	
 	case SB_LINERIGHT:
-		setScrollPos(scrollPosX + fontWidth, scrollPosY);
+		setEditTrack(editTrack + 1);
 	break;
 	
 	case SB_PAGELEFT:
-		setScrollPos(scrollPosX - 20, scrollPosY);
+		setEditTrack(editTrack - windowTracks);
 	break;
 	
 	case SB_PAGEDOWN:
-		setScrollPos(scrollPosX + 20, scrollPosY);
+		setEditTrack(editTrack + windowTracks);
 	break;
 
 	case SB_THUMBPOSITION:
 	case SB_THUMBTRACK:
-		setScrollPos(getScrollPos(hwnd, SB_HORZ), scrollPosY);
+		setEditTrack(getScrollPos(hwnd, SB_HORZ));
 	break;
 	}
 }
@@ -420,7 +427,8 @@ void TrackView::onSize(int width, int height)
 	windowWidth  = width;
 	windowHeight = height;
 
-	windowLines   = (height - topMarginHeight) / fontHeight;
+	windowLines  = (height - topMarginHeight) / fontHeight;
+	windowTracks = (width - leftMarginWidth) / trackWidth;
 	
 	setEditLine(editLine);
 	setupScrollBars();
