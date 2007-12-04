@@ -8,7 +8,9 @@ static const int topMarginHeight = 20;
 static const int leftMarginWidth = 60;
 
 static const int fontHeight = 16;
-static const int fontWidth = 12;
+static const int fontWidth = 6;
+
+static const int trackWidth = fontWidth * 16;
 
 static const int lines = 0x80;
 static const int tracks = 16;
@@ -65,7 +67,7 @@ void TrackView::paintTracks(HDC hdc, RECT rcTracks)
 //	HBRUSH editBrush = CreateSolidBrush(RGB(255, 255, 0));
 
 	lastLine = min(lastLine, lines) - 1;
-/*
+
 	RECT topLeftCorner;
 	topLeftCorner.top = 0;
 	topLeftCorner.bottom = topMarginHeight;
@@ -75,7 +77,7 @@ void TrackView::paintTracks(HDC hdc, RECT rcTracks)
 	DrawEdge(hdc, &fillRect, BDR_RAISEDINNER | BDR_RAISEDOUTER, BF_ADJUST | BF_BOTTOM);
 	FillRect(hdc, &fillRect, (HBRUSH)GetStockObject(LTGRAY_BRUSH));
 	ExcludeClipRect(hdc, topLeftCorner.left, topLeftCorner.top, topLeftCorner.right, topLeftCorner.bottom);
-*/
+
 	SetBkMode(hdc, TRANSPARENT);
 //	SetBkMode(hdc, OPAQUE);
 
@@ -111,8 +113,6 @@ void TrackView::paintTracks(HDC hdc, RECT rcTracks)
 	int trackLeft = leftMarginWidth - scrollPosX;
 	for (int x = 0; x < tracks; ++x)
 	{
-		int trackWidth = fontWidth * 5;
-		
 		RECT topMargin;
 
 		topMargin.top = 0;
@@ -249,7 +249,7 @@ void TrackView::scrollWindow(HWND hwnd, int scrollX, int scrollY)
 void TrackView::setScrollPos(HWND hwnd, int newScrollPosX, int newScrollPosY)
 {
 	// clamp newscrollPosX
-	newScrollPosX = max(scrollPosX, 0);
+	newScrollPosX = max(newScrollPosX, 0);
 	
 	if (newScrollPosX != scrollPosX || newScrollPosY != scrollPosY)
 	{
@@ -290,7 +290,6 @@ void TrackView::setEditLine(HWND hwnd, int newEditLine)
 	InvalidateRect(hwnd, &lineRect, TRUE);
 
 	setScrollPos(hwnd, scrollPosX, ((editLine + 1) * fontHeight) - (windowHeight / 2));
-
 }
 
 static int getScrollPos(HWND hwnd, int bar)
