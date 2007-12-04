@@ -62,14 +62,16 @@ void TrackView::paintTracks(HDC hdc, RECT rcTracks)
 {
 	TCHAR temp[256];
 	
-	int firstLine = 0; // scrollPosY + max((rcTracks.top - topMarginHeight) / fontHeight, 0);
-	int lastLine  = lines; // scrollPosY + min(((rcTracks.bottom - topMarginHeight) + (fontHeight - 1)) / fontHeight, lines - 1);
+	int firstLine = editLine - windowLines / 2 - 1;
+	int lastLine  = editLine + windowLines / 2 + 1;
+	
+	/* clamp first & last line */
+	firstLine = min(max(firstLine, 0), lines - 1);
+	lastLine = min(max(lastLine, 0), lines - 1);
 
 //	int editLine = firstLine + (lastLine - firstLine) / 2;
 	HBRUSH editBrush = CreateSolidBrush(RGB(255, 255, 0));
 //	HBRUSH editBrush = CreateSolidBrush(RGB(255, 255, 0));
-
-	lastLine = min(lastLine, lines) - 1;
 
 	RECT topLeftCorner;
 	topLeftCorner.top = 0;
@@ -102,7 +104,7 @@ void TrackView::paintTracks(HDC hdc, RECT rcTracks)
 		else if ((line % 4) == 0)  SetTextColor(hdc, RGB(64, 64, 64));
 		else                    SetTextColor(hdc, RGB(128, 128, 128));
 		
-		_sntprintf_s(temp, 256, _T("%04Xh"), line);
+		_sntprintf_s(temp, 256, _T("%0*Xh"), 5, line);
 		TextOut(hdc,
 			leftMargin.left, leftMargin.top,
 			temp, int(_tcslen(temp))
