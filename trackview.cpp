@@ -15,24 +15,27 @@ static const int trackWidth = fontWidth * 16;
 static const int lines = 0x80;
 static const int tracks = 16;
 
-int TrackView::getScreenY(int line)
-{
-	return topMarginHeight + (line  * fontHeight) - scrollPosY;
-}
-
-void TrackView::onCreate(HWND hwnd)
+TrackView::TrackView(HWND hwnd)
 {
 	scrollPosX = 0;
 	scrollPosY = 0;
 	windowWidth  = -1;
 	windowHeight = -1;
-	
 	editLine = 0;
-	
-	setupScrollBars(hwnd);
+	this->hwnd = hwnd;
 }
 
-void TrackView::onPaint(HWND hwnd)
+int TrackView::getScreenY(int line)
+{
+	return topMarginHeight + (line  * fontHeight) - scrollPosY;
+}
+
+void TrackView::onCreate()
+{
+	setupScrollBars();
+}
+
+void TrackView::onPaint()
 {
 	PAINTSTRUCT ps;
 	HDC hdc = BeginPaint(hwnd, &ps);
@@ -208,7 +211,7 @@ void TrackView::paintTracks(HDC hdc, RECT rcTracks)
 	DeleteObject(editBrush);
 }
 
-void TrackView::setupScrollBars(HWND hwnd)
+void TrackView::setupScrollBars()
 {
 	SCROLLINFO si = { sizeof(si) };
 	si.fMask = SIF_POS | SIF_PAGE | SIF_RANGE | SIF_DISABLENOSCROLL;
@@ -226,7 +229,7 @@ void TrackView::setupScrollBars(HWND hwnd)
 	SetScrollInfo(hwnd, SB_HORZ, &si, TRUE);
 }
 
-void TrackView::scrollWindow(HWND hwnd, int scrollX, int scrollY)
+void TrackView::scrollWindow(int scrollX, int scrollY)
 {
 	RECT clip;
 	GetClientRect(hwnd, &clip);
@@ -246,7 +249,7 @@ void TrackView::scrollWindow(HWND hwnd, int scrollX, int scrollY)
 	);
 }
 
-void TrackView::setScrollPos(HWND hwnd, int newScrollPosX, int newScrollPosY)
+void TrackView::setScrollPos(int newScrollPosX, int newScrollPosY)
 {
 	// clamp newscrollPosX
 	newScrollPosX = max(newScrollPosX, 0);
@@ -260,12 +263,12 @@ void TrackView::setScrollPos(HWND hwnd, int newScrollPosX, int newScrollPosY)
 		scrollPosX = newScrollPosX;
 		scrollPosY = newScrollPosY;
 		
-		scrollWindow(hwnd, scrollX, scrollY);
-		setupScrollBars(hwnd);
+		scrollWindow(scrollX, scrollY);
+		setupScrollBars();
 	}
 }
 
-void TrackView::setEditLine(HWND hwnd, int newEditLine)
+void TrackView::setEditLine(int newEditLine)
 {
 	int oldEditLine = editLine;
 	editLine = newEditLine;
@@ -289,7 +292,7 @@ void TrackView::setEditLine(HWND hwnd, int newEditLine)
 	lineRect.bottom = lineRect.top + fontHeight;
 	InvalidateRect(hwnd, &lineRect, TRUE);
 
-	setScrollPos(hwnd, scrollPosX, ((editLine + 1) * fontHeight) - (windowHeight / 2));
+	setScrollPos(scrollPosX, ((editLine + 1) * fontHeight) - (windowHeight / 2));
 }
 
 static int getScrollPos(HWND hwnd, int bar)
@@ -299,82 +302,82 @@ static int getScrollPos(HWND hwnd, int bar)
 	return int(si.nTrackPos);
 }
 
-void TrackView::onVScroll(HWND hwnd, UINT sbCode, int newPos)
+void TrackView::onVScroll(UINT sbCode, int newPos)
 {
 	switch (sbCode)
 	{
 	case SB_TOP:
-		setEditLine(hwnd, 0);
+		setEditLine(0);
 	break;
 	
 	case SB_LINEUP:
-		setEditLine(hwnd, editLine - 1);
+		setEditLine(editLine - 1);
 	break;
 	
 	case SB_LINEDOWN:
-		setEditLine(hwnd, editLine + 1);
+		setEditLine(editLine + 1);
 	break;
 	
 	case SB_PAGEUP:
-		setEditLine(hwnd, editLine - windowLines / 2);
+		setEditLine(editLine - windowLines / 2);
 	break;
 	
 	case SB_PAGEDOWN:
-		setEditLine(hwnd, editLine + windowLines / 2);
+		setEditLine(editLine + windowLines / 2);
 	break;
 
 	case SB_THUMBPOSITION:
 	case SB_THUMBTRACK:
-		setEditLine(hwnd, getScrollPos(hwnd, SB_VERT));
+		setEditLine(getScrollPos(hwnd, SB_VERT));
 	break;
 	}
 }
 
-void TrackView::onHScroll(HWND hwnd, UINT sbCode, int newPos)
+void TrackView::onHScroll(UINT sbCode, int newPos)
 {
 	switch (sbCode)
 	{
 	case SB_LEFT:
-		setScrollPos(hwnd, 0, scrollPosY);
+		setScrollPos(0, scrollPosY);
 	break;
 	// SB_RIGHT currently missing.
 	
 	case SB_LINELEFT:
-		setScrollPos(hwnd, scrollPosX - fontWidth, scrollPosY);
+		setScrollPos(scrollPosX - fontWidth, scrollPosY);
 	break;
 	
 	case SB_LINERIGHT:
-		setScrollPos(hwnd, scrollPosX + fontWidth, scrollPosY);
+		setScrollPos(scrollPosX + fontWidth, scrollPosY);
 	break;
 	
 	case SB_PAGELEFT:
-		setScrollPos(hwnd, scrollPosX - 20, scrollPosY);
+		setScrollPos(scrollPosX - 20, scrollPosY);
 	break;
 	
 	case SB_PAGEDOWN:
-		setScrollPos(hwnd, scrollPosX + 20, scrollPosY);
+		setScrollPos(scrollPosX + 20, scrollPosY);
 	break;
 
 	case SB_THUMBPOSITION:
 	case SB_THUMBTRACK:
-		setScrollPos(hwnd, getScrollPos(hwnd, SB_HORZ), scrollPosY);
+		setScrollPos(getScrollPos(hwnd, SB_HORZ), scrollPosY);
 	break;
 	}
 }
 
-void TrackView::onKeyDown(HWND hwnd, UINT keyCode, UINT flags)
+void TrackView::onKeyDown(UINT keyCode, UINT flags)
 {
 	switch (keyCode)
 	{
-		case VK_UP:   setEditLine(hwnd, editLine - 1); break;
-		case VK_DOWN: setEditLine(hwnd, editLine + 1); break;
+		case VK_UP:   setEditLine(editLine - 1); break;
+		case VK_DOWN: setEditLine(editLine + 1); break;
 
-		case VK_PRIOR: setEditLine(hwnd, editLine - windowLines / 2); break;
-		case VK_NEXT:  setEditLine(hwnd, editLine + windowLines / 2); break;
+		case VK_PRIOR: setEditLine(editLine - windowLines / 2); break;
+		case VK_NEXT:  setEditLine(editLine + windowLines / 2); break;
 	}
 }
 
-void TrackView::onSize(HWND hwnd, int width, int height)
+void TrackView::onSize(int width, int height)
 {
 	const int oldWindowWidth = windowWidth;
 	const int oldWindowHeight = windowHeight;
@@ -384,16 +387,18 @@ void TrackView::onSize(HWND hwnd, int width, int height)
 
 	windowLines   = (height - topMarginHeight) / fontHeight;
 	
-	setEditLine(hwnd, editLine);
-	setupScrollBars(hwnd);
+	setEditLine(editLine);
+	setupScrollBars();
 }
 
 LRESULT TrackView::windowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
+	ASSERT(hwnd == this->hwnd);
+	
 	switch(msg)
 	{
 		case WM_CREATE:
-			onCreate(hwnd);
+			onCreate();
 		break;
 		
 		case WM_CLOSE:
@@ -405,23 +410,23 @@ LRESULT TrackView::windowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 		break;
 		
 		case WM_SIZE:
-			onSize(hwnd, LOWORD(lParam), HIWORD(lParam));
+			onSize(LOWORD(lParam), HIWORD(lParam));
 		break;
 		
 		case WM_VSCROLL:
-			onVScroll(hwnd, LOWORD(wParam), getScrollPos(hwnd, SB_VERT));
+			onVScroll(LOWORD(wParam), getScrollPos(hwnd, SB_VERT));
 		break;
 		
 		case WM_HSCROLL:
-			onHScroll(hwnd, LOWORD(wParam), getScrollPos(hwnd, SB_HORZ));
+			onHScroll(LOWORD(wParam), getScrollPos(hwnd, SB_HORZ));
 		break;
 		
 		case WM_PAINT:
-			onPaint(hwnd);
+			onPaint();
 		break;
 		
 		case WM_KEYDOWN:
-			onKeyDown(hwnd, (UINT)wParam, (UINT)lParam);
+			onKeyDown((UINT)wParam, (UINT)lParam);
 		break;
 		
 		default:
@@ -442,7 +447,7 @@ LRESULT CALLBACK trackViewWindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM 
 			ASSERT(NULL == trackView);
 			
 			// allocate a TrackView instance
-			trackView = new TrackView();
+			trackView = new TrackView(hwnd);
 			
 			// Set the TrackView instance
 #pragma warning(suppress:4244) /* remove a pointless warning */
