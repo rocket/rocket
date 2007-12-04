@@ -18,9 +18,12 @@ public:
 	
 	void setupScrollBars(HWND hwnd);
 	void setScrollPos(HWND hwnd, int newScrollPosX, int newScrollPosY);
+	void setEditLine(HWND hwnd, int newEditLine);
+	void scrollWindow(HWND hwnd, int newScrollPosX, int newScrollPosY);
 
 	int getScreenY(int line);
 	
+	int editLine;
 	int scrollPosX, scrollPosY;
 	int windowWidth, windowHeight;
 	int windowLines;
