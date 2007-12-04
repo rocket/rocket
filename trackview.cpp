@@ -21,7 +21,9 @@ TrackView::TrackView(HWND hwnd)
 	scrollPosY = 0;
 	windowWidth  = -1;
 	windowHeight = -1;
+	
 	editLine = 0;
+	editTrack = 0;
 
 	this->hwnd = hwnd;
 
@@ -36,6 +38,11 @@ TrackView::~TrackView()
 int TrackView::getScreenY(int line)
 {
 	return topMarginHeight + (line  * fontHeight) - scrollPosY;
+}
+
+int TrackView::getScreenX(int track)
+{
+	return leftMarginWidth + (track * trackWidth) - scrollPosX;
 }
 
 void TrackView::onCreate()
@@ -119,23 +126,22 @@ void TrackView::paintTracks(HDC hdc, RECT rcTracks)
 	
 	SetTextColor(hdc, RGB(0, 0, 0));
 	
-	int trackLeft = leftMarginWidth - scrollPosX;
-	for (int x = 0; x < tracks; ++x)
+	for (int track = 0; track < tracks; ++track)
 	{
 		RECT topMargin;
 
 		topMargin.top = 0;
 		topMargin.bottom = topMarginHeight;
 
-		topMargin.left = trackLeft;
-		topMargin.right = trackLeft + trackWidth;
+		topMargin.left = getScreenX(track);
+		topMargin.right = topMargin.left + trackWidth;
 		
 		RECT fillRect = topMargin;
 		DrawEdge(hdc, &fillRect, BDR_RAISEDINNER | BDR_RAISEDOUTER, BF_ADJUST | BF_LEFT | BF_RIGHT | BF_BOTTOM);
 		FillRect(hdc, &fillRect, (HBRUSH)GetStockObject(LTGRAY_BRUSH));
 
 		/* format the text */
-		_sntprintf_s(temp, 256, _T("track %d"), x);
+		_sntprintf_s(temp, 256, _T("track %d"), track);
 		TextOut(hdc,
 			fillRect.left, 0,
 			temp, int(_tcslen(temp))
@@ -146,8 +152,8 @@ void TrackView::paintTracks(HDC hdc, RECT rcTracks)
 		for (int line = firstLine; line <= lastLine; ++line)
 		{
 			RECT patternDataRect;
-			patternDataRect.left = trackLeft;
-			patternDataRect.right = trackLeft + trackWidth;
+			patternDataRect.left = getScreenX(track);
+			patternDataRect.right = patternDataRect.left + trackWidth;
 			patternDataRect.top = getScreenY(line);
 			patternDataRect.bottom = patternDataRect.top + fontHeight;
 
@@ -156,7 +162,7 @@ void TrackView::paintTracks(HDC hdc, RECT rcTracks)
 			if (line == editLine) bgBrush = editBrush;
 
 			RECT fillRect = patternDataRect;
-			if (line == editLine && x == 1) DrawEdge(hdc, &fillRect, BDR_RAISEDINNER | BDR_SUNKENOUTER, BF_ADJUST | BF_TOP | BF_BOTTOM | BF_LEFT | BF_RIGHT);
+			if (line == editLine && track == editTrack) DrawEdge(hdc, &fillRect, BDR_RAISEDINNER | BDR_SUNKENOUTER, BF_ADJUST | BF_TOP | BF_BOTTOM | BF_LEFT | BF_RIGHT);
 			FillRect( hdc, &fillRect, bgBrush);
 			
 			bool key = (line % 8 == 0);
@@ -166,7 +172,7 @@ void TrackView::paintTracks(HDC hdc, RECT rcTracks)
 			if (!key) _sntprintf_s(temp, 256, _T(" - - -"));
 			else _sntprintf_s(temp, 256, _T("%2.2f"), val);
 			TextOut(hdc,
-				trackLeft, patternDataRect.top,
+				patternDataRect.left, patternDataRect.top,
 				temp, int(_tcslen(temp))
 			);
 		}
@@ -179,14 +185,14 @@ void TrackView::paintTracks(HDC hdc, RECT rcTracks)
 		DrawEdge(hdc, &bottomMargin, BDR_SUNKENINNER | BDR_RAISEDOUTER, BF_ADJUST | BF_TOP);
 		FillRect(hdc, &bottomMargin, (HBRUSH)GetStockObject(WHITE_BRUSH));
 */
-		trackLeft += trackWidth;
 	}
 
 	/* pad top margin to the left edge */
+
 	RECT topMargin;
 	topMargin.top = 0;
 	topMargin.bottom = topMarginHeight;
-	topMargin.left = trackLeft;
+	topMargin.left = getScreenX(tracks);
 	topMargin.right = rcTracks.right;
 	DrawEdge(hdc, &topMargin, BDR_SUNKENINNER | BDR_RAISEDOUTER, BF_ADJUST | BF_LEFT);
 	FillRect(hdc, &topMargin, (HBRUSH)GetStockObject(LTGRAY_BRUSH));
@@ -195,7 +201,7 @@ void TrackView::paintTracks(HDC hdc, RECT rcTracks)
 	RECT rightMargin;
 	rightMargin.top    = getScreenY(0);
 	rightMargin.bottom = getScreenY(lines);
-	rightMargin.left  = trackLeft;
+	rightMargin.left  = getScreenX(tracks);
 	rightMargin.right = rcTracks.right;
 	FillRect( hdc, &rightMargin, (HBRUSH)GetStockObject(GRAY_BRUSH));
 
@@ -298,6 +304,29 @@ void TrackView::setEditLine(int newEditLine)
 	setScrollPos(scrollPosX, (editLine * fontHeight) - ((windowHeight - topMarginHeight) / 2) + fontHeight / 2);
 }
 
+void TrackView::setEditTrack(int newEditTrack)
+{
+	int oldEditTrack = editTrack;
+	editTrack = newEditTrack;
+	
+	// clamp to document
+	editTrack = max(editTrack, 0);
+	editTrack = min(editTrack, tracks - 1);
+
+	RECT trackRect;
+	trackRect.top    = getScreenY(editLine);
+	trackRect.bottom = trackRect.top + fontHeight;
+
+	trackRect.left  = getScreenX(oldEditTrack);
+	trackRect.right = trackRect.left + trackWidth;
+	InvalidateRect(hwnd, &trackRect, TRUE);
+
+	trackRect.left  = getScreenX(editTrack);
+	trackRect.right = trackRect.left + trackWidth;
+	InvalidateRect(hwnd, &trackRect, TRUE);
+
+}
+
 static int getScrollPos(HWND hwnd, int bar)
 {
 	SCROLLINFO si = { sizeof(si), SIF_TRACKPOS };
@@ -374,6 +403,9 @@ void TrackView::onKeyDown(UINT keyCode, UINT flags)
 	{
 		case VK_UP:   setEditLine(editLine - 1); break;
 		case VK_DOWN: setEditLine(editLine + 1); break;
+
+		case VK_LEFT:  setEditTrack(editTrack - 1); break;
+		case VK_RIGHT: setEditTrack(editTrack + 1); break;
 
 		case VK_PRIOR: setEditLine(editLine - windowLines / 2); break;
 		case VK_NEXT:  setEditLine(editLine + windowLines / 2); break;
