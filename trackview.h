@@ -4,6 +4,7 @@ class TrackView
 {
 public:
 	TrackView(HWND hwnd);
+	~TrackView();
 
 	// events
 	void onCreate();
@@ -31,6 +32,9 @@ public:
 	int windowLines;
 	
 	HWND hwnd;
+
+	HBRUSH editBrush;
+
 };
 
 ATOM registerTrackViewWindowClass(HINSTANCE hInstance);
