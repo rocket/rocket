@@ -73,6 +73,8 @@ void TrackView::paintTracks(HDC hdc, RECT rcTracks)
 
 //	printf("%d %d\n", firstLine, lastLine);
 	SetBkMode(hdc, TRANSPARENT);
+
+	SelectObject(hdc, editBrush);
 	
 	RECT topLeftCorner;
 	topLeftCorner.top = 0;
@@ -153,8 +155,13 @@ void TrackView::paintTracks(HDC hdc, RECT rcTracks)
 			if (line == editLine) bgBrush = editBrush;
 
 			RECT fillRect = patternDataRect;
-			if (line == editLine && track == editTrack) DrawEdge(hdc, &fillRect, BDR_RAISEDINNER | BDR_SUNKENOUTER, BF_ADJUST | BF_TOP | BF_BOTTOM | BF_LEFT | BF_RIGHT);
+//			if (line == editLine && track == editTrack) DrawEdge(hdc, &fillRect, BDR_RAISEDINNER | BDR_SUNKENOUTER, BF_ADJUST | BF_TOP | BF_BOTTOM | BF_LEFT | BF_RIGHT);
 			FillRect( hdc, &fillRect, bgBrush);
+			if (line == editLine && track == editTrack)
+			{
+//				DrawFocusRect(hdc, &fillRect);
+				Rectangle(hdc, fillRect.left, fillRect.top, fillRect.right, fillRect.bottom);
+			}
 			
 			bool key = (line % 8 == 0);
 			float val = (float(line) / 16);
