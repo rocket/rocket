@@ -12,8 +12,8 @@ static const int fontWidth = 6;
 
 static const int trackWidth = fontWidth * 16;
 
-static const int lines = 0x20;
-static const int tracks = 16;
+static const int lines = 0x80;
+static const int tracks = 32;
 
 TrackView::TrackView(HWND hwnd)
 {
@@ -60,31 +60,84 @@ void TrackView::onPaint()
 	EndPaint(hwnd, &ps);
 }
 
+void TrackView::paintTopMargin(HDC hdc, RECT rcTracks)
+{
+	RECT fillRect;
+	RECT topLeftMargin;
+	topLeftMargin.top = 0;
+	topLeftMargin.bottom = topMarginHeight;
+	topLeftMargin.left = 0;
+	topLeftMargin.right = leftMarginWidth;
+	fillRect = topLeftMargin;
+	DrawEdge(hdc, &fillRect, BDR_RAISEDINNER | BDR_RAISEDOUTER, BF_ADJUST | BF_BOTTOM);
+	FillRect(hdc, &fillRect, (HBRUSH)GetStockObject(LTGRAY_BRUSH));
+	ExcludeClipRect(hdc, topLeftMargin.left, topLeftMargin.top, topLeftMargin.right, topLeftMargin.bottom);
+
+	int firstTrack = min(max(scrollPosX / trackWidth, 0), tracks - 1);
+	int lastTrack  = min(max(firstTrack + windowTracks + 1, 0), tracks - 1);
+
+	for (int track = firstTrack; track <= lastTrack; ++track)
+	{
+		char temp[256];
+		RECT topMargin;
+
+		topMargin.top = 0;
+		topMargin.bottom = topMarginHeight;
+
+		topMargin.left = getScreenX(track);
+		topMargin.right = topMargin.left + trackWidth;
+		
+		if (!RectVisible(hdc, &topMargin)) continue;
+
+		RECT fillRect = topMargin;
+
+		HBRUSH bgBrush = (HBRUSH)GetStockObject(LTGRAY_BRUSH);
+		if (track == editTrack) bgBrush = editBrush;
+
+		DrawEdge(hdc, &fillRect, BDR_RAISEDINNER | BDR_RAISEDOUTER, BF_ADJUST | BF_LEFT | BF_RIGHT | BF_BOTTOM);
+		FillRect(hdc, &fillRect, bgBrush);
+
+		/* format the text */
+		_sntprintf_s(temp, 256, _T("track %d"), track);
+		TextOut(hdc,
+			fillRect.left, 0,
+			temp, int(_tcslen(temp))
+		);
+		ExcludeClipRect(hdc, topMargin.left, topMargin.top, topMargin.right, topMargin.bottom);
+	}
+
+	RECT topRightMargin;
+	topRightMargin.top = 0;
+	topRightMargin.bottom = topMarginHeight;
+	topRightMargin.left = getScreenX(tracks);
+	topRightMargin.right = rcTracks.right;
+	fillRect = topRightMargin;
+	DrawEdge(hdc, &fillRect, BDR_RAISEDINNER | BDR_RAISEDOUTER, BF_ADJUST | BF_BOTTOM);
+	FillRect(hdc, &fillRect, (HBRUSH)GetStockObject(LTGRAY_BRUSH));
+	ExcludeClipRect(hdc, topRightMargin.left, topRightMargin.top, topRightMargin.right, topRightMargin.bottom);
+
+}
+
 void TrackView::paintTracks(HDC hdc, RECT rcTracks)
 {
 	TCHAR temp[256];
+
+	int firstTrack = min(max(scrollPosX / trackWidth, 0), tracks - 1);
+	int lastTrack  = min(max(firstTrack + windowTracks + 1, 0), tracks - 1);
 	
 	int firstLine = editLine - windowLines / 2 - 1;
 	int lastLine  = editLine + windowLines / 2 + 1;
-	
 	/* clamp first & last line */
 	firstLine = min(max(firstLine, 0), lines - 1);
 	lastLine = min(max(lastLine, 0), lines - 1);
 
-//	printf("%d %d\n", firstLine, lastLine);
 	SetBkMode(hdc, TRANSPARENT);
 
 	SelectObject(hdc, editBrush);
 	
-	RECT topLeftCorner;
-	topLeftCorner.top = 0;
-	topLeftCorner.bottom = topMarginHeight;
-	topLeftCorner.left = 0;
-	topLeftCorner.right = leftMarginWidth;
-	RECT fillRect = topLeftCorner;
-	DrawEdge(hdc, &fillRect, BDR_RAISEDINNER | BDR_RAISEDOUTER, BF_ADJUST | BF_BOTTOM);
-	FillRect(hdc, &fillRect, (HBRUSH)GetStockObject(LTGRAY_BRUSH));
-	ExcludeClipRect(hdc, topLeftCorner.left, topLeftCorner.top, topLeftCorner.right, topLeftCorner.bottom);
+
+	paintTopMargin(hdc, rcTracks);
+
 	
 	for (int line = firstLine; line <= lastLine; ++line)
 	{
@@ -93,6 +146,8 @@ void TrackView::paintTracks(HDC hdc, RECT rcTracks)
 		leftMargin.right = leftMarginWidth;
 		leftMargin.top    = getScreenY(line);
 		leftMargin.bottom = leftMargin.top + fontHeight;
+
+		if (!RectVisible(hdc, &leftMargin)) continue;
 
 		if (line == editLine) FillRect(hdc, &leftMargin, editBrush);
 		else                  FillRect(hdc, &leftMargin, (HBRUSH)GetStockObject(LTGRAY_BRUSH));
@@ -115,33 +170,8 @@ void TrackView::paintTracks(HDC hdc, RECT rcTracks)
 	
 	SetTextColor(hdc, RGB(0, 0, 0));
 	
-	for (int track = 0; track < tracks; ++track)
+	for (int track = firstTrack; track <= lastTrack; ++track)
 	{
-		RECT topMargin;
-
-		topMargin.top = 0;
-		topMargin.bottom = topMarginHeight;
-
-		topMargin.left = getScreenX(track);
-		topMargin.right = topMargin.left + trackWidth;
-		
-		RECT fillRect = topMargin;
-
-		HBRUSH bgBrush = (HBRUSH)GetStockObject(LTGRAY_BRUSH);
-		if (track == editTrack) bgBrush = editBrush;
-
-		DrawEdge(hdc, &fillRect, BDR_RAISEDINNER | BDR_RAISEDOUTER, BF_ADJUST | BF_LEFT | BF_RIGHT | BF_BOTTOM);
-		FillRect(hdc, &fillRect, bgBrush);
-
-		/* format the text */
-		_sntprintf_s(temp, 256, _T("track %d"), track);
-		TextOut(hdc,
-			fillRect.left, 0,
-			temp, int(_tcslen(temp))
-		);
-		ExcludeClipRect(hdc, topMargin.left, topMargin.top, topMargin.right, topMargin.bottom);
-
-//		SetBkColor(hdc, RGB(255, 0, 0));
 		for (int line = firstLine; line <= lastLine; ++line)
 		{
 			RECT patternDataRect;
@@ -149,6 +179,8 @@ void TrackView::paintTracks(HDC hdc, RECT rcTracks)
 			patternDataRect.right = patternDataRect.left + trackWidth;
 			patternDataRect.top = getScreenY(line);
 			patternDataRect.bottom = patternDataRect.top + fontHeight;
+
+			if (!RectVisible(hdc, &patternDataRect)) continue;
 
 			HBRUSH bgBrush = (HBRUSH)GetStockObject(WHITE_BRUSH);
 			if (line % 8 == 0) bgBrush = (HBRUSH)GetStockObject(LTGRAY_BRUSH);
@@ -176,36 +208,33 @@ void TrackView::paintTracks(HDC hdc, RECT rcTracks)
 		}
 	}
 
-	/* pad top margin to the left edge */
-	RECT topMargin;
-	topMargin.top = 0;
-	topMargin.bottom = topMarginHeight;
-	topMargin.left = getScreenX(tracks);
-	topMargin.right = rcTracks.right;
-	DrawEdge(hdc, &topMargin, BDR_SUNKENINNER | BDR_RAISEDOUTER, BF_ADJUST | BF_LEFT);
-	FillRect(hdc, &topMargin, (HBRUSH)GetStockObject(LTGRAY_BRUSH));
-
 	/* right margin */
-	RECT rightMargin;
-	rightMargin.top    = getScreenY(0);
-	rightMargin.bottom = getScreenY(lines);
-	rightMargin.left  = getScreenX(tracks);
-	rightMargin.right = rcTracks.right;
-	FillRect( hdc, &rightMargin, (HBRUSH)GetStockObject(GRAY_BRUSH));
+	{
+		RECT rightMargin;
+		rightMargin.top    = getScreenY(0);
+		rightMargin.bottom = getScreenY(lines);
+		rightMargin.left  = getScreenX(tracks);
+		rightMargin.right = rcTracks.right;
+		FillRect( hdc, &rightMargin, (HBRUSH)GetStockObject(GRAY_BRUSH));
+	}
 
-	RECT bottomPadding;
-	bottomPadding.top = getScreenY(lines);
-	bottomPadding.bottom = rcTracks.bottom;
-	bottomPadding.left = rcTracks.left;
-	bottomPadding.right = rcTracks.right;
-	FillRect(hdc, &bottomPadding, (HBRUSH)GetStockObject(GRAY_BRUSH));
+	{
+		RECT bottomPadding;
+		bottomPadding.top = getScreenY(lines);
+		bottomPadding.bottom = rcTracks.bottom;
+		bottomPadding.left = rcTracks.left;
+		bottomPadding.right = rcTracks.right;
+		FillRect(hdc, &bottomPadding, (HBRUSH)GetStockObject(GRAY_BRUSH));
+	}
 	
-	RECT topPadding;
-	topPadding.top = rcTracks.top;
-	topPadding.bottom = getScreenY(0);
-	topPadding.left = rcTracks.left;
-	topPadding.right = rcTracks.right;
-	FillRect(hdc, &topPadding, (HBRUSH)GetStockObject(GRAY_BRUSH));
+	{
+		RECT topPadding;
+		topPadding.top = max(rcTracks.top, topMarginHeight);
+		topPadding.bottom = getScreenY(0);
+		topPadding.left = rcTracks.left;
+		topPadding.right = rcTracks.right;
+		FillRect(hdc, &topPadding, (HBRUSH)GetStockObject(GRAY_BRUSH));
+	}
 }
 
 void TrackView::setupScrollBars()
@@ -327,15 +356,13 @@ void TrackView::setEditTrack(int newEditTrack)
 	trackRect.right = trackRect.left + trackWidth;
 	InvalidateRect(hwnd, &trackRect, TRUE);
 
-	if (getScreenX(editTrack) < 0)
-	{
-		setScrollPos(scrollPosX - trackWidth, scrollPosY);
-	}
-	else if (getScreenX(editTrack) + trackWidth > windowWidth)
-	{
-		setScrollPos(scrollPosX + trackWidth, scrollPosY);
-	}
-	else setupScrollBars();
+	int firstTrack = scrollPosX / trackWidth;
+	int lastTrack  = firstTrack + windowTracks;
+
+	int newFirstTrack = firstTrack;
+	if (editTrack >= lastTrack) newFirstTrack = editTrack - (lastTrack - firstTrack - 1);
+	if (editTrack < firstTrack) newFirstTrack = editTrack;
+	setScrollPos(newFirstTrack * trackWidth, scrollPosY);
 }
 
 static int getScrollPos(HWND hwnd, int bar)
@@ -435,7 +462,7 @@ void TrackView::onSize(int width, int height)
 	windowHeight = height;
 
 	windowLines  = (height - topMarginHeight) / fontHeight;
-	windowTracks = (width - leftMarginWidth) / trackWidth;
+	windowTracks = (width  - leftMarginWidth) / trackWidth;
 	
 	setEditLine(editLine);
 	setupScrollBars();
@@ -485,7 +512,7 @@ LRESULT TrackView::windowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	return FALSE;
 }
 
-LRESULT CALLBACK trackViewWindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
+static LRESULT CALLBACK trackViewWindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
 	// Get the TrackView instance (if any)
 #pragma warning(suppress:4312) /* remove a pointless warning */

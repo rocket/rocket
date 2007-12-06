@@ -6,6 +6,11 @@ public:
 	TrackView(HWND hwnd);
 	~TrackView();
 
+private:
+	// some nasty hackery to forward the window messages
+	friend static LRESULT CALLBACK trackViewWindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
+	LRESULT windowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
+
 	// events
 	void onCreate();
 	void onPaint();
@@ -15,9 +20,9 @@ public:
 	void onKeyDown(UINT keyCode, UINT flags);
 	
 	// the window procedure
-	LRESULT windowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
 	void paintTracks(HDC hdc, RECT rcTracks);
+	void paintTopMargin(HDC hdc, RECT rcTracks);
 	
 	void setupScrollBars();
 	void setScrollPos(int newScrollPosX, int newScrollPosY);
@@ -37,9 +42,7 @@ public:
 	int windowLines, windowTracks;
 	
 	HWND hwnd;
-
 	HBRUSH editBrush;
-
 };
 
 ATOM registerTrackViewWindowClass(HINSTANCE hInstance);
