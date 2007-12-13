@@ -200,6 +200,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\syncdata.h"
+				>
+			</File>
+			<File
 				RelativePath=".\trackview.h"
 				>
 			</File>

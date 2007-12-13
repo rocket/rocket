@@ -1,5 +1,7 @@
 #pragma once
 
+#include "syncdata.h"
+
 class TrackView
 {
 public:

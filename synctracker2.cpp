@@ -61,6 +61,19 @@ int _tmain(int argc, _TCHAR* argv[])
 	MSG Msg;
 	HINSTANCE hInstance = GetModuleHandle(NULL);
 	
+	SyncData syncData;
+	SyncTrack &testTrack = syncData.getTrack("test");
+
+//	testTrack.setKeyFrame(0, SyncTrack::KeyFrame(1.0f));
+	testTrack.setKeyFrame(1, SyncTrack::KeyFrame(2.0f));
+	testTrack.setKeyFrame(4, SyncTrack::KeyFrame(3.0f));
+
+	for (int i = 0; i < 5 * 2; ++i)
+	{
+		float time = float(i) / 2;
+		printf("%f %d - %f\n", time, testTrack.isKeyFrame(i), testTrack.getValue(time));
+	}
+	
 	ATOM mainClass      = registerMainWindowClass(hInstance);
 	ATOM trackViewClass = registerTrackViewWindowClass(hInstance);
 	if(!mainClass || ! trackViewClass)

@@ -2,7 +2,7 @@
 
 #include "trackview.h"
 
-const TCHAR *trackViewWindowClassName = _T("TrackView");
+static const TCHAR *trackViewWindowClassName = _T("TrackView");
 
 static const int topMarginHeight = 20;
 static const int leftMarginWidth = 60;
@@ -55,6 +55,8 @@ void TrackView::onPaint()
 	PAINTSTRUCT ps;
 	HDC hdc = BeginPaint(hwnd, &ps);
 	
+	SelectObject(hdc, GetStockObject(SYSTEM_FIXED_FONT));
+//	SelectObject(hdc, GetStockObject(SYSTEM_FONT));
 	paintTracks(hdc, ps.rcPaint);
 	
 	EndPaint(hwnd, &ps);
@@ -199,7 +201,7 @@ void TrackView::paintTracks(HDC hdc, RECT rcTracks)
 			float val = (float(line) / 16);
 			
 			/* format the text */
-			if (!key) _sntprintf_s(temp, 256, _T(" - - -"));
+			if (!key) _sntprintf_s(temp, 256, _T("---"));
 			else _sntprintf_s(temp, 256, _T("%2.2f"), val);
 			TextOut(hdc,
 				patternDataRect.left, patternDataRect.top,
