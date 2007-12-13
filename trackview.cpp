@@ -13,9 +13,8 @@ static const int fontWidth = 6;
 static const int trackWidth = fontWidth * 16;
 
 static const int lines = 0x80;
-static const int tracks = 32;
 
-TrackView::TrackView()
+TrackView::TrackView() : syncData(NULL)
 {
 	scrollPosX = 0;
 	scrollPosY = 0;
@@ -75,12 +74,11 @@ void TrackView::paintTopMargin(HDC hdc, RECT rcTracks)
 	FillRect(hdc, &fillRect, (HBRUSH)GetStockObject(LTGRAY_BRUSH));
 	ExcludeClipRect(hdc, topLeftMargin.left, topLeftMargin.top, topLeftMargin.right, topLeftMargin.bottom);
 
-	int firstTrack = min(max(scrollPosX / trackWidth, 0), tracks - 1);
-	int lastTrack  = min(max(firstTrack + windowTracks + 1, 0), tracks - 1);
+	int firstTrack = min(max(scrollPosX / trackWidth, 0), getTrackCount() - 1);
+	int lastTrack  = min(max(firstTrack + windowTracks + 1, 0), getTrackCount() - 1);
 
 	for (int track = firstTrack; track <= lastTrack; ++track)
 	{
-		char temp[256];
 		RECT topMargin;
 
 		topMargin.top = 0;
@@ -100,10 +98,13 @@ void TrackView::paintTopMargin(HDC hdc, RECT rcTracks)
 		FillRect(hdc, &fillRect, bgBrush);
 
 		/* format the text */
+		TCHAR temp[256];
 		_sntprintf_s(temp, 256, _T("track %d"), track);
+
+		std::string trackName(temp);
 		TextOut(hdc,
 			fillRect.left, 0,
-			temp, int(_tcslen(temp))
+			trackName.c_str(), int(trackName.length())
 		);
 		ExcludeClipRect(hdc, topMargin.left, topMargin.top, topMargin.right, topMargin.bottom);
 	}
@@ -111,7 +112,7 @@ void TrackView::paintTopMargin(HDC hdc, RECT rcTracks)
 	RECT topRightMargin;
 	topRightMargin.top = 0;
 	topRightMargin.bottom = topMarginHeight;
-	topRightMargin.left = getScreenX(tracks);
+	topRightMargin.left = getScreenX(getTrackCount());
 	topRightMargin.right = rcTracks.right;
 	fillRect = topRightMargin;
 	DrawEdge(hdc, &fillRect, BDR_RAISEDINNER | BDR_RAISEDOUTER, BF_ADJUST | BF_BOTTOM);
@@ -124,8 +125,8 @@ void TrackView::paintTracks(HDC hdc, RECT rcTracks)
 {
 	TCHAR temp[256];
 
-	int firstTrack = min(max(scrollPosX / trackWidth, 0), tracks - 1);
-	int lastTrack  = min(max(firstTrack + windowTracks + 1, 0), tracks - 1);
+	int firstTrack = min(max(scrollPosX / trackWidth, 0), getTrackCount() - 1);
+	int lastTrack  = min(max(firstTrack + windowTracks + 1, 0), getTrackCount() - 1);
 	
 	int firstLine = editLine - windowLines / 2 - 1;
 	int lastLine  = editLine + windowLines / 2 + 1;
@@ -215,7 +216,7 @@ void TrackView::paintTracks(HDC hdc, RECT rcTracks)
 		RECT rightMargin;
 		rightMargin.top    = getScreenY(0);
 		rightMargin.bottom = getScreenY(lines);
-		rightMargin.left  = getScreenX(tracks);
+		rightMargin.left  = getScreenX(getTrackCount());
 		rightMargin.right = rcTracks.right;
 		FillRect( hdc, &rightMargin, (HBRUSH)GetStockObject(GRAY_BRUSH));
 	}
@@ -253,7 +254,7 @@ void TrackView::setupScrollBars()
 	si.nPos  = editTrack;
 	si.nPage = windowTracks;
 	si.nMin  = 0;
-	si.nMax  = tracks - 1 + windowTracks - 1;
+	si.nMax  = getTrackCount() - 1 + windowTracks - 1;
 	SetScrollInfo(hwnd, SB_HORZ, &si, TRUE);
 }
 
@@ -330,7 +331,7 @@ void TrackView::setEditTrack(int newEditTrack)
 	
 	// clamp to document
 	editTrack = max(editTrack, 0);
-	editTrack = min(editTrack, tracks - 1);
+	editTrack = min(editTrack, getTrackCount() - 1);
 
 	RECT trackRect;
 
@@ -414,7 +415,7 @@ void TrackView::onHScroll(UINT sbCode, int newPos)
 	break;
 	
 	case SB_RIGHT:
-		setEditTrack(tracks - 1);
+		setEditTrack(getTrackCount() - 1);
 	break;
 	
 	case SB_LINELEFT:

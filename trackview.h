@@ -2,6 +2,8 @@
 
 #include "syncdata.h"
 
+class SyncData;
+
 class TrackView
 {
 public:
@@ -10,6 +12,9 @@ public:
 
 	HWND create(HINSTANCE hInstance, HWND hwndParent);
 	HWND getWin(){ return hwnd; }
+
+	void setSyncData(SyncData *syncData) { this->syncData = syncData; }
+	SyncData *getSyncData() { return syncData; }
 
 private:
 	// some nasty hackery to forward the window messages
@@ -39,12 +44,21 @@ private:
 	int getScreenY(int line);
 	int getScreenX(int track);
 	
+	int getTrackCount()
+	{
+		SyncData *syncData = getSyncData();
+		if (NULL == syncData) return 0;
+		return int(syncData->getTrackCount());
+	};
+
 	/* cursor position */
 	int editLine, editTrack;
 
 	int scrollPosX, scrollPosY;
 	int windowWidth, windowHeight;
 	int windowLines, windowTracks;
+	
+	SyncData *syncData;
 	
 	HWND hwnd;
 	HBRUSH editBrush;

@@ -8,7 +8,7 @@
 
 const TCHAR *mainWindowClassName = _T("MainWindow");
 
-TrackView trackView;
+TrackView *trackView;
 HWND trackViewWin;
 
 LRESULT CALLBACK mainWindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
@@ -16,7 +16,7 @@ LRESULT CALLBACK mainWindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPara
 	switch(msg)
 	{
 		case WM_CREATE:
-			trackViewWin = trackView.create(GetModuleHandle(NULL), hwnd);
+			trackViewWin = trackView->create(GetModuleHandle(NULL), hwnd);
 		break;
 		
 		case WM_SIZE:
@@ -65,6 +65,7 @@ int _tmain(int argc, _TCHAR* argv[])
 	
 	SyncData syncData;
 	SyncTrack &testTrack = syncData.getTrack("test");
+	SyncTrack &test2Track = syncData.getTrack("test2");
 
 //	testTrack.setKeyFrame(0, SyncTrack::KeyFrame(1.0f));
 	testTrack.setKeyFrame(1, SyncTrack::KeyFrame(2.0f));
@@ -83,6 +84,9 @@ int _tmain(int argc, _TCHAR* argv[])
 		MessageBox(NULL, _T("Window Registration Failed!"), _T("Error!"), MB_ICONEXCLAMATION | MB_OK);
 		return 0;
 	}
+	
+	trackView = new TrackView();
+	trackView->setSyncData(&syncData);
 	
 	// Step 2: Creating the Window
 	hwnd = CreateWindowEx(
@@ -110,6 +114,9 @@ int _tmain(int argc, _TCHAR* argv[])
 		TranslateMessage(&Msg);
 		DispatchMessage(&Msg);
 	}
+	
+	delete trackView;
+	trackView = NULL;
 	
 	UnregisterClass(mainWindowClassName, hInstance);
 	return int(Msg.wParam);
