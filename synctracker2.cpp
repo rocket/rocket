@@ -8,13 +8,15 @@
 
 const TCHAR *mainWindowClassName = _T("MainWindow");
 
+TrackView trackView;
 HWND trackViewWin;
+
 LRESULT CALLBACK mainWindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
 	switch(msg)
 	{
 		case WM_CREATE:
-			trackViewWin = createTrackViewWindow(GetModuleHandle(NULL), hwnd);
+			trackViewWin = trackView.create(GetModuleHandle(NULL), hwnd);
 		break;
 		
 		case WM_SIZE:

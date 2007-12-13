@@ -15,7 +15,7 @@ static const int trackWidth = fontWidth * 16;
 static const int lines = 0x80;
 static const int tracks = 32;
 
-TrackView::TrackView(HWND hwnd)
+TrackView::TrackView()
 {
 	scrollPosX = 0;
 	scrollPosY = 0;
@@ -25,7 +25,7 @@ TrackView::TrackView(HWND hwnd)
 	editLine = 0;
 	editTrack = 0;
 
-	this->hwnd = hwnd;
+	this->hwnd = NULL;
 
 	editBrush = CreateSolidBrush(RGB(255, 255, 0));
 }
@@ -523,10 +523,9 @@ static LRESULT CALLBACK trackViewWindowProc(HWND hwnd, UINT msg, WPARAM wParam, 
 	switch(msg)
 	{
 		case WM_NCCREATE:
-			ASSERT(NULL == trackView);
-			
-			// allocate a TrackView instance
-			trackView = new TrackView(hwnd);
+			// Get TrackView from createstruct
+			trackView = (TrackView*)((CREATESTRUCT*)lParam)->lpCreateParams;
+			trackView->hwnd = hwnd;
 			
 			// Set the TrackView instance
 #pragma warning(suppress:4244) /* remove a pointless warning */
@@ -543,8 +542,7 @@ static LRESULT CALLBACK trackViewWindowProc(HWND hwnd, UINT msg, WPARAM wParam, 
 			// call the window proc and store away the return code
 			LRESULT res = trackView->windowProc(hwnd, msg, wParam, lParam);
 
-			// free the TrackView instance
-			delete trackView;
+			// get rid of the TrackView instance
 			trackView = NULL;
 			SetWindowLongPtr(hwnd, 0, (LONG_PTR)NULL);
 
@@ -580,7 +578,7 @@ ATOM registerTrackViewWindowClass(HINSTANCE hInstance)
 	return RegisterClassEx(&wc);
 }
 
-HWND createTrackViewWindow(HINSTANCE hInstance, HWND hwndParent)
+HWND TrackView::create(HINSTANCE hInstance, HWND hwndParent)
 {
 	HWND hwnd = CreateWindowEx(
 		WS_EX_CLIENTEDGE,
@@ -588,7 +586,7 @@ HWND createTrackViewWindow(HINSTANCE hInstance, HWND hwndParent)
 		WS_VSCROLL | WS_HSCROLL | WS_CHILD | WS_VISIBLE,
 		CW_USEDEFAULT, CW_USEDEFAULT, // x, y
 		CW_USEDEFAULT, CW_USEDEFAULT, // width, height
-		hwndParent, NULL, GetModuleHandle(NULL), NULL
+		hwndParent, NULL, GetModuleHandle(NULL), (void*)this
 	);
 	return hwnd;
 }

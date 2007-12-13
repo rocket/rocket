@@ -5,8 +5,11 @@
 class TrackView
 {
 public:
-	TrackView(HWND hwnd);
+	TrackView();
 	~TrackView();
+
+	HWND create(HINSTANCE hInstance, HWND hwndParent);
+	HWND getWin(){ return hwnd; }
 
 private:
 	// some nasty hackery to forward the window messages
@@ -48,4 +51,3 @@ private:
 };
 
 ATOM registerTrackViewWindowClass(HINSTANCE hInstance);
-HWND createTrackViewWindow(HINSTANCE hInstance, HWND hwndParent);
