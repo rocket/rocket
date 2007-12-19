@@ -77,8 +77,15 @@ void TrackView::paintTopMargin(HDC hdc, RECT rcTracks)
 	int firstTrack = min(max(scrollPosX / trackWidth, 0), getTrackCount() - 1);
 	int lastTrack  = min(max(firstTrack + windowTracks + 1, 0), getTrackCount() - 1);
 
-	for (int track = firstTrack; track <= lastTrack; ++track)
+	SyncData *syncData = getSyncData();
+	if (NULL == syncData) return;
+	
+	SyncData::TrackContainer::iterator trackIter = syncData->tracks.begin();
+	for (int track = 0; track <= lastTrack; ++track, ++trackIter)
 	{
+		ASSERT(trackIter != syncData->tracks.end());
+		if (track < firstTrack) continue;
+
 		RECT topMargin;
 
 		topMargin.top = 0;
@@ -97,11 +104,7 @@ void TrackView::paintTopMargin(HDC hdc, RECT rcTracks)
 		DrawEdge(hdc, &fillRect, BDR_RAISEDINNER | BDR_RAISEDOUTER, BF_ADJUST | BF_LEFT | BF_RIGHT | BF_BOTTOM);
 		FillRect(hdc, &fillRect, bgBrush);
 
-		/* format the text */
-		TCHAR temp[256];
-		_sntprintf_s(temp, 256, _T("track %d"), track);
-
-		std::string trackName(temp);
+		std::string trackName = trackIter->first;
 		TextOut(hdc,
 			fillRect.left, 0,
 			trackName.c_str(), int(trackName.length())

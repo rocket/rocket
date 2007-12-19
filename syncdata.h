@@ -1,8 +1,8 @@
 #pragma once
 
 #include <string>
-#include <list>
 #include <map>
+
 #include <exception>
 #include <cmath>
 
@@ -69,7 +69,7 @@ public:
 	
 	size_t getTrackCount() { return tracks.size(); }
 	
-private:
+// private:
 	typedef std::map<const std::string, SyncTrack> TrackContainer;
 	TrackContainer tracks;
 };

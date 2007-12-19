@@ -66,6 +66,12 @@ int _tmain(int argc, _TCHAR* argv[])
 	SyncData syncData;
 	SyncTrack &testTrack = syncData.getTrack("test");
 	SyncTrack &test2Track = syncData.getTrack("test2");
+	for (int i = 0; i < 1 << 16; ++i)
+	{
+		char temp[256];
+		sprintf(temp, "gen %02d", i);
+		SyncTrack &temp2 = syncData.getTrack(temp);
+	}
 
 //	testTrack.setKeyFrame(0, SyncTrack::KeyFrame(1.0f));
 	testTrack.setKeyFrame(1, SyncTrack::KeyFrame(2.0f));
