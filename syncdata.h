@@ -24,27 +24,31 @@ public:
 		int currRow = int(floor(time));
 		
 		// find bounding keyframes
-		keyFrameContainer::const_iterator upper = keyFrames.upper_bound(currRow);
-		keyFrameContainer::const_iterator lower = upper;
+		KeyFrameContainer::const_iterator upper = keyFrames.upper_bound(currRow);
+		KeyFrameContainer::const_iterator lower = upper;
 		lower--;
 		
 		// bounds check
 		if (lower == keyFrames.end()) return upper->second.value;
 		if (upper == keyFrames.end()) return lower->second.value;
 		
+		float delta = upper->second.value - lower->second.value;
+		
 		// lerp, bitch
 		float d = (time - lower->first) / (upper->first - lower->first);
-		return lower->second.value + (upper->second.value - lower->second.value) * d;
+		return lower->second.value + delta * d;
 	};
 	
-	bool isKeyFrame(int row)
+	bool isKeyFrame(int row) const
 	{
 		return keyFrames.find(row) != keyFrames.end();
 	}
 	
-	KeyFrame &getKeyFrame(int row)
+	const KeyFrame *getKeyFrame(int row) const
 	{
-		return keyFrames[row];
+		KeyFrameContainer::const_iterator iter = keyFrames.find(row);
+		if (iter == keyFrames.end()) return NULL;
+		return &iter->second;
 	}
 	
 	void setKeyFrame(int row, const KeyFrame &keyFrame)
@@ -53,8 +57,8 @@ public:
 	}
 	
 private:
-	typedef std::map<int, struct KeyFrame> keyFrameContainer;
-	keyFrameContainer keyFrames;
+	typedef std::map<int, struct KeyFrame> KeyFrameContainer;
+	KeyFrameContainer keyFrames;
 };
 
 class SyncData

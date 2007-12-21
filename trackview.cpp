@@ -176,8 +176,15 @@ void TrackView::paintTracks(HDC hdc, RECT rcTracks)
 	
 	SetTextColor(hdc, RGB(0, 0, 0));
 	
-	for (int track = firstTrack; track <= lastTrack; ++track)
+	SyncData *syncData = getSyncData();
+	if (NULL == syncData) return;
+	
+	SyncData::TrackContainer::iterator trackIter = syncData->tracks.begin();
+	for (int track = 0; track <= lastTrack; ++track, ++trackIter)
 	{
+		ASSERT(trackIter != syncData->tracks.end());
+		if (track < firstTrack) continue;
+
 		for (int line = firstLine; line <= lastLine; ++line)
 		{
 			RECT patternDataRect;
@@ -201,12 +208,17 @@ void TrackView::paintTracks(HDC hdc, RECT rcTracks)
 				Rectangle(hdc, fillRect.left, fillRect.top, fillRect.right, fillRect.bottom);
 			}
 			
-			bool key = (line % 8 == 0);
-			float val = (float(line) / 16);
+			const SyncTrack &track = trackIter->second;
+			bool key = track.isKeyFrame(line);
 			
 			/* format the text */
 			if (!key) _sntprintf_s(temp, 256, _T("---"));
-			else _sntprintf_s(temp, 256, _T("%2.2f"), val);
+			else
+			{
+				float val = track.getKeyFrame(line)->value;
+				_sntprintf_s(temp, 256, _T("%2.2f"), val);
+			}
+
 			TextOut(hdc,
 				patternDataRect.left, patternDataRect.top,
 				temp, int(_tcslen(temp))

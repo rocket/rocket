@@ -11,7 +11,7 @@ const TCHAR *mainWindowClassName = _T("MainWindow");
 TrackView *trackView;
 HWND trackViewWin;
 
-LRESULT CALLBACK mainWindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
+static LRESULT CALLBACK mainWindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
 	switch(msg)
 	{
@@ -37,7 +37,7 @@ LRESULT CALLBACK mainWindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPara
 	return 0;
 }
 
-ATOM registerMainWindowClass(HINSTANCE hInstance)
+static ATOM registerMainWindowClass(HINSTANCE hInstance)
 {
 	WNDCLASSEX wc;
 	
@@ -66,16 +66,18 @@ int _tmain(int argc, _TCHAR* argv[])
 	SyncData syncData;
 	SyncTrack &testTrack = syncData.getTrack("test");
 	SyncTrack &test2Track = syncData.getTrack("test2");
-	for (int i = 0; i < 1 << 16; ++i)
+/*	for (int i = 0; i < 1 << 16; ++i)
 	{
 		char temp[256];
 		sprintf(temp, "gen %02d", i);
 		SyncTrack &temp2 = syncData.getTrack(temp);
-	}
+	} */
 
-//	testTrack.setKeyFrame(0, SyncTrack::KeyFrame(1.0f));
 	testTrack.setKeyFrame(1, SyncTrack::KeyFrame(2.0f));
 	testTrack.setKeyFrame(4, SyncTrack::KeyFrame(3.0f));
+
+	test2Track.setKeyFrame(0, SyncTrack::KeyFrame(100.0f));
+	test2Track.setKeyFrame(8, SyncTrack::KeyFrame(999.0f));
 
 	for (int i = 0; i < 5 * 2; ++i)
 	{
