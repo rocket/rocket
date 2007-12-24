@@ -2,6 +2,7 @@
 
 #include "syncdata.h"
 
+#include <string>
 class SyncData;
 
 class TrackView
@@ -28,6 +29,7 @@ private:
 	void onHScroll(UINT sbCode, int newPos);
 	void onSize(int width, int height);
 	void onKeyDown(UINT keyCode, UINT flags);
+	void onChar(UINT keyCode, UINT flags);
 	
 	// the window procedure
 
@@ -38,10 +40,10 @@ private:
 	void setScrollPos(int newScrollPosX, int newScrollPosY);
 	void scrollWindow(int newScrollPosX, int newScrollPosY);
 
-	void setEditLine(int newEditLine);
+	void setEditRow(int newEditRow);
 	void setEditTrack(int newEditTrack);
 
-	int getScreenY(int line);
+	int getScreenY(int row);
 	int getScreenX(int track);
 	
 	int getTrackCount()
@@ -52,13 +54,15 @@ private:
 	};
 
 	/* cursor position */
-	int editLine, editTrack;
+	int editRow, editTrack;
 
-	int scrollPosX, scrollPosY;
+	int scrollPosX,  scrollPosY;
 	int windowWidth, windowHeight;
-	int windowLines, windowTracks;
+	int windowRows,  windowTracks;
 	
 	SyncData *syncData;
+
+	std::string editString;
 	
 	HWND hwnd;
 	HBRUSH editBrush;

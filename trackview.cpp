@@ -12,7 +12,7 @@ static const int fontWidth = 6;
 
 static const int trackWidth = fontWidth * 16;
 
-static const int lines = 0x80;
+static const int rows = 0x80;
 
 TrackView::TrackView() : syncData(NULL)
 {
@@ -21,7 +21,7 @@ TrackView::TrackView() : syncData(NULL)
 	windowWidth  = -1;
 	windowHeight = -1;
 	
-	editLine = 0;
+	editRow = 0;
 	editTrack = 0;
 
 	this->hwnd = NULL;
@@ -34,9 +34,9 @@ TrackView::~TrackView()
 	DeleteObject(editBrush);
 }
 
-int TrackView::getScreenY(int line)
+int TrackView::getScreenY(int row)
 {
-	return topMarginHeight + (line  * fontHeight) - scrollPosY;
+	return topMarginHeight + (row  * fontHeight) - scrollPosY;
 }
 
 int TrackView::getScreenX(int track)
@@ -131,11 +131,11 @@ void TrackView::paintTracks(HDC hdc, RECT rcTracks)
 	int firstTrack = min(max(scrollPosX / trackWidth, 0), getTrackCount() - 1);
 	int lastTrack  = min(max(firstTrack + windowTracks + 1, 0), getTrackCount() - 1);
 	
-	int firstLine = editLine - windowLines / 2 - 1;
-	int lastLine  = editLine + windowLines / 2 + 1;
-	/* clamp first & last line */
-	firstLine = min(max(firstLine, 0), lines - 1);
-	lastLine = min(max(lastLine, 0), lines - 1);
+	int firstRow = editRow - windowRows / 2 - 1;
+	int lastRow  = editRow + windowRows / 2 + 1;
+	/* clamp first & last row */
+	firstRow = min(max(firstRow, 0), rows - 1);
+	lastRow  = min(max(lastRow,  0), rows - 1);
 
 	SetBkMode(hdc, TRANSPARENT);
 
@@ -145,27 +145,27 @@ void TrackView::paintTracks(HDC hdc, RECT rcTracks)
 	paintTopMargin(hdc, rcTracks);
 
 	
-	for (int line = firstLine; line <= lastLine; ++line)
+	for (int row = firstRow; row <= lastRow; ++row)
 	{
 		RECT leftMargin;
 		leftMargin.left  = 0;
 		leftMargin.right = leftMarginWidth;
-		leftMargin.top    = getScreenY(line);
+		leftMargin.top    = getScreenY(row);
 		leftMargin.bottom = leftMargin.top + fontHeight;
 
 		if (!RectVisible(hdc, &leftMargin)) continue;
 
-		if (line == editLine) FillRect(hdc, &leftMargin, editBrush);
-		else                  FillRect(hdc, &leftMargin, (HBRUSH)GetStockObject(LTGRAY_BRUSH));
+		if (row == editRow) FillRect(hdc, &leftMargin, editBrush);
+		else                FillRect(hdc, &leftMargin, (HBRUSH)GetStockObject(LTGRAY_BRUSH));
 
 		DrawEdge(hdc, &leftMargin, BDR_RAISEDINNER | BDR_RAISEDOUTER, BF_RIGHT | BF_BOTTOM | BF_TOP);
 //		Rectangle( hdc, leftMargin.left, leftMargin.top, leftMargin.right, leftMargin.bottom + 1);
-		if ((line % 16) == 0)      SetTextColor(hdc, RGB(0, 0, 0));
-		else if ((line % 8) == 0)  SetTextColor(hdc, RGB(32, 32, 32));
-		else if ((line % 4) == 0)  SetTextColor(hdc, RGB(64, 64, 64));
-		else                    SetTextColor(hdc, RGB(128, 128, 128));
+		if ((row % 16) == 0)      SetTextColor(hdc, RGB(0, 0, 0));
+		else if ((row % 8) == 0)  SetTextColor(hdc, RGB(32, 32, 32));
+		else if ((row % 4) == 0)  SetTextColor(hdc, RGB(64, 64, 64));
+		else                      SetTextColor(hdc, RGB(128, 128, 128));
 		
-		_sntprintf_s(temp, 256, _T("%0*Xh"), 5, line);
+		_sntprintf_s(temp, 256, _T("%0*Xh"), 5, row);
 		TextOut(hdc,
 			leftMargin.left, leftMargin.top,
 			temp, int(_tcslen(temp))
@@ -185,38 +185,38 @@ void TrackView::paintTracks(HDC hdc, RECT rcTracks)
 		ASSERT(trackIter != syncData->tracks.end());
 		if (track < firstTrack) continue;
 
-		for (int line = firstLine; line <= lastLine; ++line)
+		for (int row = firstRow; row <= lastRow; ++row)
 		{
 			RECT patternDataRect;
 			patternDataRect.left = getScreenX(track);
 			patternDataRect.right = patternDataRect.left + trackWidth;
-			patternDataRect.top = getScreenY(line);
+			patternDataRect.top = getScreenY(row);
 			patternDataRect.bottom = patternDataRect.top + fontHeight;
 
 			if (!RectVisible(hdc, &patternDataRect)) continue;
 
 			HBRUSH bgBrush = (HBRUSH)GetStockObject(WHITE_BRUSH);
-			if (line % 8 == 0) bgBrush = (HBRUSH)GetStockObject(LTGRAY_BRUSH);
-			if (line == editLine) bgBrush = editBrush;
+			if (row % 8 == 0) bgBrush = (HBRUSH)GetStockObject(LTGRAY_BRUSH);
+			if (row == editRow) bgBrush = editBrush;
 
 			RECT fillRect = patternDataRect;
-//			if (line == editLine && track == editTrack) DrawEdge(hdc, &fillRect, BDR_RAISEDINNER | BDR_SUNKENOUTER, BF_ADJUST | BF_TOP | BF_BOTTOM | BF_LEFT | BF_RIGHT);
+//			if (row == editRow && track == editTrack) DrawEdge(hdc, &fillRect, BDR_RAISEDINNER | BDR_SUNKENOUTER, BF_ADJUST | BF_TOP | BF_BOTTOM | BF_LEFT | BF_RIGHT);
 			FillRect( hdc, &fillRect, bgBrush);
-			if (line == editLine && track == editTrack)
+			if (row == editRow && track == editTrack)
 			{
 //				DrawFocusRect(hdc, &fillRect);
 				Rectangle(hdc, fillRect.left, fillRect.top, fillRect.right, fillRect.bottom);
 			}
 			
 			const SyncTrack &track = trackIter->second;
-			bool key = track.isKeyFrame(line);
+			bool key = track.isKeyFrame(row);
 			
 			/* format the text */
 			if (!key) _sntprintf_s(temp, 256, _T("---"));
 			else
 			{
-				float val = track.getKeyFrame(line)->value;
-				_sntprintf_s(temp, 256, _T("%2.2f"), val);
+				float val = track.getKeyFrame(row)->value;
+				_sntprintf_s(temp, 256, _T("%.2f"), val);
 			}
 
 			TextOut(hdc,
@@ -230,7 +230,7 @@ void TrackView::paintTracks(HDC hdc, RECT rcTracks)
 	{
 		RECT rightMargin;
 		rightMargin.top    = getScreenY(0);
-		rightMargin.bottom = getScreenY(lines);
+		rightMargin.bottom = getScreenY(rows);
 		rightMargin.left  = getScreenX(getTrackCount());
 		rightMargin.right = rcTracks.right;
 		FillRect( hdc, &rightMargin, (HBRUSH)GetStockObject(GRAY_BRUSH));
@@ -238,7 +238,7 @@ void TrackView::paintTracks(HDC hdc, RECT rcTracks)
 
 	{
 		RECT bottomPadding;
-		bottomPadding.top = getScreenY(lines);
+		bottomPadding.top = getScreenY(rows);
 		bottomPadding.bottom = rcTracks.bottom;
 		bottomPadding.left = rcTracks.left;
 		bottomPadding.right = rcTracks.right;
@@ -259,10 +259,10 @@ void TrackView::setupScrollBars()
 {
 	SCROLLINFO si = { sizeof(si) };
 	si.fMask = SIF_POS | SIF_PAGE | SIF_RANGE | SIF_DISABLENOSCROLL;
-	si.nPos  = editLine;
-	si.nPage = windowLines;
+	si.nPos  = editRow;
+	si.nPage = windowRows;
 	si.nMin  = 0;
-	si.nMax  = lines - 1 + windowLines - 1;
+	si.nMax  = rows - 1 + windowRows - 1;
 	SetScrollInfo(hwnd, SB_VERT, &si, TRUE);
 	
 	si.fMask = SIF_POS | SIF_PAGE | SIF_RANGE | SIF_DISABLENOSCROLL;
@@ -278,8 +278,8 @@ void TrackView::scrollWindow(int scrollX, int scrollY)
 	RECT clip;
 	GetClientRect(hwnd, &clip);
 	
-	if (scrollX == 0) clip.top  = topMarginHeight; /* don't scroll the top line */
-	if (scrollY == 0) clip.left = leftMarginWidth; /* don't scroll the top line */
+	if (scrollX == 0) clip.top  = topMarginHeight; // don't scroll the top margin
+	if (scrollY == 0) clip.left = leftMarginWidth; // don't scroll the left margin
 	
 	ScrollWindowEx(
 		hwnd,
@@ -312,31 +312,30 @@ void TrackView::setScrollPos(int newScrollPosX, int newScrollPosY)
 	}
 }
 
-void TrackView::setEditLine(int newEditLine)
+void TrackView::setEditRow(int newEditRow)
 {
-	int oldEditLine = editLine;
-	editLine = newEditLine;
+	int oldEditRow = editRow;
+	editRow = newEditRow;
 	
 	// clamp to document
-	editLine = max(editLine, 0);
-	editLine = min(editLine, lines - 1);
+	editRow = min(max(editRow, 0), rows - 1);
 
 	RECT clientRect;
 	GetClientRect(hwnd, &clientRect);
 
-	RECT lineRect;
-	lineRect.left  = clientRect.left;
-	lineRect.right = clientRect.right;
+	RECT rowRect;
+	rowRect.left  = clientRect.left;
+	rowRect.right = clientRect.right;
 
-	lineRect.top    = getScreenY(oldEditLine);
-	lineRect.bottom = lineRect.top + fontHeight;
-	InvalidateRect(hwnd, &lineRect, TRUE);
+	rowRect.top    = getScreenY(oldEditRow);
+	rowRect.bottom = rowRect.top + fontHeight;
+	InvalidateRect(hwnd, &rowRect, TRUE);
 
-	lineRect.top    = getScreenY(editLine);
-	lineRect.bottom = lineRect.top + fontHeight;
-	InvalidateRect(hwnd, &lineRect, TRUE);
+	rowRect.top    = getScreenY(editRow);
+	rowRect.bottom = rowRect.top + fontHeight;
+	InvalidateRect(hwnd, &rowRect, TRUE);
 
-	setScrollPos(scrollPosX, (editLine * fontHeight) - ((windowHeight - topMarginHeight) / 2) + fontHeight / 2);
+	setScrollPos(scrollPosX, (editRow * fontHeight) - ((windowHeight - topMarginHeight) / 2) + fontHeight / 2);
 }
 
 void TrackView::setEditTrack(int newEditTrack)
@@ -351,7 +350,7 @@ void TrackView::setEditTrack(int newEditTrack)
 	RECT trackRect;
 
 	/* dirty marker */
-	trackRect.top    = getScreenY(editLine);
+	trackRect.top    = getScreenY(editRow);
 	trackRect.bottom = trackRect.top + fontHeight;
 
 	trackRect.left  = getScreenX(oldEditTrack);
@@ -395,28 +394,28 @@ void TrackView::onVScroll(UINT sbCode, int newPos)
 	switch (sbCode)
 	{
 	case SB_TOP:
-		setEditLine(0);
+		setEditRow(0);
 	break;
 	
 	case SB_LINEUP:
-		setEditLine(editLine - 1);
+		setEditRow(editRow - 1);
 	break;
 	
 	case SB_LINEDOWN:
-		setEditLine(editLine + 1);
+		setEditRow(editRow + 1);
 	break;
 	
 	case SB_PAGEUP:
-		setEditLine(editLine - windowLines / 2);
+		setEditRow(editRow - windowRows / 2);
 	break;
 	
 	case SB_PAGEDOWN:
-		setEditLine(editLine + windowLines / 2);
+		setEditRow(editRow + windowRows / 2);
 	break;
 
 	case SB_THUMBPOSITION:
 	case SB_THUMBTRACK:
-		setEditLine(getScrollPos(hwnd, SB_VERT));
+		setEditRow(getScrollPos(hwnd, SB_VERT));
 	break;
 	}
 }
@@ -460,14 +459,80 @@ void TrackView::onKeyDown(UINT keyCode, UINT flags)
 {
 	switch (keyCode)
 	{
-		case VK_UP:   setEditLine(editLine - 1); break;
-		case VK_DOWN: setEditLine(editLine + 1); break;
+		case VK_UP:   setEditRow(editRow - 1); break;
+		case VK_DOWN: setEditRow(editRow + 1); break;
 
 		case VK_LEFT:  setEditTrack(editTrack - 1); break;
 		case VK_RIGHT: setEditTrack(editTrack + 1); break;
 
-		case VK_PRIOR: setEditLine(editLine - windowLines / 2); break;
-		case VK_NEXT:  setEditLine(editLine + windowLines / 2); break;
+		case VK_PRIOR: setEditRow(editRow - windowRows / 2); break;
+		case VK_NEXT:  setEditRow(editRow + windowRows / 2); break;
+	}
+}
+
+void TrackView::onChar(UINT keyCode, UINT flags)
+{
+	bool refresh = false;
+	printf("char: \"%c\" (%d) - flags: %x\n", (char)keyCode, keyCode, flags);
+	switch ((char)keyCode)
+	{
+		case '0':
+		case '1':
+		case '2':
+		case '3':
+		case '4':
+		case '5':
+		case '6':
+		case '7':
+		case '8':
+		case '9':
+		case '.':
+			editString.push_back(keyCode);
+			printf("accepted: %c - %s\n", (char)keyCode, editString.c_str());
+			refresh = true;
+		break;
+
+		case VK_RETURN:
+			printf("submit: %f\n", atof(editString.c_str()));
+			// TODO: submit new number
+			editString.clear();
+			refresh = true;
+		break;
+
+		case VK_BACK:
+			if (editString.size() > 0)
+			{
+				editString.resize(editString.size() - 1);
+				refresh = true;
+			}
+			else MessageBeep(0);
+		break;
+
+		case VK_CANCEL:
+		case VK_ESCAPE:
+			if (editString.size() > 0)
+			{
+				// return to old value (i.e don't clear)
+				editString.clear();
+				
+				refresh = true;
+				MessageBeep(0);
+			}
+		break;
+
+		default:
+			MessageBeep(0);
+	}
+
+	if (refresh)
+	{
+/*		RECT rowRect;
+NB:			getScreenX(int track)
+		rowRect.left  = clientRect.left;
+		rowRect.right = clientRect.right;
+		rowRect.top    = getScreenY(oldEditRow);
+		rowRect.bottom = rowRect.top + fontHeight;
+		InvalidateRect(hwnd, &rowRect, TRUE); */
 	}
 }
 
@@ -479,10 +544,10 @@ void TrackView::onSize(int width, int height)
 	windowWidth  = width;
 	windowHeight = height;
 
-	windowLines  = (height - topMarginHeight) / fontHeight;
+	windowRows   = (height - topMarginHeight) / fontHeight;
 	windowTracks = (width  - leftMarginWidth) / trackWidth;
 	
-	setEditLine(editLine);
+	setEditRow(editRow);
 	setupScrollBars();
 }
 
@@ -522,6 +587,10 @@ LRESULT TrackView::windowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 		
 		case WM_KEYDOWN:
 			onKeyDown((UINT)wParam, (UINT)lParam);
+		break;
+		
+		case WM_CHAR:
+			onChar((UINT)wParam, (UINT)lParam);
 		break;
 		
 		default:

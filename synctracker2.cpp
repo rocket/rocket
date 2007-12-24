@@ -79,6 +79,8 @@ int _tmain(int argc, _TCHAR* argv[])
 	test2Track.setKeyFrame(0, SyncTrack::KeyFrame(100.0f));
 	test2Track.setKeyFrame(8, SyncTrack::KeyFrame(999.0f));
 
+	test2Track.setKeyFrame(16, SyncTrack::KeyFrame(float(1E-5)));
+
 	for (int i = 0; i < 5 * 2; ++i)
 	{
 		float time = float(i) / 2;
