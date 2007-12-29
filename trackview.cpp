@@ -346,17 +346,34 @@ void TrackView::setEditTrack(int newEditTrack)
 	// clamp to document
 	editTrack = max(editTrack, 0);
 	editTrack = min(editTrack, getTrackCount() - 1);
-
+	
+	// sync up iterators
+/*	int currEditTrack = oldEditTrack;
+	while (editTrack != currEditTrack)
+	{
+		if (currEditTrack < editTrack)
+		{
+			currEditTrack++;
+		}
+		else
+		{
+			currEditTrack--;
+		}
+	} */
+	
+	
 	RECT trackRect;
-
-	/* dirty marker */
+	
+	// dirty old and new marker
 	trackRect.top    = getScreenY(editRow);
 	trackRect.bottom = trackRect.top + fontHeight;
 
+	// old marker
 	trackRect.left  = getScreenX(oldEditTrack);
 	trackRect.right = trackRect.left + trackWidth;
 	InvalidateRect(hwnd, &trackRect, TRUE);
 
+	// new marker
 	trackRect.left  = getScreenX(editTrack);
 	trackRect.right = trackRect.left + trackWidth;
 	InvalidateRect(hwnd, &trackRect, TRUE);

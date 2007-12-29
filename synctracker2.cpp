@@ -64,8 +64,9 @@ int _tmain(int argc, _TCHAR* argv[])
 	HINSTANCE hInstance = GetModuleHandle(NULL);
 	
 	SyncData syncData;
-	SyncTrack &testTrack = syncData.getTrack("test");
-	SyncTrack &test2Track = syncData.getTrack("test2");
+	SyncTrack &camXTrack = syncData.getTrack("cam.x");
+	SyncTrack &camYTrack = syncData.getTrack("cam.y");
+	SyncTrack &camZTrack = syncData.getTrack("cam.z");
 /*	for (int i = 0; i < 1 << 16; ++i)
 	{
 		char temp[256];
@@ -73,18 +74,18 @@ int _tmain(int argc, _TCHAR* argv[])
 		SyncTrack &temp2 = syncData.getTrack(temp);
 	} */
 
-	testTrack.setKeyFrame(1, SyncTrack::KeyFrame(2.0f));
-	testTrack.setKeyFrame(4, SyncTrack::KeyFrame(3.0f));
+	camXTrack.setKeyFrame(1, SyncTrack::KeyFrame(2.0f));
+	camXTrack.setKeyFrame(4, SyncTrack::KeyFrame(3.0f));
 
-	test2Track.setKeyFrame(0, SyncTrack::KeyFrame(100.0f));
-	test2Track.setKeyFrame(8, SyncTrack::KeyFrame(999.0f));
+	camYTrack.setKeyFrame(0, SyncTrack::KeyFrame(100.0f));
+	camYTrack.setKeyFrame(8, SyncTrack::KeyFrame(999.0f));
 
-	test2Track.setKeyFrame(16, SyncTrack::KeyFrame(float(1E-5)));
+	camYTrack.setKeyFrame(16, SyncTrack::KeyFrame(float(1E-5)));
 
 	for (int i = 0; i < 5 * 2; ++i)
 	{
 		float time = float(i) / 2;
-		printf("%f %d - %f\n", time, testTrack.isKeyFrame(i), testTrack.getValue(time));
+		printf("%f %d - %f\n", time, camXTrack.isKeyFrame(i), camXTrack.getValue(time));
 	}
 	
 	ATOM mainClass      = registerMainWindowClass(hInstance);
