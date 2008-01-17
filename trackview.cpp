@@ -11,10 +11,9 @@ static const int fontHeight = 16;
 static const int fontWidth = 6;
 
 static const int trackWidth = fontWidth * 16;
-
 static const int rows = 0x80;
 
-TrackView::TrackView() : syncData(NULL)
+TrackView::TrackView()
 {
 	scrollPosX = 0;
 	scrollPosY = 0;
@@ -44,12 +43,13 @@ int TrackView::getScreenX(int track)
 	return leftMarginWidth + (track * trackWidth) - scrollPosX;
 }
 
-void TrackView::onCreate()
+LRESULT TrackView::onCreate()
 {
 	setupScrollBars();
+	return FALSE;
 }
 
-void TrackView::onPaint()
+LRESULT TrackView::onPaint()
 {
 	PAINTSTRUCT ps;
 	HDC hdc = BeginPaint(hwnd, &ps);
@@ -59,6 +59,8 @@ void TrackView::onPaint()
 	paintTracks(hdc, ps.rcPaint);
 	
 	EndPaint(hwnd, &ps);
+
+	return FALSE;
 }
 
 void TrackView::paintTopMargin(HDC hdc, RECT rcTracks)
@@ -202,17 +204,21 @@ void TrackView::paintTracks(HDC hdc, RECT rcTracks)
 			RECT fillRect = patternDataRect;
 //			if (row == editRow && track == editTrack) DrawEdge(hdc, &fillRect, BDR_RAISEDINNER | BDR_SUNKENOUTER, BF_ADJUST | BF_TOP | BF_BOTTOM | BF_LEFT | BF_RIGHT);
 			FillRect( hdc, &fillRect, bgBrush);
+
+			bool drawEditString = false;
 			if (row == editRow && track == editTrack)
 			{
 //				DrawFocusRect(hdc, &fillRect);
 				Rectangle(hdc, fillRect.left, fillRect.top, fillRect.right, fillRect.bottom);
+				if (editString.size() > 0) drawEditString = true;
 			}
 			
 			const SyncTrack &track = trackIter->second;
 			bool key = track.isKeyFrame(row);
 			
 			/* format the text */
-			if (!key) _sntprintf_s(temp, 256, _T("---"));
+			if (drawEditString) _sntprintf_s(temp, 256, editString.c_str());
+			else if (!key) _sntprintf_s(temp, 256, _T("---"));
 			else
 			{
 				float val = track.getKeyFrame(row)->value;
@@ -347,21 +353,6 @@ void TrackView::setEditTrack(int newEditTrack)
 	editTrack = max(editTrack, 0);
 	editTrack = min(editTrack, getTrackCount() - 1);
 	
-	// sync up iterators
-/*	int currEditTrack = oldEditTrack;
-	while (editTrack != currEditTrack)
-	{
-		if (currEditTrack < editTrack)
-		{
-			currEditTrack++;
-		}
-		else
-		{
-			currEditTrack--;
-		}
-	} */
-	
-	
 	RECT trackRect;
 	
 	// dirty old and new marker
@@ -406,7 +397,7 @@ static int getScrollPos(HWND hwnd, int bar)
 	return int(si.nTrackPos);
 }
 
-void TrackView::onVScroll(UINT sbCode, int newPos)
+LRESULT TrackView::onVScroll(UINT sbCode, int newPos)
 {
 	switch (sbCode)
 	{
@@ -435,9 +426,11 @@ void TrackView::onVScroll(UINT sbCode, int newPos)
 		setEditRow(getScrollPos(hwnd, SB_VERT));
 	break;
 	}
+	
+	return FALSE;
 }
 
-void TrackView::onHScroll(UINT sbCode, int newPos)
+LRESULT TrackView::onHScroll(UINT sbCode, int newPos)
 {
 	switch (sbCode)
 	{
@@ -470,57 +463,73 @@ void TrackView::onHScroll(UINT sbCode, int newPos)
 		setEditTrack(getScrollPos(hwnd, SB_HORZ));
 	break;
 	}
+	
+	return FALSE;
 }
 
-void TrackView::onKeyDown(UINT keyCode, UINT flags)
+LRESULT TrackView::onKeyDown(UINT keyCode, UINT flags)
 {
+	bool refreshCaret = false;
+	bool ctrlDown   = GetKeyState(VK_CONTROL) < 0 ? true : false;
+	bool shiftDown  = GetKeyState(VK_SHIFT) < 0 ? true : false;
+	bool altDown    = GetKeyState(VK_MENU) < 0 ? true : false;
+
+	if (editString.empty())
+	{
+		switch (keyCode)
+		{
+			case VK_UP:   setEditRow(editRow - 1); break;
+			case VK_DOWN: setEditRow(editRow + 1); break;
+			
+			case VK_LEFT:  setEditTrack(editTrack - 1); break;
+			case VK_RIGHT: setEditTrack(editTrack + 1); break;
+			
+			case VK_PRIOR: setEditRow(editRow - windowRows / 2); break;
+			case VK_NEXT:  setEditRow(editRow + windowRows / 2); break;
+
+			case 'U':
+				if (true == ctrlDown && true == shiftDown)
+				{
+					if (!syncDataEdit.redo()) MessageBeep(0);
+				}
+				else if (true == ctrlDown)
+				{
+					if (!syncDataEdit.undo()) MessageBeep(0);
+				}
+				InvalidateRect(hwnd, NULL, TRUE);
+			break;
+		}
+	}
+	
 	switch (keyCode)
 	{
-		case VK_UP:   setEditRow(editRow - 1); break;
-		case VK_DOWN: setEditRow(editRow + 1); break;
-
-		case VK_LEFT:  setEditTrack(editTrack - 1); break;
-		case VK_RIGHT: setEditTrack(editTrack + 1); break;
-
-		case VK_PRIOR: setEditRow(editRow - windowRows / 2); break;
-		case VK_NEXT:  setEditRow(editRow + windowRows / 2); break;
-	}
-}
-
-void TrackView::onChar(UINT keyCode, UINT flags)
-{
-	bool refresh = false;
-	printf("char: \"%c\" (%d) - flags: %x\n", (char)keyCode, keyCode, flags);
-	switch ((char)keyCode)
-	{
-		case '0':
-		case '1':
-		case '2':
-		case '3':
-		case '4':
-		case '5':
-		case '6':
-		case '7':
-		case '8':
-		case '9':
-		case '.':
-			editString.push_back(keyCode);
-			printf("accepted: %c - %s\n", (char)keyCode, editString.c_str());
-			refresh = true;
+		case VK_RETURN:
+		{
+			SyncDataEdit::EditCommand *cmd = new SyncDataEdit::EditCommand(
+					editTrack, editRow,
+					float(atof(editString.c_str()))
+				);
+			
+			syncDataEdit.exec(cmd);
+			
+			editString.clear();
+			refreshCaret = true;
+		}
 		break;
 
-		case VK_RETURN:
-			printf("submit: %f\n", atof(editString.c_str()));
-			// TODO: submit new number
-			editString.clear();
-			refresh = true;
+		case VK_DELETE:
+		{
+			SyncTrack &track = getSyncData()->getTrack(editTrack);
+			track.deleteKeyFrame(editRow);
+			refreshCaret = true;
+		}
 		break;
 
 		case VK_BACK:
 			if (editString.size() > 0)
 			{
 				editString.resize(editString.size() - 1);
-				refresh = true;
+				refreshCaret = true;
 			}
 			else MessageBeep(0);
 		break;
@@ -532,28 +541,67 @@ void TrackView::onChar(UINT keyCode, UINT flags)
 				// return to old value (i.e don't clear)
 				editString.clear();
 				
-				refresh = true;
+				refreshCaret = true;
 				MessageBeep(0);
 			}
 		break;
-
-		default:
-			MessageBeep(0);
 	}
 
-	if (refresh)
+	if (refreshCaret)
 	{
-/*		RECT rowRect;
-NB:			getScreenX(int track)
-		rowRect.left  = clientRect.left;
-		rowRect.right = clientRect.right;
-		rowRect.top    = getScreenY(oldEditRow);
-		rowRect.bottom = rowRect.top + fontHeight;
-		InvalidateRect(hwnd, &rowRect, TRUE); */
+		RECT rowRect;
+		rowRect.left  = getScreenX(editTrack);
+		rowRect.right = getScreenX(editTrack + 1);
+		rowRect.top    = getScreenY(editRow);
+		rowRect.bottom = getScreenY(editRow + 1);
+		InvalidateRect(hwnd, &rowRect, TRUE);
 	}
+
+	return FALSE;
 }
 
-void TrackView::onSize(int width, int height)
+LRESULT TrackView::onChar(UINT keyCode, UINT flags)
+{
+	bool refreshCaret = false;
+	printf("char: \"%c\" (%d) - flags: %x\n", (char)keyCode, keyCode, flags);
+	switch ((char)keyCode)
+	{
+		case '.':
+			// only one '.' allowed
+			if (std::string::npos != editString.find('.'))
+			{
+				MessageBeep(0);
+				break;
+			}
+		case '0':
+		case '1':
+		case '2':
+		case '3':
+		case '4':
+		case '5':
+		case '6':
+		case '7':
+		case '8':
+		case '9':
+			editString.push_back(keyCode);
+			printf("accepted: %c - %s\n", (char)keyCode, editString.c_str());
+			refreshCaret = true;
+		break;
+	}
+
+	if (refreshCaret)
+	{
+		RECT rowRect;
+		rowRect.left  = getScreenX(editTrack);
+		rowRect.right = getScreenX(editTrack + 1);
+		rowRect.top    = getScreenY(editRow);
+		rowRect.bottom = getScreenY(editRow + 1);
+		InvalidateRect(hwnd, &rowRect, TRUE);
+	}
+	return FALSE;
+}
+
+LRESULT TrackView::onSize(int width, int height)
 {
 	const int oldWindowWidth = windowWidth;
 	const int oldWindowHeight = windowHeight;
@@ -566,6 +614,7 @@ void TrackView::onSize(int width, int height)
 	
 	setEditRow(editRow);
 	setupScrollBars();
+	return FALSE;
 }
 
 LRESULT TrackView::windowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
@@ -574,9 +623,7 @@ LRESULT TrackView::windowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	
 	switch(msg)
 	{
-		case WM_CREATE:
-			onCreate();
-		break;
+		case WM_CREATE:  return onCreate();
 		
 		case WM_CLOSE:
 			DestroyWindow(hwnd);
@@ -586,28 +633,15 @@ LRESULT TrackView::windowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 			PostQuitMessage(0);
 		break;
 		
-		case WM_SIZE:
-			onSize(LOWORD(lParam), HIWORD(lParam));
-		break;
-		
-		case WM_VSCROLL:
-			onVScroll(LOWORD(wParam), getScrollPos(hwnd, SB_VERT));
-		break;
-		
-		case WM_HSCROLL:
-			onHScroll(LOWORD(wParam), getScrollPos(hwnd, SB_HORZ));
-		break;
-		
-		case WM_PAINT:
-			onPaint();
-		break;
-		
-		case WM_KEYDOWN:
-			onKeyDown((UINT)wParam, (UINT)lParam);
-		break;
-		
-		case WM_CHAR:
-			onChar((UINT)wParam, (UINT)lParam);
+		case WM_SIZE:    return onSize(LOWORD(lParam), HIWORD(lParam));
+		case WM_VSCROLL: return onVScroll(LOWORD(wParam), getScrollPos(hwnd, SB_VERT));
+		case WM_HSCROLL: return onHScroll(LOWORD(wParam), getScrollPos(hwnd, SB_HORZ));
+		case WM_PAINT:   return onPaint();
+		case WM_KEYDOWN: return onKeyDown((UINT)wParam, (UINT)lParam);
+		case WM_CHAR:    return onChar((UINT)wParam, (UINT)lParam);
+
+		case WM_COPY:
+			printf("copy!\n");
 		break;
 		
 		default:

@@ -51,10 +51,21 @@ public:
 		return &iter->second;
 	}
 	
+	void deleteKeyFrame(int row)
+	{
+		keyFrames.erase(row);
+	}
+
 	void setKeyFrame(int row, const KeyFrame &keyFrame)
 	{
 		keyFrames[row] = keyFrame;
 	}
+	
+	void setKeyFrame(int row, const float value)
+	{
+		keyFrames[row] = KeyFrame(value);
+	}
+
 	
 private:
 	typedef std::map<int, struct KeyFrame> KeyFrameContainer;
@@ -69,6 +80,16 @@ public:
 		TrackContainer::iterator iter = tracks.find(name);
 		if (iter != tracks.end()) return iter->second;
 		return tracks[name] = SyncTrack();
+	}
+	
+	SyncTrack &getTrack(size_t track)
+	{
+		assert(track >= 0);
+		assert(track < tracks.size());
+		
+		SyncData::TrackContainer::iterator trackIter = tracks.begin();
+		for (size_t currTrack = 0; currTrack < track; ++currTrack, ++trackIter);
+		return trackIter->second;
 	}
 	
 	size_t getTrackCount() { return tracks.size(); }
