@@ -25,6 +25,10 @@ TrackView::TrackView()
 
 	this->hwnd = NULL;
 
+	selectActive = false;
+	selectBaseBrush = CreateSolidBrush(RGB(255, 192, 255));
+	selectDarkBrush = CreateSolidBrush(RGB(192, 128, 192));
+	
 	editBrush = CreateSolidBrush(RGB(255, 255, 0));
 }
 
@@ -143,9 +147,7 @@ void TrackView::paintTracks(HDC hdc, RECT rcTracks)
 
 	SelectObject(hdc, editBrush);
 	
-
 	paintTopMargin(hdc, rcTracks);
-
 	
 	for (int row = firstRow; row <= lastRow; ++row)
 	{
@@ -157,8 +159,10 @@ void TrackView::paintTracks(HDC hdc, RECT rcTracks)
 
 		if (!RectVisible(hdc, &leftMargin)) continue;
 
-		if (row == editRow) FillRect(hdc, &leftMargin, editBrush);
-		else                FillRect(hdc, &leftMargin, (HBRUSH)GetStockObject(LTGRAY_BRUSH));
+		HBRUSH fillBrush;
+		if (row == editRow) fillBrush = editBrush;
+		else fillBrush = (HBRUSH)GetStockObject(LTGRAY_BRUSH);
+		FillRect(hdc, &leftMargin, fillBrush);
 
 		DrawEdge(hdc, &leftMargin, BDR_RAISEDINNER | BDR_RAISEDOUTER, BF_RIGHT | BF_BOTTOM | BF_TOP);
 //		Rectangle( hdc, leftMargin.left, leftMargin.top, leftMargin.right, leftMargin.bottom + 1);
@@ -180,6 +184,11 @@ void TrackView::paintTracks(HDC hdc, RECT rcTracks)
 	
 	SyncData *syncData = getSyncData();
 	if (NULL == syncData) return;
+
+	int selectLeft  = min(selectStartTrack, selectStopTrack);
+	int selectRight = max(selectStartTrack, selectStopTrack);
+	int selectTop    = min(selectStartRow, selectStopRow);
+	int selectBottom = max(selectStartRow, selectStopRow);
 	
 	SyncData::TrackContainer::iterator trackIter = syncData->tracks.begin();
 	for (int track = 0; track <= lastTrack; ++track, ++trackIter)
@@ -197,9 +206,20 @@ void TrackView::paintTracks(HDC hdc, RECT rcTracks)
 
 			if (!RectVisible(hdc, &patternDataRect)) continue;
 
-			HBRUSH bgBrush = (HBRUSH)GetStockObject(WHITE_BRUSH);
-			if (row % 8 == 0) bgBrush = (HBRUSH)GetStockObject(LTGRAY_BRUSH);
-			if (row == editRow) bgBrush = editBrush;
+			HBRUSH baseBrush = (HBRUSH)GetStockObject(WHITE_BRUSH);
+			HBRUSH darkBrush = (HBRUSH)GetStockObject(LTGRAY_BRUSH);
+
+//			if (row % 8 == 0) bgBrush = (HBRUSH)GetStockObject(LTGRAY_BRUSH);
+//			if (row == editRow) bgBrush = editBrush;
+
+			if (selectActive && (track >= selectLeft && track <= selectRight) && (row >= selectTop && row <= selectBottom))
+			{
+				baseBrush = selectBaseBrush;
+				darkBrush = selectDarkBrush;
+			}
+
+			HBRUSH bgBrush = baseBrush;
+			if (row % 8 == 0) bgBrush = darkBrush;
 
 			RECT fillRect = patternDataRect;
 //			if (row == editRow && track == editTrack) DrawEdge(hdc, &fillRect, BDR_RAISEDINNER | BDR_SUNKENOUTER, BF_ADJUST | BF_TOP | BF_BOTTOM | BF_LEFT | BF_RIGHT);
@@ -325,22 +345,13 @@ void TrackView::setEditRow(int newEditRow)
 	
 	// clamp to document
 	editRow = min(max(editRow, 0), rows - 1);
-
-	RECT clientRect;
-	GetClientRect(hwnd, &clientRect);
-
-	RECT rowRect;
-	rowRect.left  = clientRect.left;
-	rowRect.right = clientRect.right;
-
-	rowRect.top    = getScreenY(oldEditRow);
-	rowRect.bottom = rowRect.top + fontHeight;
-	InvalidateRect(hwnd, &rowRect, TRUE);
-
-	rowRect.top    = getScreenY(editRow);
-	rowRect.bottom = rowRect.top + fontHeight;
-	InvalidateRect(hwnd, &rowRect, TRUE);
-
+	
+	bool selecting  = GetKeyState(VK_SHIFT) < 0 ? true : false;
+	if (selecting) selectStopRow = editRow;
+	
+	invalidateRow(oldEditRow);
+	invalidateRow(editRow);
+	
 	setScrollPos(scrollPosX, (editRow * fontHeight) - ((windowHeight - topMarginHeight) / 2) + fontHeight / 2);
 }
 
@@ -353,34 +364,12 @@ void TrackView::setEditTrack(int newEditTrack)
 	editTrack = max(editTrack, 0);
 	editTrack = min(editTrack, getTrackCount() - 1);
 	
-	RECT trackRect;
+	bool selecting  = GetKeyState(VK_SHIFT) < 0 ? true : false;
+	if (selecting) selectStopTrack = editTrack;
 	
-	// dirty old and new marker
-	trackRect.top    = getScreenY(editRow);
-	trackRect.bottom = trackRect.top + fontHeight;
-
-	// old marker
-	trackRect.left  = getScreenX(oldEditTrack);
-	trackRect.right = trackRect.left + trackWidth;
-	InvalidateRect(hwnd, &trackRect, TRUE);
-
-	// new marker
-	trackRect.left  = getScreenX(editTrack);
-	trackRect.right = trackRect.left + trackWidth;
-	InvalidateRect(hwnd, &trackRect, TRUE);
-
-	/* dirty track-marker */
-	trackRect.top    = 0;
-	trackRect.bottom = topMarginHeight;
-
-	trackRect.left  = getScreenX(oldEditTrack);
-	trackRect.right = trackRect.left + trackWidth;
-	InvalidateRect(hwnd, &trackRect, TRUE);
-
-	trackRect.left  = getScreenX(editTrack);
-	trackRect.right = trackRect.left + trackWidth;
-	InvalidateRect(hwnd, &trackRect, TRUE);
-
+	invalidateTrack(oldEditTrack);
+	invalidateTrack(editTrack);
+	
 	int firstTrack = scrollPosX / trackWidth;
 	int lastTrack  = firstTrack + windowTracks;
 
@@ -487,6 +476,12 @@ LRESULT TrackView::onKeyDown(UINT keyCode, UINT flags)
 			case VK_PRIOR: setEditRow(editRow - windowRows / 2); break;
 			case VK_NEXT:  setEditRow(editRow + windowRows / 2); break;
 
+			case VK_SHIFT:
+				selectStartTrack = selectStopTrack = editTrack;
+				selectStartRow   = selectStopRow   = editRow;
+				selectActive = true;
+			break;
+
 			// simulate keyboard accelerators
 			case 'Z':
 				if (ctrlDown) SendMessage(GetParent(this->getWin()), WM_COMMAND, MAKEWPARAM(shiftDown ? WM_REDO : WM_UNDO, 1), 0);
@@ -504,14 +499,18 @@ LRESULT TrackView::onKeyDown(UINT keyCode, UINT flags)
 	{
 		case VK_RETURN:
 		{
-			SyncDataEdit::EditCommand *cmd = new SyncDataEdit::EditCommand(
-				editTrack, editRow,
-				true, float(_tstof(editString.c_str()))
-			);
-			syncDataEdit.exec(cmd);
-			
-			editString.clear();
-			refreshCaret = true;
+			if (editString.size() > 0)
+			{
+				SyncDataEdit::EditCommand *cmd = new SyncDataEdit::EditCommand(
+					editTrack, editRow,
+					true, float(_tstof(editString.c_str()))
+				);
+				syncDataEdit.exec(cmd);
+				
+				editString.clear();
+				invalidatePos(editTrack, editRow);
+			}
+			else MessageBeep(0);
 		}
 		break;
 
@@ -522,8 +521,7 @@ LRESULT TrackView::onKeyDown(UINT keyCode, UINT flags)
 				false, 0.0f
 			);
 			syncDataEdit.exec(cmd);
-			
-			refreshCaret = true;
+			invalidatePos(editTrack, editRow);
 		}
 		break;
 
@@ -531,40 +529,32 @@ LRESULT TrackView::onKeyDown(UINT keyCode, UINT flags)
 			if (editString.size() > 0)
 			{
 				editString.resize(editString.size() - 1);
-				refreshCaret = true;
+				invalidatePos(editTrack, editRow);
 			}
 			else MessageBeep(0);
 		break;
 
 		case VK_CANCEL:
 		case VK_ESCAPE:
+			if (selectActive)
+			{
+				selectActive = false;
+				invalidateRange(selectStartTrack, selectStopTrack, selectStartRow, selectStopRow);
+			}
 			if (editString.size() > 0)
 			{
 				// return to old value (i.e don't clear)
 				editString.clear();
-				
-				refreshCaret = true;
+				invalidatePos(editTrack, editRow);
 				MessageBeep(0);
 			}
 		break;
 	}
-
-	if (refreshCaret)
-	{
-		RECT rowRect;
-		rowRect.left  = getScreenX(editTrack);
-		rowRect.right = getScreenX(editTrack + 1);
-		rowRect.top    = getScreenY(editRow);
-		rowRect.bottom = getScreenY(editRow + 1);
-		InvalidateRect(hwnd, &rowRect, TRUE);
-	}
-
 	return FALSE;
 }
 
 LRESULT TrackView::onChar(UINT keyCode, UINT flags)
 {
-	bool refreshCaret = false;
 	printf("char: \"%c\" (%d) - flags: %x\n", (char)keyCode, keyCode, flags);
 	switch ((char)keyCode)
 	{
@@ -587,18 +577,8 @@ LRESULT TrackView::onChar(UINT keyCode, UINT flags)
 		case '9':
 			editString.push_back(keyCode);
 			printf("accepted: %c - %s\n", (char)keyCode, editString.c_str());
-			refreshCaret = true;
+			invalidatePos(editTrack, editRow);
 		break;
-	}
-
-	if (refreshCaret)
-	{
-		RECT rowRect;
-		rowRect.left  = getScreenX(editTrack);
-		rowRect.right = getScreenX(editTrack + 1);
-		rowRect.top    = getScreenY(editRow);
-		rowRect.bottom = getScreenY(editRow + 1);
-		InvalidateRect(hwnd, &rowRect, TRUE);
 	}
 	return FALSE;
 }

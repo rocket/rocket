@@ -66,6 +66,12 @@ public:
 		keyFrames[row] = KeyFrame(value);
 	}
 
+	int getFrameCount()
+	{
+		KeyFrameContainer::const_iterator iter = keyFrames.end();
+		iter--;
+		return iter->first;
+	}
 	
 private:
 	typedef std::map<int, struct KeyFrame> KeyFrameContainer;

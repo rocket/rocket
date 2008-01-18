@@ -145,6 +145,16 @@ private:
 	void setupScrollBars();
 	void setScrollPos(int newScrollPosX, int newScrollPosY);
 	void scrollWindow(int newScrollPosX, int newScrollPosY);
+
+	void invalidateRange(int startTrack, int stopTrack, int startRow, int stopRow)
+	{
+		RECT rect;
+		rect.left  = getScreenX(min(startTrack, stopTrack));
+		rect.right = getScreenX(max(startTrack, stopTrack) + 1);
+		rect.top    = getScreenY(min(startRow, stopRow));
+		rect.bottom = getScreenY(max(startRow, stopRow) + 1);
+		InvalidateRect(hwnd, &rect, TRUE);
+	}
 	
 	void invalidatePos(int track, int row)
 	{
@@ -155,6 +165,35 @@ private:
 		rect.bottom = getScreenY(row + 1);
 		InvalidateRect(hwnd, &rect, TRUE);
 	}
+	
+	void invalidateRow(int row)
+	{
+		RECT clientRect;
+		GetClientRect(hwnd, &clientRect);
+		
+		RECT rect;
+		rect.left  = clientRect.left;
+		rect.right =  clientRect.right;
+		rect.top    = getScreenY(row);
+		rect.bottom = getScreenY(row + 1);
+		
+		InvalidateRect(hwnd, &rect, TRUE);
+	}
+	
+	void invalidateTrack(int track)
+	{
+		RECT clientRect;
+		GetClientRect(hwnd, &clientRect);
+		
+		RECT rect;
+		rect.left  = getScreenX(track);
+		rect.right = getScreenX(track + 1);
+		rect.top    = clientRect.top;
+		rect.bottom = clientRect.bottom;
+		
+		InvalidateRect(hwnd, &rect, TRUE);
+	}
+
 	
 	void setEditRow(int newEditRow);
 	void setEditTrack(int newEditTrack);
@@ -168,6 +207,12 @@ private:
 		if (NULL == syncData) return 0;
 		return int(syncData->getTrackCount());
 	};
+	
+	bool selectActive;
+	int selectStartTrack, selectStopTrack;
+	int selectStartRow, selectStopRow;
+	
+	HBRUSH selectBaseBrush, selectDarkBrush;
 	
 	/* cursor position */
 	int editRow, editTrack;
