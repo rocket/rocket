@@ -106,10 +106,10 @@ void TrackView::paintTopMargin(HDC hdc, RECT rcTracks)
 		DrawEdge(hdc, &fillRect, BDR_RAISEDINNER | BDR_RAISEDOUTER, BF_ADJUST | BF_LEFT | BF_RIGHT | BF_BOTTOM);
 		FillRect(hdc, &fillRect, bgBrush);
 
-		std::string trackName = trackIter->first;
+		const std::basic_string<TCHAR> &trackName = trackIter->first;
 		TextOut(hdc,
 			fillRect.left, 0,
-			trackName.c_str(), int(trackName.length())
+			trackName.data(), int(trackName.length())
 		);
 		ExcludeClipRect(hdc, topMargin.left, topMargin.top, topMargin.right, topMargin.bottom);
 	}
@@ -487,9 +487,15 @@ LRESULT TrackView::onKeyDown(UINT keyCode, UINT flags)
 			case VK_PRIOR: setEditRow(editRow - windowRows / 2); break;
 			case VK_NEXT:  setEditRow(editRow + windowRows / 2); break;
 
+			// simulate keyboard accelerators
 			case 'Z':
-				// simulate keyboard accelerators
-				SendMessage(GetParent(this->getWin()), WM_COMMAND, MAKEWPARAM(shiftDown ? WM_REDO : WM_UNDO, 1), 0);
+				if (ctrlDown) SendMessage(GetParent(this->getWin()), WM_COMMAND, MAKEWPARAM(shiftDown ? WM_REDO : WM_UNDO, 1), 0);
+			break;
+			case 'C':
+				printf("hit '%c', flags: %X\n", keyCode, flags);
+//				if (ctrlDown) SendMessage(GetParent(this->getWin()), WM_COMMAND, MAKEWPARAM(shiftDown ? WM_REDO : WM_UNDO, 1), 0);
+			break;
+			default:
 			break;
 		}
 	}
@@ -500,7 +506,7 @@ LRESULT TrackView::onKeyDown(UINT keyCode, UINT flags)
 		{
 			SyncDataEdit::EditCommand *cmd = new SyncDataEdit::EditCommand(
 				editTrack, editRow,
-				true, float(atof(editString.c_str()))
+				true, float(_tstof(editString.c_str()))
 			);
 			syncDataEdit.exec(cmd);
 			

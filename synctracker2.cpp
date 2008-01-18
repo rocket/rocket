@@ -39,23 +39,23 @@ static LRESULT CALLBACK mainWindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARA
 			SendMessage(statusBarWin, SB_SETTEXT, 0, (LPARAM)"Hi there :)");
 			
 			HMENU fileMenu = CreatePopupMenu();
-			AppendMenu(fileMenu, MF_STRING, 0, "&Open\tCtrl+O");
-			AppendMenu(fileMenu, MF_STRING, 2, "&Save\tCtrl+S");
-			AppendMenu(fileMenu, MF_STRING, 3, "Save &As");
+			AppendMenu(fileMenu, MF_STRING, 0, _T("&Open\tCtrl+O"));
+			AppendMenu(fileMenu, MF_STRING, 2, _T("&Save\tCtrl+S"));
+			AppendMenu(fileMenu, MF_STRING, 3, _T("Save &As"));
 			AppendMenu(fileMenu, MF_SEPARATOR, 0, NULL);
-			AppendMenu(fileMenu, MF_STRING, 3, "&Exit");
+			AppendMenu(fileMenu, MF_STRING, 3, _T("&Exit"));
 			
 			HMENU editMenu = CreatePopupMenu();
-			AppendMenu(editMenu, MF_STRING, WM_UNDO, "&Undo\tCtrl+Z");
-			AppendMenu(editMenu, MF_STRING, WM_REDO, "&Redo\tShift+Ctrl+Z");
+			AppendMenu(editMenu, MF_STRING, WM_UNDO, _T("&Undo\tCtrl+Z"));
+			AppendMenu(editMenu, MF_STRING, WM_REDO, _T("&Redo\tShift+Ctrl+Z"));
 			AppendMenu(editMenu, MF_SEPARATOR, 0, NULL);
-			AppendMenu(editMenu, MF_STRING, WM_CUT,   "Cu&t\tCtrl+X");
-			AppendMenu(editMenu, MF_STRING, WM_COPY,  "&Copy\tCtrl+C");
-			AppendMenu(editMenu, MF_STRING, WM_PASTE, "&Paste\tCtrl+V");
+			AppendMenu(editMenu, MF_STRING, WM_CUT,   _T("Cu&t\tCtrl+X"));
+			AppendMenu(editMenu, MF_STRING, WM_COPY,  _T("&Copy\tCtrl+C"));
+			AppendMenu(editMenu, MF_STRING, WM_PASTE, _T("&Paste\tCtrl+V"));
 			
 			HMENU rootMenu = CreateMenu();
-			AppendMenu(rootMenu, MF_STRING | MF_POPUP, (UINT_PTR)fileMenu, "&File");
-			AppendMenu(rootMenu, MF_STRING | MF_POPUP, (UINT_PTR)editMenu, "&Edit");
+			AppendMenu(rootMenu, MF_STRING | MF_POPUP, (UINT_PTR)fileMenu, _T("&File"));
+			AppendMenu(rootMenu, MF_STRING | MF_POPUP, (UINT_PTR)editMenu, _T("&Edit"));
 			SetMenu(hwnd, rootMenu);
 		}
 		break;
@@ -81,15 +81,12 @@ static LRESULT CALLBACK mainWindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARA
 		case WM_COMMAND:
 			switch (LOWORD(wParam))
 			{
-				case WM_COPY:
-					/* PostMessage(m_hWnd, WM_COPY, 0, 0); */
-					/* HMMMM.... not working... */
-					printf("copy!\n");
-				break;
-				
 				// simply forward these
 				case WM_UNDO:
 				case WM_REDO:
+				case WM_COPY:
+				case WM_PASTE:
+				case WM_CUT:
 					SendMessage(trackViewWin, LOWORD(wParam), 0, 0);
 				break;
 
@@ -203,9 +200,9 @@ int _tmain(int argc, _TCHAR* argv[])
 #endif
 
 	SyncData syncData;
-	SyncTrack &camXTrack = syncData.getTrack("cam.x");
-	SyncTrack &camYTrack = syncData.getTrack("cam.y");
-	SyncTrack &camZTrack = syncData.getTrack("cam.z");
+	SyncTrack &camXTrack = syncData.getTrack(_T("cam.x"));
+	SyncTrack &camYTrack = syncData.getTrack(_T("cam.y"));
+	SyncTrack &camZTrack = syncData.getTrack(_T("cam.z"));
 /*	for (int i = 0; i < 1 << 16; ++i)
 	{
 		char temp[256];

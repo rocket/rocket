@@ -75,7 +75,7 @@ private:
 class SyncData
 {
 public:
-	SyncTrack &getTrack(std::string name)
+	SyncTrack &getTrack(const std::basic_string<TCHAR> &name)
 	{
 		TrackContainer::iterator iter = tracks.find(name);
 		if (iter != tracks.end()) return iter->second;
@@ -95,6 +95,6 @@ public:
 	size_t getTrackCount() { return tracks.size(); }
 	
 // private:
-	typedef std::map<const std::string, SyncTrack> TrackContainer;
+	typedef std::map<const std::basic_string<TCHAR>, SyncTrack> TrackContainer;
 	TrackContainer tracks;
 };

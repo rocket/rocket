@@ -178,7 +178,7 @@ private:
 	
 	SyncDataEdit syncDataEdit;
 	
-	std::string editString;
+	std::basic_string<TCHAR> editString;
 	
 	HWND hwnd;
 	HBRUSH editBrush;
