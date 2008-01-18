@@ -46,8 +46,8 @@ static LRESULT CALLBACK mainWindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARA
 			AppendMenu(fileMenu, MF_STRING, 3, "&Exit");
 			
 			HMENU editMenu = CreatePopupMenu();
-			AppendMenu(editMenu, MF_STRING, WM_USER+0, "&Undo\tCtrl+Z");
-			AppendMenu(editMenu, MF_STRING, WM_USER+1, "&Redo\tShift+Ctrl+Z");
+			AppendMenu(editMenu, MF_STRING, WM_UNDO, "&Undo\tCtrl+Z");
+			AppendMenu(editMenu, MF_STRING, WM_REDO, "&Redo\tShift+Ctrl+Z");
 			AppendMenu(editMenu, MF_SEPARATOR, 0, NULL);
 			AppendMenu(editMenu, MF_STRING, WM_CUT,   "Cu&t\tCtrl+X");
 			AppendMenu(editMenu, MF_STRING, WM_COPY,  "&Copy\tCtrl+C");
@@ -79,13 +79,20 @@ static LRESULT CALLBACK mainWindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARA
 		break;
 		
 		case WM_COMMAND:
-			switch (wParam)
+			switch (LOWORD(wParam))
 			{
 				case WM_COPY:
 					/* PostMessage(m_hWnd, WM_COPY, 0, 0); */
 					/* HMMMM.... not working... */
 					printf("copy!\n");
 				break;
+				
+				// simply forward these
+				case WM_UNDO:
+				case WM_REDO:
+					SendMessage(trackViewWin, LOWORD(wParam), 0, 0);
+				break;
+
 				default:
 					printf("cmd %d %d\n", wParam, lParam);
 			}

@@ -487,16 +487,9 @@ LRESULT TrackView::onKeyDown(UINT keyCode, UINT flags)
 			case VK_PRIOR: setEditRow(editRow - windowRows / 2); break;
 			case VK_NEXT:  setEditRow(editRow + windowRows / 2); break;
 
-			case 'U':
-				if (true == ctrlDown && true == shiftDown)
-				{
-					if (!syncDataEdit.redo()) MessageBeep(0);
-				}
-				else if (true == ctrlDown)
-				{
-					if (!syncDataEdit.undo()) MessageBeep(0);
-				}
-				InvalidateRect(hwnd, NULL, TRUE);
+			case 'Z':
+				// simulate keyboard accelerators
+				SendMessage(GetParent(this->getWin()), WM_COMMAND, MAKEWPARAM(shiftDown ? WM_REDO : WM_UNDO, 1), 0);
 			break;
 		}
 	}
@@ -506,10 +499,9 @@ LRESULT TrackView::onKeyDown(UINT keyCode, UINT flags)
 		case VK_RETURN:
 		{
 			SyncDataEdit::EditCommand *cmd = new SyncDataEdit::EditCommand(
-					editTrack, editRow,
-					float(atof(editString.c_str()))
-				);
-			
+				editTrack, editRow,
+				true, float(atof(editString.c_str()))
+			);
 			syncDataEdit.exec(cmd);
 			
 			editString.clear();
@@ -519,8 +511,12 @@ LRESULT TrackView::onKeyDown(UINT keyCode, UINT flags)
 
 		case VK_DELETE:
 		{
-			SyncTrack &track = getSyncData()->getTrack(editTrack);
-			track.deleteKeyFrame(editRow);
+			SyncDataEdit::EditCommand *cmd = new SyncDataEdit::EditCommand(
+				editTrack, editRow,
+				false, 0.0f
+			);
+			syncDataEdit.exec(cmd);
+			
 			refreshCaret = true;
 		}
 		break;
@@ -643,7 +639,19 @@ LRESULT TrackView::windowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 		case WM_COPY:
 			printf("copy!\n");
 		break;
-		
+
+		case WM_UNDO:
+			if (!syncDataEdit.undo()) MessageBeep(0);
+			// unfortunately, we don't know how much to invalidate... so we'll just invalidate it all.
+			InvalidateRect(hwnd, NULL, TRUE);
+		break;
+
+		case WM_REDO:
+			if (!syncDataEdit.redo()) MessageBeep(0);
+			// unfortunately, we don't know how much to invalidate... so we'll just invalidate it all.
+			InvalidateRect(hwnd, NULL, TRUE);
+		break;
+
 		default:
 			return DefWindowProc(hwnd, msg, wParam, lParam);
 	}

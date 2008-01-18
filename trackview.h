@@ -27,20 +27,27 @@ public:
 	class EditCommand : public Command
 	{
 	public:
-		EditCommand(int track, int row, float value) : track(track), row(row), newVal(value) {}
+		EditCommand(int track, int row, bool existing, float value) : track(track), row(row), newValExisting(existing), newVal(value) {}
 		~EditCommand() {}
 		
 		virtual void exec(SyncDataEdit *data)
 		{
 			SyncTrack &track = data->getSyncData()->getTrack(this->track);
+
+			// store old state
 			oldValExisting = track.isKeyFrame(row);
 			if (oldValExisting) oldVal = track.getKeyFrame(row)->value;
-			track.setKeyFrame(row, newVal);
+
+			// update
+			if (!newValExisting) track.deleteKeyFrame(row);
+			else track.setKeyFrame(row, newVal);
 		}
 		
 		virtual void undo(SyncDataEdit *data)
 		{
 			SyncTrack &track = data->getSyncData()->getTrack(this->track);
+
+			// un-update
 			if (!oldValExisting) track.deleteKeyFrame(row);
 			else track.setKeyFrame(row, oldVal);
 		}
@@ -48,7 +55,7 @@ public:
 	private:
 		int track, row;
 		float newVal, oldVal;
-		bool oldValExisting;
+		bool newValExisting, oldValExisting;
 	};
 
 	void exec(Command *cmd)
@@ -99,6 +106,10 @@ private:
 	
 	SyncData *syncData;
 };
+
+
+// custom messages
+#define WM_REDO (WM_USER + 1)
 
 class TrackView
 {
