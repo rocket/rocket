@@ -12,6 +12,10 @@ static const int fontWidth = 6;
 
 static const int trackWidth = fontWidth * 16;
 static const int rows = 0x80;
+static DWORD darken(DWORD col, float amt)
+{
+	return RGB(GetRValue(col) * amt, GetGValue(col) * amt, GetBValue(col) * amt);
+}
 
 TrackView::TrackView()
 {
@@ -22,18 +26,30 @@ TrackView::TrackView()
 	
 	editRow = 0;
 	editTrack = 0;
+	
+	selectStartTrack = selectStopTrack = 0;
+	selectStartRow = selectStopRow = 0;
+	selectActive = false;
 
 	this->hwnd = NULL;
+	
+	bgBaseBrush = GetSysColorBrush(COLOR_WINDOW); // CreateSolidBrush(RGB(0xff, 0xff, 0xff));
+	bgDarkBrush = CreateSolidBrush(darken(GetSysColor(COLOR_WINDOW), 0.9f));
 
-	selectActive = false;
-	selectBaseBrush = CreateSolidBrush(RGB(255, 192, 255));
-	selectDarkBrush = CreateSolidBrush(RGB(192, 128, 192));
+//	selectBaseBrush = CreateSolidBrush(RGB(0xff, 0xdd, 0xff));
+//	selectDarkBrush = CreateSolidBrush(RGB(0xdd, 0xbb, 0xdd));
+	selectBaseBrush = GetSysColorBrush(COLOR_HIGHLIGHT);
+	selectDarkBrush = CreateSolidBrush(darken(GetSysColor(COLOR_HIGHLIGHT), 0.9f));
 	
 	editBrush = CreateSolidBrush(RGB(255, 255, 0));
 }
 
 TrackView::~TrackView()
 {
+	DeleteObject(bgBaseBrush);
+	DeleteObject(bgDarkBrush);
+	DeleteObject(selectBaseBrush);
+	DeleteObject(selectDarkBrush);
 	DeleteObject(editBrush);
 }
 
@@ -77,7 +93,7 @@ void TrackView::paintTopMargin(HDC hdc, RECT rcTracks)
 	topLeftMargin.right = leftMarginWidth;
 	fillRect = topLeftMargin;
 	DrawEdge(hdc, &fillRect, BDR_RAISEDINNER | BDR_RAISEDOUTER, BF_ADJUST | BF_BOTTOM);
-	FillRect(hdc, &fillRect, (HBRUSH)GetStockObject(LTGRAY_BRUSH));
+	FillRect(hdc, &fillRect, GetSysColorBrush(COLOR_3DFACE));
 	ExcludeClipRect(hdc, topLeftMargin.left, topLeftMargin.top, topLeftMargin.right, topLeftMargin.bottom);
 
 	int firstTrack = min(max(scrollPosX / trackWidth, 0), getTrackCount() - 1);
@@ -104,7 +120,7 @@ void TrackView::paintTopMargin(HDC hdc, RECT rcTracks)
 
 		RECT fillRect = topMargin;
 
-		HBRUSH bgBrush = (HBRUSH)GetStockObject(LTGRAY_BRUSH);
+		HBRUSH bgBrush = GetSysColorBrush(COLOR_3DFACE);
 		if (track == editTrack) bgBrush = editBrush;
 
 		DrawEdge(hdc, &fillRect, BDR_RAISEDINNER | BDR_RAISEDOUTER, BF_ADJUST | BF_LEFT | BF_RIGHT | BF_BOTTOM);
@@ -125,7 +141,7 @@ void TrackView::paintTopMargin(HDC hdc, RECT rcTracks)
 	topRightMargin.right = rcTracks.right;
 	fillRect = topRightMargin;
 	DrawEdge(hdc, &fillRect, BDR_RAISEDINNER | BDR_RAISEDOUTER, BF_ADJUST | BF_BOTTOM);
-	FillRect(hdc, &fillRect, (HBRUSH)GetStockObject(LTGRAY_BRUSH));
+	FillRect(hdc, &fillRect, GetSysColorBrush(COLOR_3DFACE));
 	ExcludeClipRect(hdc, topRightMargin.left, topRightMargin.top, topRightMargin.right, topRightMargin.bottom);
 
 }
@@ -145,7 +161,7 @@ void TrackView::paintTracks(HDC hdc, RECT rcTracks)
 
 	SetBkMode(hdc, TRANSPARENT);
 
-	SelectObject(hdc, editBrush);
+//	SelectObject(hdc, editBrush);
 	
 	paintTopMargin(hdc, rcTracks);
 	
@@ -161,7 +177,7 @@ void TrackView::paintTracks(HDC hdc, RECT rcTracks)
 
 		HBRUSH fillBrush;
 		if (row == editRow) fillBrush = editBrush;
-		else fillBrush = (HBRUSH)GetStockObject(LTGRAY_BRUSH);
+		else fillBrush = GetSysColorBrush(COLOR_3DFACE);
 		FillRect(hdc, &leftMargin, fillBrush);
 
 		DrawEdge(hdc, &leftMargin, BDR_RAISEDINNER | BDR_RAISEDOUTER, BF_RIGHT | BF_BOTTOM | BF_TOP);
@@ -180,7 +196,7 @@ void TrackView::paintTracks(HDC hdc, RECT rcTracks)
 		ExcludeClipRect(hdc, leftMargin.left, leftMargin.top, leftMargin.right, leftMargin.bottom);
 	}
 	
-	SetTextColor(hdc, RGB(0, 0, 0));
+	SetTextColor(hdc, GetSysColor(COLOR_WINDOWTEXT));
 	
 	SyncData *syncData = getSyncData();
 	if (NULL == syncData) return;
@@ -206,13 +222,11 @@ void TrackView::paintTracks(HDC hdc, RECT rcTracks)
 
 			if (!RectVisible(hdc, &patternDataRect)) continue;
 
-			HBRUSH baseBrush = (HBRUSH)GetStockObject(WHITE_BRUSH);
-			HBRUSH darkBrush = (HBRUSH)GetStockObject(LTGRAY_BRUSH);
+			bool selected = selectActive && (track >= selectLeft && track <= selectRight) && (row >= selectTop && row <= selectBottom);
 
-//			if (row % 8 == 0) bgBrush = (HBRUSH)GetStockObject(LTGRAY_BRUSH);
-//			if (row == editRow) bgBrush = editBrush;
-
-			if (selectActive && (track >= selectLeft && track <= selectRight) && (row >= selectTop && row <= selectBottom))
+			HBRUSH baseBrush = bgBaseBrush;
+			HBRUSH darkBrush = bgDarkBrush;
+			if (selected)
 			{
 				baseBrush = selectBaseBrush;
 				darkBrush = selectDarkBrush;
@@ -224,14 +238,22 @@ void TrackView::paintTracks(HDC hdc, RECT rcTracks)
 			RECT fillRect = patternDataRect;
 //			if (row == editRow && track == editTrack) DrawEdge(hdc, &fillRect, BDR_RAISEDINNER | BDR_SUNKENOUTER, BF_ADJUST | BF_TOP | BF_BOTTOM | BF_LEFT | BF_RIGHT);
 			FillRect( hdc, &fillRect, bgBrush);
+/*			if (row % 8 == 0)
+			{
+				MoveToEx(hdc, patternDataRect.left, patternDataRect.top, (LPPOINT) NULL); 
+				LineTo(hdc,   patternDataRect.right, patternDataRect.top); 
+			} */
 
 			bool drawEditString = false;
 			if (row == editRow && track == editTrack)
 			{
+				FrameRect(hdc, &fillRect, (HBRUSH)GetStockObject(BLACK_BRUSH));
 //				DrawFocusRect(hdc, &fillRect);
-				Rectangle(hdc, fillRect.left, fillRect.top, fillRect.right, fillRect.bottom);
+//				Rectangle(hdc, fillRect.left, fillRect.top, fillRect.right, fillRect.bottom);
 				if (editString.size() > 0) drawEditString = true;
 			}
+
+//			InvertRect(hdc, &fillRect);
 			
 			const SyncTrack &track = trackIter->second;
 			bool key = track.isKeyFrame(row);
@@ -244,11 +266,14 @@ void TrackView::paintTracks(HDC hdc, RECT rcTracks)
 				float val = track.getKeyFrame(row)->value;
 				_sntprintf_s(temp, 256, _T("%.2f"), val);
 			}
-
+			
+			COLORREF oldCol;
+			if (selected) oldCol = SetTextColor(hdc, GetSysColor(COLOR_HIGHLIGHTTEXT));
 			TextOut(hdc,
 				patternDataRect.left, patternDataRect.top,
 				temp, int(_tcslen(temp))
 			);
+			if (selected) SetTextColor(hdc, oldCol);
 		}
 	}
 
@@ -259,7 +284,7 @@ void TrackView::paintTracks(HDC hdc, RECT rcTracks)
 		rightMargin.bottom = getScreenY(rows);
 		rightMargin.left  = getScreenX(getTrackCount());
 		rightMargin.right = rcTracks.right;
-		FillRect( hdc, &rightMargin, (HBRUSH)GetStockObject(GRAY_BRUSH));
+		FillRect( hdc, &rightMargin, GetSysColorBrush(COLOR_APPWORKSPACE));
 	}
 
 	{
@@ -268,7 +293,7 @@ void TrackView::paintTracks(HDC hdc, RECT rcTracks)
 		bottomPadding.bottom = rcTracks.bottom;
 		bottomPadding.left = rcTracks.left;
 		bottomPadding.right = rcTracks.right;
-		FillRect(hdc, &bottomPadding, (HBRUSH)GetStockObject(GRAY_BRUSH));
+		FillRect(hdc, &bottomPadding, GetSysColorBrush(COLOR_APPWORKSPACE));
 	}
 	
 	{
@@ -277,7 +302,7 @@ void TrackView::paintTracks(HDC hdc, RECT rcTracks)
 		topPadding.bottom = getScreenY(0);
 		topPadding.left = rcTracks.left;
 		topPadding.right = rcTracks.right;
-		FillRect(hdc, &topPadding, (HBRUSH)GetStockObject(GRAY_BRUSH));
+		FillRect(hdc, &topPadding, GetSysColorBrush(COLOR_APPWORKSPACE));
 	}
 }
 
@@ -347,7 +372,17 @@ void TrackView::setEditRow(int newEditRow)
 	editRow = min(max(editRow, 0), rows - 1);
 	
 	bool selecting  = GetKeyState(VK_SHIFT) < 0 ? true : false;
-	if (selecting) selectStopRow = editRow;
+	if (selecting)
+	{
+		selectStopRow = editRow;
+		invalidateRange(selectStartTrack, selectStopTrack, oldEditRow, editRow);
+	}
+	else if (selectActive)
+	{
+		// leave select mode
+		selectActive = false;
+		invalidateRange(selectStartTrack, selectStopTrack, selectStartRow, selectStopRow);
+	}
 	
 	invalidateRow(oldEditRow);
 	invalidateRow(editRow);
@@ -366,6 +401,12 @@ void TrackView::setEditTrack(int newEditTrack)
 	
 	bool selecting  = GetKeyState(VK_SHIFT) < 0 ? true : false;
 	if (selecting) selectStopTrack = editTrack;
+	else if (selectActive)
+	{
+		// leave select mode
+		selectActive = false;
+		invalidateRange(selectStartTrack, selectStopTrack, selectStartRow, selectStopRow);
+	}
 	
 	invalidateTrack(oldEditTrack);
 	invalidateTrack(editTrack);
@@ -477,6 +518,7 @@ LRESULT TrackView::onKeyDown(UINT keyCode, UINT flags)
 			case VK_NEXT:  setEditRow(editRow + windowRows / 2); break;
 
 			case VK_SHIFT:
+				if (selectActive) invalidateRange(selectStartTrack, selectStopTrack, selectStartRow, selectStopRow);
 				selectStartTrack = selectStopTrack = editTrack;
 				selectStartRow   = selectStopRow   = editRow;
 				selectActive = true;
@@ -487,7 +529,11 @@ LRESULT TrackView::onKeyDown(UINT keyCode, UINT flags)
 				if (ctrlDown) SendMessage(GetParent(this->getWin()), WM_COMMAND, MAKEWPARAM(shiftDown ? WM_REDO : WM_UNDO, 1), 0);
 			break;
 			case 'C':
-				printf("hit '%c', flags: %X\n", keyCode, flags);
+				if (ctrlDown && !altDown && !shiftDown)
+				{
+					SendMessage(GetParent(this->getWin()), WM_COMMAND, MAKEWPARAM(WM_COPY, 1), 0);
+				}
+//				printf("hit '%c', flags: %X\n", keyCode, flags);
 //				if (ctrlDown) SendMessage(GetParent(this->getWin()), WM_COMMAND, MAKEWPARAM(shiftDown ? WM_REDO : WM_UNDO, 1), 0);
 			break;
 			default:
@@ -623,7 +669,38 @@ LRESULT TrackView::windowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 		case WM_CHAR:    return onChar((UINT)wParam, (UINT)lParam);
 
 		case WM_COPY:
-			printf("copy!\n");
+			{
+				int selectLeft  = min(selectStartTrack, selectStopTrack);
+				int selectRight = max(selectStartTrack, selectStopTrack);
+				int selectTop    = min(selectStartRow, selectStopRow);
+				int selectBottom = max(selectStartRow, selectStopRow);
+				printf("copying:\n");
+
+				struct CopyEntry
+				{
+					int track, row;
+					float val;
+					bool valExisting;
+				};
+				
+//				std::vector<CopyEntry> copyBuffer;
+				if (FAILED(OpenClipboard(getWin())))
+				{
+					MessageBox(NULL, "Failed to open clipboard", NULL, MB_OK);
+				}
+				else
+				{
+					EmptyClipboard();
+					for (int track = selectLeft; track <= selectRight; ++track)
+					{
+						for (int row = selectTop; row <= selectBottom; ++row)
+						{
+							printf("(%d %d) = ", track, row);
+						}
+					}
+					CloseClipboard();
+				}
+			}
 		break;
 
 		case WM_UNDO:

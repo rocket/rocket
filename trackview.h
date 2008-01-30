@@ -212,6 +212,7 @@ private:
 	int selectStartTrack, selectStopTrack;
 	int selectStartRow, selectStopRow;
 	
+	HBRUSH bgBaseBrush, bgDarkBrush;
 	HBRUSH selectBaseBrush, selectDarkBrush;
 	
 	/* cursor position */
