@@ -121,82 +121,45 @@ static ATOM registerMainWindowClass(HINSTANCE hInstance)
 	return RegisterClassEx(&wc);
 }
 
-
-#include <winsock2.h>
+#include "network.h"
 
 int _tmain(int argc, _TCHAR* argv[])
 {
 	HWND hwnd;
-	MSG Msg;
 	HINSTANCE hInstance = GetModuleHandle(NULL);
 
-#if 0
-	WSADATA wsaData;
-	int error = WSAStartup( MAKEWORD( 2, 0 ), &wsaData );
-	if (0 != error)
+#if 1
+	if (false == initNetwork())
 	{
 		fputs("Failed to init WinSock", stderr);
 		exit(1);
 	}
 
-	if (LOBYTE( wsaData.wVersion ) != 2 || HIBYTE( wsaData.wVersion ) != 0)
-	{
-		fputs("Wrong version of WinSock", stderr);
-		exit(1);
-	}
-
-	SOCKET server = socket( AF_INET, SOCK_STREAM, 0 );
+	SOCKET serverSocket = socket( AF_INET, SOCK_STREAM, 0 );
 
 	struct sockaddr_in sin;
 	memset( &sin, 0, sizeof sin );
 
 	sin.sin_family = AF_INET;
 	sin.sin_addr.s_addr = INADDR_ANY;
-	sin.sin_port = htons( 21 );
+	sin.sin_port = htons( 1338 );
 
-	if (SOCKET_ERROR == bind( server, (struct sockaddr *)&sin, sizeof(sin)))
+	puts("binding...");
+	if (SOCKET_ERROR == bind( serverSocket, (struct sockaddr *)&sin, sizeof(sin)))
 	{
 		fputs("Coult not start server", stderr);
 		exit(1);
 	}
 
-	while ( listen( server, SOMAXCONN ) == SOCKET_ERROR );
+	puts("listening...");
+	while ( listen( serverSocket, SOMAXCONN ) == SOCKET_ERROR );
 
-	int length = sizeof(sin);
-	SOCKET client = accept( server,  (sockaddr *)&sin, &length );
-
-	const char *test = "TEST123";
-	int sent = send( client, test, strlen(test), 0);
-	if (SOCKET_ERROR == sent)
+/*	ULONG nonBlock = 1;
+	if (ioctlsocket(serverSocket, FIONBIO, &nonBlock) == SOCKET_ERROR)
 	{
-		int err = WSAGetLastError();
-		fprintf(stderr, "failed to send - err %d\n", err);
-		exit(1);
-	}
-	
-
-	unsigned long int nonBlock = 1;
-	if (ioctlsocket(client, FIONBIO, &nonBlock) == SOCKET_ERROR)
-	{
-		printf("ioctlsocket() failed \n");
-		exit(1);
-	}
-
-	int read = 0;
-	while (read < 20)
-	{
-		char buffer[1024];
-		int len = recv(client, buffer, 1024, 0);
-		if (0 < len)
-		{
-			printf("got \"%s\" - left: %d\n", buffer, 20 - (read + len));
-			read += len;
-		}
-	}
-
-	closesocket(client);
-	closesocket(server);
-	WSACleanup();
+		printf("ioctlsocket() failed\n");
+		return 0;
+	} */
 #endif
 
 	SyncData syncData;
@@ -255,20 +218,81 @@ int _tmain(int argc, _TCHAR* argv[])
 	ShowWindow(hwnd, TRUE);
 	UpdateWindow(hwnd);
 
-#if 0
-/*	while (1)
+#if 1
+
+	bool done = false;
+	SOCKET clientSocket = INVALID_SOCKET;
+	MSG msg;
+	while (!done)
 	{
-		SOCKET client;
-		int length;
-		length = sizeof sin;
-		client = accept( server,  (sockaddr *)&sin, &length );
-	} */
+		if (INVALID_SOCKET == clientSocket)
+		{
+			fd_set fds;
+			FD_ZERO(&fds);
+			FD_SET(serverSocket, &fds);
+			struct timeval timeout;
+			timeout.tv_sec = 0;
+			timeout.tv_usec = 0;
+
+			// look for new clients
+			if (select(0, &fds, NULL, NULL, &timeout) > 0)
+			{
+				puts("accepting...");
+				clientSocket = clientConnect(serverSocket);
+				if (INVALID_SOCKET != clientSocket)
+				{
+					unsigned char cmd = 0x1;
+					send(clientSocket, (char*)&cmd, 1, 0);
+				}
+			}
+		}
+		else
+		{
+			unsigned char cmd = 0x1;
+			send(clientSocket, (char*)&cmd, 1, 0);
+			
+			// look for new commands
+			while (pollRead(clientSocket))
+			{
+				unsigned char cmd = 0;
+				int ret = recv(clientSocket, (char*)&cmd, 1, 0);
+				if (1 != ret)
+				{
+					closesocket(clientSocket);
+					clientSocket = INVALID_SOCKET;
+					break;
+				}
+				else
+				{
+					printf("cmd: %02x\n", cmd);
+					if (cmd == 1) printf("yes, master!\n");
+				}
+			}
+
+			// terminate connection
+/*			cmd = 0x0;
+			send(clientSocket, (char*)&cmd, 1, 0);
+			closesocket(clientSocket);
+			clientSocket = INVALID_SOCKET; */
+		}
+
+		while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
+		{
+			TranslateMessage(&msg);
+			DispatchMessage(&msg);
+			if (WM_QUIT == msg.message) done = true;
+		}
+	}
+	
+	closesocket(serverSocket);
+	closeNetwork();
+
 #else
 	// Step 3: The Message Loop
-	while(GetMessage(&Msg, NULL, 0, 0) > 0)
+	while(GetMessage(&msg, NULL, 0, 0) > 0)
 	{
-		TranslateMessage(&Msg);
-		DispatchMessage(&Msg);
+		TranslateMessage(&msg);
+		DispatchMessage(&msg);
 	}
 #endif
 	
@@ -276,5 +300,5 @@ int _tmain(int argc, _TCHAR* argv[])
 	trackView = NULL;
 	
 	UnregisterClass(mainWindowClassName, hInstance);
-	return int(Msg.wParam);
+	return int(msg.wParam);
 }
