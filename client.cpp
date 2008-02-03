@@ -42,12 +42,16 @@ int main(int argc, char *argv[])
 			if (0 == ret) done = true;
 			else
 			{
-				printf("cmd: %02x\n", cmd);
-				if (cmd == 1)
+				switch (cmd)
 				{
-					printf("yes, master!\n");
-					unsigned char cmd = 0x1;
-					send(serverSocket, (char*)&cmd, 1, 0);
+					case 1:
+						printf("yes, master!\n");
+						unsigned char cmd = 0x1;
+						send(serverSocket, (char*)&cmd, 1, 0);
+					break;
+					
+					default:
+						printf("unknown cmd: %02x\n", cmd);
 				}
 			}
 		}

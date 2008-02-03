@@ -42,6 +42,9 @@ TrackView::TrackView()
 	selectDarkBrush = CreateSolidBrush(darken(GetSysColor(COLOR_HIGHLIGHT), 0.9f));
 	
 	editBrush = CreateSolidBrush(RGB(255, 255, 0));
+
+	clipboardFormat = RegisterClipboardFormat("syncdata");
+	if (0 == clipboardFormat) printf("geh");
 }
 
 TrackView::~TrackView()
@@ -306,6 +309,99 @@ void TrackView::paintTracks(HDC hdc, RECT rcTracks)
 	}
 }
 
+void TrackView::copy()
+{
+	if (!selectActive) return;
+	
+	int selectLeft  = min(selectStartTrack, selectStopTrack);
+	int selectRight = max(selectStartTrack, selectStopTrack);
+	int selectTop    = min(selectStartRow, selectStopRow);
+	int selectBottom = max(selectStartRow, selectStopRow);
+	printf("copying:\n");
+	
+#if 0
+	struct CopyEntry
+	{
+		int track, row;
+		float val;
+		bool valExisting;
+	};
+	std::vector<CopyEntry> copyBuffer;
+#endif
+	
+	if (FAILED(OpenClipboard(getWin())))
+	{
+		MessageBox(NULL, "Failed to open clipboard", NULL, MB_OK);
+		return;
+	}
+	
+	// gather data
+	int rows = selectBottom - selectTop + 1;
+	int columns = selectRight - selectLeft + 1;
+	size_t cells = columns * rows;
+	HGLOBAL hmem = GlobalAlloc(GMEM_MOVEABLE, sizeof(float) * cells);
+	
+	std::string copyString;
+	for (int row = selectTop; row <= selectBottom; ++row)
+	{
+		for (int track = selectLeft; track <= selectRight; ++track)
+		{
+			const SyncTrack &t = syncDataEdit.getSyncData()->getTrack(track);
+			char temp[128];
+			if (t.isKeyFrame(row)) sprintf(temp, "%.2f\t", t.getKeyFrame(row)->value);
+			else sprintf(temp, "--- \t");
+			copyString += temp;
+			printf("(%d %d) = %s", track, row, temp);
+		}
+		puts("");
+		copyString += "\n";
+	}
+	
+	HGLOBAL hmem_text = GlobalAlloc(GMEM_MOVEABLE, strlen(copyString.c_str()) + 1);
+	char *clipbuf = (char *)GlobalLock(hmem_text);
+	memcpy(clipbuf, copyString.c_str(), strlen(copyString.c_str()) + 1);
+	GlobalUnlock(hmem_text);
+	
+	// update clipboard
+	EmptyClipboard();
+	SetClipboardData(clipboardFormat, hmem);
+	SetClipboardData(CF_TEXT, hmem_text);
+	CloseClipboard();
+
+	// should this memory be free'd or not? freeing seems to cause some hick-ups some times...
+//	GlobalFree(hmem);
+//	GlobalFree(hmem_text);
+}
+
+void TrackView::cut()
+{
+	int selectLeft  = min(selectStartTrack, selectStopTrack);
+	int selectRight = max(selectStartTrack, selectStopTrack);
+	int selectTop    = min(selectStartRow, selectStopRow);
+	int selectBottom = max(selectStartRow, selectStopRow);
+	
+	copy();
+#if 0
+	for (int track = selectLeft; track <= selectRight; ++track)
+	{
+		SyncTrack &t = syncDataEdit.getSyncData()->getTrack(track);
+		for (int row = selectTop; row <= selectBottom; ++row)
+		{
+			if (t.isKeyFrame(row)) t.deleteKeyFrame(row);
+		}
+	}
+	invalidateRange(selectLeft, selectRight, selectTop, selectBottom);
+#endif
+}
+
+void TrackView::paste()
+{
+	int selectLeft  = min(selectStartTrack, selectStopTrack);
+	int selectRight = max(selectStartTrack, selectStopTrack);
+	int selectTop    = min(selectStartRow, selectStopRow);
+	int selectBottom = max(selectStartRow, selectStopRow);
+}
+
 void TrackView::setupScrollBars()
 {
 	SCROLLINFO si = { sizeof(si) };
@@ -518,10 +614,13 @@ LRESULT TrackView::onKeyDown(UINT keyCode, UINT flags)
 			case VK_NEXT:  setEditRow(editRow + windowRows / 2); break;
 
 			case VK_SHIFT:
-				if (selectActive) invalidateRange(selectStartTrack, selectStopTrack, selectStartRow, selectStopRow);
-				selectStartTrack = selectStopTrack = editTrack;
-				selectStartRow   = selectStopRow   = editRow;
-				selectActive = true;
+//				if (selectActive) invalidateRange(selectStartTrack, selectStopTrack, selectStartRow, selectStopRow);
+				if (!selectActive)
+				{
+					selectStartTrack = selectStopTrack = editTrack;
+					selectStartRow   = selectStopRow   = editRow;
+					selectActive = true;
+				}
 			break;
 
 			// simulate keyboard accelerators
@@ -529,10 +628,10 @@ LRESULT TrackView::onKeyDown(UINT keyCode, UINT flags)
 				if (ctrlDown) SendMessage(GetParent(this->getWin()), WM_COMMAND, MAKEWPARAM(shiftDown ? WM_REDO : WM_UNDO, 1), 0);
 			break;
 			case 'C':
-				if (ctrlDown && !altDown && !shiftDown)
+/*				if (ctrlDown && !altDown && !shiftDown)
 				{
 					SendMessage(GetParent(this->getWin()), WM_COMMAND, MAKEWPARAM(WM_COPY, 1), 0);
-				}
+				} */
 //				printf("hit '%c', flags: %X\n", keyCode, flags);
 //				if (ctrlDown) SendMessage(GetParent(this->getWin()), WM_COMMAND, MAKEWPARAM(shiftDown ? WM_REDO : WM_UNDO, 1), 0);
 			break;
@@ -668,40 +767,9 @@ LRESULT TrackView::windowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 		case WM_KEYDOWN: return onKeyDown((UINT)wParam, (UINT)lParam);
 		case WM_CHAR:    return onChar((UINT)wParam, (UINT)lParam);
 
-		case WM_COPY:
-			{
-				int selectLeft  = min(selectStartTrack, selectStopTrack);
-				int selectRight = max(selectStartTrack, selectStopTrack);
-				int selectTop    = min(selectStartRow, selectStopRow);
-				int selectBottom = max(selectStartRow, selectStopRow);
-				printf("copying:\n");
-
-				struct CopyEntry
-				{
-					int track, row;
-					float val;
-					bool valExisting;
-				};
-				
-//				std::vector<CopyEntry> copyBuffer;
-				if (FAILED(OpenClipboard(getWin())))
-				{
-					MessageBox(NULL, "Failed to open clipboard", NULL, MB_OK);
-				}
-				else
-				{
-					EmptyClipboard();
-					for (int track = selectLeft; track <= selectRight; ++track)
-					{
-						for (int row = selectTop; row <= selectBottom; ++row)
-						{
-							printf("(%d %d) = ", track, row);
-						}
-					}
-					CloseClipboard();
-				}
-			}
-		break;
+		case WM_COPY:  copy();  break;
+		case WM_CUT:   cut();   break;
+		case WM_PASTE: paste(); break;
 
 		case WM_UNDO:
 			if (!syncDataEdit.undo()) MessageBeep(0);

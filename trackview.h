@@ -137,6 +137,10 @@ private:
 	LRESULT onKeyDown(UINT keyCode, UINT flags);
 	LRESULT onChar(UINT keyCode, UINT flags);
 	
+	void copy();
+	void cut();
+	void paste();
+	
 	// the window procedure
 	
 	void paintTracks(HDC hdc, RECT rcTracks);
@@ -228,6 +232,8 @@ private:
 	
 	HWND hwnd;
 	HBRUSH editBrush;
+
+	UINT clipboardFormat;
 };
 
 ATOM registerTrackViewWindowClass(HINSTANCE hInstance);

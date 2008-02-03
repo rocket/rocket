@@ -19,44 +19,25 @@ static LRESULT CALLBACK mainWindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARA
 	{
 		case WM_CREATE:
 		{
-			trackViewWin = trackView->create(GetModuleHandle(NULL), hwnd);
-			
+			HINSTANCE hInstance = GetModuleHandle(NULL);
+			trackViewWin = trackView->create(hInstance, hwnd);
 			InitCommonControls();
 			statusBarWin = CreateWindowEx(
 				0,                               // no extended styles
 				STATUSCLASSNAME,                 // status bar
-				(LPCTSTR)"mordi",                   // no text 
-				SBARS_SIZEGRIP | WS_VISIBLE | WS_CHILD,       // styles
+				(LPCTSTR)NULL,                   // no text 
+				SBARS_SIZEGRIP | WS_VISIBLE | WS_CHILD, // styles
 				0, 0, 0, 0,                      // x, y, cx, cy
 				hwnd,                            // parent window
-				(HMENU)100,                      // window ID
-				GetModuleHandle(NULL),           // instance
+				NULL,                            // menu
+				hInstance,                       // instance
 				NULL                             // window data
 			);
 			
-			int statwidths[] = {100, -1};
-			SendMessage(statusBarWin, SB_SETPARTS, sizeof(statwidths)/sizeof(int), (LPARAM)statwidths);
+			int statwidths[] = { 100, -1 };
+			SendMessage(statusBarWin, SB_SETPARTS, sizeof(statwidths) / sizeof(int), (LPARAM)statwidths);
 			SendMessage(statusBarWin, SB_SETTEXT, 0, (LPARAM)"Hi there :)");
-			
-			HMENU fileMenu = CreatePopupMenu();
-			AppendMenu(fileMenu, MF_STRING, 0, _T("&Open\tCtrl+O"));
-			AppendMenu(fileMenu, MF_STRING, 2, _T("&Save\tCtrl+S"));
-			AppendMenu(fileMenu, MF_STRING, 3, _T("Save &As"));
-			AppendMenu(fileMenu, MF_SEPARATOR, 0, NULL);
-			AppendMenu(fileMenu, MF_STRING, 3, _T("&Exit"));
-			
-			HMENU editMenu = CreatePopupMenu();
-			AppendMenu(editMenu, MF_STRING, WM_UNDO, _T("&Undo\tCtrl+Z"));
-			AppendMenu(editMenu, MF_STRING, WM_REDO, _T("&Redo\tShift+Ctrl+Z"));
-			AppendMenu(editMenu, MF_SEPARATOR, 0, NULL);
-			AppendMenu(editMenu, MF_STRING, WM_CUT,   _T("Cu&t\tCtrl+X"));
-			AppendMenu(editMenu, MF_STRING, WM_COPY,  _T("&Copy\tCtrl+C"));
-			AppendMenu(editMenu, MF_STRING, WM_PASTE, _T("&Paste\tCtrl+V"));
-			
-			HMENU rootMenu = CreateMenu();
-			AppendMenu(rootMenu, MF_STRING | MF_POPUP, (UINT_PTR)fileMenu, _T("&File"));
-			AppendMenu(rootMenu, MF_STRING | MF_POPUP, (UINT_PTR)editMenu, _T("&Edit"));
-			SetMenu(hwnd, rootMenu);
+			SendMessage(statusBarWin, SB_SETTEXT, 1, (LPARAM)"Hi there :)");
 		}
 		break;
 		
@@ -81,17 +62,14 @@ static LRESULT CALLBACK mainWindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARA
 		case WM_COMMAND:
 			switch (LOWORD(wParam))
 			{
-				// simply forward these
-				case WM_UNDO:
-				case WM_REDO:
-				case WM_COPY:
-				case WM_PASTE:
-				case WM_CUT:
-					SendMessage(trackViewWin, LOWORD(wParam), 0, 0);
-				break;
-
-				default:
-					printf("cmd %d %d\n", wParam, lParam);
+			case ID_FILE_SAVE: /* meh.*/ break;
+			case ID_EDIT_UNDO:  SendMessage(trackViewWin, WM_UNDO,  0, 0); break;
+			case ID_EDIT_REDO:  SendMessage(trackViewWin, WM_REDO,  0, 0); break;
+			case ID_EDIT_COPY:  SendMessage(trackViewWin, WM_COPY,  0, 0); break;
+			case ID_EDIT_CUT:   SendMessage(trackViewWin, WM_CUT,   0, 0); break;
+			case ID_EDIT_PASTE: SendMessage(trackViewWin, WM_PASTE, 0, 0); break;
+			default:
+				printf("cmd %d %d\n", wParam, lParam);
 			}
 		break;
 		
@@ -114,7 +92,7 @@ static ATOM registerMainWindowClass(HINSTANCE hInstance)
 	wc.hIcon         = LoadIcon(NULL, IDI_APPLICATION);
 	wc.hCursor       = LoadCursor(NULL, IDC_ARROW);
 	wc.hbrBackground = (HBRUSH)0;
-	wc.lpszMenuName  = NULL;
+	wc.lpszMenuName  = (LPCSTR)IDR_MENU;
 	wc.lpszClassName = mainWindowClassName;
 	wc.hIconSm       = LoadIcon(NULL, IDI_APPLICATION);
 	
@@ -215,6 +193,9 @@ int _tmain(int argc, _TCHAR* argv[])
 		return 0;
 	}
 	
+	HACCEL accel = LoadAccelerators(hInstance, (LPCSTR)IDR_ACCELERATOR);
+	printf("accel: %p\n", accel);
+	
 	ShowWindow(hwnd, TRUE);
 	UpdateWindow(hwnd);
 
@@ -278,9 +259,12 @@ int _tmain(int argc, _TCHAR* argv[])
 
 		while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
 		{
-			TranslateMessage(&msg);
-			DispatchMessage(&msg);
-			if (WM_QUIT == msg.message) done = true;
+			if (!TranslateAccelerator(hwnd, accel, &msg))
+			{
+				TranslateMessage(&msg);
+				DispatchMessage(&msg);
+				if (WM_QUIT == msg.message) done = true;
+			}
 		}
 	}
 	
