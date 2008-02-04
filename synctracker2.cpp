@@ -140,16 +140,16 @@ int _tmain(int argc, _TCHAR* argv[])
 	} */
 #endif
 
-	SyncData syncData;
+	SyncEditData syncData;
 	SyncTrack &camXTrack = syncData.getTrack(_T("cam.x"));
 	SyncTrack &camYTrack = syncData.getTrack(_T("cam.y"));
 	SyncTrack &camZTrack = syncData.getTrack(_T("cam.z"));
-/*	for (int i = 0; i < 1 << 16; ++i)
+	for (int i = 0; i < 2; ++i)
 	{
 		char temp[256];
 		sprintf(temp, "gen %02d", i);
 		SyncTrack &temp2 = syncData.getTrack(temp);
-	} */
+	}
 
 	camXTrack.setKeyFrame(1, SyncTrack::KeyFrame(2.0f));
 	camXTrack.setKeyFrame(4, SyncTrack::KeyFrame(3.0f));

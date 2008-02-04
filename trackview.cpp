@@ -346,7 +346,7 @@ void TrackView::copy()
 	{
 		for (int track = selectLeft; track <= selectRight; ++track)
 		{
-			const SyncTrack &t = syncDataEdit.getSyncData()->getTrack(track);
+			const SyncTrack &t = syncData->getTrack(track);
 			char temp[128];
 			if (t.isKeyFrame(row)) sprintf(temp, "%.2f\t", t.getKeyFrame(row)->value);
 			else sprintf(temp, "--- \t");
@@ -455,8 +455,8 @@ void TrackView::setScrollPos(int newScrollPosX, int newScrollPosY)
 		scrollPosY = newScrollPosY;
 		
 		scrollWindow(scrollX, scrollY);
-		setupScrollBars();
 	}
+	setupScrollBars();
 }
 
 void TrackView::setEditRow(int newEditRow)
@@ -470,6 +470,7 @@ void TrackView::setEditRow(int newEditRow)
 	bool selecting  = GetKeyState(VK_SHIFT) < 0 ? true : false;
 	if (selecting)
 	{
+		selectActive = true;
 		selectStopRow = editRow;
 		invalidateRange(selectStartTrack, selectStopTrack, oldEditRow, editRow);
 	}
@@ -496,7 +497,12 @@ void TrackView::setEditTrack(int newEditTrack)
 	editTrack = min(editTrack, getTrackCount() - 1);
 	
 	bool selecting  = GetKeyState(VK_SHIFT) < 0 ? true : false;
-	if (selecting) selectStopTrack = editTrack;
+	if (selecting)
+	{
+		selectActive = true;
+		selectStopTrack = editTrack;
+		invalidateRange(oldEditTrack, editTrack, selectStartRow, selectStopRow);
+	}
 	else if (selectActive)
 	{
 		// leave select mode
@@ -619,22 +625,11 @@ LRESULT TrackView::onKeyDown(UINT keyCode, UINT flags)
 				{
 					selectStartTrack = selectStopTrack = editTrack;
 					selectStartRow   = selectStopRow   = editRow;
-					selectActive = true;
+//					selectActive = true;
+//					printf("select active\n");
 				}
 			break;
 
-			// simulate keyboard accelerators
-			case 'Z':
-				if (ctrlDown) SendMessage(GetParent(this->getWin()), WM_COMMAND, MAKEWPARAM(shiftDown ? WM_REDO : WM_UNDO, 1), 0);
-			break;
-			case 'C':
-/*				if (ctrlDown && !altDown && !shiftDown)
-				{
-					SendMessage(GetParent(this->getWin()), WM_COMMAND, MAKEWPARAM(WM_COPY, 1), 0);
-				} */
-//				printf("hit '%c', flags: %X\n", keyCode, flags);
-//				if (ctrlDown) SendMessage(GetParent(this->getWin()), WM_COMMAND, MAKEWPARAM(shiftDown ? WM_REDO : WM_UNDO, 1), 0);
-			break;
 			default:
 			break;
 		}
@@ -646,11 +641,11 @@ LRESULT TrackView::onKeyDown(UINT keyCode, UINT flags)
 		{
 			if (editString.size() > 0)
 			{
-				SyncDataEdit::EditCommand *cmd = new SyncDataEdit::EditCommand(
+				SyncEditData::EditCommand *cmd = new SyncEditData::EditCommand(
 					editTrack, editRow,
 					true, float(_tstof(editString.c_str()))
 				);
-				syncDataEdit.exec(cmd);
+				syncData->exec(cmd);
 				
 				editString.clear();
 				invalidatePos(editTrack, editRow);
@@ -661,11 +656,11 @@ LRESULT TrackView::onKeyDown(UINT keyCode, UINT flags)
 
 		case VK_DELETE:
 		{
-			SyncDataEdit::EditCommand *cmd = new SyncDataEdit::EditCommand(
+			SyncEditData::EditCommand *cmd = new SyncEditData::EditCommand(
 				editTrack, editRow,
 				false, 0.0f
 			);
-			syncDataEdit.exec(cmd);
+			syncData->exec(cmd);
 			invalidatePos(editTrack, editRow);
 		}
 		break;
@@ -772,13 +767,13 @@ LRESULT TrackView::windowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 		case WM_PASTE: paste(); break;
 
 		case WM_UNDO:
-			if (!syncDataEdit.undo()) MessageBeep(0);
+			if (!syncData->undo()) MessageBeep(0);
 			// unfortunately, we don't know how much to invalidate... so we'll just invalidate it all.
 			InvalidateRect(hwnd, NULL, TRUE);
 		break;
 
 		case WM_REDO:
-			if (!syncDataEdit.redo()) MessageBeep(0);
+			if (!syncData->redo()) MessageBeep(0);
 			// unfortunately, we don't know how much to invalidate... so we'll just invalidate it all.
 			InvalidateRect(hwnd, NULL, TRUE);
 		break;
