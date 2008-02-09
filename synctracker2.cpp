@@ -13,13 +13,62 @@ TrackView *trackView;
 HWND trackViewWin;
 HWND statusBarWin;
 
+#define WM_SETROWS (WM_USER+1)
+
 #include "network.h"
+
+static LRESULT CALLBACK setRowsDialogProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
+{
+	switch (message)
+	{
+	case WM_INITDIALOG:
+		{
+			int *rows = (int*)lParam;
+			assert(NULL != rows);
+			
+			/* create row-string */
+			char temp[256];
+			_snprintf(temp, 256, "%d", *rows);
+			
+			/* set initial row count */
+			SetWindowText(GetDlgItem(hDlg, IDC_SETROWS_EDIT), temp);
+		}
+		break;
+	
+	case WM_COMMAND:
+		if (LOWORD(wParam) == IDOK)
+		{
+			/* get value */
+			char temp[256];
+			GetWindowText(GetDlgItem(hDlg, IDC_SETROWS_EDIT), temp, 256);
+			int result = atoi(temp);
+			
+			/* update editor */
+			SendMessage(GetParent(hDlg), WM_SETROWS, 0, result);
+			
+			/* end dialog */
+			EndDialog(hDlg, LOWORD(wParam));
+			return TRUE;
+		}
+		else if(LOWORD(wParam)== IDCANCEL)
+		{
+			EndDialog( hDlg, LOWORD(wParam));
+		}
+		break;
+	
+	case WM_CLOSE:
+		EndDialog(hDlg, LOWORD(wParam));
+		return TRUE;
+	}
+
+	return FALSE;
+}
 
 static LRESULT CALLBACK mainWindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
 	switch(msg)
 	{
-		case WM_CREATE:
+	case WM_CREATE:
 		{
 			HINSTANCE hInstance = GetModuleHandle(NULL);
 			trackViewWin = trackView->create(hInstance, hwnd);
@@ -42,8 +91,8 @@ static LRESULT CALLBACK mainWindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARA
 			SendMessage(statusBarWin, SB_SETTEXT, 1, (LPARAM)_T("Hi there :)"));
 		}
 		break;
-		
-		case WM_SIZE:
+	
+	case WM_SIZE:
 		{
 			int width  = LOWORD(lParam);
 			int height = HIWORD(lParam);
@@ -56,62 +105,47 @@ static LRESULT CALLBACK mainWindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARA
 			MoveWindow(statusBarWin, 0, height - statusBarHeight, width, statusBarHeight, TRUE);
 		}
 		break;
-		
-		case WM_SETFOCUS:
-			SetFocus(trackViewWin); // needed to forward keyboard input
-		break;
-		
-		case WM_COMMAND:
-			switch (LOWORD(wParam))
-			{
-			case ID_FILE_SAVE: /* meh.*/ break;
-			case ID_FILE_EXIT:  PostQuitMessage(0); break;
-			case ID_EDIT_UNDO:  SendMessage(trackViewWin, WM_UNDO,  0, 0); break;
-			case ID_EDIT_REDO:  SendMessage(trackViewWin, WM_REDO,  0, 0); break;
-			case ID_EDIT_COPY:  SendMessage(trackViewWin, WM_COPY,  0, 0); break;
-			case ID_EDIT_CUT:   SendMessage(trackViewWin, WM_CUT,   0, 0); break;
-			case ID_EDIT_PASTE: SendMessage(trackViewWin, WM_PASTE, 0, 0); break;
-			default:
-				printf("cmd %d %d\n", wParam, lParam);
-			}
+	
+	case WM_SETFOCUS:
+		SetFocus(trackViewWin); // needed to forward keyboard input
 		break;
 
-		case WM_USER+1:
+	case WM_SETROWS:
+		printf("rows: %d\n", int(lParam));
+		trackView->setRows(int(lParam));
+	break;
+	
+	case WM_COMMAND:
+		switch (LOWORD(wParam))
 		{
-			if (WSAGETSELECTERROR(lParam))
+		case ID_FILE_SAVE:  /* meh.*/ break;
+		case ID_FILE_EXIT:  PostQuitMessage(0); break;
+		case ID_EDIT_UNDO:  SendMessage(trackViewWin, WM_UNDO,  0, 0); break;
+		case ID_EDIT_REDO:  SendMessage(trackViewWin, WM_REDO,  0, 0); break;
+		case ID_EDIT_COPY:  SendMessage(trackViewWin, WM_COPY,  0, 0); break;
+		case ID_EDIT_CUT:   SendMessage(trackViewWin, WM_CUT,   0, 0); break;
+		case ID_EDIT_PASTE: SendMessage(trackViewWin, WM_PASTE, 0, 0); break;
+		
+		case ID_EDIT_SETROWS:
 			{
-				printf("ERR!\n");
-				// error occurred
-				WSACleanup ();
-				return 0;
-			}
-			
-			printf("tjo %x %x\n", lParam, wParam);
-			SOCKET serverSocket = (SOCKET)wParam;
-			switch (WSAGETSELECTEVENT(lParam))
-			{
-			case FD_ACCEPT:
-				printf("accept\n");
+				HINSTANCE hInstance = GetModuleHandle(NULL);
+				int rows = trackView->getRows();
+				INT_PTR result = DialogBoxParam(hInstance, MAKEINTRESOURCE(IDD_SETROWS), hwnd, (DLGPROC)setRowsDialogProc, (LPARAM)&rows);
+				if (FAILED(result)) MessageBox(NULL, "unable to create dialog box", NULL, MB_OK);
+				if (IDOK == result)
 				{
-					SOCKET clientSocket = clientConnect(serverSocket);
-					if (INVALID_SOCKET != clientSocket)
-					{
-						unsigned char cmd = 0x1;
-						send(clientSocket, (char*)&cmd, 1, 0);
-						closesocket(clientSocket);
-					}
-					else
-					{
-						puts("accept failed!");
-					}
+					printf("result: %d\n", result);
 				}
-			break;
 			}
-		}
-		break;
+			break;
 		
 		default:
-			return DefWindowProc(hwnd, msg, wParam, lParam);
+			printf("cmd %d %d\n", wParam, lParam);
+		}
+		break;
+	
+	default:
+		return DefWindowProc(hwnd, msg, wParam, lParam);
 	}
 	return 0;
 }
@@ -129,7 +163,7 @@ static ATOM registerMainWindowClass(HINSTANCE hInstance)
 	wc.hIcon         = LoadIcon(NULL, IDI_APPLICATION);
 	wc.hCursor       = LoadCursor(NULL, IDC_ARROW);
 	wc.hbrBackground = (HBRUSH)0;
-	wc.lpszMenuName  = (LPCSTR)IDR_MENU;
+	wc.lpszMenuName  = MAKEINTRESOURCE(IDR_MENU);
 	wc.lpszClassName = mainWindowClassName;
 	wc.hIconSm       = LoadIcon(NULL, IDI_APPLICATION);
 	
@@ -138,35 +172,42 @@ static ATOM registerMainWindowClass(HINSTANCE hInstance)
 
 int _tmain(int argc, _TCHAR* argv[])
 {
-	HWND hwnd;
+#ifdef _DEBUG
+	_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
+	_CrtSetReportMode(_CRT_WARN, _CRTDBG_MODE_DEBUG);
+	_CrtSetReportMode(_CRT_ERROR, _CRTDBG_MODE_DEBUG);
+	_CrtSetReportMode(_CRT_ASSERT, _CRTDBG_MODE_DEBUG);
+/*	_CrtSetBreakAlloc(68); */
+#endif
+	
 	HINSTANCE hInstance = GetModuleHandle(NULL);
-
+	
 #if 1
 	if (false == initNetwork())
 	{
 		fputs("Failed to init WinSock", stderr);
 		exit(1);
 	}
-
+	
 	SOCKET serverSocket = socket( AF_INET, SOCK_STREAM, 0 );
-
+	
 	struct sockaddr_in sin;
 	memset( &sin, 0, sizeof sin );
-
+	
 	sin.sin_family = AF_INET;
 	sin.sin_addr.s_addr = INADDR_ANY;
 	sin.sin_port = htons( 1338 );
-
+	
 	puts("binding...");
 	if (SOCKET_ERROR == bind( serverSocket, (struct sockaddr *)&sin, sizeof(sin)))
 	{
 		fputs("Coult not start server", stderr);
 		exit(1);
 	}
-
+	
 	puts("listening...");
 	while ( listen( serverSocket, SOMAXCONN ) == SOCKET_ERROR );
-
+	
 /*	ULONG nonBlock = 1;
 	if (ioctlsocket(serverSocket, FIONBIO, &nonBlock) == SOCKET_ERROR)
 	{
@@ -174,26 +215,27 @@ int _tmain(int argc, _TCHAR* argv[])
 		return 0;
 	} */
 #endif
-
+	
 	SyncEditData syncData;
 	SyncTrack &camXTrack = syncData.getTrack(_T("cam.x"));
 	SyncTrack &camYTrack = syncData.getTrack(_T("cam.y"));
 	SyncTrack &camZTrack = syncData.getTrack(_T("cam.z"));
+	
 	for (int i = 0; i < 2; ++i)
 	{
 		char temp[256];
-		sprintf(temp, "gen %02d", i);
+		_snprintf(temp, 256, "gen %02d", i);
 		SyncTrack &temp2 = syncData.getTrack(temp);
 	}
-
-	camXTrack.setKeyFrame(1, SyncTrack::KeyFrame(2.0f));
-	camXTrack.setKeyFrame(4, SyncTrack::KeyFrame(3.0f));
-
-	camYTrack.setKeyFrame(0, SyncTrack::KeyFrame(100.0f));
-	camYTrack.setKeyFrame(8, SyncTrack::KeyFrame(999.0f));
-
+	
+	camXTrack.setKeyFrame(1, 2.0f);
+	camXTrack.setKeyFrame(4, 3.0f);
+	
+	camYTrack.setKeyFrame(0, 100.0f);
+	camYTrack.setKeyFrame(8, 999.0f);
+	
 	camYTrack.setKeyFrame(16, SyncTrack::KeyFrame(float(1E-5)));
-
+	
 	for (int i = 0; i < 5 * 2; ++i)
 	{
 		float time = float(i) / 2;
@@ -212,7 +254,7 @@ int _tmain(int argc, _TCHAR* argv[])
 	trackView->setSyncData(&syncData);
 	
 	// Step 2: Creating the Window
-	hwnd = CreateWindowEx(
+	HWND hwnd = CreateWindowEx(
 		0,
 		mainWindowClassName,
 		_T("SyncTracker 3000"),
@@ -221,6 +263,7 @@ int _tmain(int argc, _TCHAR* argv[])
 		CW_USEDEFAULT, CW_USEDEFAULT, // width, height
 		NULL, NULL, hInstance, NULL
 	);
+	printf("main window: %p\n", hwnd);
 	
 	if (NULL == hwnd)
 	{
@@ -228,17 +271,16 @@ int _tmain(int argc, _TCHAR* argv[])
 		return 0;
 	}
 	
-	HACCEL accel = LoadAccelerators(hInstance, (LPCSTR)IDR_ACCELERATOR);
+	HACCEL accel = LoadAccelerators(hInstance, MAKEINTRESOURCE(IDR_ACCELERATOR));
 	printf("accel: %p\n", accel);
 	
 	ShowWindow(hwnd, TRUE);
 	UpdateWindow(hwnd);
-
+	
 #if 1
-
+	
 	printf("server socket %x\n", serverSocket);
-//	WSAAsyncSelect(serverSocket, hwnd, WM_USER+1, FD_ACCEPT);
-
+	
 	bool done = false;
 	SOCKET clientSocket = INVALID_SOCKET;
 	MSG msg;
@@ -253,7 +295,7 @@ int _tmain(int argc, _TCHAR* argv[])
 			struct timeval timeout;
 			timeout.tv_sec = 0;
 			timeout.tv_usec = 0;
-
+			
 			// look for new clients
 			if (select(0, &fds, NULL, NULL, &timeout) > 0)
 			{
@@ -288,7 +330,7 @@ int _tmain(int argc, _TCHAR* argv[])
 					if (cmd == 1) printf("yes, master!\n");
 				}
 			}
-
+			
 			// terminate connection
 /*			cmd = 0x0;
 			send(clientSocket, (char*)&cmd, 1, 0);
@@ -310,7 +352,7 @@ int _tmain(int argc, _TCHAR* argv[])
 	
 	closesocket(serverSocket);
 	closeNetwork();
-
+	
 #else
 	// Step 3: The Message Loop
 	while(GetMessage(&msg, NULL, 0, 0) > 0)

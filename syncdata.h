@@ -37,7 +37,7 @@ public:
 		// lerp, bitch
 		float d = (time - lower->first) / (upper->first - lower->first);
 		return lower->second.value + delta * d;
-	};
+	}
 	
 	bool isKeyFrame(size_t row) const
 	{
@@ -63,7 +63,7 @@ public:
 	
 	void setKeyFrame(size_t row, const float value)
 	{
-		keyFrames[row] = KeyFrame(value);
+		setKeyFrame(row, KeyFrame(value));
 	}
 	
 	size_t getFrameCount() const
@@ -74,6 +74,7 @@ public:
 	}
 	
 private:
+	
 	typedef std::map<size_t, struct KeyFrame> KeyFrameContainer;
 	KeyFrameContainer keyFrames;
 };
@@ -98,9 +99,10 @@ public:
 		return trackIter->second;
 	}
 	
-	size_t getTrackCount() { return tracks.size(); }
+	size_t getTrackCount() const { return tracks.size(); }
 	
-// private:
+//private:
 	typedef std::map<const std::basic_string<TCHAR>, SyncTrack> TrackContainer;
 	TrackContainer tracks;
 };
+

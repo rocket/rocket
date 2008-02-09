@@ -82,7 +82,7 @@ LRESULT TrackView::onPaint()
 	paintTracks(hdc, ps.rcPaint);
 	
 	EndPaint(hwnd, &ps);
-
+	
 	return FALSE;
 }
 
@@ -98,10 +98,10 @@ void TrackView::paintTopMargin(HDC hdc, RECT rcTracks)
 	DrawEdge(hdc, &fillRect, BDR_RAISEDINNER | BDR_RAISEDOUTER, BF_ADJUST | BF_BOTTOM);
 	FillRect(hdc, &fillRect, GetSysColorBrush(COLOR_3DFACE));
 	ExcludeClipRect(hdc, topLeftMargin.left, topLeftMargin.top, topLeftMargin.right, topLeftMargin.bottom);
-
+	
 	int firstTrack = min(max(scrollPosX / trackWidth, 0), getTrackCount() - 1);
 	int lastTrack  = min(max(firstTrack + windowTracks + 1, 0), getTrackCount() - 1);
-
+	
 	SyncData *syncData = getSyncData();
 	if (NULL == syncData) return;
 	
@@ -110,25 +110,25 @@ void TrackView::paintTopMargin(HDC hdc, RECT rcTracks)
 	{
 		ASSERT(trackIter != syncData->tracks.end());
 		if (track < firstTrack) continue;
-
+		
 		RECT topMargin;
-
+		
 		topMargin.top = 0;
 		topMargin.bottom = topMarginHeight;
-
+		
 		topMargin.left = getScreenX(track);
 		topMargin.right = topMargin.left + trackWidth;
 		
 		if (!RectVisible(hdc, &topMargin)) continue;
-
+		
 		RECT fillRect = topMargin;
-
+		
 		HBRUSH bgBrush = GetSysColorBrush(COLOR_3DFACE);
 		if (track == editTrack) bgBrush = editBrush;
-
+		
 		DrawEdge(hdc, &fillRect, BDR_RAISEDINNER | BDR_RAISEDOUTER, BF_ADJUST | BF_LEFT | BF_RIGHT | BF_BOTTOM);
 		FillRect(hdc, &fillRect, bgBrush);
-
+		
 		const std::basic_string<TCHAR> &trackName = trackIter->first;
 		TextOut(hdc,
 			fillRect.left, 0,
@@ -136,7 +136,7 @@ void TrackView::paintTopMargin(HDC hdc, RECT rcTracks)
 		);
 		ExcludeClipRect(hdc, topMargin.left, topMargin.top, topMargin.right, topMargin.bottom);
 	}
-
+	
 	RECT topRightMargin;
 	topRightMargin.top = 0;
 	topRightMargin.bottom = topMarginHeight;
@@ -146,13 +146,12 @@ void TrackView::paintTopMargin(HDC hdc, RECT rcTracks)
 	DrawEdge(hdc, &fillRect, BDR_RAISEDINNER | BDR_RAISEDOUTER, BF_ADJUST | BF_BOTTOM);
 	FillRect(hdc, &fillRect, GetSysColorBrush(COLOR_3DFACE));
 	ExcludeClipRect(hdc, topRightMargin.left, topRightMargin.top, topRightMargin.right, topRightMargin.bottom);
-
 }
 
 void TrackView::paintTracks(HDC hdc, RECT rcTracks)
 {
 	TCHAR temp[256];
-
+	
 	int firstTrack = min(max(scrollPosX / trackWidth, 0), getTrackCount() - 1);
 	int lastTrack  = min(max(firstTrack + windowTracks + 1, 0), getTrackCount() - 1);
 	
@@ -161,9 +160,9 @@ void TrackView::paintTracks(HDC hdc, RECT rcTracks)
 	/* clamp first & last row */
 	firstRow = min(max(firstRow, 0), rows - 1);
 	lastRow  = min(max(lastRow,  0), rows - 1);
-
+	
 	SetBkMode(hdc, TRANSPARENT);
-
+	
 //	SelectObject(hdc, editBrush);
 	
 	paintTopMargin(hdc, rcTracks);
@@ -195,7 +194,7 @@ void TrackView::paintTracks(HDC hdc, RECT rcTracks)
 			leftMargin.left, leftMargin.top,
 			temp, int(_tcslen(temp))
 		);
-
+		
 		ExcludeClipRect(hdc, leftMargin.left, leftMargin.top, leftMargin.right, leftMargin.bottom);
 	}
 	
@@ -203,7 +202,7 @@ void TrackView::paintTracks(HDC hdc, RECT rcTracks)
 	
 	SyncData *syncData = getSyncData();
 	if (NULL == syncData) return;
-
+	
 	int selectLeft  = min(selectStartTrack, selectStopTrack);
 	int selectRight = max(selectStartTrack, selectStopTrack);
 	int selectTop    = min(selectStartRow, selectStopRow);
@@ -214,7 +213,7 @@ void TrackView::paintTracks(HDC hdc, RECT rcTracks)
 	{
 		ASSERT(trackIter != syncData->tracks.end());
 		if (track < firstTrack) continue;
-
+		
 		for (int row = firstRow; row <= lastRow; ++row)
 		{
 			RECT patternDataRect;
@@ -222,11 +221,11 @@ void TrackView::paintTracks(HDC hdc, RECT rcTracks)
 			patternDataRect.right = patternDataRect.left + trackWidth;
 			patternDataRect.top = getScreenY(row);
 			patternDataRect.bottom = patternDataRect.top + fontHeight;
-
+			
 			if (!RectVisible(hdc, &patternDataRect)) continue;
-
+			
 			bool selected = selectActive && (track >= selectLeft && track <= selectRight) && (row >= selectTop && row <= selectBottom);
-
+			
 			HBRUSH baseBrush = bgBaseBrush;
 			HBRUSH darkBrush = bgDarkBrush;
 			if (selected)
@@ -234,10 +233,10 @@ void TrackView::paintTracks(HDC hdc, RECT rcTracks)
 				baseBrush = selectBaseBrush;
 				darkBrush = selectDarkBrush;
 			}
-
+			
 			HBRUSH bgBrush = baseBrush;
 			if (row % 8 == 0) bgBrush = darkBrush;
-
+			
 			RECT fillRect = patternDataRect;
 //			if (row == editRow && track == editTrack) DrawEdge(hdc, &fillRect, BDR_RAISEDINNER | BDR_SUNKENOUTER, BF_ADJUST | BF_TOP | BF_BOTTOM | BF_LEFT | BF_RIGHT);
 			FillRect( hdc, &fillRect, bgBrush);
@@ -246,7 +245,7 @@ void TrackView::paintTracks(HDC hdc, RECT rcTracks)
 				MoveToEx(hdc, patternDataRect.left, patternDataRect.top, (LPPOINT) NULL); 
 				LineTo(hdc,   patternDataRect.right, patternDataRect.top); 
 			} */
-
+			
 			bool drawEditString = false;
 			if (row == editRow && track == editTrack)
 			{
@@ -255,7 +254,7 @@ void TrackView::paintTracks(HDC hdc, RECT rcTracks)
 //				Rectangle(hdc, fillRect.left, fillRect.top, fillRect.right, fillRect.bottom);
 				if (editString.size() > 0) drawEditString = true;
 			}
-
+			
 //			InvertRect(hdc, &fillRect);
 			
 			const SyncTrack &track = trackIter->second;
@@ -279,7 +278,7 @@ void TrackView::paintTracks(HDC hdc, RECT rcTracks)
 			if (selected) SetTextColor(hdc, oldCol);
 		}
 	}
-
+	
 	/* right margin */
 	{
 		RECT rightMargin;
@@ -289,7 +288,7 @@ void TrackView::paintTracks(HDC hdc, RECT rcTracks)
 		rightMargin.right = rcTracks.right;
 		FillRect( hdc, &rightMargin, GetSysColorBrush(COLOR_APPWORKSPACE));
 	}
-
+	
 	{
 		RECT bottomPadding;
 		bottomPadding.top = getScreenY(rows);
@@ -367,7 +366,7 @@ void TrackView::copy()
 	SetClipboardData(clipboardFormat, hmem);
 	SetClipboardData(CF_TEXT, hmem_text);
 	CloseClipboard();
-
+	
 	// should this memory be free'd or not? freeing seems to cause some hick-ups some times...
 //	GlobalFree(hmem);
 //	GlobalFree(hmem_text);
@@ -515,7 +514,7 @@ void TrackView::setEditTrack(int newEditTrack)
 	
 	int firstTrack = scrollPosX / trackWidth;
 	int lastTrack  = firstTrack + windowTracks;
-
+	
 	int newFirstTrack = firstTrack;
 	if (editTrack >= lastTrack) newFirstTrack = editTrack - (lastTrack - firstTrack - 1);
 	if (editTrack < firstTrack) newFirstTrack = editTrack;
@@ -529,34 +528,43 @@ static int getScrollPos(HWND hwnd, int bar)
 	return int(si.nTrackPos);
 }
 
+void TrackView::setRows(int rows)
+{
+	int oldRows = getRows();
+	this->rows = rows;
+	InvalidateRect(getWin(), NULL, FALSE);
+	setEditRow(min(editRow, rows - 1));
+}
+
+
 LRESULT TrackView::onVScroll(UINT sbCode, int newPos)
 {
 	switch (sbCode)
 	{
 	case SB_TOP:
 		setEditRow(0);
-	break;
+		break;
 	
 	case SB_LINEUP:
 		setEditRow(editRow - 1);
-	break;
+		break;
 	
 	case SB_LINEDOWN:
 		setEditRow(editRow + 1);
-	break;
+		break;
 	
 	case SB_PAGEUP:
 		setEditRow(editRow - windowRows / 2);
-	break;
+		break;
 	
 	case SB_PAGEDOWN:
 		setEditRow(editRow + windowRows / 2);
-	break;
-
+		break;
+	
 	case SB_THUMBPOSITION:
 	case SB_THUMBTRACK:
 		setEditRow(getScrollPos(hwnd, SB_VERT));
-	break;
+		break;
 	}
 	
 	return FALSE;
@@ -568,32 +576,32 @@ LRESULT TrackView::onHScroll(UINT sbCode, int newPos)
 	{
 	case SB_LEFT:
 		setEditTrack(0);
-	break;
+		break;
 	
 	case SB_RIGHT:
 		setEditTrack(getTrackCount() - 1);
-	break;
+		break;
 	
 	case SB_LINELEFT:
 		setEditTrack(editTrack - 1);
-	break;
+		break;
 	
 	case SB_LINERIGHT:
 		setEditTrack(editTrack + 1);
-	break;
+		break;
 	
 	case SB_PAGELEFT:
 		setEditTrack(editTrack - windowTracks);
-	break;
+		break;
 	
 	case SB_PAGEDOWN:
 		setEditTrack(editTrack + windowTracks);
-	break;
-
+		break;
+	
 	case SB_THUMBPOSITION:
 	case SB_THUMBTRACK:
 		setEditTrack(getScrollPos(hwnd, SB_HORZ));
-	break;
+		break;
 	}
 	
 	return FALSE;
@@ -605,56 +613,54 @@ LRESULT TrackView::onKeyDown(UINT keyCode, UINT flags)
 	bool ctrlDown   = GetKeyState(VK_CONTROL) < 0 ? true : false;
 	bool shiftDown  = GetKeyState(VK_SHIFT) < 0 ? true : false;
 	bool altDown    = GetKeyState(VK_MENU) < 0 ? true : false;
-
+	
 	if (editString.empty())
 	{
 		switch (keyCode)
 		{
-			case VK_UP:   setEditRow(editRow - 1); break;
-			case VK_DOWN: setEditRow(editRow + 1); break;
-			
-			case VK_LEFT:  setEditTrack(editTrack - 1); break;
-			case VK_RIGHT: setEditTrack(editTrack + 1); break;
-			
-			case VK_PRIOR: setEditRow(editRow - windowRows / 2); break;
-			case VK_NEXT:  setEditRow(editRow + windowRows / 2); break;
-
-			case VK_SHIFT:
-//				if (selectActive) invalidateRange(selectStartTrack, selectStopTrack, selectStartRow, selectStopRow);
-				if (!selectActive)
-				{
-					selectStartTrack = selectStopTrack = editTrack;
-					selectStartRow   = selectStopRow   = editRow;
-//					selectActive = true;
-//					printf("select active\n");
-				}
+		case VK_UP:   setEditRow(editRow - 1); break;
+		case VK_DOWN: setEditRow(editRow + 1); break;
+		
+		case VK_LEFT:  setEditTrack(editTrack - 1); break;
+		case VK_RIGHT: setEditTrack(editTrack + 1); break;
+		
+		case VK_PRIOR: setEditRow(editRow - windowRows / 2); break;
+		case VK_NEXT:  setEditRow(editRow + windowRows / 2); break;
+		
+		case VK_SHIFT:
+//			if (selectActive) invalidateRange(selectStartTrack, selectStopTrack, selectStartRow, selectStopRow);
+			if (!selectActive)
+			{
+				selectStartTrack = selectStopTrack = editTrack;
+				selectStartRow   = selectStopRow   = editRow;
+//				selectActive = true;
+//				printf("select active\n");
+			}
 			break;
-
-			default:
+		
+		default:
 			break;
 		}
 	}
 	
 	switch (keyCode)
 	{
-		case VK_RETURN:
+	case VK_RETURN:
+		if (editString.size() > 0)
 		{
-			if (editString.size() > 0)
-			{
-				SyncEditData::EditCommand *cmd = new SyncEditData::EditCommand(
-					editTrack, editRow,
-					true, float(_tstof(editString.c_str()))
-				);
-				syncData->exec(cmd);
-				
-				editString.clear();
-				invalidatePos(editTrack, editRow);
-			}
-			else MessageBeep(0);
+			SyncEditData::EditCommand *cmd = new SyncEditData::EditCommand(
+				editTrack, editRow,
+				true, float(_tstof(editString.c_str()))
+			);
+			syncData->exec(cmd);
+			
+			editString.clear();
+			invalidatePos(editTrack, editRow);
 		}
+		else MessageBeep(0);
 		break;
-
-		case VK_DELETE:
+	
+	case VK_DELETE:
 		{
 			SyncEditData::EditCommand *cmd = new SyncEditData::EditCommand(
 				editTrack, editRow,
@@ -664,30 +670,30 @@ LRESULT TrackView::onKeyDown(UINT keyCode, UINT flags)
 			invalidatePos(editTrack, editRow);
 		}
 		break;
-
-		case VK_BACK:
-			if (editString.size() > 0)
-			{
-				editString.resize(editString.size() - 1);
-				invalidatePos(editTrack, editRow);
-			}
-			else MessageBeep(0);
+	
+	case VK_BACK:
+		if (editString.size() > 0)
+		{
+			editString.resize(editString.size() - 1);
+			invalidatePos(editTrack, editRow);
+		}
+		else MessageBeep(0);
 		break;
-
-		case VK_CANCEL:
-		case VK_ESCAPE:
-			if (selectActive)
-			{
-				selectActive = false;
-				invalidateRange(selectStartTrack, selectStopTrack, selectStartRow, selectStopRow);
-			}
-			if (editString.size() > 0)
-			{
-				// return to old value (i.e don't clear)
-				editString.clear();
-				invalidatePos(editTrack, editRow);
-				MessageBeep(0);
-			}
+	
+	case VK_CANCEL:
+	case VK_ESCAPE:
+		if (selectActive)
+		{
+			selectActive = false;
+			invalidateRange(selectStartTrack, selectStopTrack, selectStartRow, selectStopRow);
+		}
+		if (editString.size() > 0)
+		{
+			// return to old value (i.e don't clear)
+			editString.clear();
+			invalidatePos(editTrack, editRow);
+			MessageBeep(0);
+		}
 		break;
 	}
 	return FALSE;
@@ -698,26 +704,27 @@ LRESULT TrackView::onChar(UINT keyCode, UINT flags)
 	printf("char: \"%c\" (%d) - flags: %x\n", (char)keyCode, keyCode, flags);
 	switch ((char)keyCode)
 	{
-		case '.':
-			// only one '.' allowed
-			if (std::string::npos != editString.find('.'))
-			{
-				MessageBeep(0);
-				break;
-			}
-		case '0':
-		case '1':
-		case '2':
-		case '3':
-		case '4':
-		case '5':
-		case '6':
-		case '7':
-		case '8':
-		case '9':
-			editString.push_back(keyCode);
-			printf("accepted: %c - %s\n", (char)keyCode, editString.c_str());
-			invalidatePos(editTrack, editRow);
+	case '.':
+		// only one '.' allowed
+		if (std::string::npos != editString.find('.'))
+		{
+			MessageBeep(0);
+			break;
+		}
+	
+	case '0':
+	case '1':
+	case '2':
+	case '3':
+	case '4':
+	case '5':
+	case '6':
+	case '7':
+	case '8':
+	case '9':
+		editString.push_back(keyCode);
+		printf("accepted: %c - %s\n", (char)keyCode, editString.c_str());
+		invalidatePos(editTrack, editRow);
 		break;
 	}
 	return FALSE;
@@ -727,10 +734,10 @@ LRESULT TrackView::onSize(int width, int height)
 {
 	const int oldWindowWidth = windowWidth;
 	const int oldWindowHeight = windowHeight;
-
+	
 	windowWidth  = width;
 	windowHeight = height;
-
+	
 	windowRows   = (height - topMarginHeight) / fontHeight;
 	windowTracks = (width  - leftMarginWidth) / trackWidth;
 	
@@ -745,41 +752,41 @@ LRESULT TrackView::windowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	
 	switch(msg)
 	{
-		case WM_CREATE:  return onCreate();
-		
-		case WM_CLOSE:
-			DestroyWindow(hwnd);
+	case WM_CREATE:  return onCreate();
+	
+	case WM_CLOSE:
+		DestroyWindow(hwnd);
 		break;
-		
-		case WM_DESTROY:
-			PostQuitMessage(0);
+	
+	case WM_DESTROY:
+		PostQuitMessage(0);
 		break;
-		
-		case WM_SIZE:    return onSize(LOWORD(lParam), HIWORD(lParam));
-		case WM_VSCROLL: return onVScroll(LOWORD(wParam), getScrollPos(hwnd, SB_VERT));
-		case WM_HSCROLL: return onHScroll(LOWORD(wParam), getScrollPos(hwnd, SB_HORZ));
-		case WM_PAINT:   return onPaint();
-		case WM_KEYDOWN: return onKeyDown((UINT)wParam, (UINT)lParam);
-		case WM_CHAR:    return onChar((UINT)wParam, (UINT)lParam);
-
-		case WM_COPY:  copy();  break;
-		case WM_CUT:   cut();   break;
-		case WM_PASTE: paste(); break;
-
-		case WM_UNDO:
-			if (!syncData->undo()) MessageBeep(0);
-			// unfortunately, we don't know how much to invalidate... so we'll just invalidate it all.
-			InvalidateRect(hwnd, NULL, TRUE);
+	
+	case WM_SIZE:    return onSize(LOWORD(lParam), HIWORD(lParam));
+	case WM_VSCROLL: return onVScroll(LOWORD(wParam), getScrollPos(hwnd, SB_VERT));
+	case WM_HSCROLL: return onHScroll(LOWORD(wParam), getScrollPos(hwnd, SB_HORZ));
+	case WM_PAINT:   return onPaint();
+	case WM_KEYDOWN: return onKeyDown((UINT)wParam, (UINT)lParam);
+	case WM_CHAR:    return onChar((UINT)wParam, (UINT)lParam);
+	
+	case WM_COPY:  copy();  break;
+	case WM_CUT:   cut();   break;
+	case WM_PASTE: paste(); break;
+	
+	case WM_UNDO:
+		if (!syncData->undo()) MessageBeep(0);
+		// unfortunately, we don't know how much to invalidate... so we'll just invalidate it all.
+		InvalidateRect(hwnd, NULL, TRUE);
 		break;
-
-		case WM_REDO:
-			if (!syncData->redo()) MessageBeep(0);
-			// unfortunately, we don't know how much to invalidate... so we'll just invalidate it all.
-			InvalidateRect(hwnd, NULL, TRUE);
+	
+	case WM_REDO:
+		if (!syncData->redo()) MessageBeep(0);
+		// unfortunately, we don't know how much to invalidate... so we'll just invalidate it all.
+		InvalidateRect(hwnd, NULL, TRUE);
 		break;
-
-		default:
-			return DefWindowProc(hwnd, msg, wParam, lParam);
+	
+	default:
+		return DefWindowProc(hwnd, msg, wParam, lParam);
 	}
 	return FALSE;
 }
@@ -792,38 +799,37 @@ static LRESULT CALLBACK trackViewWindowProc(HWND hwnd, UINT msg, WPARAM wParam, 
 	
 	switch(msg)
 	{
-		case WM_NCCREATE:
-			// Get TrackView from createstruct
-			trackView = (TrackView*)((CREATESTRUCT*)lParam)->lpCreateParams;
-			trackView->hwnd = hwnd;
-			
-			// Set the TrackView instance
-#pragma warning(suppress:4244) /* remove a pointless warning */
-			SetWindowLongPtr(hwnd, 0, (LONG_PTR)trackView);
-
-			// call the proper window procedure
-			return trackView->windowProc(hwnd, msg, wParam, lParam);
-		break;
+	case WM_NCCREATE:
+		// Get TrackView from createstruct
+		trackView = (TrackView*)((CREATESTRUCT*)lParam)->lpCreateParams;
+		trackView->hwnd = hwnd;
 		
-		case WM_NCDESTROY:
+		// Set the TrackView instance
+#pragma warning(suppress:4244) /* remove a pointless warning */
+		SetWindowLongPtr(hwnd, 0, (LONG_PTR)trackView);
+		
+		// call the proper window procedure
+		return trackView->windowProc(hwnd, msg, wParam, lParam);
+		break;
+	
+	case WM_NCDESTROY:
+		ASSERT(NULL != trackView);
 		{
-			ASSERT(NULL != trackView);
-			
 			// call the window proc and store away the return code
 			LRESULT res = trackView->windowProc(hwnd, msg, wParam, lParam);
-
+			
 			// get rid of the TrackView instance
 			trackView = NULL;
 			SetWindowLongPtr(hwnd, 0, (LONG_PTR)NULL);
-
+			
 			// return the stored return code
 			return res;
 		}
 		break;
-		
-		default:
-			ASSERT(NULL != trackView);
-			return trackView->windowProc(hwnd, msg, wParam, lParam);
+	
+	default:
+		ASSERT(NULL != trackView);
+		return trackView->windowProc(hwnd, msg, wParam, lParam);
 	}
 	return 0;
 }

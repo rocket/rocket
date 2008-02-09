@@ -26,8 +26,8 @@ SOCKET clientConnect(SOCKET serverSocket)
 	const char *expectedGreeting = clientGreeting;
 	char recievedGreeting[128];
 	
-	while(recv(clientSocket, recievedGreeting, int(strlen(expectedGreeting)), 0) < 0) Sleep(1);
-
+	recv(clientSocket, recievedGreeting, int(strlen(expectedGreeting)), 0);
+	
 	fprintf(stderr, "got: \"%s\"\n", recievedGreeting);
 	if (strncmp(expectedGreeting, recievedGreeting, strlen(expectedGreeting)) != 0)
 	{

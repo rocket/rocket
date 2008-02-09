@@ -21,6 +21,9 @@ public:
 	void setSyncData(SyncEditData *syncData) { this->syncData = syncData; }
 	SyncEditData *getSyncData() { return syncData; }
 	
+	void setRows(int rows);
+	int getRows() const { return rows; }
+	
 private:
 	// some nasty hackery to forward the window messages
 	friend static LRESULT CALLBACK trackViewWindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
@@ -47,7 +50,7 @@ private:
 	void setupScrollBars();
 	void setScrollPos(int newScrollPosX, int newScrollPosY);
 	void scrollWindow(int newScrollPosX, int newScrollPosY);
-
+	
 	void invalidateRange(int startTrack, int stopTrack, int startRow, int stopRow)
 	{
 		RECT rect;
@@ -124,8 +127,6 @@ private:
 	int windowWidth, windowHeight;
 	int windowRows,  windowTracks;
 	
-	int rows;
-	
 	SyncEditData *syncData;
 	
 	std::basic_string<TCHAR> editString;
@@ -134,6 +135,7 @@ private:
 	HBRUSH editBrush;
 
 	UINT clipboardFormat;
+	int rows;
 };
 
 ATOM registerTrackViewWindowClass(HINSTANCE hInstance);
