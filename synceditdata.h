@@ -17,38 +17,87 @@ public:
 		virtual void undo(SyncEditData *data) = 0;
 	};
 	
+	class InsertCommand : public Command
+	{
+	public:
+		InsertCommand(size_t track, size_t row, const SyncTrack::KeyFrame &key) : track(track), row(row), key(key) {}
+		~InsertCommand() {}
+		
+		virtual void exec(SyncEditData *data)
+		{
+			SyncTrack &track = data->getTrack(this->track);
+			assert(!track.isKeyFrame(row));
+			track.setKeyFrame(row, key);
+		}
+		
+		virtual void undo(SyncEditData *data)
+		{
+			SyncTrack &track = data->getTrack(this->track);
+			assert(track.isKeyFrame(row));
+			track.deleteKeyFrame(row);
+		}
+		
+	private:
+		size_t track, row;
+		SyncTrack::KeyFrame key;
+	};
+	
+	class DeleteCommand : public Command
+	{
+	public:
+		DeleteCommand(size_t track, size_t row) : track(track), row(row) {}
+		~DeleteCommand() {}
+		
+		virtual void exec(SyncEditData *data)
+		{
+			SyncTrack &track = data->getTrack(this->track);
+			assert(track.isKeyFrame(row));
+			oldKey = *track.getKeyFrame(row);
+			track.deleteKeyFrame(row);
+		}
+		
+		virtual void undo(SyncEditData *data)
+		{
+			SyncTrack &track = data->getTrack(this->track);
+			assert(!track.isKeyFrame(row));
+			track.setKeyFrame(row, oldKey);
+		}
+		
+	private:
+		size_t track, row;
+		SyncTrack::KeyFrame oldKey;
+	};
+
+	
 	class EditCommand : public Command
 	{
 	public:
-		EditCommand(size_t track, size_t row, bool existing, float value) : track(track), row(row), newValExisting(existing), newVal(value) {}
+		EditCommand(size_t track, size_t row, const SyncTrack::KeyFrame &key) : track(track), row(row), key(key) {}
 		~EditCommand() {}
 		
 		virtual void exec(SyncEditData *data)
 		{
 			SyncTrack &track = data->getTrack(this->track);
 			
-			// store old state
-			oldValExisting = track.isKeyFrame(row);
-			if (oldValExisting) oldVal = track.getKeyFrame(row)->value;
+			// store old key
+			assert(track.isKeyFrame(row));
+			oldKey = *track.getKeyFrame(row);
 			
 			// update
-			if (!newValExisting) track.deleteKeyFrame(row);
-			else track.setKeyFrame(row, newVal);
+			track.setKeyFrame(row, key);
 		}
 		
 		virtual void undo(SyncEditData *data)
 		{
 			SyncTrack &track = data->getTrack(this->track);
 			
-			// un-update
-			if (!oldValExisting) track.deleteKeyFrame(row);
-			else track.setKeyFrame(row, oldVal);
+			assert(track.isKeyFrame(row));
+			track.setKeyFrame(row, oldKey);
 		}
 		
 	private:
 		size_t track, row;
-		float newVal, oldVal;
-		bool newValExisting, oldValExisting;
+		SyncTrack::KeyFrame oldKey, key;
 	};
 	
 	class MultiCommand : public Command
@@ -124,6 +173,28 @@ public:
 			redoStack.pop();
 			delete cmd;
 		}
+	}
+	
+	void setKey(int track, int row, float val)
+	{
+		SyncTrack &t = getTrack(track);
+		SyncEditData::Command *cmd;
+		if (t.isKeyFrame(row))
+		{
+			cmd = new EditCommand(track, row, val);
+		}
+		else
+		{
+			cmd = new InsertCommand(track, row, val);
+		}
+		exec(cmd);
+	}
+	
+	void deleteKey(int track, int row)
+	{
+		assert(getTrack(track).isKeyFrame(row));
+		Command *cmd = new DeleteCommand(track, row);
+		exec(cmd);
 	}
 	
 private:

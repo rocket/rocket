@@ -38,13 +38,14 @@ TrackView::TrackView()
 
 //	selectBaseBrush = CreateSolidBrush(RGB(0xff, 0xdd, 0xff));
 //	selectDarkBrush = CreateSolidBrush(RGB(0xdd, 0xbb, 0xdd));
+
 	selectBaseBrush = GetSysColorBrush(COLOR_HIGHLIGHT);
 	selectDarkBrush = CreateSolidBrush(darken(GetSysColor(COLOR_HIGHLIGHT), 0.9f));
 	
-	editBrush = CreateSolidBrush(RGB(255, 255, 0));
-
-	clipboardFormat = RegisterClipboardFormat("syncdata");
-	if (0 == clipboardFormat) printf("geh");
+	editBrush = CreateSolidBrush(RGB(255, 255, 0)); // yellow
+	
+	clipboardFormat = RegisterClipboardFormat(_T("syncdata"));
+	assert(0 != clipboardFormat);
 }
 
 TrackView::~TrackView()
@@ -97,13 +98,14 @@ void TrackView::paintTopMargin(HDC hdc, RECT rcTracks)
 	fillRect = topLeftMargin;
 	DrawEdge(hdc, &fillRect, BDR_RAISEDINNER | BDR_RAISEDOUTER, BF_ADJUST | BF_BOTTOM);
 	FillRect(hdc, &fillRect, GetSysColorBrush(COLOR_3DFACE));
-	ExcludeClipRect(hdc, topLeftMargin.left, topLeftMargin.top, topLeftMargin.right, topLeftMargin.bottom);
 	
 	int firstTrack = min(max(scrollPosX / trackWidth, 0), getTrackCount() - 1);
 	int lastTrack  = min(max(firstTrack + windowTracks + 1, 0), getTrackCount() - 1);
 	
 	SyncData *syncData = getSyncData();
 	if (NULL == syncData) return;
+
+	SetTextColor(hdc, GetSysColor(COLOR_WINDOWTEXT));
 	
 	SyncData::TrackContainer::iterator trackIter = syncData->tracks.begin();
 	for (int track = 0; track <= lastTrack; ++track, ++trackIter)
@@ -134,7 +136,6 @@ void TrackView::paintTopMargin(HDC hdc, RECT rcTracks)
 			fillRect.left, 0,
 			trackName.data(), int(trackName.length())
 		);
-		ExcludeClipRect(hdc, topMargin.left, topMargin.top, topMargin.right, topMargin.bottom);
 	}
 	
 	RECT topRightMargin;
@@ -145,7 +146,9 @@ void TrackView::paintTopMargin(HDC hdc, RECT rcTracks)
 	fillRect = topRightMargin;
 	DrawEdge(hdc, &fillRect, BDR_RAISEDINNER | BDR_RAISEDOUTER, BF_ADJUST | BF_BOTTOM);
 	FillRect(hdc, &fillRect, GetSysColorBrush(COLOR_3DFACE));
-	ExcludeClipRect(hdc, topRightMargin.left, topRightMargin.top, topRightMargin.right, topRightMargin.bottom);
+	
+	// make sure that the top margin isn't overdrawn by the track-data
+	ExcludeClipRect(hdc, 0, 0, rcTracks.right, topMarginHeight);
 }
 
 void TrackView::paintTracks(HDC hdc, RECT rcTracks)
@@ -162,9 +165,6 @@ void TrackView::paintTracks(HDC hdc, RECT rcTracks)
 	lastRow  = min(max(lastRow,  0), rows - 1);
 	
 	SetBkMode(hdc, TRANSPARENT);
-	
-//	SelectObject(hdc, editBrush);
-	
 	paintTopMargin(hdc, rcTracks);
 	
 	for (int row = firstRow; row <= lastRow; ++row)
@@ -183,19 +183,18 @@ void TrackView::paintTracks(HDC hdc, RECT rcTracks)
 		FillRect(hdc, &leftMargin, fillBrush);
 		
 		DrawEdge(hdc, &leftMargin, BDR_RAISEDINNER | BDR_RAISEDOUTER, BF_RIGHT | BF_BOTTOM | BF_TOP);
-//		Rectangle( hdc, leftMargin.left, leftMargin.top, leftMargin.right, leftMargin.bottom + 1);
-		if ((row % 16) == 0)      SetTextColor(hdc, RGB(0, 0, 0));
-		else if ((row % 8) == 0)  SetTextColor(hdc, RGB(32, 32, 32));
-		else if ((row % 4) == 0)  SetTextColor(hdc, RGB(64, 64, 64));
-		else                      SetTextColor(hdc, RGB(128, 128, 128));
+		if ((row % 8) == 0)      SetTextColor(hdc, RGB(0, 0, 0));
+		else if ((row % 4) == 0) SetTextColor(hdc, RGB(64, 64, 64));
+		else                     SetTextColor(hdc, RGB(128, 128, 128));
+		
+/*		if ((row % 4) == 0) SetTextColor(hdc, GetSysColor(COLOR_BTNTEXT));
+		else                SetTextColor(hdc, GetSysColor(COLOR_GRAYTEXT)); */
 		
 		_sntprintf_s(temp, 256, _T("%0*Xh"), 5, row);
 		TextOut(hdc,
 			leftMargin.left, leftMargin.top,
 			temp, int(_tcslen(temp))
 		);
-		
-		ExcludeClipRect(hdc, leftMargin.left, leftMargin.top, leftMargin.right, leftMargin.bottom);
 	}
 	
 	SetTextColor(hdc, GetSysColor(COLOR_WINDOWTEXT));
@@ -330,7 +329,7 @@ void TrackView::copy()
 	
 	if (FAILED(OpenClipboard(getWin())))
 	{
-		MessageBox(NULL, "Failed to open clipboard", NULL, MB_OK);
+		MessageBox(NULL, _T("Failed to open clipboard"), NULL, MB_OK);
 		return;
 	}
 	
@@ -607,6 +606,29 @@ LRESULT TrackView::onHScroll(UINT sbCode, int newPos)
 	return FALSE;
 }
 
+void TrackView::onReturn()
+{
+	if (editString.size() > 0)
+	{
+		syncData->setKey(editTrack, editRow, float(_tstof(editString.c_str())));
+		
+		editString.clear();
+		invalidatePos(editTrack, editRow);
+	}
+	else MessageBeep(0);
+}
+
+void TrackView::onDelete()
+{
+	SyncTrack &track = syncData->getTrack(editTrack);
+	if (track.isKeyFrame(editRow))
+	{
+		syncData->deleteKey(editTrack, editRow);
+		invalidatePos(editTrack, editRow);
+	}
+	else MessageBeep(0);
+}
+
 LRESULT TrackView::onKeyDown(UINT keyCode, UINT flags)
 {
 	bool refreshCaret = false;
@@ -645,31 +667,8 @@ LRESULT TrackView::onKeyDown(UINT keyCode, UINT flags)
 	
 	switch (keyCode)
 	{
-	case VK_RETURN:
-		if (editString.size() > 0)
-		{
-			SyncEditData::EditCommand *cmd = new SyncEditData::EditCommand(
-				editTrack, editRow,
-				true, float(_tstof(editString.c_str()))
-			);
-			syncData->exec(cmd);
-			
-			editString.clear();
-			invalidatePos(editTrack, editRow);
-		}
-		else MessageBeep(0);
-		break;
-	
-	case VK_DELETE:
-		{
-			SyncEditData::EditCommand *cmd = new SyncEditData::EditCommand(
-				editTrack, editRow,
-				false, 0.0f
-			);
-			syncData->exec(cmd);
-			invalidatePos(editTrack, editRow);
-		}
-		break;
+	case VK_RETURN: onReturn(); break;
+	case VK_DELETE: onDelete(); break;
 	
 	case VK_BACK:
 		if (editString.size() > 0)

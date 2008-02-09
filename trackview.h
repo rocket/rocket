@@ -38,6 +38,9 @@ private:
 	LRESULT onKeyDown(UINT keyCode, UINT flags);
 	LRESULT onChar(UINT keyCode, UINT flags);
 	
+	void onReturn();
+	void onDelete();
+
 	void copy();
 	void cut();
 	void paste();

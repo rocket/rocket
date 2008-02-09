@@ -27,8 +27,8 @@ static LRESULT CALLBACK setRowsDialogProc(HWND hDlg, UINT message, WPARAM wParam
 			assert(NULL != rows);
 			
 			/* create row-string */
-			char temp[256];
-			_snprintf(temp, 256, "%d", *rows);
+			TCHAR temp[256];
+			_sntprintf_s(temp, 256, _T("%d"), *rows);
 			
 			/* set initial row count */
 			SetWindowText(GetDlgItem(hDlg, IDC_SETROWS_EDIT), temp);
@@ -39,9 +39,9 @@ static LRESULT CALLBACK setRowsDialogProc(HWND hDlg, UINT message, WPARAM wParam
 		if (LOWORD(wParam) == IDOK)
 		{
 			/* get value */
-			char temp[256];
+			TCHAR temp[256];
 			GetWindowText(GetDlgItem(hDlg, IDC_SETROWS_EDIT), temp, 256);
-			int result = atoi(temp);
+			int result = _tstoi(temp);
 			
 			/* update editor */
 			SendMessage(GetParent(hDlg), WM_SETROWS, 0, result);
@@ -131,7 +131,7 @@ static LRESULT CALLBACK mainWindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARA
 				HINSTANCE hInstance = GetModuleHandle(NULL);
 				int rows = trackView->getRows();
 				INT_PTR result = DialogBoxParam(hInstance, MAKEINTRESOURCE(IDD_SETROWS), hwnd, (DLGPROC)setRowsDialogProc, (LPARAM)&rows);
-				if (FAILED(result)) MessageBox(NULL, "unable to create dialog box", NULL, MB_OK);
+				if (FAILED(result)) MessageBox(NULL, _T("unable to create dialog box"), NULL, MB_OK);
 				if (IDOK == result)
 				{
 					printf("result: %d\n", result);
@@ -223,8 +223,8 @@ int _tmain(int argc, _TCHAR* argv[])
 	
 	for (int i = 0; i < 2; ++i)
 	{
-		char temp[256];
-		_snprintf(temp, 256, "gen %02d", i);
+		TCHAR temp[256];
+		_sntprintf_s(temp, 256, _T("gen %02d"), i);
 		SyncTrack &temp2 = syncData.getTrack(temp);
 	}
 	
