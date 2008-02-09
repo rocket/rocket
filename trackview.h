@@ -124,6 +124,8 @@ private:
 	int windowWidth, windowHeight;
 	int windowRows,  windowTracks;
 	
+	int rows;
+	
 	SyncEditData *syncData;
 	
 	std::basic_string<TCHAR> editString;

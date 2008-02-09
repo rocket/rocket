@@ -11,7 +11,6 @@ static const int fontHeight = 16;
 static const int fontWidth = 6;
 
 static const int trackWidth = fontWidth * 16;
-static const int rows = 0x80;
 static DWORD darken(DWORD col, float amt)
 {
 	return RGB(GetRValue(col) * amt, GetGValue(col) * amt, GetBValue(col) * amt);
@@ -26,11 +25,12 @@ TrackView::TrackView()
 	
 	editRow = 0;
 	editTrack = 0;
+	rows = 0x80;
 	
 	selectStartTrack = selectStopTrack = 0;
 	selectStartRow = selectStopRow = 0;
 	selectActive = false;
-
+	
 	this->hwnd = NULL;
 	
 	bgBaseBrush = GetSysColorBrush(COLOR_WINDOW); // CreateSolidBrush(RGB(0xff, 0xff, 0xff));
@@ -175,14 +175,14 @@ void TrackView::paintTracks(HDC hdc, RECT rcTracks)
 		leftMargin.right = leftMarginWidth;
 		leftMargin.top    = getScreenY(row);
 		leftMargin.bottom = leftMargin.top + fontHeight;
-
+		
 		if (!RectVisible(hdc, &leftMargin)) continue;
-
+		
 		HBRUSH fillBrush;
 		if (row == editRow) fillBrush = editBrush;
 		else fillBrush = GetSysColorBrush(COLOR_3DFACE);
 		FillRect(hdc, &leftMargin, fillBrush);
-
+		
 		DrawEdge(hdc, &leftMargin, BDR_RAISEDINNER | BDR_RAISEDOUTER, BF_RIGHT | BF_BOTTOM | BF_TOP);
 //		Rectangle( hdc, leftMargin.left, leftMargin.top, leftMargin.right, leftMargin.bottom + 1);
 		if ((row % 16) == 0)      SetTextColor(hdc, RGB(0, 0, 0));

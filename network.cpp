@@ -1,4 +1,5 @@
 #include "network.h"
+#include <stdio.h>
 
 bool initNetwork()
 {
@@ -20,11 +21,14 @@ SOCKET clientConnect(SOCKET serverSocket)
 {
 	SOCKET clientSocket = accept(serverSocket,  NULL, NULL);
 	if (INVALID_SOCKET == clientSocket) return INVALID_SOCKET;
+	printf("%x\n", clientSocket);
 	
 	const char *expectedGreeting = clientGreeting;
 	char recievedGreeting[128];
 	
-	recv(clientSocket, recievedGreeting, int(strlen(expectedGreeting)), 0);
+	while(recv(clientSocket, recievedGreeting, int(strlen(expectedGreeting)), 0) < 0) Sleep(1);
+
+	fprintf(stderr, "got: \"%s\"\n", recievedGreeting);
 	if (strncmp(expectedGreeting, recievedGreeting, strlen(expectedGreeting)) != 0)
 	{
 		closesocket(clientSocket);

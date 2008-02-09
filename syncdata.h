@@ -39,34 +39,34 @@ public:
 		return lower->second.value + delta * d;
 	};
 	
-	bool isKeyFrame(int row) const
+	bool isKeyFrame(size_t row) const
 	{
 		return keyFrames.find(row) != keyFrames.end();
 	}
 	
-	const KeyFrame *getKeyFrame(int row) const
+	const KeyFrame *getKeyFrame(size_t row) const
 	{
 		KeyFrameContainer::const_iterator iter = keyFrames.find(row);
 		if (iter == keyFrames.end()) return NULL;
 		return &iter->second;
 	}
 	
-	void deleteKeyFrame(int row)
+	void deleteKeyFrame(size_t row)
 	{
 		keyFrames.erase(row);
 	}
-
-	void setKeyFrame(int row, const KeyFrame &keyFrame)
+	
+	void setKeyFrame(size_t row, const KeyFrame &keyFrame)
 	{
 		keyFrames[row] = keyFrame;
 	}
 	
-	void setKeyFrame(int row, const float value)
+	void setKeyFrame(size_t row, const float value)
 	{
 		keyFrames[row] = KeyFrame(value);
 	}
-
-	int getFrameCount()
+	
+	size_t getFrameCount() const
 	{
 		KeyFrameContainer::const_iterator iter = keyFrames.end();
 		iter--;
@@ -74,7 +74,7 @@ public:
 	}
 	
 private:
-	typedef std::map<int, struct KeyFrame> KeyFrameContainer;
+	typedef std::map<size_t, struct KeyFrame> KeyFrameContainer;
 	KeyFrameContainer keyFrames;
 };
 

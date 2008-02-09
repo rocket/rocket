@@ -39,15 +39,21 @@ int main(int argc, char *argv[])
 		{
 			unsigned char cmd = 0;
 			int ret = recv(serverSocket, (char*)&cmd, 1, 0);
-			if (0 == ret) done = true;
+			if (0 == ret)
+			{
+				done = true;
+				break;
+			}
 			else
 			{
 				switch (cmd)
 				{
 					case 1:
 						printf("yes, master!\n");
-						unsigned char cmd = 0x1;
-						send(serverSocket, (char*)&cmd, 1, 0);
+						{
+							unsigned char cmd = 0x1;
+							send(serverSocket, (char*)&cmd, 1, 0);
+						}
 					break;
 					
 					default:

@@ -13,6 +13,8 @@ TrackView *trackView;
 HWND trackViewWin;
 HWND statusBarWin;
 
+#include "network.h"
+
 static LRESULT CALLBACK mainWindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
 	switch(msg)
@@ -36,8 +38,8 @@ static LRESULT CALLBACK mainWindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARA
 			
 			int statwidths[] = { 100, -1 };
 			SendMessage(statusBarWin, SB_SETPARTS, sizeof(statwidths) / sizeof(int), (LPARAM)statwidths);
-			SendMessage(statusBarWin, SB_SETTEXT, 0, (LPARAM)"Hi there :)");
-			SendMessage(statusBarWin, SB_SETTEXT, 1, (LPARAM)"Hi there :)");
+			SendMessage(statusBarWin, SB_SETTEXT, 0, (LPARAM)_T("Hi there :)"));
+			SendMessage(statusBarWin, SB_SETTEXT, 1, (LPARAM)_T("Hi there :)"));
 		}
 		break;
 		
@@ -63,6 +65,7 @@ static LRESULT CALLBACK mainWindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARA
 			switch (LOWORD(wParam))
 			{
 			case ID_FILE_SAVE: /* meh.*/ break;
+			case ID_FILE_EXIT:  PostQuitMessage(0); break;
 			case ID_EDIT_UNDO:  SendMessage(trackViewWin, WM_UNDO,  0, 0); break;
 			case ID_EDIT_REDO:  SendMessage(trackViewWin, WM_REDO,  0, 0); break;
 			case ID_EDIT_COPY:  SendMessage(trackViewWin, WM_COPY,  0, 0); break;
@@ -71,6 +74,40 @@ static LRESULT CALLBACK mainWindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARA
 			default:
 				printf("cmd %d %d\n", wParam, lParam);
 			}
+		break;
+
+		case WM_USER+1:
+		{
+			if (WSAGETSELECTERROR(lParam))
+			{
+				printf("ERR!\n");
+				// error occurred
+				WSACleanup ();
+				return 0;
+			}
+			
+			printf("tjo %x %x\n", lParam, wParam);
+			SOCKET serverSocket = (SOCKET)wParam;
+			switch (WSAGETSELECTEVENT(lParam))
+			{
+			case FD_ACCEPT:
+				printf("accept\n");
+				{
+					SOCKET clientSocket = clientConnect(serverSocket);
+					if (INVALID_SOCKET != clientSocket)
+					{
+						unsigned char cmd = 0x1;
+						send(clientSocket, (char*)&cmd, 1, 0);
+						closesocket(clientSocket);
+					}
+					else
+					{
+						puts("accept failed!");
+					}
+				}
+			break;
+			}
+		}
 		break;
 		
 		default:
@@ -98,8 +135,6 @@ static ATOM registerMainWindowClass(HINSTANCE hInstance)
 	
 	return RegisterClassEx(&wc);
 }
-
-#include "network.h"
 
 int _tmain(int argc, _TCHAR* argv[])
 {
@@ -201,11 +236,15 @@ int _tmain(int argc, _TCHAR* argv[])
 
 #if 1
 
+	printf("server socket %x\n", serverSocket);
+//	WSAAsyncSelect(serverSocket, hwnd, WM_USER+1, FD_ACCEPT);
+
 	bool done = false;
 	SOCKET clientSocket = INVALID_SOCKET;
 	MSG msg;
 	while (!done)
 	{
+#if 1
 		if (INVALID_SOCKET == clientSocket)
 		{
 			fd_set fds;
@@ -256,7 +295,7 @@ int _tmain(int argc, _TCHAR* argv[])
 			closesocket(clientSocket);
 			clientSocket = INVALID_SOCKET; */
 		}
-
+#endif
 		while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
 		{
 			if (!TranslateAccelerator(hwnd, accel, &msg))
@@ -266,6 +305,7 @@ int _tmain(int argc, _TCHAR* argv[])
 				if (WM_QUIT == msg.message) done = true;
 			}
 		}
+		Sleep(1);
 	}
 	
 	closesocket(serverSocket);
