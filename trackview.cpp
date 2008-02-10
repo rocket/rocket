@@ -29,7 +29,6 @@ TrackView::TrackView()
 	
 	selectStartTrack = selectStopTrack = 0;
 	selectStartRow = selectStopRow = 0;
-	selectActive = false;
 	
 	this->hwnd = NULL;
 	
@@ -223,7 +222,7 @@ void TrackView::paintTracks(HDC hdc, RECT rcTracks)
 			
 			if (!RectVisible(hdc, &patternDataRect)) continue;
 			
-			bool selected = selectActive && (track >= selectLeft && track <= selectRight) && (row >= selectTop && row <= selectBottom);
+			bool selected = (track >= selectLeft && track <= selectRight) && (row >= selectTop && row <= selectBottom);
 			
 			HBRUSH baseBrush = bgBaseBrush;
 			HBRUSH darkBrush = bgDarkBrush;
@@ -309,8 +308,6 @@ void TrackView::paintTracks(HDC hdc, RECT rcTracks)
 
 void TrackView::copy()
 {
-	if (!selectActive) return;
-	
 	int selectLeft  = min(selectStartTrack, selectStopTrack);
 	int selectRight = max(selectStartTrack, selectStopTrack);
 	int selectTop    = min(selectStartRow, selectStopRow);
@@ -373,10 +370,10 @@ void TrackView::copy()
 
 void TrackView::cut()
 {
-	int selectLeft  = min(selectStartTrack, selectStopTrack);
+/*	int selectLeft  = min(selectStartTrack, selectStopTrack);
 	int selectRight = max(selectStartTrack, selectStopTrack);
 	int selectTop    = min(selectStartRow, selectStopRow);
-	int selectBottom = max(selectStartRow, selectStopRow);
+	int selectBottom = max(selectStartRow, selectStopRow); */
 	
 	copy();
 #if 0
@@ -394,10 +391,10 @@ void TrackView::cut()
 
 void TrackView::paste()
 {
-	int selectLeft  = min(selectStartTrack, selectStopTrack);
+/*	int selectLeft  = min(selectStartTrack, selectStopTrack);
 	int selectRight = max(selectStartTrack, selectStopTrack);
 	int selectTop    = min(selectStartRow, selectStopRow);
-	int selectBottom = max(selectStartRow, selectStopRow);
+	int selectBottom = max(selectStartRow, selectStopRow); */
 }
 
 void TrackView::setupScrollBars()
@@ -465,18 +462,19 @@ void TrackView::setEditRow(int newEditRow)
 	// clamp to document
 	editRow = min(max(editRow, 0), rows - 1);
 	
-	bool selecting  = GetKeyState(VK_SHIFT) < 0 ? true : false;
-	if (selecting)
+	if (oldEditRow != editRow)
 	{
-		selectActive = true;
-		selectStopRow = editRow;
-		invalidateRange(selectStartTrack, selectStopTrack, oldEditRow, editRow);
-	}
-	else if (selectActive)
-	{
-		// leave select mode
-		selectActive = false;
-		invalidateRange(selectStartTrack, selectStopTrack, selectStartRow, selectStopRow);
+		if (GetKeyState(VK_SHIFT) < 0)
+		{
+			selectStopRow = editRow;
+			invalidateRange(selectStartTrack, selectStopTrack, oldEditRow, editRow);
+		}
+		else
+		{
+			invalidateRange(selectStartTrack, selectStopTrack, selectStartRow, selectStopRow);
+			selectStartRow   = selectStopRow   = editRow;
+			selectStartTrack = selectStopTrack = editTrack;
+		}
 	}
 	
 	invalidateRow(oldEditRow);
@@ -494,18 +492,19 @@ void TrackView::setEditTrack(int newEditTrack)
 	editTrack = max(editTrack, 0);
 	editTrack = min(editTrack, getTrackCount() - 1);
 	
-	bool selecting  = GetKeyState(VK_SHIFT) < 0 ? true : false;
-	if (selecting)
+	if (oldEditTrack != editTrack)
 	{
-		selectActive = true;
-		selectStopTrack = editTrack;
-		invalidateRange(oldEditTrack, editTrack, selectStartRow, selectStopRow);
-	}
-	else if (selectActive)
-	{
-		// leave select mode
-		selectActive = false;
-		invalidateRange(selectStartTrack, selectStopTrack, selectStartRow, selectStopRow);
+		if (GetKeyState(VK_SHIFT) < 0)
+		{
+			selectStopTrack = editTrack;
+			invalidateRange(oldEditTrack, editTrack, selectStartRow, selectStopRow);
+		}
+		else
+		{
+			invalidateRange(selectStartTrack, selectStopTrack, selectStartRow, selectStopRow);
+			selectStartRow   = selectStopRow   = editRow;
+			selectStartTrack = selectStopTrack = editTrack;
+		}
 	}
 	
 	invalidateTrack(oldEditTrack);
@@ -529,14 +528,13 @@ static int getScrollPos(HWND hwnd, int bar)
 
 void TrackView::setRows(int rows)
 {
-	int oldRows = getRows();
 	this->rows = rows;
 	InvalidateRect(getWin(), NULL, FALSE);
 	setEditRow(min(editRow, rows - 1));
 }
 
 
-LRESULT TrackView::onVScroll(UINT sbCode, int newPos)
+LRESULT TrackView::onVScroll(UINT sbCode, int /*newPos*/)
 {
 	switch (sbCode)
 	{
@@ -569,7 +567,7 @@ LRESULT TrackView::onVScroll(UINT sbCode, int newPos)
 	return FALSE;
 }
 
-LRESULT TrackView::onHScroll(UINT sbCode, int newPos)
+LRESULT TrackView::onHScroll(UINT sbCode, int /*newPos*/)
 {
 	switch (sbCode)
 	{
@@ -629,13 +627,8 @@ void TrackView::onDelete()
 	else MessageBeep(0);
 }
 
-LRESULT TrackView::onKeyDown(UINT keyCode, UINT flags)
+LRESULT TrackView::onKeyDown(UINT keyCode, UINT /*flags*/)
 {
-	bool refreshCaret = false;
-	bool ctrlDown   = GetKeyState(VK_CONTROL) < 0 ? true : false;
-	bool shiftDown  = GetKeyState(VK_SHIFT) < 0 ? true : false;
-	bool altDown    = GetKeyState(VK_MENU) < 0 ? true : false;
-	
 	if (editString.empty())
 	{
 		switch (keyCode)
@@ -648,17 +641,6 @@ LRESULT TrackView::onKeyDown(UINT keyCode, UINT flags)
 		
 		case VK_PRIOR: setEditRow(editRow - windowRows / 2); break;
 		case VK_NEXT:  setEditRow(editRow + windowRows / 2); break;
-		
-		case VK_SHIFT:
-//			if (selectActive) invalidateRange(selectStartTrack, selectStopTrack, selectStartRow, selectStopRow);
-			if (!selectActive)
-			{
-				selectStartTrack = selectStopTrack = editTrack;
-				selectStartRow   = selectStopRow   = editRow;
-//				selectActive = true;
-//				printf("select active\n");
-			}
-			break;
 		
 		default:
 			break;
@@ -681,11 +663,6 @@ LRESULT TrackView::onKeyDown(UINT keyCode, UINT flags)
 	
 	case VK_CANCEL:
 	case VK_ESCAPE:
-		if (selectActive)
-		{
-			selectActive = false;
-			invalidateRange(selectStartTrack, selectStopTrack, selectStartRow, selectStopRow);
-		}
 		if (editString.size() > 0)
 		{
 			// return to old value (i.e don't clear)
@@ -700,8 +677,8 @@ LRESULT TrackView::onKeyDown(UINT keyCode, UINT flags)
 
 LRESULT TrackView::onChar(UINT keyCode, UINT flags)
 {
-	printf("char: \"%c\" (%d) - flags: %x\n", (char)keyCode, keyCode, flags);
-	switch ((char)keyCode)
+	printf("char: \"%c\" (%d) - flags: %x\n", char(keyCode), keyCode, flags);
+	switch (char(keyCode))
 	{
 	case '.':
 		// only one '.' allowed
@@ -721,8 +698,8 @@ LRESULT TrackView::onChar(UINT keyCode, UINT flags)
 	case '7':
 	case '8':
 	case '9':
-		editString.push_back(keyCode);
-		printf("accepted: %c - %s\n", (char)keyCode, editString.c_str());
+		editString.push_back(char(keyCode));
+		printf("accepted: %c - %s\n", char(keyCode), editString.c_str());
 		invalidatePos(editTrack, editRow);
 		break;
 	}
@@ -731,9 +708,6 @@ LRESULT TrackView::onChar(UINT keyCode, UINT flags)
 
 LRESULT TrackView::onSize(int width, int height)
 {
-	const int oldWindowWidth = windowWidth;
-	const int oldWindowHeight = windowHeight;
-	
 	windowWidth  = width;
 	windowHeight = height;
 	
@@ -830,7 +804,6 @@ static LRESULT CALLBACK trackViewWindowProc(HWND hwnd, UINT msg, WPARAM wParam, 
 		ASSERT(NULL != trackView);
 		return trackView->windowProc(hwnd, msg, wParam, lParam);
 	}
-	return 0;
 }
 
 ATOM registerTrackViewWindowClass(HINSTANCE hInstance)
@@ -861,7 +834,7 @@ HWND TrackView::create(HINSTANCE hInstance, HWND hwndParent)
 		WS_VSCROLL | WS_HSCROLL | WS_CHILD | WS_VISIBLE,
 		CW_USEDEFAULT, CW_USEDEFAULT, // x, y
 		CW_USEDEFAULT, CW_USEDEFAULT, // width, height
-		hwndParent, NULL, GetModuleHandle(NULL), (void*)this
+		hwndParent, NULL, hInstance, (void*)this
 	);
 	return hwnd;
 }

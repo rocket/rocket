@@ -116,7 +116,6 @@ private:
 		return int(syncData->getTrackCount());
 	};
 	
-	bool selectActive;
 	int selectStartTrack, selectStopTrack;
 	int selectStartRow, selectStopRow;
 	
