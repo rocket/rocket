@@ -118,6 +118,8 @@ public:
 			commands.push_back(cmd);
 		}
 		
+		size_t getSize() const { return commands.size(); }
+		
 		virtual void exec(SyncEditData *data)
 		{
 			std::list<Command*>::iterator it;
@@ -175,18 +177,18 @@ public:
 		}
 	}
 	
-	void setKeyFrame(int track, int row, const SyncTrack::KeyFrame &key)
+	Command *getSetKeyFrameCommand(int track, int row, const SyncTrack::KeyFrame &key)
 	{
 		SyncTrack &t = getTrack(track);
 		SyncEditData::Command *cmd;
-		if (t.isKeyFrame(row))
-		{
-			cmd = new EditCommand(track, row, key);
-		}
-		else
-		{
-			cmd = new InsertCommand(track, row, key);
-		}
+		if (t.isKeyFrame(row)) cmd = new EditCommand(track, row, key);
+		else                   cmd = new InsertCommand(track, row, key);
+		return cmd;
+	}
+	
+	void setKeyFrame(int track, int row, const SyncTrack::KeyFrame &key)
+	{
+		SyncEditData::Command *cmd = getSetKeyFrameCommand(track, row, key);
 		exec(cmd);
 	}
 	

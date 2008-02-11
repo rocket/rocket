@@ -221,7 +221,7 @@ int _tmain(int argc, _TCHAR* argv[])
 	SyncTrack &camYTrack = syncData.getTrack(_T("cam.y"));
 	SyncTrack &camZTrack = syncData.getTrack(_T("cam.z"));
 	
-	for (int i = 0; i < 2; ++i)
+	for (int i = 0; i < 16; ++i)
 	{
 		TCHAR temp[256];
 		_sntprintf_s(temp, 256, _T("gen %02d"), i);

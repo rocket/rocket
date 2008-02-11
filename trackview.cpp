@@ -1,6 +1,7 @@
 #include "stdafx.h"
 
 #include "trackview.h"
+#include <vector>
 
 static const TCHAR *trackViewWindowClassName = _T("TrackView");
 
@@ -310,7 +311,14 @@ void TrackView::paintTracks(HDC hdc, RECT rcTracks)
 	}
 }
 
-void TrackView::copy()
+struct CopyEntry
+{
+	int track, row;
+	SyncTrack::KeyFrame keyFrame;
+};
+
+
+void TrackView::editCopy()
 {
 	int selectLeft  = min(selectStartTrack, selectStopTrack);
 	int selectRight = max(selectStartTrack, selectStopTrack);
@@ -340,66 +348,129 @@ void TrackView::copy()
 	size_t cells = columns * rows;
 	
 	std::string copyString;
+	
+	std::vector<struct CopyEntry> copyEntries;
 	for (int row = selectTop; row <= selectBottom; ++row)
 	{
+		int localRow = row - selectTop;
 		for (int track = selectLeft; track <= selectRight; ++track)
 		{
+			int localTrack = track - selectLeft;
 			const SyncTrack &t = syncData->getTrack(track);
 			char temp[128];
-			if (t.isKeyFrame(row)) sprintf(temp, "%.2f\t", t.getKeyFrame(row)->value);
+			if (t.isKeyFrame(row))
+			{
+				const SyncTrack::KeyFrame *keyFrame = t.getKeyFrame(row);
+				assert(NULL != keyFrame);
+				
+				CopyEntry ce;
+				ce.track = localTrack;
+				ce.row = localRow;
+				ce.keyFrame = *keyFrame;
+
+				copyEntries.push_back(ce);
+				sprintf(temp, "%.2f\t", keyFrame->value);
+			}
 			else sprintf(temp, "--- \t");
 			copyString += temp;
-			printf("(%d %d) = %s", track - selectLeft, row - selectTop, temp);
+			printf("(%d %d) = %s", localTrack, localRow, temp);
 		}
 		puts("");
 		copyString += "\n";
 	}
 	
-	HGLOBAL hmem = GlobalAlloc(GMEM_MOVEABLE, sizeof(float) * cells);
+	int buffer_width  = selectRight - selectLeft + 1;
+	int buffer_height = selectBottom - selectTop + 1;
+	size_t buffer_size = copyEntries.size();
+	
+	HGLOBAL hmem = GlobalAlloc(GMEM_MOVEABLE, sizeof(int) * 3 + sizeof(CopyEntry) * copyEntries.size());
+	char *clipbuf = (char *)GlobalLock(hmem);
+	
+	printf("%d %d, size: %d\n", buffer_width, buffer_height, buffer_size);
+	// copy data
+	memcpy(clipbuf + 0,                                &buffer_width,  sizeof(int));
+	memcpy(clipbuf + sizeof(int),                      &buffer_height, sizeof(int));
+	memcpy(clipbuf + 2 * sizeof(int),                  &buffer_size,   sizeof(size_t));
+	if (copyEntries.size() > 0 ) memcpy(clipbuf + 2 * sizeof(int) + sizeof(size_t), &copyEntries[0], sizeof(CopyEntry) * copyEntries.size());
+	
+	GlobalUnlock(hmem);
+	clipbuf = NULL;
 	
 	HGLOBAL hmem_text = GlobalAlloc(GMEM_MOVEABLE, strlen(copyString.c_str()) + 1);
-	char *clipbuf = (char *)GlobalLock(hmem_text);
+	clipbuf = (char *)GlobalLock(hmem_text);
 	memcpy(clipbuf, copyString.c_str(), strlen(copyString.c_str()) + 1);
 	GlobalUnlock(hmem_text);
+	clipbuf = NULL;
 	
 	// update clipboard
 	EmptyClipboard();
 	SetClipboardData(clipboardFormat, hmem);
-	SetClipboardData(CF_TEXT, hmem_text);
+/*	SetClipboardData(CF_TEXT, hmem_text); */
 	CloseClipboard();
-	
-	// should this memory be free'd or not? freeing seems to cause some hick-ups some times...
-//	GlobalFree(hmem);
-//	GlobalFree(hmem_text);
 }
 
-void TrackView::cut()
+void TrackView::editCut()
 {
-/*	int selectLeft  = min(selectStartTrack, selectStopTrack);
-	int selectRight = max(selectStartTrack, selectStopTrack);
-	int selectTop    = min(selectStartRow, selectStopRow);
-	int selectBottom = max(selectStartRow, selectStopRow); */
-	
-	copy();
-#if 0
-	for (int track = selectLeft; track <= selectRight; ++track)
+	editCopy();
+	editDelete();
+}
+
+void TrackView::editPaste()
+{
+#if 1
+	if (FAILED(OpenClipboard(getWin())))
 	{
-		SyncTrack &t = syncDataEdit.getSyncData()->getTrack(track);
-		for (int row = selectTop; row <= selectBottom; ++row)
-		{
-			if (t.isKeyFrame(row)) t.deleteKeyFrame(row);
-		}
+		MessageBox(NULL, _T("Failed to open clipboard"), NULL, MB_OK);
+		return;
 	}
-	invalidateRange(selectLeft, selectRight, selectTop, selectBottom);
+	
+	if (IsClipboardFormatAvailable(clipboardFormat))
+	{
+		HGLOBAL hmem = GetClipboardData(clipboardFormat);
+		char *clipbuf = (char *)GlobalLock(hmem);
+		
+		// copy data
+		int buffer_width, buffer_height, buffer_size;
+		memcpy(&buffer_width,  clipbuf + 0,               sizeof(int));
+		memcpy(&buffer_height, clipbuf + sizeof(int),     sizeof(int));
+		memcpy(&buffer_size,   clipbuf + 2 * sizeof(int), sizeof(size_t));
+			
+		if (buffer_size > 0)
+		{
+			printf("%d %d, size: %d\n", buffer_width, buffer_height, buffer_size);
+			char *src = clipbuf + 2 * sizeof(int) + sizeof(size_t);
+			
+			SyncEditData::MultiCommand *multiCmd = new SyncEditData::MultiCommand();
+			for (int i = 0; i < buffer_size; ++i)
+			{
+				struct CopyEntry ce;
+				memcpy(&ce, src, sizeof(CopyEntry));
+				printf("%d,%d = %f\n", ce.track, ce.row, ce.keyFrame.value);
+				
+				SyncEditData::Command *cmd = syncData->getSetKeyFrameCommand(editTrack + ce.track, editRow + ce.row, ce.keyFrame);
+				multiCmd->addCommand(cmd);
+				src += sizeof(CopyEntry);
+			}
+			syncData->exec(multiCmd);
+		}
+		
+		GlobalUnlock(hmem);
+		clipbuf = NULL;
+	}
+	else if (!IsClipboardFormatAvailable(clipboardFormat))
+	{
+		HGLOBAL hmem = GetClipboardData(clipboardFormat);
+		char *clipbuf = (char *)GlobalLock(hmem);
+		
+		/* DO STUFFZ! */
+		
+		GlobalUnlock(hmem);
+		clipbuf = NULL;
+	}
+	else MessageBeep(0);
+	
+	CloseClipboard();
 #endif
-}
-
-void TrackView::paste()
-{
-/*	int selectLeft  = min(selectStartTrack, selectStopTrack);
-	int selectRight = max(selectStartTrack, selectStopTrack);
-	int selectTop    = min(selectStartRow, selectStopRow);
-	int selectBottom = max(selectStartRow, selectStopRow); */
 }
 
 void TrackView::setupScrollBars()
@@ -609,7 +680,7 @@ LRESULT TrackView::onHScroll(UINT sbCode, int /*newPos*/)
 	return FALSE;
 }
 
-void TrackView::onReturn()
+void TrackView::editSetValue()
 {
 	if (editString.size() > 0)
 	{
@@ -621,15 +692,38 @@ void TrackView::onReturn()
 	else MessageBeep(0);
 }
 
-void TrackView::onDelete()
+void TrackView::editDelete()
 {
-	SyncTrack &track = syncData->getTrack(editTrack);
-	if (track.isKeyFrame(editRow))
+	int selectLeft  = min(selectStartTrack, selectStopTrack);
+	int selectRight = max(selectStartTrack, selectStopTrack);
+	int selectTop    = min(selectStartRow, selectStopRow);
+	int selectBottom = max(selectStartRow, selectStopRow);
+	printf("deleting\n");
+
+	SyncEditData::MultiCommand *multiCmd = new SyncEditData::MultiCommand();
+	for (int track = selectLeft; track <= selectRight; ++track)
 	{
-		syncData->deleteKeyFrame(editTrack, editRow);
-		invalidatePos(editTrack, editRow);
+		SyncTrack &t = syncData->getTrack(track);
+		for (int row = selectTop; row <= selectBottom; ++row)
+		{
+			if (t.isKeyFrame(row))
+			{
+				SyncEditData::Command *cmd = new SyncEditData::DeleteCommand(track, row);
+				multiCmd->addCommand(cmd);
+			}
+		}
 	}
-	else MessageBeep(0);
+	
+	if (0 == multiCmd->getSize())
+	{
+		MessageBeep(0);
+		delete multiCmd;
+	}
+	else
+	{
+		syncData->exec(multiCmd);
+		invalidateRange(selectLeft, selectRight, selectTop, selectBottom);
+	}
 }
 
 void TrackView::bias(float amount)
@@ -681,8 +775,8 @@ LRESULT TrackView::onKeyDown(UINT keyCode, UINT /*flags*/)
 	
 	switch (keyCode)
 	{
-	case VK_RETURN: onReturn(); break;
-	case VK_DELETE: onDelete(); break;
+	case VK_RETURN: editSetValue(); break;
+	case VK_DELETE: editDelete(); break;
 	
 	case VK_BACK:
 		if (!editString.empty())
@@ -774,20 +868,23 @@ LRESULT TrackView::windowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	case WM_KEYDOWN: return onKeyDown((UINT)wParam, (UINT)lParam);
 	case WM_CHAR:    return onChar((UINT)wParam, (UINT)lParam);
 	
-	case WM_COPY:  copy();  break;
-	case WM_CUT:   cut();   break;
-	case WM_PASTE: paste(); break;
+	case WM_COPY:  editCopy();  break;
+	case WM_CUT:   editCut();   break;
+	case WM_PASTE:
+		editPaste();
+		InvalidateRect(hwnd, NULL, FALSE);
+		break;
 	
 	case WM_UNDO:
 		if (!syncData->undo()) MessageBeep(0);
 		// unfortunately, we don't know how much to invalidate... so we'll just invalidate it all.
-		InvalidateRect(hwnd, NULL, TRUE);
+		InvalidateRect(hwnd, NULL, FALSE);
 		break;
 	
 	case WM_REDO:
 		if (!syncData->redo()) MessageBeep(0);
 		// unfortunately, we don't know how much to invalidate... so we'll just invalidate it all.
-		InvalidateRect(hwnd, NULL, TRUE);
+		InvalidateRect(hwnd, NULL, FALSE);
 		break;
 	
 	default:

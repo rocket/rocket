@@ -38,13 +38,13 @@ private:
 	LRESULT onKeyDown(UINT keyCode, UINT flags);
 	LRESULT onChar(UINT keyCode, UINT flags);
 	
-	void onReturn();
-	void onDelete();
+	void editSetValue();
 	void bias(float amount);
 	
-	void copy();
-	void cut();
-	void paste();
+	void editDelete();
+	void editCopy();
+	void editCut();
+	void editPaste();
 	
 	// the window procedure
 	
@@ -62,7 +62,7 @@ private:
 		rect.right = getScreenX(max(startTrack, stopTrack) + 1);
 		rect.top    = getScreenY(min(startRow, stopRow));
 		rect.bottom = getScreenY(max(startRow, stopRow) + 1);
-		InvalidateRect(hwnd, &rect, TRUE);
+		InvalidateRect(hwnd, &rect, FALSE);
 	}
 	
 	void invalidatePos(int track, int row)
@@ -72,7 +72,7 @@ private:
 		rect.right = getScreenX(track + 1);
 		rect.top    = getScreenY(row);
 		rect.bottom = getScreenY(row + 1);
-		InvalidateRect(hwnd, &rect, TRUE);
+		InvalidateRect(hwnd, &rect, FALSE);
 	}
 	
 	void invalidateRow(int row)
@@ -86,7 +86,7 @@ private:
 		rect.top    = getScreenY(row);
 		rect.bottom = getScreenY(row + 1);
 		
-		InvalidateRect(hwnd, &rect, TRUE);
+		InvalidateRect(hwnd, &rect, FALSE);
 	}
 	
 	void invalidateTrack(int track)
@@ -100,7 +100,7 @@ private:
 		rect.top    = clientRect.top;
 		rect.bottom = clientRect.bottom;
 		
-		InvalidateRect(hwnd, &rect, TRUE);
+		InvalidateRect(hwnd, &rect, FALSE);
 	}
 	
 	void setEditRow(int newEditRow);
