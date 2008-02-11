@@ -32,14 +32,14 @@ TrackView::TrackView()
 	
 	this->hwnd = NULL;
 	
-	bgBaseBrush = GetSysColorBrush(COLOR_WINDOW); // CreateSolidBrush(RGB(0xff, 0xff, 0xff));
+	bgBaseBrush = GetSysColorBrush(COLOR_WINDOW);
 	bgDarkBrush = CreateSolidBrush(darken(GetSysColor(COLOR_WINDOW), 0.9f));
-
-//	selectBaseBrush = CreateSolidBrush(RGB(0xff, 0xdd, 0xff));
-//	selectDarkBrush = CreateSolidBrush(RGB(0xdd, 0xbb, 0xdd));
-
+	
 	selectBaseBrush = GetSysColorBrush(COLOR_HIGHLIGHT);
 	selectDarkBrush = CreateSolidBrush(darken(GetSysColor(COLOR_HIGHLIGHT), 0.9f));
+	
+	rowPen       = CreatePen(PS_SOLID, 1, darken(GetSysColor(COLOR_WINDOW), 0.7f));
+	rowSelectPen = CreatePen(PS_SOLID, 1, darken(GetSysColor(COLOR_HIGHLIGHT), 0.7f));
 	
 	editBrush = CreateSolidBrush(RGB(255, 255, 0)); // yellow
 	
@@ -54,6 +54,8 @@ TrackView::~TrackView()
 	DeleteObject(selectBaseBrush);
 	DeleteObject(selectDarkBrush);
 	DeleteObject(editBrush);
+	DeleteObject(rowPen);
+	DeleteObject(rowSelectPen);
 }
 
 int TrackView::getScreenY(int row)
@@ -238,11 +240,13 @@ void TrackView::paintTracks(HDC hdc, RECT rcTracks)
 			RECT fillRect = patternDataRect;
 //			if (row == editRow && track == editTrack) DrawEdge(hdc, &fillRect, BDR_RAISEDINNER | BDR_SUNKENOUTER, BF_ADJUST | BF_TOP | BF_BOTTOM | BF_LEFT | BF_RIGHT);
 			FillRect( hdc, &fillRect, bgBrush);
-/*			if (row % 8 == 0)
+			if (row % 8 == 0)
 			{
 				MoveToEx(hdc, patternDataRect.left, patternDataRect.top, (LPPOINT) NULL); 
+				if (selected) SelectObject(hdc, rowSelectPen);
+				else          SelectObject(hdc, rowPen);
 				LineTo(hdc,   patternDataRect.right, patternDataRect.top); 
-			} */
+			}
 			
 			bool drawEditString = false;
 			if (row == editRow && track == editTrack)
@@ -334,7 +338,6 @@ void TrackView::copy()
 	int rows = selectBottom - selectTop + 1;
 	int columns = selectRight - selectLeft + 1;
 	size_t cells = columns * rows;
-	HGLOBAL hmem = GlobalAlloc(GMEM_MOVEABLE, sizeof(float) * cells);
 	
 	std::string copyString;
 	for (int row = selectTop; row <= selectBottom; ++row)
@@ -346,11 +349,13 @@ void TrackView::copy()
 			if (t.isKeyFrame(row)) sprintf(temp, "%.2f\t", t.getKeyFrame(row)->value);
 			else sprintf(temp, "--- \t");
 			copyString += temp;
-			printf("(%d %d) = %s", track, row, temp);
+			printf("(%d %d) = %s", track - selectLeft, row - selectTop, temp);
 		}
 		puts("");
 		copyString += "\n";
 	}
+	
+	HGLOBAL hmem = GlobalAlloc(GMEM_MOVEABLE, sizeof(float) * cells);
 	
 	HGLOBAL hmem_text = GlobalAlloc(GMEM_MOVEABLE, strlen(copyString.c_str()) + 1);
 	char *clipbuf = (char *)GlobalLock(hmem_text);

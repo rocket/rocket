@@ -101,7 +101,6 @@ private:
 		
 		InvalidateRect(hwnd, &rect, TRUE);
 	}
-
 	
 	void setEditRow(int newEditRow);
 	void setEditTrack(int newEditTrack);
@@ -121,6 +120,8 @@ private:
 	
 	HBRUSH bgBaseBrush, bgDarkBrush;
 	HBRUSH selectBaseBrush, selectDarkBrush;
+	HPEN rowPen, rowSelectPen;
+	HBRUSH editBrush;
 	
 	/* cursor position */
 	int editRow, editTrack;
@@ -134,7 +135,6 @@ private:
 	std::basic_string<TCHAR> editString;
 	
 	HWND hwnd;
-	HBRUSH editBrush;
 
 	UINT clipboardFormat;
 	int rows;
