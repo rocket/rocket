@@ -265,11 +265,11 @@ void TrackView::paintTracks(HDC hdc, RECT rcTracks)
 			
 			/* format the text */
 			if (drawEditString) _sntprintf_s(temp, 256, editString.c_str());
-			else if (!key) _sntprintf_s(temp, 256, _T("---"));
+			else if (!key) _sntprintf_s(temp, 256, _T("  ---"));
 			else
 			{
 				float val = track.getKeyFrame(row)->value;
-				_sntprintf_s(temp, 256, _T("%.2f"), val);
+				_sntprintf_s(temp, 256, _T("% .2f"), val);
 			}
 			
 			COLORREF oldCol;
@@ -324,7 +324,6 @@ void TrackView::editCopy()
 	int selectRight = max(selectStartTrack, selectStopTrack);
 	int selectTop    = min(selectStartRow, selectStopRow);
 	int selectBottom = max(selectStartRow, selectStopRow);
-	printf("copying:\n");
 	
 #if 0
 	struct CopyEntry
@@ -367,15 +366,13 @@ void TrackView::editCopy()
 				ce.track = localTrack;
 				ce.row = localRow;
 				ce.keyFrame = *keyFrame;
-
+				
 				copyEntries.push_back(ce);
 				sprintf(temp, "%.2f\t", keyFrame->value);
 			}
 			else sprintf(temp, "--- \t");
 			copyString += temp;
-			printf("(%d %d) = %s", localTrack, localRow, temp);
 		}
-		puts("");
 		copyString += "\n";
 	}
 	
@@ -386,7 +383,6 @@ void TrackView::editCopy()
 	HGLOBAL hmem = GlobalAlloc(GMEM_MOVEABLE, sizeof(int) * 3 + sizeof(CopyEntry) * copyEntries.size());
 	char *clipbuf = (char *)GlobalLock(hmem);
 	
-	printf("%d %d, size: %d\n", buffer_width, buffer_height, buffer_size);
 	// copy data
 	memcpy(clipbuf + 0,                                &buffer_width,  sizeof(int));
 	memcpy(clipbuf + sizeof(int),                      &buffer_height, sizeof(int));
@@ -437,7 +433,6 @@ void TrackView::editPaste()
 			
 		if (buffer_size > 0)
 		{
-			printf("%d %d, size: %d\n", buffer_width, buffer_height, buffer_size);
 			char *src = clipbuf + 2 * sizeof(int) + sizeof(size_t);
 			
 			SyncEditData::MultiCommand *multiCmd = new SyncEditData::MultiCommand();
@@ -445,7 +440,6 @@ void TrackView::editPaste()
 			{
 				struct CopyEntry ce;
 				memcpy(&ce, src, sizeof(CopyEntry));
-				printf("%d,%d = %f\n", ce.track, ce.row, ce.keyFrame.value);
 				
 				SyncEditData::Command *cmd = syncData->getSetKeyFrameCommand(editTrack + ce.track, editRow + ce.row, ce.keyFrame);
 				multiCmd->addCommand(cmd);
@@ -680,11 +674,18 @@ LRESULT TrackView::onHScroll(UINT sbCode, int /*newPos*/)
 	return FALSE;
 }
 
-void TrackView::editSetValue()
+void TrackView::editEnterValue()
 {
 	if (editString.size() > 0)
 	{
-		syncData->setKeyFrame(editTrack, editRow, float(_tstof(editString.c_str())));
+		SyncTrack &t = syncData->getTrack(editTrack);
+		
+		SyncTrack::KeyFrame newKey;
+		if (t.isKeyFrame(editRow)) newKey = *t.getKeyFrame(editRow); // copy old key
+		newKey.value = float(_tstof(editString.c_str())); // modify value
+		
+		SyncEditData::Command *cmd = syncData->getSetKeyFrameCommand(editTrack, editRow, newKey);
+		syncData->exec(cmd);
 		
 		editString.clear();
 		invalidatePos(editTrack, editRow);
@@ -698,7 +699,6 @@ void TrackView::editDelete()
 	int selectRight = max(selectStartTrack, selectStopTrack);
 	int selectTop    = min(selectStartRow, selectStopRow);
 	int selectBottom = max(selectStartRow, selectStopRow);
-	printf("deleting\n");
 
 	SyncEditData::MultiCommand *multiCmd = new SyncEditData::MultiCommand();
 	for (int track = selectLeft; track <= selectRight; ++track)
@@ -726,17 +726,54 @@ void TrackView::editDelete()
 	}
 }
 
-void TrackView::bias(float amount)
+void TrackView::editBiasValue(float amount)
 {
-	SyncTrack &track = syncData->getTrack(editTrack);
+	int selectLeft  = min(selectStartTrack, selectStopTrack);
+	int selectRight = max(selectStartTrack, selectStopTrack);
+	int selectTop    = min(selectStartRow, selectStopRow);
+	int selectBottom = max(selectStartRow, selectStopRow);
+
+	SyncEditData::MultiCommand *multiCmd = new SyncEditData::MultiCommand();
+	for (int track = selectLeft; track <= selectRight; ++track)
+	{
+		SyncTrack &t = syncData->getTrack(track);
+		for (int row = selectTop; row <= selectBottom; ++row)
+		{
+			if (t.isKeyFrame(row))
+			{
+				SyncTrack::KeyFrame newKey = *t.getKeyFrame(row); // copy old key
+				newKey.value += amount; // modify value
+				
+				// add sub-command
+				SyncEditData::Command *cmd = syncData->getSetKeyFrameCommand(track, row, newKey);
+				multiCmd->addCommand(cmd);
+			}
+		}
+	}
+	
+	if (0 == multiCmd->getSize())
+	{
+		MessageBeep(0);
+		delete multiCmd;
+	}
+	else
+	{
+		syncData->exec(multiCmd);
+		invalidateRange(selectLeft, selectRight, selectTop, selectBottom);
+	}
+
+/*	SyncTrack &track = syncData->getTrack(editTrack);
 	if (track.isKeyFrame(editRow))
 	{
 		SyncTrack::KeyFrame newKey = *track.getKeyFrame(editRow);
 		newKey.value += amount;
-		syncData->setKeyFrame(editTrack, editRow, newKey);
+		
+		SyncEditData::Command *cmd = syncData->getSetKeyFrameCommand(editTrack, editRow, newKey);
+		syncData->exec(cmd);
+		
 		invalidatePos(editTrack, editRow);
 	}
-	else MessageBeep(0);
+	else MessageBeep(0); */
 }
 
 LRESULT TrackView::onKeyDown(UINT keyCode, UINT /*flags*/)
@@ -746,12 +783,22 @@ LRESULT TrackView::onKeyDown(UINT keyCode, UINT /*flags*/)
 		switch (keyCode)
 		{
 		case VK_UP:
-			if (GetKeyState(VK_CONTROL) < 0) bias(1);
+			if (GetKeyState(VK_CONTROL) < 0)
+			{
+				float bias = 1.0f;
+				if (GetKeyState(VK_SHIFT) < 0) bias = 0.1f;
+				editBiasValue(bias);
+			}
 			else setEditRow(editRow - 1);
 			break;
 		
 		case VK_DOWN:
-			if (GetKeyState(VK_CONTROL) < 0) bias(-1);
+			if (GetKeyState(VK_CONTROL) < 0)
+			{
+				float bias = 1.0f;
+				if (GetKeyState(VK_SHIFT) < 0) bias = 0.1f;
+				editBiasValue(-bias);
+			}
 			else setEditRow(editRow + 1);
 			break;
 		
@@ -759,12 +806,22 @@ LRESULT TrackView::onKeyDown(UINT keyCode, UINT /*flags*/)
 		case VK_RIGHT: setEditTrack(editTrack + 1); break;
 		
 		case VK_PRIOR:
-			if (GetKeyState(VK_CONTROL) < 0) bias(10);
+			if (GetKeyState(VK_CONTROL) < 0)
+			{
+				float bias = 10.0f;
+				if (GetKeyState(VK_SHIFT) < 0) bias = 100.0f;
+				editBiasValue(bias);
+			}
 			else setEditRow(editRow - windowRows / 2);
 			break;
 		
 		case VK_NEXT:
-			if (GetKeyState(VK_CONTROL) < 0) bias(-10);
+			if (GetKeyState(VK_CONTROL) < 0)
+			{
+				float bias = 10.0f;
+				if (GetKeyState(VK_SHIFT) < 0) bias = 100.0f;
+				editBiasValue(-bias);
+			}
 			else setEditRow(editRow + windowRows / 2);
 			break;
 		
@@ -775,7 +832,7 @@ LRESULT TrackView::onKeyDown(UINT keyCode, UINT /*flags*/)
 	
 	switch (keyCode)
 	{
-	case VK_RETURN: editSetValue(); break;
+	case VK_RETURN: editEnterValue(); break;
 	case VK_DELETE: editDelete(); break;
 	
 	case VK_BACK:
@@ -803,7 +860,6 @@ LRESULT TrackView::onKeyDown(UINT keyCode, UINT /*flags*/)
 
 LRESULT TrackView::onChar(UINT keyCode, UINT flags)
 {
-	printf("char: \"%c\" (%d) - flags: %x\n", char(keyCode), keyCode, flags);
 	switch (char(keyCode))
 	{
 	case '.':
@@ -813,6 +869,13 @@ LRESULT TrackView::onChar(UINT keyCode, UINT flags)
 			MessageBeep(0);
 			break;
 		}
+	case '-':
+		if (editString.empty())
+		{
+			editString.push_back(char(keyCode));
+			invalidatePos(editTrack, editRow);
+		}
+		break;
 	
 	case '0':
 	case '1':
@@ -825,7 +888,6 @@ LRESULT TrackView::onChar(UINT keyCode, UINT flags)
 	case '8':
 	case '9':
 		editString.push_back(char(keyCode));
-		printf("accepted: %c - %s\n", char(keyCode), editString.c_str());
 		invalidatePos(editTrack, editRow);
 		break;
 	}

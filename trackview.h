@@ -23,6 +23,7 @@ public:
 	
 	void setRows(int rows);
 	int getRows() const { return rows; }
+	void editBiasValue(float amount);
 	
 private:
 	// some nasty hackery to forward the window messages
@@ -38,9 +39,7 @@ private:
 	LRESULT onKeyDown(UINT keyCode, UINT flags);
 	LRESULT onChar(UINT keyCode, UINT flags);
 	
-	void editSetValue();
-	void bias(float amount);
-	
+	void editEnterValue();
 	void editDelete();
 	void editCopy();
 	void editCut();

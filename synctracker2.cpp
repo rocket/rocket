@@ -14,6 +14,7 @@ HWND trackViewWin;
 HWND statusBarWin;
 
 #define WM_SETROWS (WM_USER+1)
+#define WM_BIASSELECTION (WM_USER+2)
 
 #include "network.h"
 
@@ -21,6 +22,10 @@ static LRESULT CALLBACK setRowsDialogProc(HWND hDlg, UINT message, WPARAM wParam
 {
 	switch (message)
 	{
+/*	case WM_CHAR:
+		printf("char: %d %d\n", wParam, lParam);
+		break; */
+	
 	case WM_INITDIALOG:
 		{
 			int *rows = (int*)lParam;
@@ -31,7 +36,8 @@ static LRESULT CALLBACK setRowsDialogProc(HWND hDlg, UINT message, WPARAM wParam
 			_sntprintf_s(temp, 256, _T("%d"), *rows);
 			
 			/* set initial row count */
-			SetWindowText(GetDlgItem(hDlg, IDC_SETROWS_EDIT), temp);
+			SetDlgItemText(hDlg, IDC_SETROWS_EDIT, temp);
+			return TRUE;
 		}
 		break;
 	
@@ -40,11 +46,59 @@ static LRESULT CALLBACK setRowsDialogProc(HWND hDlg, UINT message, WPARAM wParam
 		{
 			/* get value */
 			TCHAR temp[256];
-			GetWindowText(GetDlgItem(hDlg, IDC_SETROWS_EDIT), temp, 256);
+			GetDlgItemText(hDlg, IDC_SETROWS_EDIT, temp, 256);
 			int result = _tstoi(temp);
 			
 			/* update editor */
 			SendMessage(GetParent(hDlg), WM_SETROWS, 0, result);
+			
+			/* end dialog */
+			EndDialog(hDlg, LOWORD(wParam));
+			return TRUE;
+		}
+		else if(LOWORD(wParam)== IDCANCEL)
+		{
+			EndDialog( hDlg, LOWORD(wParam));
+			return TRUE;
+		}
+		break;
+	
+	case WM_CLOSE:
+		EndDialog(hDlg, LOWORD(wParam));
+		return TRUE;
+	}
+
+	return FALSE;
+}
+
+static LRESULT CALLBACK biasSelectionDialogProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
+{
+	switch (message)
+	{
+	case WM_INITDIALOG:
+		{
+			int *intialBias = (int*)lParam;
+			assert(NULL != intialBias);
+			
+			/* create bias-string */
+			TCHAR temp[256];
+			_sntprintf_s(temp, 256, _T("%d"), *intialBias);
+			
+			/* set initial bias */
+			SetDlgItemText(hDlg, IDC_SETROWS_EDIT, temp);
+		}
+		break;
+	
+	case WM_COMMAND:
+		if (LOWORD(wParam) == IDOK)
+		{
+			/* get value */
+			TCHAR temp[256];
+			GetDlgItemText(hDlg, IDC_BIASSELECTION_EDIT, temp, 256);
+			int bias = _tstoi(temp);
+			
+			/* update editor */
+			SendMessage(GetParent(hDlg), WM_BIASSELECTION, 0, LPARAM(bias));
 			
 			/* end dialog */
 			EndDialog(hDlg, LOWORD(wParam));
@@ -113,12 +167,21 @@ static LRESULT CALLBACK mainWindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARA
 	case WM_SETROWS:
 		printf("rows: %d\n", int(lParam));
 		trackView->setRows(int(lParam));
-	break;
+		break;
+
+	case WM_BIASSELECTION:
+		trackView->editBiasValue(float(lParam));
+		break;
 	
 	case WM_COMMAND:
 		switch (LOWORD(wParam))
 		{
-		case ID_FILE_SAVE:  /* meh.*/ break;
+		case ID_FILE_SAVE:
+		case ID_FILE_SAVE_AS:
+		case ID_FILE_OPEN:
+			MessageBox(trackViewWin, "Not implemented", NULL, MB_OK | MB_ICONERROR);
+			break;
+		
 		case ID_FILE_EXIT:  PostQuitMessage(0); break;
 		case ID_EDIT_UNDO:  SendMessage(trackViewWin, WM_UNDO,  0, 0); break;
 		case ID_EDIT_REDO:  SendMessage(trackViewWin, WM_REDO,  0, 0); break;
@@ -132,15 +195,17 @@ static LRESULT CALLBACK mainWindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARA
 				int rows = trackView->getRows();
 				INT_PTR result = DialogBoxParam(hInstance, MAKEINTRESOURCE(IDD_SETROWS), hwnd, (DLGPROC)setRowsDialogProc, (LPARAM)&rows);
 				if (FAILED(result)) MessageBox(NULL, _T("unable to create dialog box"), NULL, MB_OK);
-				if (IDOK == result)
-				{
-					printf("result: %d\n", result);
-				}
 			}
 			break;
 		
-		default:
-			printf("cmd %d %d\n", wParam, lParam);
+		case ID_EDIT_BIAS:
+			{
+				HINSTANCE hInstance = GetModuleHandle(NULL);
+				int initialBias = 0;
+				INT_PTR result = DialogBoxParam(hInstance, MAKEINTRESOURCE(IDD_BIASSELECTION), hwnd, (DLGPROC)biasSelectionDialogProc, (LPARAM)&initialBias);
+				if (FAILED(result)) MessageBox(NULL, _T("unable to create dialog box"), NULL, MB_OK);
+			}
+			break;
 		}
 		break;
 	

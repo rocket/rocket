@@ -186,18 +186,6 @@ public:
 		return cmd;
 	}
 	
-	void setKeyFrame(int track, int row, const SyncTrack::KeyFrame &key)
-	{
-		SyncEditData::Command *cmd = getSetKeyFrameCommand(track, row, key);
-		exec(cmd);
-	}
-	
-	void deleteKeyFrame(int track, int row)
-	{
-		assert(getTrack(track).isKeyFrame(row));
-		Command *cmd = new DeleteCommand(track, row);
-		exec(cmd);
-	}
 	
 private:
 	

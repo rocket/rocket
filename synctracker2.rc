@@ -57,8 +57,9 @@ BEGIN
     "C",            ID_EDIT_COPY,           VIRTKEY, CONTROL, NOINVERT
     "X",            ID_EDIT_CUT,            VIRTKEY, CONTROL, NOINVERT
     "V",            ID_EDIT_PASTE,          VIRTKEY, CONTROL, NOINVERT
-    "Z",            ID_EDIT_UNDO,           VIRTKEY, CONTROL, NOINVERT
     "Z",            ID_EDIT_REDO,           VIRTKEY, SHIFT, CONTROL, NOINVERT
+    "Z",            ID_EDIT_UNDO,           VIRTKEY, CONTROL, NOINVERT
+    "B",            ID_EDIT_BIAS,           VIRTKEY, CONTROL, NOINVERT
 END
 
 
@@ -86,6 +87,8 @@ BEGIN
         MENUITEM "Cu&t\tCtrl+X",                ID_EDIT_CUT
         MENUITEM "&Paste\tCtrl+V",              ID_EDIT_PASTE
         MENUITEM SEPARATOR
+        MENUITEM "&Bias Selection\tCtrl+B",     ID_EDIT_BIAS
+        MENUITEM SEPARATOR
         MENUITEM "Set Rows",                    ID_EDIT_SETROWS
     END
 END
@@ -105,6 +108,15 @@ BEGIN
     DEFPUSHBUTTON   "OK",IDOK,72,6,50,14
 END
 
+IDD_BIASSELECTION DIALOGEX 0, 0, 129, 27
+STYLE DS_SETFONT | DS_FIXEDSYS | DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Bias Selection"
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    EDITTEXT        IDC_BIASSELECTION_EDIT,7,6,59,12,ES_AUTOHSCROLL | ES_NUMBER
+    DEFPUSHBUTTON   "OK",IDOK,72,6,50,14
+END
+
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -115,6 +127,14 @@ END
 GUIDELINES DESIGNINFO 
 BEGIN
     IDD_SETROWS, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 122
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 20
+    END
+
+    IDD_BIASSELECTION, DIALOG
     BEGIN
         LEFTMARGIN, 7
         RIGHTMARGIN, 122
