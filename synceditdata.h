@@ -113,7 +113,7 @@ public:
 			commands.clear();
 		}
 		
-		void addEditCommand(Command *cmd)
+		void addCommand(Command *cmd)
 		{
 			commands.push_back(cmd);
 		}
@@ -175,22 +175,22 @@ public:
 		}
 	}
 	
-	void setKey(int track, int row, float val)
+	void setKeyFrame(int track, int row, const SyncTrack::KeyFrame &key)
 	{
 		SyncTrack &t = getTrack(track);
 		SyncEditData::Command *cmd;
 		if (t.isKeyFrame(row))
 		{
-			cmd = new EditCommand(track, row, val);
+			cmd = new EditCommand(track, row, key);
 		}
 		else
 		{
-			cmd = new InsertCommand(track, row, val);
+			cmd = new InsertCommand(track, row, key);
 		}
 		exec(cmd);
 	}
 	
-	void deleteKey(int track, int row)
+	void deleteKeyFrame(int track, int row)
 	{
 		assert(getTrack(track).isKeyFrame(row));
 		Command *cmd = new DeleteCommand(track, row);

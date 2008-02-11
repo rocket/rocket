@@ -40,7 +40,8 @@ private:
 	
 	void onReturn();
 	void onDelete();
-
+	void bias(float amount);
+	
 	void copy();
 	void cut();
 	void paste();

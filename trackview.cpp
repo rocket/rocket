@@ -613,7 +613,7 @@ void TrackView::onReturn()
 {
 	if (editString.size() > 0)
 	{
-		syncData->setKey(editTrack, editRow, float(_tstof(editString.c_str())));
+		syncData->setKeyFrame(editTrack, editRow, float(_tstof(editString.c_str())));
 		
 		editString.clear();
 		invalidatePos(editTrack, editRow);
@@ -626,7 +626,20 @@ void TrackView::onDelete()
 	SyncTrack &track = syncData->getTrack(editTrack);
 	if (track.isKeyFrame(editRow))
 	{
-		syncData->deleteKey(editTrack, editRow);
+		syncData->deleteKeyFrame(editTrack, editRow);
+		invalidatePos(editTrack, editRow);
+	}
+	else MessageBeep(0);
+}
+
+void TrackView::bias(float amount)
+{
+	SyncTrack &track = syncData->getTrack(editTrack);
+	if (track.isKeyFrame(editRow))
+	{
+		SyncTrack::KeyFrame newKey = *track.getKeyFrame(editRow);
+		newKey.value += amount;
+		syncData->setKeyFrame(editTrack, editRow, newKey);
 		invalidatePos(editTrack, editRow);
 	}
 	else MessageBeep(0);
@@ -638,14 +651,28 @@ LRESULT TrackView::onKeyDown(UINT keyCode, UINT /*flags*/)
 	{
 		switch (keyCode)
 		{
-		case VK_UP:   setEditRow(editRow - 1); break;
-		case VK_DOWN: setEditRow(editRow + 1); break;
+		case VK_UP:
+			if (GetKeyState(VK_CONTROL) < 0) bias(1);
+			else setEditRow(editRow - 1);
+			break;
+		
+		case VK_DOWN:
+			if (GetKeyState(VK_CONTROL) < 0) bias(-1);
+			else setEditRow(editRow + 1);
+			break;
 		
 		case VK_LEFT:  setEditTrack(editTrack - 1); break;
 		case VK_RIGHT: setEditTrack(editTrack + 1); break;
 		
-		case VK_PRIOR: setEditRow(editRow - windowRows / 2); break;
-		case VK_NEXT:  setEditRow(editRow + windowRows / 2); break;
+		case VK_PRIOR:
+			if (GetKeyState(VK_CONTROL) < 0) bias(10);
+			else setEditRow(editRow - windowRows / 2);
+			break;
+		
+		case VK_NEXT:
+			if (GetKeyState(VK_CONTROL) < 0) bias(-10);
+			else setEditRow(editRow + windowRows / 2);
+			break;
 		
 		default:
 			break;
@@ -658,7 +685,7 @@ LRESULT TrackView::onKeyDown(UINT keyCode, UINT /*flags*/)
 	case VK_DELETE: onDelete(); break;
 	
 	case VK_BACK:
-		if (editString.size() > 0)
+		if (!editString.empty())
 		{
 			editString.resize(editString.size() - 1);
 			invalidatePos(editTrack, editRow);
@@ -668,7 +695,7 @@ LRESULT TrackView::onKeyDown(UINT keyCode, UINT /*flags*/)
 	
 	case VK_CANCEL:
 	case VK_ESCAPE:
-		if (editString.size() > 0)
+		if (!editString.empty())
 		{
 			// return to old value (i.e don't clear)
 			editString.clear();
