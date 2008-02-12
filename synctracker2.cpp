@@ -6,7 +6,7 @@
 #include <commctrl.h>
 
 #include "trackview.h"
-
+#include <vector>
 const TCHAR *mainWindowClassName = _T("MainWindow");
 
 TrackView *trackView;
@@ -282,16 +282,23 @@ int _tmain(int argc, _TCHAR* argv[])
 #endif
 	
 	SyncEditData syncData;
+	syncData.clientSocket = INVALID_SOCKET;
+
 	SyncTrack &camXTrack = syncData.getTrack(_T("cam.x"));
+	SyncTrack &camXTrack2 = syncData.getTrack(_T("cam.x"));
+	camXTrack.setKeyFrame(1, 2.0f);
+	camXTrack.setKeyFrame(4, 3.0f);
+	printf("%p %p\n", &camXTrack, &camXTrack2);
+
 	SyncTrack &camYTrack = syncData.getTrack(_T("cam.y"));
 	SyncTrack &camZTrack = syncData.getTrack(_T("cam.z"));
 	
-	for (int i = 0; i < 16; ++i)
+/*	for (int i = 0; i < 16; ++i)
 	{
 		TCHAR temp[256];
 		_sntprintf_s(temp, 256, _T("gen %02d"), i);
 		SyncTrack &temp2 = syncData.getTrack(temp);
-	}
+	} */
 	
 	camXTrack.setKeyFrame(1, 2.0f);
 	camXTrack.setKeyFrame(4, 3.0f);
@@ -368,31 +375,64 @@ int _tmain(int argc, _TCHAR* argv[])
 				clientSocket = clientConnect(serverSocket);
 				if (INVALID_SOCKET != clientSocket)
 				{
-					unsigned char cmd = 0x1;
-					send(clientSocket, (char*)&cmd, 1, 0);
+					puts("connected.");
+					syncData.clientSocket = clientSocket;
+/*					for (int track = 0; track < syncData.getTrackCount(); ++track)
+					{
+						
+					} */
 				}
 			}
 		}
 		else
 		{
-			unsigned char cmd = 0x1;
-			send(clientSocket, (char*)&cmd, 1, 0);
-			
 			// look for new commands
 			while (pollRead(clientSocket))
 			{
 				unsigned char cmd = 0;
 				int ret = recv(clientSocket, (char*)&cmd, 1, 0);
-				if (1 != ret)
+				if (1 > ret)
 				{
 					closesocket(clientSocket);
 					clientSocket = INVALID_SOCKET;
+					syncData.clientSocket = INVALID_SOCKET;
 					break;
 				}
 				else
 				{
-					printf("cmd: %02x\n", cmd);
-					if (cmd == 1) printf("yes, master!\n");
+					switch (cmd)
+					{
+					case GET_TRACK:
+						// get len
+						int str_len = 0;
+						int ret = recv(clientSocket, (char*)&str_len, sizeof(int), 0);
+						assert(ret == sizeof(size_t));
+						printf("len: %d\n", str_len);
+						
+//						int clientAddr = 0;
+//						int ret = recv(clientSocket, (char*)&clientAddr, sizeof(int), 0);
+						
+						// get string
+						std::string trackName;
+						trackName.resize(str_len * 2);
+						recv(clientSocket, &trackName[0], str_len, 0);
+						trackName.push_back('\0');
+						
+						// 
+						printf("name: %s\n", trackName.c_str());
+
+						const SyncTrack &track = syncData.getTrack(trackName);
+//						clientRemap[track] = clientAddr;
+						
+						for (size_t keyframe = 0; keyframe < track.getFrameCount(); ++keyframe)
+						{
+//							printf("name: %s\n", trackName.c_str());
+						}
+						
+						break;
+					}
+//					printf("cmd: %02x\n", cmd);
+//					if (cmd == 1) printf("yes, master!\n");
 				}
 			}
 			

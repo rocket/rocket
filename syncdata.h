@@ -2,6 +2,7 @@
 
 #include <string>
 #include <map>
+#include <vector>
 
 #include <exception>
 #include <cmath>
@@ -68,6 +69,7 @@ public:
 	
 	size_t getFrameCount() const
 	{
+		if (keyFrames.empty()) return 0;
 		KeyFrameContainer::const_iterator iter = keyFrames.end();
 		iter--;
 		return iter->first;
@@ -85,8 +87,11 @@ public:
 	SyncTrack &getTrack(const std::basic_string<TCHAR> &name)
 	{
 		TrackContainer::iterator iter = tracks.find(name);
-		if (iter != tracks.end()) return iter->second;
-		return tracks[name] = SyncTrack();
+		if (iter != tracks.end()) return *actualTracks[iter->second];
+		
+		tracks[name] = actualTracks.size();
+		actualTracks.push_back(new SyncTrack());
+		return *actualTracks.back();
 	}
 	
 	SyncTrack &getTrack(size_t track)
@@ -96,13 +101,15 @@ public:
 		
 		SyncData::TrackContainer::iterator trackIter = tracks.begin();
 		for (size_t currTrack = 0; currTrack < track; ++currTrack, ++trackIter);
-		return trackIter->second;
+		return *actualTracks[trackIter->second];
 	}
 	
 	size_t getTrackCount() const { return tracks.size(); }
 	
-//private:
-	typedef std::map<const std::basic_string<TCHAR>, SyncTrack> TrackContainer;
+// private:
+	typedef std::map<const std::basic_string<TCHAR>, size_t> TrackContainer;
+//	typedef std::map<const std::basic_string<TCHAR>, SyncTrack> TrackContainer;
 	TrackContainer tracks;
+//	std::vector<SyncTrack*> actualTracks;
 };
 

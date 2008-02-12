@@ -1,11 +1,6 @@
 #include <stdio.h>
 #include "network.h"
-
-/*
-struct hostent *getHost()
-{
-	
-}*/
+#include "syncdataclient.h"
 
 int main(int argc, char *argv[])
 {
@@ -30,39 +25,15 @@ int main(int argc, char *argv[])
 		exit(-1);
 	}
 	
+	SyncDataClient syncData(serverSocket);
+	SyncTrack &track = syncData.getTrack("test");
+	
 	puts("recieving...");
 	bool done = false;
 	while (!done)
 	{
-		// look for new commands
-		while (pollRead(serverSocket))
-		{
-			unsigned char cmd = 0;
-			int ret = recv(serverSocket, (char*)&cmd, 1, 0);
-			if (0 == ret)
-			{
-				done = true;
-				break;
-			}
-			else
-			{
-				switch (cmd)
-				{
-					case 1:
-						printf("yes, master!\n");
-						{
-							unsigned char cmd = 0x1;
-							send(serverSocket, (char*)&cmd, 1, 0);
-						}
-					break;
-					
-					default:
-						printf("unknown cmd: %02x\n", cmd);
-				}
-			}
-		}
-		
-		putchar('.');
+//		putchar('.');
+		done = syncData.poll();
 	}
 	closesocket(serverSocket);
 	

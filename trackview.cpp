@@ -260,7 +260,7 @@ void TrackView::paintTracks(HDC hdc, RECT rcTracks)
 			
 //			InvertRect(hdc, &fillRect);
 			
-			const SyncTrack &track = trackIter->second;
+			const SyncTrack &track = *syncData->actualTracks[trackIter->second];
 			bool key = track.isKeyFrame(row);
 			
 			/* format the text */
@@ -325,16 +325,6 @@ void TrackView::editCopy()
 	int selectTop    = min(selectStartRow, selectStopRow);
 	int selectBottom = max(selectStartRow, selectStopRow);
 	
-#if 0
-	struct CopyEntry
-	{
-		int track, row;
-		float val;
-		bool valExisting;
-	};
-	std::vector<CopyEntry> copyBuffer;
-#endif
-	
 	if (FAILED(OpenClipboard(getWin())))
 	{
 		MessageBox(NULL, _T("Failed to open clipboard"), NULL, MB_OK);
@@ -346,17 +336,14 @@ void TrackView::editCopy()
 	int columns = selectRight - selectLeft + 1;
 	size_t cells = columns * rows;
 	
-	std::string copyString;
-	
 	std::vector<struct CopyEntry> copyEntries;
-	for (int row = selectTop; row <= selectBottom; ++row)
+	for (int track = selectLeft; track <= selectRight; ++track)
 	{
-		int localRow = row - selectTop;
-		for (int track = selectLeft; track <= selectRight; ++track)
+		int localTrack = track - selectLeft;
+		const SyncTrack &t = syncData->getTrack(track);
+		for (int row = selectTop; row <= selectBottom; ++row)
 		{
-			int localTrack = track - selectLeft;
-			const SyncTrack &t = syncData->getTrack(track);
-			char temp[128];
+			int localRow = row - selectTop;
 			if (t.isKeyFrame(row))
 			{
 				const SyncTrack::KeyFrame *keyFrame = t.getKeyFrame(row);
@@ -368,12 +355,8 @@ void TrackView::editCopy()
 				ce.keyFrame = *keyFrame;
 				
 				copyEntries.push_back(ce);
-				sprintf(temp, "%.2f\t", keyFrame->value);
 			}
-			else sprintf(temp, "--- \t");
-			copyString += temp;
 		}
-		copyString += "\n";
 	}
 	
 	int buffer_width  = selectRight - selectLeft + 1;
@@ -392,16 +375,9 @@ void TrackView::editCopy()
 	GlobalUnlock(hmem);
 	clipbuf = NULL;
 	
-	HGLOBAL hmem_text = GlobalAlloc(GMEM_MOVEABLE, strlen(copyString.c_str()) + 1);
-	clipbuf = (char *)GlobalLock(hmem_text);
-	memcpy(clipbuf, copyString.c_str(), strlen(copyString.c_str()) + 1);
-	GlobalUnlock(hmem_text);
-	clipbuf = NULL;
-	
 	// update clipboard
 	EmptyClipboard();
 	SetClipboardData(clipboardFormat, hmem);
-/*	SetClipboardData(CF_TEXT, hmem_text); */
 	CloseClipboard();
 }
 
@@ -447,16 +423,6 @@ void TrackView::editPaste()
 			}
 			syncData->exec(multiCmd);
 		}
-		
-		GlobalUnlock(hmem);
-		clipbuf = NULL;
-	}
-	else if (!IsClipboardFormatAvailable(clipboardFormat))
-	{
-		HGLOBAL hmem = GetClipboardData(clipboardFormat);
-		char *clipbuf = (char *)GlobalLock(hmem);
-		
-		/* DO STUFFZ! */
 		
 		GlobalUnlock(hmem);
 		clipbuf = NULL;
@@ -761,19 +727,6 @@ void TrackView::editBiasValue(float amount)
 		syncData->exec(multiCmd);
 		invalidateRange(selectLeft, selectRight, selectTop, selectBottom);
 	}
-
-/*	SyncTrack &track = syncData->getTrack(editTrack);
-	if (track.isKeyFrame(editRow))
-	{
-		SyncTrack::KeyFrame newKey = *track.getKeyFrame(editRow);
-		newKey.value += amount;
-		
-		SyncEditData::Command *cmd = syncData->getSetKeyFrameCommand(editTrack, editRow, newKey);
-		syncData->exec(cmd);
-		
-		invalidatePos(editTrack, editRow);
-	}
-	else MessageBeep(0); */
 }
 
 LRESULT TrackView::onKeyDown(UINT keyCode, UINT /*flags*/)

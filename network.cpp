@@ -28,7 +28,6 @@ SOCKET clientConnect(SOCKET serverSocket)
 	
 	recv(clientSocket, recievedGreeting, int(strlen(expectedGreeting)), 0);
 	
-	fprintf(stderr, "got: \"%s\"\n", recievedGreeting);
 	if (strncmp(expectedGreeting, recievedGreeting, strlen(expectedGreeting)) != 0)
 	{
 		closesocket(clientSocket);
