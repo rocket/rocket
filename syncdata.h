@@ -110,6 +110,6 @@ public:
 	typedef std::map<const std::basic_string<TCHAR>, size_t> TrackContainer;
 //	typedef std::map<const std::basic_string<TCHAR>, SyncTrack> TrackContainer;
 	TrackContainer tracks;
-//	std::vector<SyncTrack*> actualTracks;
+	std::vector<SyncTrack*> actualTracks;
 };
 
