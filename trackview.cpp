@@ -134,6 +134,9 @@ void TrackView::paintTopMargin(HDC hdc, RECT rcTracks)
 		FillRect(hdc, &fillRect, bgBrush);
 		
 		const std::basic_string<TCHAR> &trackName = trackIter->first;
+		
+		if (this->syncData->clientRemap.count(track) == 0) SetTextColor(hdc, GetSysColor(COLOR_GRAYTEXT));
+		else SetTextColor(hdc, GetSysColor(COLOR_WINDOWTEXT));
 		TextOut(hdc,
 			fillRect.left, 0,
 			trackName.data(), int(trackName.length())

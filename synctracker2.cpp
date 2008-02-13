@@ -394,6 +394,8 @@ int _tmain(int argc, _TCHAR* argv[])
 					closesocket(clientSocket);
 					clientSocket = INVALID_SOCKET;
 					syncData.clientSocket = INVALID_SOCKET;
+					syncData.clientRemap.clear();
+					InvalidateRect(trackViewWin, NULL, FALSE);
 					break;
 				}
 				else
