@@ -14,6 +14,8 @@ public:
 	void sendSetKeyCommand(int track, int row, const SyncTrack::KeyFrame &key)
 	{
 		if (INVALID_SOCKET == clientSocket) return;
+		if (clientRemap.count(track) == 0) return;
+		track = int(clientRemap[track]);
 		
 		unsigned char cmd = SET_KEY;
 		send(clientSocket, (char*)&cmd, 1, 0);
@@ -223,8 +225,8 @@ public:
 	}
 	
 	SOCKET clientSocket;
-private:
-//	std::map<SyncTrack*, int> clientRemap;
+// private:
+	std::map<size_t, size_t> clientRemap;
 	
 	std::stack<Command*> undoStack;
 	std::stack<Command*> redoStack;

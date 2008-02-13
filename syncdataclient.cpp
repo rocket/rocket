@@ -4,22 +4,28 @@
 SyncTrack &SyncDataClient::getTrack(const std::basic_string<TCHAR> &name)
 {
 	TrackContainer::iterator iter = tracks.find(name);
-	if (iter != tracks.end()) return iter->second;
+	if (iter != tracks.end()) return *actualTracks[iter->second];
 		
 	unsigned char cmd = GET_TRACK;
 	send(serverSocket, (char*)&cmd, 1, 0);
+
+	size_t clientIndex = actualTracks.size();
+	send(serverSocket, (char*)&clientIndex, sizeof(size_t), 0);
 	
 	// send request data
-	int name_len = name.size();
+	size_t name_len = name.size();
 	printf("len: %d\n", name_len);
-	send(serverSocket, (char*)&name_len, sizeof(int), 0);
+	send(serverSocket, (char*)&name_len, sizeof(size_t), 0);
 	
 	const char *name_str = name.c_str();
 	send(serverSocket, name_str, name_len, 0);
 	
-	SyncTrack track = SyncTrack();
+	SyncTrack *track = new SyncTrack();
 	/* todo: fill in based on the response */
-	return tracks[name] = track;
+
+	actualTracks.push_back(track);
+	tracks[name] = clientIndex;
+	return *track;
 }
 
 bool SyncDataClient::poll()
@@ -30,7 +36,7 @@ bool SyncDataClient::poll()
 	{
 		unsigned char cmd = 0;
 		int ret = recv(serverSocket, (char*)&cmd, 1, 0);
-		if (0 == ret)
+		if (0 >= ret)
 		{
 			done = true;
 			break;

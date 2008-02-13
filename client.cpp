@@ -27,6 +27,7 @@ int main(int argc, char *argv[])
 	
 	SyncDataClient syncData(serverSocket);
 	SyncTrack &track = syncData.getTrack("test");
+	SyncTrack &track2 = syncData.getTrack("test2");
 	
 	puts("recieving...");
 	bool done = false;

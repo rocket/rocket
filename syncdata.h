@@ -75,7 +75,7 @@ public:
 		return iter->first;
 	}
 	
-private:
+// private:
 	
 	typedef std::map<size_t, struct KeyFrame> KeyFrameContainer;
 	KeyFrameContainer keyFrames;
@@ -84,14 +84,24 @@ private:
 class SyncData
 {
 public:
-	SyncTrack &getTrack(const std::basic_string<TCHAR> &name)
+	size_t getTrackIndex(const std::basic_string<TCHAR> &name)
 	{
 		TrackContainer::iterator iter = tracks.find(name);
-		if (iter != tracks.end()) return *actualTracks[iter->second];
+		if (iter != tracks.end()) return int(iter->second);
 		
-		tracks[name] = actualTracks.size();
+		size_t index = actualTracks.size();
+		tracks[name] = index;
 		actualTracks.push_back(new SyncTrack());
-		return *actualTracks.back();
+		return index;
+	}
+	
+	SyncTrack &getTrack(const std::basic_string<TCHAR> &name)
+	{
+		size_t index = getTrackIndex(name);
+		assert(index >= 0);
+		assert(index < int(actualTracks.size()));
+		assert(NULL != actualTracks[index]);
+		return *actualTracks[index];
 	}
 	
 	SyncTrack &getTrack(size_t track)

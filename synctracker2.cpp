@@ -377,14 +377,12 @@ int _tmain(int argc, _TCHAR* argv[])
 				{
 					puts("connected.");
 					syncData.clientSocket = clientSocket;
-/*					for (int track = 0; track < syncData.getTrackCount(); ++track)
-					{
-						
-					} */
+					syncData.clientRemap.clear();
 				}
 			}
 		}
-		else
+		
+		if (INVALID_SOCKET != clientSocket)
 		{
 			// look for new commands
 			while (pollRead(clientSocket))
@@ -403,44 +401,45 @@ int _tmain(int argc, _TCHAR* argv[])
 					switch (cmd)
 					{
 					case GET_TRACK:
+						size_t clientIndex = 0;
+						int ret = recv(clientSocket, (char*)&clientIndex, sizeof(int), 0);
+						printf("client index: %d\n", clientIndex);
+						
 						// get len
 						int str_len = 0;
-						int ret = recv(clientSocket, (char*)&str_len, sizeof(int), 0);
-						assert(ret == sizeof(size_t));
-						printf("len: %d\n", str_len);
+						ret = recv(clientSocket, (char*)&str_len, sizeof(int), 0);
 						
 //						int clientAddr = 0;
 //						int ret = recv(clientSocket, (char*)&clientAddr, sizeof(int), 0);
 						
 						// get string
 						std::string trackName;
-						trackName.resize(str_len * 2);
+						trackName.resize(str_len);
 						recv(clientSocket, &trackName[0], str_len, 0);
-						trackName.push_back('\0');
 						
-						// 
-						printf("name: %s\n", trackName.c_str());
-
-						const SyncTrack &track = syncData.getTrack(trackName);
-//						clientRemap[track] = clientAddr;
+						// find track
+						size_t serverIndex = syncData.getTrackIndex(trackName.c_str());
+						printf("name: \"%s\"\n", trackName.c_str());
 						
-						for (size_t keyframe = 0; keyframe < track.getFrameCount(); ++keyframe)
+						// setup remap
+						syncData.clientRemap[serverIndex] = clientIndex;
+						
+						const SyncTrack &track = *syncData.actualTracks[serverIndex];
+						
+						SyncTrack::KeyFrameContainer::const_iterator it;
+						for (it = track.keyFrames.begin(); it != track.keyFrames.end(); ++it)
 						{
-//							printf("name: %s\n", trackName.c_str());
+							int row = int(it->first);
+							const SyncTrack::KeyFrame &key = it->second;
+							syncData.sendSetKeyCommand(int(serverIndex), row, key);
 						}
 						
+						InvalidateRect(trackViewWin, NULL, FALSE);
 						break;
+//					case SOMETHING_ELSE:
 					}
-//					printf("cmd: %02x\n", cmd);
-//					if (cmd == 1) printf("yes, master!\n");
 				}
 			}
-			
-			// terminate connection
-/*			cmd = 0x0;
-			send(clientSocket, (char*)&cmd, 1, 0);
-			closesocket(clientSocket);
-			clientSocket = INVALID_SOCKET; */
 		}
 #endif
 		while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
@@ -455,6 +454,7 @@ int _tmain(int argc, _TCHAR* argv[])
 		Sleep(1);
 	}
 	
+	closesocket(clientSocket);
 	closesocket(serverSocket);
 	closeNetwork();
 	
