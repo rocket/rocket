@@ -1,20 +1,22 @@
 #include "device.h"
 #include "../network.h"
-#include "../syncdataclient.h"
+#include "../syncdata.h"
 
 using namespace sync;
 
 class ClientDevice : public Device
 {
 public:
-	ClientDevice(SOCKET serverSocket, Timer &timer) : syncData(serverSocket), timer(timer) {}
+	ClientDevice(SOCKET serverSocket, Timer &timer) : serverSocket(serverSocket), timer(timer) {}
 	~ClientDevice();
 
 	Track &getTrack(const std::string &trackName);
 	bool update(float row);
 	
 private:
-	SyncDataClient syncData;
+	SyncData syncData;
+	SOCKET serverSocket;
+	
 	Timer &timer;
 };
 
@@ -25,12 +27,74 @@ ClientDevice::~ClientDevice()
 
 Track &ClientDevice::getTrack(const std::string &trackName)
 {
-	return syncData.getTrack(trackName);
+	SyncData::TrackContainer::iterator iter = syncData.tracks.find(trackName);
+	if (iter != syncData.tracks.end()) return *syncData.actualTracks[iter->second];
+		
+	unsigned char cmd = GET_TRACK;
+	send(serverSocket, (char*)&cmd, 1, 0);
+
+	size_t clientIndex = syncData.actualTracks.size();
+	send(serverSocket, (char*)&clientIndex, sizeof(size_t), 0);
+	
+	// send request data
+	size_t name_len = trackName.size();
+	printf("len: %d\n", name_len);
+	send(serverSocket, (char*)&name_len, sizeof(size_t), 0);
+	
+	const char *name_str = trackName.c_str();
+	send(serverSocket, name_str, name_len, 0);
+	
+	sync::Track *track = new sync::Track();
+	/* todo: fill in based on the response */
+
+	syncData.actualTracks.push_back(track);
+	syncData.tracks[trackName] = clientIndex;
+	return *track;
 }
 
 bool ClientDevice::update(float row)
 {
-	return !syncData.poll();
+	bool done = false;
+	// look for new commands
+	while (pollRead(serverSocket))
+	{
+		unsigned char cmd = 0;
+		int ret = recv(serverSocket, (char*)&cmd, 1, 0);
+		if (0 >= ret)
+		{
+			done = true;
+			break;
+		}
+		else
+		{
+			switch (cmd)
+			{
+				case SET_KEY:
+					{
+						int track, row;
+						float value;
+						recv(serverSocket, (char*)&track, sizeof(int), 0);
+						recv(serverSocket, (char*)&row,   sizeof(int), 0);
+						recv(serverSocket, (char*)&value, sizeof(float), 0);
+						printf("set: %d,%d = %f\n", track, row, value);
+					}
+					break;
+				
+				case DELETE_KEY:
+					{
+						int track, row;
+						recv(serverSocket, (char*)&track, sizeof(int), 0);
+						recv(serverSocket, (char*)&row,   sizeof(int), 0);
+						printf("delete: %d,%d = %f\n", track, row);
+					}
+					break;
+				
+				default:
+					printf("unknown cmd: %02x\n", cmd);
+			}
+		}
+	}
+	return !done;
 }
 
 Device *sync::createDevice(const std::string &baseName, Timer &timer)

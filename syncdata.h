@@ -6,6 +6,8 @@
 
 #include <exception>
 #include <cmath>
+#include <cassert>
+#include <tchar.h>
 
 #include "sync/track.h"
 
