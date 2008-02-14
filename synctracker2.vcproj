@@ -222,10 +222,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\syncdata.h"
-				>
-			</File>
-			<File
 				RelativePath=".\synceditdata.h"
 				>
 			</File>

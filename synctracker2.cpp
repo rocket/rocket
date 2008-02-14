@@ -318,7 +318,7 @@ int _tmain(int argc, _TCHAR* argv[])
 	
 	ATOM mainClass      = registerMainWindowClass(hInstance);
 	ATOM trackViewClass = registerTrackViewWindowClass(hInstance);
-	if(!mainClass || ! trackViewClass)
+	if (!mainClass || !trackViewClass)
 	{
 		MessageBox(NULL, _T("Window Registration Failed!"), _T("Error!"), MB_ICONEXCLAMATION | MB_OK);
 		return 0;
@@ -327,7 +327,6 @@ int _tmain(int argc, _TCHAR* argv[])
 	trackView = new TrackView();
 	trackView->setSyncData(&syncData);
 	
-	// Step 2: Creating the Window
 	HWND hwnd = CreateWindowEx(
 		0,
 		mainWindowClassName,
@@ -405,42 +404,52 @@ int _tmain(int argc, _TCHAR* argv[])
 					switch (cmd)
 					{
 					case GET_TRACK:
-						size_t clientIndex = 0;
-						int ret = recv(clientSocket, (char*)&clientIndex, sizeof(int), 0);
-						printf("client index: %d\n", clientIndex);
-						
-						// get len
-						int str_len = 0;
-						ret = recv(clientSocket, (char*)&str_len, sizeof(int), 0);
-						
-//						int clientAddr = 0;
-//						int ret = recv(clientSocket, (char*)&clientAddr, sizeof(int), 0);
-						
-						// get string
-						std::string trackName;
-						trackName.resize(str_len);
-						recv(clientSocket, &trackName[0], str_len, 0);
-						
-						// find track
-						size_t serverIndex = syncData.getTrackIndex(trackName.c_str());
-						printf("name: \"%s\"\n", trackName.c_str());
-						
-						// setup remap
-						syncData.clientRemap[serverIndex] = clientIndex;
-						
-						const sync::Track &track = *syncData.actualTracks[serverIndex];
-						
-						sync::Track::KeyFrameContainer::const_iterator it;
-						for (it = track.keyFrames.begin(); it != track.keyFrames.end(); ++it)
 						{
-							int row = int(it->first);
-							const sync::Track::KeyFrame &key = it->second;
-							syncData.sendSetKeyCommand(int(serverIndex), row, key);
+							size_t clientIndex = 0;
+							int ret = recv(clientSocket, (char*)&clientIndex, sizeof(int), 0);
+							printf("client index: %d\n", clientIndex);
+							
+							// get len
+							int str_len = 0;
+							ret = recv(clientSocket, (char*)&str_len, sizeof(int), 0);
+							
+	//						int clientAddr = 0;
+	//						int ret = recv(clientSocket, (char*)&clientAddr, sizeof(int), 0);
+							
+							// get string
+							std::string trackName;
+							trackName.resize(str_len);
+							recv(clientSocket, &trackName[0], str_len, 0);
+							
+							// find track
+							size_t serverIndex = syncData.getTrackIndex(trackName.c_str());
+							printf("name: \"%s\"\n", trackName.c_str());
+							
+							// setup remap
+							syncData.clientRemap[serverIndex] = clientIndex;
+							
+							const sync::Track &track = *syncData.actualTracks[serverIndex];
+							
+							sync::Track::KeyFrameContainer::const_iterator it;
+							for (it = track.keyFrames.begin(); it != track.keyFrames.end(); ++it)
+							{
+								int row = int(it->first);
+								const sync::Track::KeyFrame &key = it->second;
+								syncData.sendSetKeyCommand(int(serverIndex), row, key);
+							}
+							
+							InvalidateRect(trackViewWin, NULL, FALSE);
 						}
-						
-						InvalidateRect(trackViewWin, NULL, FALSE);
 						break;
-//					case SOMETHING_ELSE:
+					
+					case SET_ROW:
+						{
+							int newRow = 0;
+							int ret = recv(clientSocket, (char*)&newRow, sizeof(int), 0);
+							printf("new row: %d\n", newRow);
+							trackView->setEditRow(newRow);
+						}
+						break;
 					}
 				}
 			}

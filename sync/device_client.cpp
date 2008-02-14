@@ -10,7 +10,8 @@ public:
 	ClientDevice(const std::string &baseName, SOCKET serverSocket, Timer &timer) :
 		baseName(baseName),
 		timer(timer),
-		serverSocket(serverSocket)
+		serverSocket(serverSocket),
+		serverRow(-1)
 	{
 	}
 	
@@ -24,12 +25,12 @@ private:
 	sync::Data syncData;
 	Timer &timer;
 	
+	int    serverRow;
 	SOCKET serverSocket;
 };
 
 ClientDevice::~ClientDevice()
 {
-	
 }
 
 Track &ClientDevice::getTrack(const std::string &trackName)
@@ -94,7 +95,7 @@ bool ClientDevice::update(float row)
 						int track, row;
 						recv(serverSocket, (char*)&track, sizeof(int), 0);
 						recv(serverSocket, (char*)&row,   sizeof(int), 0);
-						printf("delete: %d,%d = %f\n", track, row);
+						printf("delete: %d,%d\n", track, row);
 						
 						sync::Track &t = syncData.getTrack(track);
 						t.deleteKeyFrame(row);
@@ -106,6 +107,19 @@ bool ClientDevice::update(float row)
 			}
 		}
 	}
+	
+	if (timer.isPlaying())
+	{
+		int newServerRow = int(floor(row));
+		if (serverRow != newServerRow)
+		{
+			unsigned char cmd = SET_ROW;
+			send(serverSocket, (char*)&cmd, 1, 0);
+			send(serverSocket, (char*)&newServerRow, sizeof(int), 0);
+			serverRow = newServerRow;
+		}
+	}
+	
 	return !done;
 }
 

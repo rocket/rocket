@@ -25,6 +25,8 @@ public:
 	int getRows() const { return rows; }
 	void editBiasValue(float amount);
 	
+	void setEditRow(int newEditRow);
+	
 private:
 	// some nasty hackery to forward the window messages
 	friend static LRESULT CALLBACK trackViewWindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
@@ -44,8 +46,6 @@ private:
 	void editCopy();
 	void editCut();
 	void editPaste();
-	
-	// the window procedure
 	
 	void paintTracks(HDC hdc, RECT rcTracks);
 	void paintTopMargin(HDC hdc, RECT rcTracks);
@@ -102,7 +102,6 @@ private:
 		InvalidateRect(hwnd, &rect, FALSE);
 	}
 	
-	void setEditRow(int newEditRow);
 	void setEditTrack(int newEditTrack);
 	
 	int getScreenY(int row);

@@ -68,11 +68,11 @@ int main(int argc, char *argv[])
 	timer.play();
 	while (1)
 	{
-		float row = timer.getRow();
+		float row = float(timer.getRow()) / 10;
 		if (!syncDevice->update(row)) break;
 		
 		printf("%2.2f: %2.2f                \n", row, track.getValue(row));
-		Sleep(1000);
+		Sleep(100);
 	}
 
 	return 0;
