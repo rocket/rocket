@@ -7,79 +7,7 @@
 #include <exception>
 #include <cmath>
 
-class SyncTrack
-{
-public:
-	struct KeyFrame
-	{
-		KeyFrame() : lerp(false) {}
-		KeyFrame(float value) : value(value), lerp(false) {}
-		float value;
-		bool lerp;
-	};
-	
-	float getValue(float time)
-	{
-		if (keyFrames.size() == 0) return 0.0f;
-		
-		int currRow = int(floor(time));
-		
-		// find bounding keyframes
-		KeyFrameContainer::const_iterator upper = keyFrames.upper_bound(currRow);
-		KeyFrameContainer::const_iterator lower = upper;
-		lower--;
-		
-		// bounds check
-		if (lower == keyFrames.end()) return upper->second.value;
-		if (upper == keyFrames.end()) return lower->second.value;
-		
-		float delta = upper->second.value - lower->second.value;
-		
-		// lerp, bitch
-		float d = (time - lower->first) / (upper->first - lower->first);
-		return lower->second.value + delta * d;
-	}
-	
-	bool isKeyFrame(size_t row) const
-	{
-		return keyFrames.find(row) != keyFrames.end();
-	}
-	
-	const KeyFrame *getKeyFrame(size_t row) const
-	{
-		KeyFrameContainer::const_iterator iter = keyFrames.find(row);
-		if (iter == keyFrames.end()) return NULL;
-		return &iter->second;
-	}
-	
-	void deleteKeyFrame(size_t row)
-	{
-		keyFrames.erase(row);
-	}
-	
-	void setKeyFrame(size_t row, const KeyFrame &keyFrame)
-	{
-		keyFrames[row] = keyFrame;
-	}
-	
-	void setKeyFrame(size_t row, const float value)
-	{
-		setKeyFrame(row, KeyFrame(value));
-	}
-	
-	size_t getFrameCount() const
-	{
-		if (keyFrames.empty()) return 0;
-		KeyFrameContainer::const_iterator iter = keyFrames.end();
-		iter--;
-		return iter->first;
-	}
-	
-// private:
-	
-	typedef std::map<size_t, struct KeyFrame> KeyFrameContainer;
-	KeyFrameContainer keyFrames;
-};
+#include "sync/track.h"
 
 class SyncData
 {
@@ -91,11 +19,11 @@ public:
 		
 		size_t index = actualTracks.size();
 		tracks[name] = index;
-		actualTracks.push_back(new SyncTrack());
+		actualTracks.push_back(new sync::Track);
 		return index;
 	}
 	
-	SyncTrack &getTrack(const std::basic_string<TCHAR> &name)
+	sync::Track &getTrack(const std::basic_string<TCHAR> &name)
 	{
 		size_t index = getTrackIndex(name);
 		assert(index >= 0);
@@ -104,7 +32,7 @@ public:
 		return *actualTracks[index];
 	}
 	
-	SyncTrack &getTrack(size_t track)
+	sync::Track &getTrack(size_t track)
 	{
 		assert(track >= 0);
 		assert(track < tracks.size());
@@ -120,6 +48,6 @@ public:
 	typedef std::map<const std::basic_string<TCHAR>, size_t> TrackContainer;
 //	typedef std::map<const std::basic_string<TCHAR>, SyncTrack> TrackContainer;
 	TrackContainer tracks;
-	std::vector<SyncTrack*> actualTracks;
+	std::vector<sync::Track*> actualTracks;
 };
 

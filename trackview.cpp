@@ -263,7 +263,7 @@ void TrackView::paintTracks(HDC hdc, RECT rcTracks)
 			
 //			InvertRect(hdc, &fillRect);
 			
-			const SyncTrack &track = *syncData->actualTracks[trackIter->second];
+			const sync::Track &track = *syncData->actualTracks[trackIter->second];
 			bool key = track.isKeyFrame(row);
 			
 			/* format the text */
@@ -317,7 +317,7 @@ void TrackView::paintTracks(HDC hdc, RECT rcTracks)
 struct CopyEntry
 {
 	int track, row;
-	SyncTrack::KeyFrame keyFrame;
+	sync::Track::KeyFrame keyFrame;
 };
 
 
@@ -343,13 +343,13 @@ void TrackView::editCopy()
 	for (int track = selectLeft; track <= selectRight; ++track)
 	{
 		int localTrack = track - selectLeft;
-		const SyncTrack &t = syncData->getTrack(track);
+		const sync::Track &t = syncData->getTrack(track);
 		for (int row = selectTop; row <= selectBottom; ++row)
 		{
 			int localRow = row - selectTop;
 			if (t.isKeyFrame(row))
 			{
-				const SyncTrack::KeyFrame *keyFrame = t.getKeyFrame(row);
+				const sync::Track::KeyFrame *keyFrame = t.getKeyFrame(row);
 				assert(NULL != keyFrame);
 				
 				CopyEntry ce;
@@ -647,9 +647,9 @@ void TrackView::editEnterValue()
 {
 	if (editString.size() > 0)
 	{
-		SyncTrack &t = syncData->getTrack(editTrack);
+		sync::Track &t = syncData->getTrack(editTrack);
 		
-		SyncTrack::KeyFrame newKey;
+		sync::Track::KeyFrame newKey;
 		if (t.isKeyFrame(editRow)) newKey = *t.getKeyFrame(editRow); // copy old key
 		newKey.value = float(_tstof(editString.c_str())); // modify value
 		
@@ -672,7 +672,7 @@ void TrackView::editDelete()
 	SyncEditData::MultiCommand *multiCmd = new SyncEditData::MultiCommand();
 	for (int track = selectLeft; track <= selectRight; ++track)
 	{
-		SyncTrack &t = syncData->getTrack(track);
+		sync::Track &t = syncData->getTrack(track);
 		for (int row = selectTop; row <= selectBottom; ++row)
 		{
 			if (t.isKeyFrame(row))
@@ -705,12 +705,12 @@ void TrackView::editBiasValue(float amount)
 	SyncEditData::MultiCommand *multiCmd = new SyncEditData::MultiCommand();
 	for (int track = selectLeft; track <= selectRight; ++track)
 	{
-		SyncTrack &t = syncData->getTrack(track);
+		sync::Track &t = syncData->getTrack(track);
 		for (int row = selectTop; row <= selectBottom; ++row)
 		{
 			if (t.isKeyFrame(row))
 			{
-				SyncTrack::KeyFrame newKey = *t.getKeyFrame(row); // copy old key
+				sync::Track::KeyFrame newKey = *t.getKeyFrame(row); // copy old key
 				newKey.value += amount; // modify value
 				
 				// add sub-command

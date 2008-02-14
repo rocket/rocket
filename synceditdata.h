@@ -11,7 +11,7 @@ class SyncEditData : public SyncData
 public:
 	SyncEditData() : SyncData() {}
 	
-	void sendSetKeyCommand(int track, int row, const SyncTrack::KeyFrame &key)
+	void sendSetKeyCommand(int track, int row, const sync::Track::KeyFrame &key)
 	{
 		if (INVALID_SOCKET == clientSocket) return;
 		if (clientRemap.count(track) == 0) return;
@@ -46,12 +46,12 @@ public:
 	class InsertCommand : public Command
 	{
 	public:
-		InsertCommand(int track, int row, const SyncTrack::KeyFrame &key) : track(track), row(row), key(key) {}
+		InsertCommand(int track, int row, const sync::Track::KeyFrame &key) : track(track), row(row), key(key) {}
 		~InsertCommand() {}
 		
 		virtual void exec(SyncEditData *data)
 		{
-			SyncTrack &t = data->getTrack(this->track);
+			sync::Track &t = data->getTrack(this->track);
 			assert(!t.isKeyFrame(row));
 			t.setKeyFrame(row, key);
 			
@@ -60,7 +60,7 @@ public:
 		
 		virtual void undo(SyncEditData *data)
 		{
-			SyncTrack &t = data->getTrack(this->track);
+			sync::Track &t = data->getTrack(this->track);
 			assert(t.isKeyFrame(row));
 			t.deleteKeyFrame(row);
 			
@@ -69,7 +69,7 @@ public:
 		
 	private:
 		int track, row;
-		SyncTrack::KeyFrame key;
+		sync::Track::KeyFrame key;
 	};
 	
 	class DeleteCommand : public Command
@@ -80,7 +80,7 @@ public:
 		
 		virtual void exec(SyncEditData *data)
 		{
-			SyncTrack &t = data->getTrack(this->track);
+			sync::Track &t = data->getTrack(this->track);
 			assert(t.isKeyFrame(row));
 			oldKey = *t.getKeyFrame(row);
 			t.deleteKeyFrame(row);
@@ -90,7 +90,7 @@ public:
 		
 		virtual void undo(SyncEditData *data)
 		{
-			SyncTrack &t = data->getTrack(this->track);
+			sync::Track &t = data->getTrack(this->track);
 			assert(!t.isKeyFrame(row));
 			t.setKeyFrame(row, oldKey);
 			
@@ -99,19 +99,19 @@ public:
 		
 	private:
 		int track, row;
-		SyncTrack::KeyFrame oldKey;
+		sync::Track::KeyFrame oldKey;
 	};
 
 	
 	class EditCommand : public Command
 	{
 	public:
-		EditCommand(int track, int row, const SyncTrack::KeyFrame &key) : track(track), row(row), key(key) {}
+		EditCommand(int track, int row, const sync::Track::KeyFrame &key) : track(track), row(row), key(key) {}
 		~EditCommand() {}
 		
 		virtual void exec(SyncEditData *data)
 		{
-			SyncTrack &t = data->getTrack(this->track);
+			sync::Track &t = data->getTrack(this->track);
 			
 			// store old key
 			assert(t.isKeyFrame(row));
@@ -125,7 +125,7 @@ public:
 		
 		virtual void undo(SyncEditData *data)
 		{
-			SyncTrack &t = data->getTrack(this->track);
+			sync::Track &t = data->getTrack(this->track);
 			
 			assert(t.isKeyFrame(row));
 			t.setKeyFrame(row, oldKey);
@@ -135,7 +135,7 @@ public:
 		
 	private:
 		int track, row;
-		SyncTrack::KeyFrame oldKey, key;
+		sync::Track::KeyFrame oldKey, key;
 	};
 	
 	class MultiCommand : public Command
@@ -215,9 +215,9 @@ public:
 		}
 	}
 	
-	Command *getSetKeyFrameCommand(int track, int row, const SyncTrack::KeyFrame &key)
+	Command *getSetKeyFrameCommand(int track, int row, const sync::Track::KeyFrame &key)
 	{
-		SyncTrack &t = getTrack(track);
+		sync::Track &t = getTrack(track);
 		SyncEditData::Command *cmd;
 		if (t.isKeyFrame(row)) cmd = new EditCommand(track, row, key);
 		else                   cmd = new InsertCommand(track, row, key);

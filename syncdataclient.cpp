@@ -1,7 +1,7 @@
 #include "syncdataclient.h"
 #include "network.h"
 
-SyncTrack &SyncDataClient::getTrack(const std::basic_string<TCHAR> &name)
+sync::Track &SyncDataClient::getTrack(const std::basic_string<TCHAR> &name)
 {
 	TrackContainer::iterator iter = tracks.find(name);
 	if (iter != tracks.end()) return *actualTracks[iter->second];
@@ -20,7 +20,7 @@ SyncTrack &SyncDataClient::getTrack(const std::basic_string<TCHAR> &name)
 	const char *name_str = name.c_str();
 	send(serverSocket, name_str, name_len, 0);
 	
-	SyncTrack *track = new SyncTrack();
+	sync::Track *track = new sync::Track();
 	/* todo: fill in based on the response */
 
 	actualTracks.push_back(track);

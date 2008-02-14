@@ -67,7 +67,7 @@ static LRESULT CALLBACK setRowsDialogProc(HWND hDlg, UINT message, WPARAM wParam
 		EndDialog(hDlg, LOWORD(wParam));
 		return TRUE;
 	}
-
+	
 	return FALSE;
 }
 
@@ -114,7 +114,7 @@ static LRESULT CALLBACK biasSelectionDialogProc(HWND hDlg, UINT message, WPARAM 
 		EndDialog(hDlg, LOWORD(wParam));
 		return TRUE;
 	}
-
+	
 	return FALSE;
 }
 
@@ -163,12 +163,12 @@ static LRESULT CALLBACK mainWindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARA
 	case WM_SETFOCUS:
 		SetFocus(trackViewWin); // needed to forward keyboard input
 		break;
-
+	
 	case WM_SETROWS:
 		printf("rows: %d\n", int(lParam));
 		trackView->setRows(int(lParam));
 		break;
-
+	
 	case WM_BIASSELECTION:
 		trackView->editBiasValue(float(lParam));
 		break;
@@ -283,13 +283,14 @@ int _tmain(int argc, _TCHAR* argv[])
 	
 	SyncEditData syncData;
 	syncData.clientSocket = INVALID_SOCKET;
-
+#if 0
+	
 	SyncTrack &camXTrack = syncData.getTrack(_T("cam.x"));
 	SyncTrack &camXTrack2 = syncData.getTrack(_T("cam.x"));
 	camXTrack.setKeyFrame(1, 2.0f);
 	camXTrack.setKeyFrame(4, 3.0f);
 	printf("%p %p\n", &camXTrack, &camXTrack2);
-
+	
 	SyncTrack &camYTrack = syncData.getTrack(_T("cam.y"));
 	SyncTrack &camZTrack = syncData.getTrack(_T("cam.z"));
 	
@@ -313,6 +314,7 @@ int _tmain(int argc, _TCHAR* argv[])
 		float time = float(i) / 2;
 		printf("%f %d - %f\n", time, camXTrack.isKeyFrame(i), camXTrack.getValue(time));
 	}
+#endif
 	
 	ATOM mainClass      = registerMainWindowClass(hInstance);
 	ATOM trackViewClass = registerTrackViewWindowClass(hInstance);
@@ -426,13 +428,13 @@ int _tmain(int argc, _TCHAR* argv[])
 						// setup remap
 						syncData.clientRemap[serverIndex] = clientIndex;
 						
-						const SyncTrack &track = *syncData.actualTracks[serverIndex];
+						const sync::Track &track = *syncData.actualTracks[serverIndex];
 						
-						SyncTrack::KeyFrameContainer::const_iterator it;
+						sync::Track::KeyFrameContainer::const_iterator it;
 						for (it = track.keyFrames.begin(); it != track.keyFrames.end(); ++it)
 						{
 							int row = int(it->first);
-							const SyncTrack::KeyFrame &key = it->second;
+							const sync::Track::KeyFrame &key = it->second;
 							syncData.sendSetKeyCommand(int(serverIndex), row, key);
 						}
 						
