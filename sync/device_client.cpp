@@ -7,17 +7,24 @@ using namespace sync;
 class ClientDevice : public Device
 {
 public:
-	ClientDevice(SOCKET serverSocket, Timer &timer) : serverSocket(serverSocket), timer(timer) {}
+	ClientDevice(const std::string &baseName, SOCKET serverSocket, Timer &timer) :
+		baseName(baseName),
+		timer(timer),
+		serverSocket(serverSocket)
+	{
+	}
+	
 	~ClientDevice();
-
+	
 	Track &getTrack(const std::string &trackName);
 	bool update(float row);
 	
 private:
+	const std::string &baseName;
 	SyncData syncData;
-	SOCKET serverSocket;
-	
 	Timer &timer;
+	
+	SOCKET serverSocket;
 };
 
 ClientDevice::~ClientDevice()
@@ -45,7 +52,6 @@ Track &ClientDevice::getTrack(const std::string &trackName)
 	send(serverSocket, name_str, name_len, 0);
 	
 	sync::Track *track = new sync::Track();
-	/* todo: fill in based on the response */
 
 	syncData.actualTracks.push_back(track);
 	syncData.tracks[trackName] = clientIndex;

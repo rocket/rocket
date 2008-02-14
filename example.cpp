@@ -50,6 +50,7 @@ private:
 
 #endif
 
+#include <windows.h>
 #include <memory>
 int main(int argc, char *argv[])
 {
@@ -64,13 +65,14 @@ int main(int argc, char *argv[])
 	
 	sync::Track &track = syncDevice->getTrack("test");
 	
-//	timer.play();
+	timer.play();
 	while (1)
 	{
 		float row = timer.getRow();
 		if (!syncDevice->update(row)) break;
 		
-		printf("%2.2f: %2.2f                \r", row, track.getValue(row));
+		printf("%2.2f: %2.2f                \n", row, track.getValue(row));
+		Sleep(1000);
 	}
 
 	return 0;

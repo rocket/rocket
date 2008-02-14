@@ -23,7 +23,6 @@ namespace sync
 		
 		void deleteKeyFrame(size_t row);
 		void setKeyFrame(size_t row, const KeyFrame &keyFrame);
-		void setKeyFrame(size_t row, const float value);
 		
 	// private:
 		
