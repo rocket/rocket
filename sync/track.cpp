@@ -1,5 +1,5 @@
 #include "track.h"
-#include "../syncdata.h"
+#include "data.h"
 using namespace sync;
 
 #include <cmath>

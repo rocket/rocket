@@ -110,7 +110,7 @@ private:
 	
 	int getTrackCount()
 	{
-		SyncData *syncData = getSyncData();
+		sync::Data *syncData = getSyncData();
 		if (NULL == syncData) return 0;
 		return int(syncData->getTrackCount());
 	};

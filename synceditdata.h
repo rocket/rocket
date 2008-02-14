@@ -1,15 +1,15 @@
 #pragma once
 
-#include "syncdata.h"
+#include "sync/data.h"
 #include <stack>
 #include <list>
 
 #include "network.h"
 
-class SyncEditData : public SyncData
+class SyncEditData : public sync::Data
 {
 public:
-	SyncEditData() : SyncData() {}
+	SyncEditData() : sync::Data() {}
 	
 	void sendSetKeyCommand(int track, int row, const sync::Track::KeyFrame &key)
 	{

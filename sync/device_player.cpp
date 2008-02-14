@@ -1,6 +1,6 @@
 #include "device.h"
+#include "data.h"
 #include "../network.h"
-#include "../syncdata.h"
 
 using namespace sync;
 
@@ -20,7 +20,7 @@ public:
 	
 private:
 	const std::string &baseName;
-	SyncData syncData;
+	sync::Data syncData;
 	Timer &timer;
 };
 
@@ -28,7 +28,7 @@ PlayerDevice::~PlayerDevice() { }
 
 Track &PlayerDevice::getTrack(const std::string &trackName)
 {
-	SyncData::TrackContainer::iterator iter = syncData.tracks.find(trackName);
+	sync::Data::TrackContainer::iterator iter = syncData.tracks.find(trackName);
 	if (iter != syncData.tracks.end()) return *syncData.actualTracks[iter->second];
 		
 	sync::Track *track = new sync::Track();

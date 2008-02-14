@@ -1,6 +1,6 @@
 #include "device.h"
+#include "data.h"
 #include "../network.h"
-#include "../syncdata.h"
 
 using namespace sync;
 
@@ -21,7 +21,7 @@ public:
 	
 private:
 	const std::string &baseName;
-	SyncData syncData;
+	sync::Data syncData;
 	Timer &timer;
 	
 	SOCKET serverSocket;
@@ -34,7 +34,7 @@ ClientDevice::~ClientDevice()
 
 Track &ClientDevice::getTrack(const std::string &trackName)
 {
-	SyncData::TrackContainer::iterator iter = syncData.tracks.find(trackName);
+	sync::Data::TrackContainer::iterator iter = syncData.tracks.find(trackName);
 	if (iter != syncData.tracks.end()) return *syncData.actualTracks[iter->second];
 		
 	unsigned char cmd = GET_TRACK;
@@ -83,6 +83,9 @@ bool ClientDevice::update(float row)
 						recv(serverSocket, (char*)&row,   sizeof(int), 0);
 						recv(serverSocket, (char*)&value, sizeof(float), 0);
 						printf("set: %d,%d = %f\n", track, row, value);
+						
+						sync::Track &t = syncData.getTrack(track);
+						t.setKeyFrame(row, Track::KeyFrame(value));
 					}
 					break;
 				
@@ -92,6 +95,9 @@ bool ClientDevice::update(float row)
 						recv(serverSocket, (char*)&track, sizeof(int), 0);
 						recv(serverSocket, (char*)&row,   sizeof(int), 0);
 						printf("delete: %d,%d = %f\n", track, row);
+						
+						sync::Track &t = syncData.getTrack(track);
+						t.deleteKeyFrame(row);
 					}
 					break;
 				
@@ -125,7 +131,7 @@ Device *sync::createDevice(const std::string &baseName, Timer &timer)
 		return NULL;
 	}
 	
-	Device *device = new ClientDevice(serverSocket, timer);
+	Device *device = new ClientDevice(baseName, serverSocket, timer);
 
 	return device;
 }

@@ -104,12 +104,12 @@ void TrackView::paintTopMargin(HDC hdc, RECT rcTracks)
 	int firstTrack = min(max(scrollPosX / trackWidth, 0), getTrackCount() - 1);
 	int lastTrack  = min(max(firstTrack + windowTracks + 1, 0), getTrackCount() - 1);
 	
-	SyncData *syncData = getSyncData();
+	sync::Data *syncData = getSyncData();
 	if (NULL == syncData) return;
 
 	SetTextColor(hdc, GetSysColor(COLOR_WINDOWTEXT));
 	
-	SyncData::TrackContainer::iterator trackIter = syncData->tracks.begin();
+	sync::Data::TrackContainer::iterator trackIter = syncData->tracks.begin();
 	for (int track = 0; track <= lastTrack; ++track, ++trackIter)
 	{
 		ASSERT(trackIter != syncData->tracks.end());
@@ -204,7 +204,7 @@ void TrackView::paintTracks(HDC hdc, RECT rcTracks)
 	
 	SetTextColor(hdc, GetSysColor(COLOR_WINDOWTEXT));
 	
-	SyncData *syncData = getSyncData();
+	sync::Data *syncData = getSyncData();
 	if (NULL == syncData) return;
 	
 	int selectLeft  = min(selectStartTrack, selectStopTrack);
@@ -212,7 +212,7 @@ void TrackView::paintTracks(HDC hdc, RECT rcTracks)
 	int selectTop    = min(selectStartRow, selectStopRow);
 	int selectBottom = max(selectStartRow, selectStopRow);
 	
-	SyncData::TrackContainer::iterator trackIter = syncData->tracks.begin();
+	sync::Data::TrackContainer::iterator trackIter = syncData->tracks.begin();
 	for (int track = 0; track <= lastTrack; ++track, ++trackIter)
 	{
 		ASSERT(trackIter != syncData->tracks.end());
