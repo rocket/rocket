@@ -35,17 +35,18 @@ public:
 	void  play()            { paused = false; }
 	
 	float getRow()
-	{ 
-		if (!paused) return row++;
-		else return row;
+	{
+		float ret = row;
+		if (!paused) row += 0.5f;
+		return ret;
 	}
 	
-	void  setRow(float row) { row = int(floor(row)); }
+	void  setRow(float row) { this->row = int(floor(row)); }
 	bool  isPlaying()       { return !paused; }
 	
 private:
 	bool paused;
-	int row;
+	float row;
 };
 
 #endif
@@ -68,7 +69,7 @@ int main(int argc, char *argv[])
 	timer.play();
 	while (1)
 	{
-		float row = float(timer.getRow()) / 10;
+		float row = float(timer.getRow());
 		if (!syncDevice->update(row)) break;
 		
 		printf("%2.2f: %2.2f                \n", row, track.getValue(row));

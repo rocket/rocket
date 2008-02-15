@@ -102,6 +102,25 @@ bool ClientDevice::update(float row)
 					}
 					break;
 				
+				case SET_ROW:
+					{
+						int row;
+						recv(serverSocket, (char*)&row,   sizeof(int), 0);
+						printf("set row: %d\n", row);
+						timer.setRow(float(row));
+					}
+					break;
+					
+				case PAUSE:
+					{
+						char flag;
+						recv(serverSocket, (char*)&flag, 1, 0);
+						printf("pause: %d\n", flag);
+						if (flag == 0) timer.play();
+						else           timer.pause();
+					}
+					break;
+				
 				default:
 					printf("unknown cmd: %02x\n", cmd);
 			}

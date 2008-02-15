@@ -9,7 +9,7 @@
 class SyncEditData : public sync::Data
 {
 public:
-	SyncEditData() : sync::Data() {}
+	SyncEditData() : sync::Data(), clientPaused(true) {}
 	
 	void sendSetKeyCommand(int track, int row, const sync::Track::KeyFrame &key)
 	{
@@ -34,7 +34,26 @@ public:
 		send(clientSocket, (char*)&track, sizeof(int), 0);
 		send(clientSocket, (char*)&row,   sizeof(int), 0);
 	}
+	
+	void sendSetRowCommand(int row)
+	{
+		if (INVALID_SOCKET == clientSocket) return;
+		
+		unsigned char cmd = SET_ROW;
+		send(clientSocket, (char*)&cmd, 1, 0);
+		send(clientSocket, (char*)&row,   sizeof(int), 0);
+	}
 
+	void sendPauseCommand(bool pause)
+	{
+		unsigned char cmd = PAUSE;
+		send(clientSocket, (char*)&cmd, 1, 0);
+		unsigned char flag = pause;
+		send(clientSocket, (char*)&flag, 1, 0);
+		clientPaused = pause;
+	}
+
+	
 	class Command
 	{
 	public:
@@ -227,6 +246,7 @@ public:
 	SOCKET clientSocket;
 // private:
 	std::map<size_t, size_t> clientRemap;
+	bool clientPaused;
 	
 	std::stack<Command*> undoStack;
 	std::stack<Command*> redoStack;

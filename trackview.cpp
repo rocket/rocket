@@ -514,6 +514,7 @@ void TrackView::setEditRow(int newEditRow)
 			selectStartRow   = selectStopRow   = editRow;
 			selectStartTrack = selectStopTrack = editTrack;
 		}
+		getSyncData()->sendSetRowCommand(editRow);
 	}
 	
 	invalidateRow(oldEditRow);
@@ -734,7 +735,7 @@ void TrackView::editBiasValue(float amount)
 
 LRESULT TrackView::onKeyDown(UINT keyCode, UINT /*flags*/)
 {
-	if (editString.empty())
+	if (editString.empty() && getSyncData()->clientPaused)
 	{
 		switch (keyCode)
 		{
@@ -809,6 +810,9 @@ LRESULT TrackView::onKeyDown(UINT keyCode, UINT /*flags*/)
 			invalidatePos(editTrack, editRow);
 			MessageBeep(0);
 		}
+		break;
+	case VK_SPACE:
+		getSyncData()->sendPauseCommand( !getSyncData()->clientPaused );
 		break;
 	}
 	return FALSE;

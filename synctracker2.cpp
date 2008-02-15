@@ -379,6 +379,8 @@ int _tmain(int argc, _TCHAR* argv[])
 					puts("connected.");
 					syncData.clientSocket = clientSocket;
 					syncData.clientRemap.clear();
+					syncData.sendPauseCommand(true);
+					syncData.sendSetRowCommand(trackView->getEditRow());
 				}
 			}
 		}

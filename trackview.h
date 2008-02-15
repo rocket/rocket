@@ -26,6 +26,7 @@ public:
 	void editBiasValue(float amount);
 	
 	void setEditRow(int newEditRow);
+	int  getEditRow() { return editRow; }
 	
 private:
 	// some nasty hackery to forward the window messages
