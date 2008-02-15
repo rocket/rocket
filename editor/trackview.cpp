@@ -1,4 +1,4 @@
-#include "stdafx.h"
+#include "../stdafx.h"
 
 #include "trackview.h"
 #include <vector>
@@ -112,7 +112,7 @@ void TrackView::paintTopMargin(HDC hdc, RECT rcTracks)
 	sync::Data::TrackContainer::iterator trackIter = syncData->tracks.begin();
 	for (int track = 0; track <= lastTrack; ++track, ++trackIter)
 	{
-		ASSERT(trackIter != syncData->tracks.end());
+		assert(trackIter != syncData->tracks.end());
 		if (track < firstTrack) continue;
 		
 		RECT topMargin;
@@ -215,7 +215,7 @@ void TrackView::paintTracks(HDC hdc, RECT rcTracks)
 	sync::Data::TrackContainer::iterator trackIter = syncData->tracks.begin();
 	for (int track = 0; track <= lastTrack; ++track, ++trackIter)
 	{
-		ASSERT(trackIter != syncData->tracks.end());
+		assert(trackIter != syncData->tracks.end());
 		if (track < firstTrack) continue;
 		
 		for (int row = firstRow; row <= lastRow; ++row)
@@ -869,7 +869,7 @@ LRESULT TrackView::onSize(int width, int height)
 
 LRESULT TrackView::windowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
-	ASSERT(hwnd == this->hwnd);
+	assert(hwnd == this->hwnd);
 	
 	switch(msg)
 	{
@@ -937,7 +937,7 @@ static LRESULT CALLBACK trackViewWindowProc(HWND hwnd, UINT msg, WPARAM wParam, 
 		break;
 	
 	case WM_NCDESTROY:
-		ASSERT(NULL != trackView);
+		assert(NULL != trackView);
 		{
 			// call the window proc and store away the return code
 			LRESULT res = trackView->windowProc(hwnd, msg, wParam, lParam);
@@ -952,7 +952,7 @@ static LRESULT CALLBACK trackViewWindowProc(HWND hwnd, UINT msg, WPARAM wParam, 
 		break;
 	
 	default:
-		ASSERT(NULL != trackView);
+		assert(NULL != trackView);
 		return trackView->windowProc(hwnd, msg, wParam, lParam);
 	}
 }

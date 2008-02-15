@@ -73,7 +73,7 @@ int main(int argc, char *argv[])
 		if (!syncDevice->update(row)) break;
 		
 		printf("%2.2f: %2.2f                \n", row, track.getValue(row));
-		Sleep(100);
+		Sleep(10);
 	}
 
 	return 0;

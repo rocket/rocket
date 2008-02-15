@@ -1,10 +1,9 @@
 #pragma once
 
-#include "sync/data.h"
+#include "../sync/network.h"
+#include "../sync/data.h"
 #include <stack>
 #include <list>
-
-#include "network.h"
 
 class SyncEditData : public sync::Data
 {

@@ -1,7 +1,9 @@
 // synctracker2.cpp : Defines the entry point for the console application.
 //
 
-#include "stdafx.h"
+#include "../stdafx.h"
+
+#define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #include <commctrl.h>
 
@@ -16,7 +18,7 @@ HWND statusBarWin;
 #define WM_SETROWS (WM_USER+1)
 #define WM_BIASSELECTION (WM_USER+2)
 
-#include "network.h"
+#include "../sync/network.h"
 
 static LRESULT CALLBACK setRowsDialogProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 {

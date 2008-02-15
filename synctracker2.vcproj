@@ -184,7 +184,7 @@
 				>
 			</File>
 			<File
-				RelativePath=".\network.cpp"
+				RelativePath=".\sync\network.cpp"
 				>
 			</File>
 			<File
@@ -192,7 +192,7 @@
 				>
 			</File>
 			<File
-				RelativePath=".\synctracker2.cpp"
+				RelativePath=".\editor\synctracker2.cpp"
 				>
 			</File>
 			<File
@@ -200,7 +200,7 @@
 				>
 			</File>
 			<File
-				RelativePath=".\trackview.cpp"
+				RelativePath=".\editor\trackview.cpp"
 				>
 			</File>
 		</Filter>
@@ -210,7 +210,15 @@
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}"
 			>
 			<File
-				RelativePath=".\network.h"
+				RelativePath=".\sync\data.h"
+				>
+			</File>
+			<File
+				RelativePath=".\sync\device.h"
+				>
+			</File>
+			<File
+				RelativePath=".\sync\network.h"
 				>
 			</File>
 			<File
@@ -222,11 +230,7 @@
 				>
 			</File>
 			<File
-				RelativePath=".\synceditdata.h"
-				>
-			</File>
-			<File
-				RelativePath=".\trackview.h"
+				RelativePath=".\sync\track.h"
 				>
 			</File>
 		</Filter>
