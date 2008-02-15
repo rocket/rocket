@@ -37,6 +37,7 @@ public:
 	void sendSetRowCommand(int row)
 	{
 		if (INVALID_SOCKET == clientSocket) return;
+		printf("sending row pos\n");
 		
 		unsigned char cmd = SET_ROW;
 		send(clientSocket, (char*)&cmd, 1, 0);

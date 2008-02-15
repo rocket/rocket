@@ -1,6 +1,6 @@
 #include "device.h"
 #include "data.h"
-#include "../network.h"
+#include "network.h"
 
 using namespace sync;
 

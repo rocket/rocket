@@ -50,7 +50,7 @@ Track &ClientDevice::getTrack(const std::string &trackName)
 	send(serverSocket, (char*)&name_len, sizeof(size_t), 0);
 	
 	const char *name_str = trackName.c_str();
-	send(serverSocket, name_str, name_len, 0);
+	send(serverSocket, name_str, int(name_len), 0);
 	
 	sync::Track *track = new sync::Track();
 

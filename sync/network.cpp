@@ -1,4 +1,3 @@
-#include "../stdafx.h"
 #include "network.h"
 #include <stdio.h>
 

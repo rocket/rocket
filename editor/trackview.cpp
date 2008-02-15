@@ -1,5 +1,3 @@
-#include "../stdafx.h"
-
 #include "trackview.h"
 #include <vector>
 
@@ -514,7 +512,10 @@ void TrackView::setEditRow(int newEditRow)
 			selectStartRow   = selectStopRow   = editRow;
 			selectStartTrack = selectStopTrack = editTrack;
 		}
-		getSyncData()->sendSetRowCommand(editRow);
+		if (getSyncData()->clientPaused)
+		{
+			getSyncData()->sendSetRowCommand(editRow);
+		}
 	}
 	
 	invalidateRow(oldEditRow);
