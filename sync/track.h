@@ -10,13 +10,28 @@ namespace sync
 	public:
 		struct KeyFrame
 		{
-			KeyFrame() : lerp(false) {}
-			KeyFrame(float value) : value(value), lerp(false) {}
+			enum InterpolationType
+			{
+				IT_STEP,
+				IT_LERP,
+				IT_COSINE,
+				IT_RAMP,
+				IT_COUNT // max value
+			};
+
+			KeyFrame() : value(0.0f), interpolationType(IT_STEP) {}
+			explicit KeyFrame(float value, InterpolationType interpolationType) :
+				value(value),
+				interpolationType(interpolationType)
+			{
+			}
+			
 			float value;
-			bool lerp;
+			InterpolationType interpolationType;
 		};
 		
 		float  getValue(float time) const;
+		
 		bool   isKeyFrame(size_t row) const;
 		const  KeyFrame *getKeyFrame(size_t row) const;
 		size_t getFrameCount() const;

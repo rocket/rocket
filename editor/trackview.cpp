@@ -664,6 +664,44 @@ void TrackView::editEnterValue()
 	else MessageBeep(0);
 }
 
+void TrackView::editToggleInterpolationType()
+{
+	if (editTrack < int(syncData->getTrackCount()))
+	{
+		sync::Track &t = syncData->getTrack(editTrack);
+		
+		// find key to modify
+		sync::Track::KeyFrameContainer::const_iterator upper = t.keyFrames.upper_bound(editRow);
+		// bounds check
+		if (upper == t.keyFrames.end())
+		{
+			MessageBeep(0);
+			return;
+		}
+		
+		sync::Track::KeyFrameContainer::const_iterator lower = lower;
+		lower--;
+		// bounds check again
+		if (lower == t.keyFrames.end())
+		{
+			MessageBeep(0);
+			return;
+		}
+		
+		sync::Track::KeyFrame newKey = lower->second;
+		// modify interpolation type
+		newKey.interpolationType = sync::Track::KeyFrame::InterpolationType(
+			(int(newKey.interpolationType) + 1) % sync::Track::KeyFrame::IT_COUNT
+		);
+		
+		SyncEditData::Command *cmd = syncData->getSetKeyFrameCommand(editTrack, int(lower->first), newKey);
+		syncData->exec(cmd);
+		
+		invalidateRange(editTrack, editTrack, lower->first, upper->first);
+	}
+	else MessageBeep(0);
+}
+
 void TrackView::editDelete()
 {
 	int selectLeft  = min(selectStartTrack, selectStopTrack);
@@ -862,6 +900,10 @@ LRESULT TrackView::onChar(UINT keyCode, UINT flags)
 			invalidatePos(editTrack, editRow);
 		}
 		else MessageBeep(0);
+		break;
+	
+	case 'i':
+		editToggleInterpolationType();
 		break;
 	}
 	return FALSE;

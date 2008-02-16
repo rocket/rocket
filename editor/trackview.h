@@ -47,6 +47,7 @@ private:
 	void editCopy();
 	void editCut();
 	void editPaste();
+	void editToggleInterpolationType();
 	
 	void paintTracks(HDC hdc, RECT rcTracks);
 	void paintTopMargin(HDC hdc, RECT rcTracks);

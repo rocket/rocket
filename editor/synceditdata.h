@@ -21,7 +21,7 @@ public:
 		send(clientSocket, (char*)&track, sizeof(int), 0);
 		send(clientSocket, (char*)&row,   sizeof(int), 0);
 		send(clientSocket, (char*)&key.value, sizeof(float), 0);
-//		send(clientSocket, (char*)&key.lerp, 1, 0);
+		send(clientSocket, (char*)&key.interpolationType, 1, 0);
 	}
 	
 	void sendDeleteKeyCommand(int track, int row)

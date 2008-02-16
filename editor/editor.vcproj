@@ -2,9 +2,9 @@
 <VisualStudioProject
 	ProjectType="Visual C++"
 	Version="8,00"
-	Name="editor"
+	Name="sync_editor"
 	ProjectGUID="{76B44BC8-8BB4-4B6E-B2FA-7738C9E7F80B}"
-	RootNamespace="synctracker2"
+	RootNamespace="sync_editor"
 	Keyword="Win32Proj"
 	>
 	<Platforms>
@@ -227,6 +227,10 @@
 			</File>
 			<File
 				RelativePath="..\sync\track.h"
+				>
+			</File>
+			<File
+				RelativePath=".\trackview.h"
 				>
 			</File>
 		</Filter>

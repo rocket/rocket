@@ -182,6 +182,7 @@
 			/>
 			<Tool
 				Name="VCLibrarianTool"
+				AdditionalDependencies="ws2_32.lib"
 			/>
 			<Tool
 				Name="VCALinkTool"

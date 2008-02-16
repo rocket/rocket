@@ -4,7 +4,6 @@
 #include <afxres.h>
 #include "resource.h"
 
-
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #include <commctrl.h>
@@ -26,10 +25,6 @@ static LRESULT CALLBACK setRowsDialogProc(HWND hDlg, UINT message, WPARAM wParam
 {
 	switch (message)
 	{
-/*	case WM_CHAR:
-		printf("char: %d %d\n", wParam, lParam);
-		break; */
-	
 	case WM_INITDIALOG:
 		{
 			int *rows = (int*)lParam;
@@ -169,7 +164,6 @@ static LRESULT CALLBACK mainWindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARA
 		break;
 	
 	case WM_SETROWS:
-		printf("rows: %d\n", int(lParam));
 		trackView->setRows(int(lParam));
 		break;
 	
@@ -183,7 +177,7 @@ static LRESULT CALLBACK mainWindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARA
 		case ID_FILE_SAVE:
 		case ID_FILE_SAVE_AS:
 		case ID_FILE_OPEN:
-			MessageBox(trackViewWin, "Not implemented", NULL, MB_OK | MB_ICONERROR);
+			MessageBox(trackViewWin, _T("Not implemented"), NULL, MB_OK | MB_ICONERROR | MB_SETFOREGROUND);
 			break;
 		
 		case ID_FILE_EXIT:  PostQuitMessage(0); break;
@@ -198,7 +192,7 @@ static LRESULT CALLBACK mainWindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARA
 				HINSTANCE hInstance = GetModuleHandle(NULL);
 				int rows = trackView->getRows();
 				INT_PTR result = DialogBoxParam(hInstance, MAKEINTRESOURCE(IDD_SETROWS), hwnd, (DLGPROC)setRowsDialogProc, (LPARAM)&rows);
-				if (FAILED(result)) MessageBox(NULL, _T("unable to create dialog box"), NULL, MB_OK);
+				if (FAILED(result)) MessageBox(NULL, _T("unable to create dialog box"), NULL, MB_OK | MB_ICONERROR | MB_SETFOREGROUND);
 			}
 			break;
 		
@@ -207,7 +201,7 @@ static LRESULT CALLBACK mainWindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARA
 				HINSTANCE hInstance = GetModuleHandle(NULL);
 				int initialBias = 0;
 				INT_PTR result = DialogBoxParam(hInstance, MAKEINTRESOURCE(IDD_BIASSELECTION), hwnd, (DLGPROC)biasSelectionDialogProc, (LPARAM)&initialBias);
-				if (FAILED(result)) MessageBox(NULL, _T("unable to create dialog box"), NULL, MB_OK);
+				if (FAILED(result)) MessageBox(NULL, _T("unable to create dialog box"), NULL, MB_OK | MB_ICONERROR | MB_SETFOREGROUND);
 			}
 			break;
 		}
@@ -270,8 +264,9 @@ int _tmain(int argc, _TCHAR* argv[])
 	puts("binding...");
 	if (SOCKET_ERROR == bind( serverSocket, (struct sockaddr *)&sin, sizeof(sin)))
 	{
+		MessageBox(NULL, "Could not start server", NULL, MB_OK | MB_ICONERROR | MB_SETFOREGROUND);
 		fputs("Coult not start server", stderr);
-		exit(1);
+		return -1;
 	}
 	
 	puts("listening...");
@@ -287,45 +282,13 @@ int _tmain(int argc, _TCHAR* argv[])
 	
 	SyncEditData syncData;
 	syncData.clientSocket = INVALID_SOCKET;
-#if 0
-	
-	SyncTrack &camXTrack = syncData.getTrack(_T("cam.x"));
-	SyncTrack &camXTrack2 = syncData.getTrack(_T("cam.x"));
-	camXTrack.setKeyFrame(1, 2.0f);
-	camXTrack.setKeyFrame(4, 3.0f);
-	printf("%p %p\n", &camXTrack, &camXTrack2);
-	
-	SyncTrack &camYTrack = syncData.getTrack(_T("cam.y"));
-	SyncTrack &camZTrack = syncData.getTrack(_T("cam.z"));
-	
-/*	for (int i = 0; i < 16; ++i)
-	{
-		TCHAR temp[256];
-		_sntprintf_s(temp, 256, _T("gen %02d"), i);
-		SyncTrack &temp2 = syncData.getTrack(temp);
-	} */
-	
-	camXTrack.setKeyFrame(1, 2.0f);
-	camXTrack.setKeyFrame(4, 3.0f);
-	
-	camYTrack.setKeyFrame(0, 100.0f);
-	camYTrack.setKeyFrame(8, 999.0f);
-	
-	camYTrack.setKeyFrame(16, SyncTrack::KeyFrame(float(1E-5)));
-	
-	for (int i = 0; i < 5 * 2; ++i)
-	{
-		float time = float(i) / 2;
-		printf("%f %d - %f\n", time, camXTrack.isKeyFrame(i), camXTrack.getValue(time));
-	}
-#endif
 	
 	ATOM mainClass      = registerMainWindowClass(hInstance);
 	ATOM trackViewClass = registerTrackViewWindowClass(hInstance);
 	if (!mainClass || !trackViewClass)
 	{
-		MessageBox(NULL, _T("Window Registration Failed!"), _T("Error!"), MB_ICONEXCLAMATION | MB_OK);
-		return 0;
+		MessageBox(NULL, _T("Window Registration Failed!"), _T("Error!"), MB_OK | MB_ICONERROR | MB_SETFOREGROUND);
+		return -1;
 	}
 	
 	trackView = new TrackView();
@@ -344,8 +307,8 @@ int _tmain(int argc, _TCHAR* argv[])
 	
 	if (NULL == hwnd)
 	{
-		MessageBox(NULL, _T("Window Creation Failed!"), _T("Error!"), MB_ICONEXCLAMATION | MB_OK);
-		return 0;
+		MessageBox(NULL, _T("Window Creation Failed!"), _T("Error!"), MB_OK | MB_ICONEXCLAMATION | MB_SETFOREGROUND);
+		return -1;
 	}
 	
 	HACCEL accel = LoadAccelerators(hInstance, MAKEINTRESOURCE(IDR_ACCELERATOR));
