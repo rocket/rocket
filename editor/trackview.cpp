@@ -647,7 +647,7 @@ LRESULT TrackView::onHScroll(UINT sbCode, int /*newPos*/)
 
 void TrackView::editEnterValue()
 {
-	if (editString.size() > 0)
+	if (int(editString.size()) > 0 && editTrack < int(syncData->getTrackCount()))
 	{
 		sync::Track &t = syncData->getTrack(editTrack);
 		
@@ -671,6 +671,12 @@ void TrackView::editDelete()
 	int selectTop    = min(selectStartRow, selectStopRow);
 	int selectBottom = max(selectStartRow, selectStopRow);
 
+	if (selectRight >= int(syncData->getTrackCount()))
+	{
+		MessageBeep(0);
+		return;
+	}
+	
 	SyncEditData::MultiCommand *multiCmd = new SyncEditData::MultiCommand();
 	for (int track = selectLeft; track <= selectRight; ++track)
 	{
@@ -782,9 +788,6 @@ LRESULT TrackView::onKeyDown(UINT keyCode, UINT /*flags*/)
 			}
 			else setEditRow(editRow + windowRows / 2);
 			break;
-		
-		default:
-			break;
 		}
 	}
 	
@@ -813,6 +816,12 @@ LRESULT TrackView::onKeyDown(UINT keyCode, UINT /*flags*/)
 		}
 		break;
 	case VK_SPACE:
+		if (!editString.empty())
+		{
+			editString.clear();
+			invalidatePos(editTrack, editRow);
+			MessageBeep(0);
+		}
 		getSyncData()->sendPauseCommand( !getSyncData()->clientPaused );
 		break;
 	}
@@ -823,13 +832,6 @@ LRESULT TrackView::onChar(UINT keyCode, UINT flags)
 {
 	switch (char(keyCode))
 	{
-	case '.':
-		// only one '.' allowed
-		if (std::string::npos != editString.find('.'))
-		{
-			MessageBeep(0);
-			break;
-		}
 	case '-':
 		if (editString.empty())
 		{
@@ -837,7 +839,13 @@ LRESULT TrackView::onChar(UINT keyCode, UINT flags)
 			invalidatePos(editTrack, editRow);
 		}
 		break;
-	
+	case '.':
+		// only one '.' allowed
+		if (std::string::npos != editString.find('.'))
+		{
+			MessageBeep(0);
+			break;
+		}
 	case '0':
 	case '1':
 	case '2':
@@ -848,8 +856,12 @@ LRESULT TrackView::onChar(UINT keyCode, UINT flags)
 	case '7':
 	case '8':
 	case '9':
-		editString.push_back(char(keyCode));
-		invalidatePos(editTrack, editRow);
+		if (editTrack < int(syncData->getTrackCount()))
+		{
+			editString.push_back(char(keyCode));
+			invalidatePos(editTrack, editRow);
+		}
+		else MessageBeep(0);
 		break;
 	}
 	return FALSE;

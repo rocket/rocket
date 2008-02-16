@@ -34,7 +34,7 @@ Track &PlayerDevice::getTrack(const std::string &trackName)
 	sync::Track *track = new sync::Track();
 	
 	// TODO: load data from file
-	track->setKeyFrame(0,  10.0f);
+	track->setKeyFrame(0,   1.0f);
 	track->setKeyFrame(10,  0.0f);
 	
 	size_t index = syncData.actualTracks.size();

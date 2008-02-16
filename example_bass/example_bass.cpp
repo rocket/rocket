@@ -55,11 +55,11 @@ int main(int argc, char *argv[])
 		if (!BASS_Init(soundDevice, 44100, BASS_DEVICE_LATENCY, 0, 0)) throw std::string("failed to init bass");
 		
 		// load tune
-		HSTREAM stream = BASS_StreamCreateFile(false, "tune.mp3", 0, 0, BASS_MP3_SETPOS | ((0 == soundDevice) ? BASS_STREAM_DECODE : 0));
+		HSTREAM stream = BASS_StreamCreateFile(false, "tune.ogg", 0, 0, BASS_MP3_SETPOS | ((0 == soundDevice) ? BASS_STREAM_DECODE : 0));
 		if (!stream) throw std::string("failed to open tune");
 		
 		// setup timer and construct sync-device
-		BassTimer timer(stream, 120.0f, 4);
+		BassTimer timer(stream, 150.0f, 4);
 		std::auto_ptr<sync::Device> syncDevice = std::auto_ptr<sync::Device>(sync::createDevice("sync", timer));
 		if (NULL == syncDevice.get()) throw std::string("something went wrong - failed to connect to host?");
 		

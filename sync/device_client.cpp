@@ -40,20 +40,19 @@ Track &ClientDevice::getTrack(const std::string &trackName)
 		
 	unsigned char cmd = GET_TRACK;
 	send(serverSocket, (char*)&cmd, 1, 0);
-
+	
 	size_t clientIndex = syncData.actualTracks.size();
 	send(serverSocket, (char*)&clientIndex, sizeof(size_t), 0);
 	
 	// send request data
 	size_t name_len = trackName.size();
-	printf("len: %d\n", name_len);
 	send(serverSocket, (char*)&name_len, sizeof(size_t), 0);
 	
 	const char *name_str = trackName.c_str();
 	send(serverSocket, name_str, int(name_len), 0);
 	
 	sync::Track *track = new sync::Track();
-
+	
 	syncData.actualTracks.push_back(track);
 	syncData.tracks[trackName] = clientIndex;
 	return *track;
@@ -83,7 +82,6 @@ bool ClientDevice::update(float row)
 						recv(serverSocket, (char*)&track, sizeof(int), 0);
 						recv(serverSocket, (char*)&row,   sizeof(int), 0);
 						recv(serverSocket, (char*)&value, sizeof(float), 0);
-						printf("set: %d,%d = %f\n", track, row, value);
 						
 						sync::Track &t = syncData.getTrack(track);
 						t.setKeyFrame(row, Track::KeyFrame(value));
@@ -95,7 +93,6 @@ bool ClientDevice::update(float row)
 						int track, row;
 						recv(serverSocket, (char*)&track, sizeof(int), 0);
 						recv(serverSocket, (char*)&row,   sizeof(int), 0);
-						printf("delete: %d,%d\n", track, row);
 						
 						sync::Track &t = syncData.getTrack(track);
 						t.deleteKeyFrame(row);
@@ -106,7 +103,6 @@ bool ClientDevice::update(float row)
 					{
 						int row;
 						recv(serverSocket, (char*)&row,   sizeof(int), 0);
-						printf("set row: %d\n", row);
 						timer.setRow(float(row));
 					}
 					break;
@@ -115,14 +111,14 @@ bool ClientDevice::update(float row)
 					{
 						char flag;
 						recv(serverSocket, (char*)&flag, 1, 0);
-						printf("pause: %d\n", flag);
 						if (flag == 0) timer.play();
 						else           timer.pause();
 					}
 					break;
 				
 				default:
-					printf("unknown cmd: %02x\n", cmd);
+					assert(false);
+					fprintf(stderr, "unknown cmd: %02x\n", cmd);
 			}
 		}
 	}
@@ -144,11 +140,7 @@ bool ClientDevice::update(float row)
 
 Device *sync::createDevice(const std::string &baseName, Timer &timer)
 {
-	if (false == initNetwork())
-	{
-		printf("noes 1!\n");
-		return NULL;
-	}
+	if (false == initNetwork()) return NULL;
 	
 	struct hostent *myhost = gethostbyname("localhost");
 	struct sockaddr_in sain;
@@ -158,13 +150,8 @@ Device *sync::createDevice(const std::string &baseName, Timer &timer)
 	
 	// connect to server
 	SOCKET serverSocket = serverConnect(&sain);
-	if (INVALID_SOCKET == serverSocket)
-	{
-		printf("noes 2!\n");
-		return NULL;
-	}
+	if (INVALID_SOCKET == serverSocket) return NULL;
 	
 	Device *device = new ClientDevice(baseName, serverSocket, timer);
-
 	return device;
 }
