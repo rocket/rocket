@@ -123,6 +123,7 @@ private:
 	HBRUSH selectBaseBrush, selectDarkBrush;
 	HPEN rowPen, rowSelectPen;
 	HBRUSH editBrush;
+	HPEN lerpPen, cosinePen, rampPen;
 	
 	/* cursor position */
 	int editRow, editTrack;

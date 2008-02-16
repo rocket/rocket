@@ -30,12 +30,12 @@ Track &PlayerDevice::getTrack(const std::string &trackName)
 {
 	sync::Data::TrackContainer::iterator iter = syncData.tracks.find(trackName);
 	if (iter != syncData.tracks.end()) return *syncData.actualTracks[iter->second];
-		
+	
 	sync::Track *track = new sync::Track();
 	
 	// TODO: load data from file
-	track->setKeyFrame(0,   1.0f);
-	track->setKeyFrame(10,  0.0f);
+	track->setKeyFrame(0,   Track::KeyFrame(1.0f, Track::KeyFrame::IT_LERP));
+	track->setKeyFrame(10,  Track::KeyFrame(0.0f, Track::KeyFrame::IT_LERP));
 	
 	size_t index = syncData.actualTracks.size();
 	syncData.actualTracks.push_back(track);

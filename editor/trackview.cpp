@@ -39,6 +39,10 @@ TrackView::TrackView()
 	
 	rowPen       = CreatePen(PS_SOLID, 1, darken(GetSysColor(COLOR_WINDOW), 0.7f));
 	rowSelectPen = CreatePen(PS_SOLID, 1, darken(GetSysColor(COLOR_HIGHLIGHT), 0.7f));
+
+	lerpPen   = CreatePen(PS_SOLID, 2, RGB(255, 0, 0));
+	cosinePen = CreatePen(PS_SOLID, 2, RGB(0, 255, 0));
+	rampPen   = CreatePen(PS_SOLID, 2, RGB(0, 0, 255));
 	
 	editBrush = CreateSolidBrush(RGB(255, 255, 0)); // yellow
 	
@@ -214,8 +218,10 @@ void TrackView::paintTracks(HDC hdc, RECT rcTracks)
 	for (int track = 0; track <= lastTrack; ++track, ++trackIter)
 	{
 		assert(trackIter != syncData->tracks.end());
+		size_t trackIndex = trackIter->second;
+		const sync::Track &t = *syncData->actualTracks[trackIndex];
+
 		if (track < firstTrack) continue;
-		
 		for (int row = firstRow; row <= lastRow; ++row)
 		{
 			RECT patternDataRect;
@@ -225,6 +231,15 @@ void TrackView::paintTracks(HDC hdc, RECT rcTracks)
 			patternDataRect.bottom = patternDataRect.top + fontHeight;
 			
 			if (!RectVisible(hdc, &patternDataRect)) continue;
+			
+			sync::Track::KeyFrame::InterpolationType interpolationType = sync::Track::KeyFrame::IT_STEP;
+			sync::Track::KeyFrameContainer::const_iterator upper = t.keyFrames.upper_bound(row);
+			sync::Track::KeyFrameContainer::const_iterator lower = upper;
+			if (lower != t.keyFrames.end())
+			{
+				lower--;
+				if (lower != t.keyFrames.end()) interpolationType = lower->second.interpolationType;
+			}
 			
 			bool selected = (track >= selectLeft && track <= selectRight) && (row >= selectTop && row <= selectBottom);
 			
@@ -250,6 +265,26 @@ void TrackView::paintTracks(HDC hdc, RECT rcTracks)
 				LineTo(hdc,   patternDataRect.right, patternDataRect.top); 
 			}
 			
+			switch (interpolationType)
+			{
+			case sync::Track::KeyFrame::IT_LERP:
+				SelectObject(hdc, lerpPen);
+				break;
+			case sync::Track::KeyFrame::IT_COSINE:
+				SelectObject(hdc, cosinePen);
+				break;
+			case sync::Track::KeyFrame::IT_RAMP:
+				SelectObject(hdc, rampPen);
+				break;
+			case sync::Track::KeyFrame::IT_STEP:
+				break;
+			}
+			if (interpolationType != sync::Track::KeyFrame::IT_STEP)
+			{
+				MoveToEx(hdc, patternDataRect.right - 1, patternDataRect.top, (LPPOINT) NULL); 
+				LineTo(hdc,   patternDataRect.right - 1, patternDataRect.bottom);
+			}
+			
 			bool drawEditString = false;
 			if (row == editRow && track == editTrack)
 			{
@@ -259,17 +294,14 @@ void TrackView::paintTracks(HDC hdc, RECT rcTracks)
 				if (editString.size() > 0) drawEditString = true;
 			}
 			
-//			InvertRect(hdc, &fillRect);
-			
-			const sync::Track &track = *syncData->actualTracks[trackIter->second];
-			bool key = track.isKeyFrame(row);
+			bool key = t.isKeyFrame(row);
 			
 			/* format the text */
 			if (drawEditString) _sntprintf_s(temp, 256, editString.c_str());
 			else if (!key) _sntprintf_s(temp, 256, _T("  ---"));
 			else
 			{
-				float val = track.getKeyFrame(row)->value;
+				float val = t.getKeyFrame(row)->value;
 				_sntprintf_s(temp, 256, _T("% .2f"), val);
 			}
 			
@@ -659,7 +691,8 @@ void TrackView::editEnterValue()
 		syncData->exec(cmd);
 		
 		editString.clear();
-		invalidatePos(editTrack, editRow);
+//		invalidatePos(editTrack, editRow);
+		InvalidateRect(getWin(), NULL, FALSE);
 	}
 	else MessageBeep(0);
 }
@@ -679,7 +712,7 @@ void TrackView::editToggleInterpolationType()
 			return;
 		}
 		
-		sync::Track::KeyFrameContainer::const_iterator lower = lower;
+		sync::Track::KeyFrameContainer::const_iterator lower = upper;
 		lower--;
 		// bounds check again
 		if (lower == t.keyFrames.end())
@@ -737,7 +770,8 @@ void TrackView::editDelete()
 	else
 	{
 		syncData->exec(multiCmd);
-		invalidateRange(selectLeft, selectRight, selectTop, selectBottom);
+		InvalidateRect(getWin(), NULL, FALSE);
+//		invalidateRange(selectLeft, selectRight, selectTop, selectBottom);
 	}
 }
 
