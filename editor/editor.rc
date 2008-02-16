@@ -86,6 +86,11 @@ BEGIN
         MENUITEM "&Copy\tCtrl+C",               ID_EDIT_COPY
         MENUITEM "Cu&t\tCtrl+X",                ID_EDIT_CUT
         MENUITEM "&Paste\tCtrl+V",              ID_EDIT_PASTE
+        MENUITEM "Clear\tDel",                  ID_EDIT_CLEAR
+        MENUITEM SEPARATOR
+        MENUITEM "Select All\tCtrl+A",          ID_EDIT_SELECTALL
+        MENUITEM "Select Track",                ID_EDIT_SELECTTRACK
+        MENUITEM "Select Row",                  ID_EDIT_SELECTROW
         MENUITEM SEPARATOR
         MENUITEM "&Bias Selection\tCtrl+B",     ID_EDIT_BIAS
         MENUITEM SEPARATOR

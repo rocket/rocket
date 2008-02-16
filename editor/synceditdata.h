@@ -43,7 +43,7 @@ public:
 		send(clientSocket, (char*)&cmd, 1, 0);
 		send(clientSocket, (char*)&row,   sizeof(int), 0);
 	}
-
+	
 	void sendPauseCommand(bool pause)
 	{
 		unsigned char cmd = PAUSE;
@@ -52,7 +52,12 @@ public:
 		send(clientSocket, (char*)&flag, 1, 0);
 		clientPaused = pause;
 	}
-
+	
+	void sendSaveCommand()
+	{
+		unsigned char cmd = SAVE_TRACKS;
+		send(clientSocket, (char*)&cmd, 1, 0);
+	}
 	
 	class Command
 	{

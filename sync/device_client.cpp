@@ -21,7 +21,10 @@ public:
 	bool update(float row);
 	
 private:
-	const std::string &baseName;
+	std::string getTrackFileName(std::string trackName);
+	void saveTracks();
+
+	const std::string baseName;
 	sync::Data syncData;
 	Timer &timer;
 	
@@ -121,6 +124,10 @@ bool ClientDevice::update(float row)
 					}
 					break;
 				
+				case SAVE_TRACKS:
+					saveTracks();
+					break;
+				
 				default:
 					assert(false);
 					fprintf(stderr, "unknown cmd: %02x\n", cmd);
@@ -143,6 +150,25 @@ bool ClientDevice::update(float row)
 	return !done;
 }
 
+std::string ClientDevice::getTrackFileName(std::string trackName)
+{
+	std::string fileName = baseName.c_str();
+	fileName += "_";
+	fileName += trackName;
+	fileName += ".track";
+	return fileName;
+}
+
+void ClientDevice::saveTracks()
+{
+	sync::Data::TrackContainer::iterator iter;
+	for (iter = syncData.tracks.begin(); iter != syncData.tracks.end(); ++iter)
+	{
+		std::string fileName = getTrackFileName(iter->first);
+		printf("\"%s\"\n", fileName.c_str());
+	}
+}
+
 Device *sync::createDevice(const std::string &baseName, Timer &timer)
 {
 	if (false == initNetwork()) return NULL;
@@ -157,6 +183,6 @@ Device *sync::createDevice(const std::string &baseName, Timer &timer)
 	SOCKET serverSocket = serverConnect(&sain);
 	if (INVALID_SOCKET == serverSocket) return NULL;
 	
-	Device *device = new ClientDevice(baseName, serverSocket, timer);
+	ClientDevice *device = new ClientDevice(baseName, serverSocket, timer);
 	return device;
 }

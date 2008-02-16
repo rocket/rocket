@@ -939,6 +939,10 @@ LRESULT TrackView::onChar(UINT keyCode, UINT flags)
 	case 'i':
 		editToggleInterpolationType();
 		break;
+
+	case 's':
+		syncData->sendSaveCommand();
+		break;
 	}
 	return FALSE;
 }
