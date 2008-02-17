@@ -181,9 +181,9 @@ static bool saveTrack(const sync::Track &track, std::string fileName)
 	sync::Track::KeyFrameContainer::const_iterator it;
 	for (it = track.keyFrames.begin(); it != track.keyFrames.end(); ++it)
 	{
-		size_t   row = it->first;
+		size_t row = it->first;
 		float value = it->second.value;
-		char  interpolationType = char(it->second.interpolationType);
+		char interpolationType = char(it->second.interpolationType);
 		
 		// write key
 		fwrite(&row, sizeof(size_t), 1, fp);
@@ -201,7 +201,13 @@ void ClientDevice::saveTracks()
 	sync::Data::TrackContainer::iterator iter;
 	for (iter = syncData.tracks.begin(); iter != syncData.tracks.end(); ++iter)
 	{
-		saveTrack(syncData.getTrack(iter->second), getTrackFileName(iter->first));
+		size_t index = iter->second;
+		
+		assert(index < syncData.getTrackCount());
+		sync::Track *track = syncData.actualTracks[index];
+		
+		assert(NULL != track);
+		saveTrack(*track, getTrackFileName(iter->first));
 	}
 }
 
