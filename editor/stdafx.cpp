@@ -1,8 +1,5 @@
-// stdafx.cpp : source file that includes just the standard includes
-// synctracker2.pch will be the pre-compiled header
-// stdafx.obj will contain the pre-compiled type information
+/* Copyright (C) 2007-2008 Erik Faye-Lund and Egbert Teeselink
+ * For conditions of distribution and use, see copyright notice in LICENSE.TXT
+ */
 
 #include "stdafx.h"
-
-// TODO: reference any additional headers you need in STDAFX.H
-// and not in this file
