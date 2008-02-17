@@ -72,6 +72,7 @@ IDR_MENU MENU
 BEGIN
     POPUP "&File"
     BEGIN
+        MENUITEM "New\tCtrl+N",                 ID_FILE_NEW40015
         MENUITEM "&Open\tCtrl+O",               ID_FILE_OPEN
         MENUITEM "&Save\tCtrl+S",               ID_FILE_SAVE
         MENUITEM "Save &As",                    ID_FILE_SAVE_AS

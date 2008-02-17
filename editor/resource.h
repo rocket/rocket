@@ -18,13 +18,14 @@
 #define ID_EDIT_SELECTALL               40012
 #define ID_EDIT_SELECTROW               40013
 #define ID_EDIT_SELECTTRACK             40014
+#define ID_FILE_NEW40015                40015
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        104
-#define _APS_NEXT_COMMAND_VALUE         40015
+#define _APS_NEXT_COMMAND_VALUE         40016
 #define _APS_NEXT_CONTROL_VALUE         1004
 #define _APS_NEXT_SYMED_VALUE           101
 #endif

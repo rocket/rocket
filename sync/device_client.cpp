@@ -82,17 +82,24 @@ bool ClientDevice::update(float row)
 					{
 						int track, row;
 						float value;
-						Track::KeyFrame::InterpolationType interp;
+						char interp;
 						
 						recv(serverSocket, (char*)&track, sizeof(int), 0);
 						recv(serverSocket, (char*)&row,   sizeof(int), 0);
 						recv(serverSocket, (char*)&value, sizeof(float), 0);
 						recv(serverSocket, (char*)&interp, 1, 0);
+
 						
+						assert(interp >= 0);
 						assert(interp < Track::KeyFrame::IT_COUNT);
 						
 						sync::Track &t = syncData.getTrack(track);
-						t.setKeyFrame(row, Track::KeyFrame(value, interp));
+						t.setKeyFrame(row,
+							Track::KeyFrame(
+								value,
+								Track::KeyFrame::InterpolationType(interp)
+							)
+						);
 					}
 					break;
 				

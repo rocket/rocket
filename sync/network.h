@@ -13,21 +13,21 @@ SOCKET serverConnect(struct sockaddr_in *addr);
 
 bool pollRead(SOCKET socket);
 
-enum RemoteCommand
-{
+enum RemoteCommand {
 	// server -> client
-	SET_KEY,
-	DELETE_KEY,
+	SET_KEY = 0,
+	DELETE_KEY = 1,
 	
 	// client -> server
-	GET_TRACK,
+	GET_TRACK = 2,
 	
 	// client -> server, server -> client
-	SET_ROW,
+	SET_ROW = 3,
 	
 	// server -> client
-	PAUSE,
-	SAVE_TRACKS
+	PAUSE = 4,
+
+	SAVE_TRACKS = 5
 };
 
 #endif /* NETWORK_H */
