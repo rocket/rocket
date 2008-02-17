@@ -164,7 +164,7 @@ static bool saveTrack(const sync::Track &track, std::string fileName)
 	FILE *fp = fopen(fileName.c_str(), "wb");
 	if (NULL == fp) return false;
 	
-	size_t keyFrameCount = track.getKeyFrameCount();
+	size_t keyFrameCount = track.keyFrames.size();
 	fwrite(&keyFrameCount, sizeof(size_t), 1, fp);
 	
 	sync::Track::KeyFrameContainer::const_iterator it;

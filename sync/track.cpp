@@ -102,11 +102,3 @@ void Track::setKeyFrame(size_t row, const KeyFrame &keyFrame)
 {
 	keyFrames[row] = keyFrame;
 }
-
-size_t Track::getKeyFrameCount() const
-{
-	if (keyFrames.empty()) return 0;
-	KeyFrameContainer::const_iterator iter = keyFrames.end();
-	iter--;
-	return iter->first;
-}

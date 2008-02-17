@@ -38,7 +38,6 @@ namespace sync
 		
 		bool   isKeyFrame(size_t row) const;
 		const  KeyFrame *getKeyFrame(size_t row) const;
-		size_t getKeyFrameCount() const;
 		
 		void deleteKeyFrame(size_t row);
 		void setKeyFrame(size_t row, const KeyFrame &keyFrame);
