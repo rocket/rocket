@@ -12,7 +12,7 @@ class ClientDevice : public Device
 {
 public:
 	ClientDevice(const std::string &baseName, SOCKET serverSocket, Timer &timer) :
-		baseName(baseName),
+		Device(baseName),
 		timer(timer),
 		serverSocket(serverSocket),
 		serverRow(-1)
@@ -25,10 +25,8 @@ public:
 	bool update(float row);
 	
 private:
-	std::string getTrackFileName(std::string trackName);
 	void saveTracks();
 
-	const std::string baseName;
 	sync::Data syncData;
 	Timer &timer;
 	
@@ -159,15 +157,6 @@ bool ClientDevice::update(float row)
 	}
 	
 	return !done;
-}
-
-std::string ClientDevice::getTrackFileName(std::string trackName)
-{
-	std::string fileName = baseName.c_str();
-	fileName += "_";
-	fileName += trackName;
-	fileName += ".track";
-	return fileName;
 }
 
 static bool saveTrack(const sync::Track &track, std::string fileName)

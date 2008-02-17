@@ -25,10 +25,14 @@ namespace sync
 	class Device
 	{
 	public:
+		Device(const std::string &baseName) : baseName(baseName) {}
 		virtual ~Device() {}
 		
 		virtual Track &getTrack(const std::string &trackName) = 0;
 		virtual bool update(float row) = 0;
+	protected:
+		std::string getTrackFileName(std::string trackName);
+		const std::string baseName;
 	};
 	
 	Device *createDevice(const std::string &baseName, Timer &timer);
