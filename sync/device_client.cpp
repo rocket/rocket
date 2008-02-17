@@ -170,13 +170,38 @@ std::string ClientDevice::getTrackFileName(std::string trackName)
 	return fileName;
 }
 
+static bool saveTrack(const sync::Track &track, std::string fileName)
+{
+	FILE *fp = fopen(fileName.c_str(), "wb");
+	if (NULL == fp) return false;
+	
+	size_t keyFrameCount = track.getKeyFrameCount();
+	fwrite(&keyFrameCount, sizeof(size_t), 1, fp);
+	
+	sync::Track::KeyFrameContainer::const_iterator it;
+	for (it = track.keyFrames.begin(); it != track.keyFrames.end(); ++it)
+	{
+		size_t   row = it->first;
+		float value = it->second.value;
+		char  interpolationType = char(it->second.interpolationType);
+		
+		// write key
+		fwrite(&row, sizeof(size_t), 1, fp);
+		fwrite(&value, sizeof(float), 1, fp);
+		fwrite(&interpolationType, sizeof(char), 1, fp);
+	}
+	
+	fclose(fp);
+	fp = NULL;
+	return true;
+}
+
 void ClientDevice::saveTracks()
 {
 	sync::Data::TrackContainer::iterator iter;
 	for (iter = syncData.tracks.begin(); iter != syncData.tracks.end(); ++iter)
 	{
-		std::string fileName = getTrackFileName(iter->first);
-		printf("\"%s\"\n", fileName.c_str());
+		saveTrack(syncData.getTrack(iter->second), getTrackFileName(iter->first));
 	}
 }
 

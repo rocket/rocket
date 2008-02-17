@@ -734,7 +734,7 @@ void TrackView::editToggleInterpolationType()
 		SyncEditData::Command *cmd = syncData->getSetKeyFrameCommand(editTrack, int(lower->first), newKey);
 		syncData->exec(cmd);
 		
-		invalidateRange(editTrack, editTrack, lower->first, upper->first);
+		invalidateRange(editTrack, editTrack, int(lower->first), int(upper->first));
 	}
 	else MessageBeep(0);
 }
