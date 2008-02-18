@@ -234,6 +234,19 @@ static ATOM registerMainWindowClass(HINSTANCE hInstance)
 	return RegisterClassEx(&wc);
 }
 
+SyncDocument loadDocument()
+{
+	SyncDocument document;
+	for (int i = 0; i < 10; ++i)
+	{
+		std::string trackName = "balle";
+		
+		// find track
+		const sync::Track &track = document.getTrack(trackName);
+	}
+	return document;
+}
+
 int _tmain(int argc, _TCHAR* argv[])
 {
 #ifdef _DEBUG
@@ -281,7 +294,7 @@ int _tmain(int argc, _TCHAR* argv[])
 	} */
 #endif
 	
-	SyncEditData syncData;
+	SyncDocument syncData;
 	syncData.clientSocket = INVALID_SOCKET;
 	
 	ATOM mainClass      = registerMainWindowClass(hInstance);
@@ -293,7 +306,7 @@ int _tmain(int argc, _TCHAR* argv[])
 	}
 	
 	trackView = new TrackView();
-	trackView->setSyncData(&syncData);
+	trackView->setDocument(&syncData);
 	
 	HWND hwnd = CreateWindowEx(
 		0,
@@ -377,7 +390,6 @@ int _tmain(int argc, _TCHAR* argv[])
 						{
 							size_t clientIndex = 0;
 							int ret = recv(clientSocket, (char*)&clientIndex, sizeof(int), 0);
-							printf("client index: %d\n", clientIndex);
 							
 							// get len
 							int str_len = 0;
@@ -393,7 +405,6 @@ int _tmain(int argc, _TCHAR* argv[])
 							
 							// find track
 							size_t serverIndex = syncData.getTrackIndex(trackName.c_str());
-							printf("name: \"%s\"\n", trackName.c_str());
 							
 							// setup remap
 							syncData.clientRemap[serverIndex] = clientIndex;

@@ -226,6 +226,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\syncdocument.h"
+				>
+			</File>
+			<File
 				RelativePath="..\sync\track.h"
 				>
 			</File>

@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include "synceditdata.h"
+#include "syncdocument.h"
 
 #include <list>
 #include <string>
@@ -22,8 +22,8 @@ public:
 	HWND create(HINSTANCE hInstance, HWND hwndParent);
 	HWND getWin(){ return hwnd; }
 	
-	void setSyncData(SyncEditData *syncData) { this->syncData = syncData; }
-	SyncEditData *getSyncData() { return syncData; }
+	void setDocument(SyncDocument *document) { this->document = document; }
+	SyncDocument *getDocument() { return document; }
 	
 	void setRows(int rows);
 	int getRows() const { return rows; }
@@ -115,7 +115,7 @@ private:
 	
 	int getTrackCount()
 	{
-		sync::Data *syncData = getSyncData();
+		sync::Data *syncData = getDocument();
 		if (NULL == syncData) return 0;
 		return int(syncData->getTrackCount());
 	};
@@ -136,7 +136,7 @@ private:
 	int windowWidth, windowHeight;
 	int windowRows,  windowTracks;
 	
-	SyncEditData *syncData;
+	SyncDocument *document;
 	
 	std::basic_string<TCHAR> editString;
 	

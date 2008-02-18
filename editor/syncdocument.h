@@ -9,10 +9,10 @@
 #include <stack>
 #include <list>
 
-class SyncEditData : public sync::Data
+class SyncDocument : public sync::Data
 {
 public:
-	SyncEditData() : sync::Data(), clientPaused(true) {}
+	SyncDocument() : sync::Data(), clientPaused(true) {}
 	
 	void sendSetKeyCommand(int track, int row, const sync::Track::KeyFrame &key)
 	{
@@ -41,8 +41,6 @@ public:
 	void sendSetRowCommand(int row)
 	{
 		if (INVALID_SOCKET == clientSocket) return;
-		printf("sending row pos\n");
-		
 		unsigned char cmd = SET_ROW;
 		send(clientSocket, (char*)&cmd, 1, 0);
 		send(clientSocket, (char*)&row,   sizeof(int), 0);
@@ -67,8 +65,8 @@ public:
 	{
 	public:
 		virtual ~Command() {}
-		virtual void exec(SyncEditData *data) = 0;
-		virtual void undo(SyncEditData *data) = 0;
+		virtual void exec(SyncDocument *data) = 0;
+		virtual void undo(SyncDocument *data) = 0;
 	};
 	
 	class InsertCommand : public Command
@@ -77,7 +75,7 @@ public:
 		InsertCommand(int track, int row, const sync::Track::KeyFrame &key) : track(track), row(row), key(key) {}
 		~InsertCommand() {}
 		
-		virtual void exec(SyncEditData *data)
+		virtual void exec(SyncDocument *data)
 		{
 			sync::Track &t = data->getTrack(this->track);
 			assert(!t.isKeyFrame(row));
@@ -86,7 +84,7 @@ public:
 			data->sendSetKeyCommand(track, row, key); // update clients
 		}
 		
-		virtual void undo(SyncEditData *data)
+		virtual void undo(SyncDocument *data)
 		{
 			sync::Track &t = data->getTrack(this->track);
 			assert(t.isKeyFrame(row));
@@ -106,7 +104,7 @@ public:
 		DeleteCommand(int track, int row) : track(track), row(row) {}
 		~DeleteCommand() {}
 		
-		virtual void exec(SyncEditData *data)
+		virtual void exec(SyncDocument *data)
 		{
 			sync::Track &t = data->getTrack(this->track);
 			assert(t.isKeyFrame(row));
@@ -116,7 +114,7 @@ public:
 			data->sendDeleteKeyCommand(track, row); // update clients
 		}
 		
-		virtual void undo(SyncEditData *data)
+		virtual void undo(SyncDocument *data)
 		{
 			sync::Track &t = data->getTrack(this->track);
 			assert(!t.isKeyFrame(row));
@@ -137,7 +135,7 @@ public:
 		EditCommand(int track, int row, const sync::Track::KeyFrame &key) : track(track), row(row), key(key) {}
 		~EditCommand() {}
 		
-		virtual void exec(SyncEditData *data)
+		virtual void exec(SyncDocument *data)
 		{
 			sync::Track &t = data->getTrack(this->track);
 			
@@ -151,7 +149,7 @@ public:
 			data->sendSetKeyCommand(track, row, key); // update clients
 		}
 		
-		virtual void undo(SyncEditData *data)
+		virtual void undo(SyncDocument *data)
 		{
 			sync::Track &t = data->getTrack(this->track);
 			
@@ -186,13 +184,13 @@ public:
 		
 		size_t getSize() const { return commands.size(); }
 		
-		virtual void exec(SyncEditData *data)
+		virtual void exec(SyncDocument *data)
 		{
 			std::list<Command*>::iterator it;
 			for (it = commands.begin(); it != commands.end(); ++it) (*it)->exec(data);
 		}
 		
-		virtual void undo(SyncEditData *data)
+		virtual void undo(SyncDocument *data)
 		{
 			std::list<Command*>::iterator it;
 			for (it = commands.begin(); it != commands.end(); ++it) (*it)->undo(data);
@@ -246,17 +244,17 @@ public:
 	Command *getSetKeyFrameCommand(int track, int row, const sync::Track::KeyFrame &key)
 	{
 		sync::Track &t = getTrack(track);
-		SyncEditData::Command *cmd;
+		SyncDocument::Command *cmd;
 		if (t.isKeyFrame(row)) cmd = new EditCommand(track, row, key);
 		else                   cmd = new InsertCommand(track, row, key);
 		return cmd;
 	}
 	
 	SOCKET clientSocket;
-// private:
 	std::map<size_t, size_t> clientRemap;
 	bool clientPaused;
 	
+private:
 	std::stack<Command*> undoStack;
 	std::stack<Command*> redoStack;
 };

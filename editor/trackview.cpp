@@ -110,15 +110,15 @@ void TrackView::paintTopMargin(HDC hdc, RECT rcTracks)
 	int firstTrack = min(max(scrollPosX / trackWidth, 0), getTrackCount() - 1);
 	int lastTrack  = min(max(firstTrack + windowTracks + 1, 0), getTrackCount() - 1);
 	
-	sync::Data *syncData = getSyncData();
-	if (NULL == syncData) return;
+	SyncDocument *document = getDocument();
+	if (NULL == document) return;
 
 	SetTextColor(hdc, GetSysColor(COLOR_WINDOWTEXT));
 	
-	sync::Data::TrackContainer::iterator trackIter = syncData->tracks.begin();
+	sync::Data::TrackContainer::iterator trackIter = document->tracks.begin();
 	for (int track = 0; track <= lastTrack; ++track, ++trackIter)
 	{
-		assert(trackIter != syncData->tracks.end());
+		assert(trackIter != document->tracks.end());
 		if (track < firstTrack) continue;
 		
 		RECT topMargin;
@@ -141,7 +141,7 @@ void TrackView::paintTopMargin(HDC hdc, RECT rcTracks)
 		
 		const std::basic_string<TCHAR> &trackName = trackIter->first;
 		
-		if (this->syncData->clientRemap.count(track) == 0) SetTextColor(hdc, GetSysColor(COLOR_GRAYTEXT));
+		if (this->document->clientRemap.count(track) == 0) SetTextColor(hdc, GetSysColor(COLOR_GRAYTEXT));
 		else SetTextColor(hdc, GetSysColor(COLOR_WINDOWTEXT));
 		TextOut(hdc,
 			fillRect.left, 0,
@@ -210,20 +210,17 @@ void TrackView::paintTracks(HDC hdc, RECT rcTracks)
 	
 	SetTextColor(hdc, GetSysColor(COLOR_WINDOWTEXT));
 	
-	sync::Data *syncData = getSyncData();
-	if (NULL == syncData) return;
-	
 	int selectLeft  = min(selectStartTrack, selectStopTrack);
 	int selectRight = max(selectStartTrack, selectStopTrack);
 	int selectTop    = min(selectStartRow, selectStopRow);
 	int selectBottom = max(selectStartRow, selectStopRow);
 	
-	sync::Data::TrackContainer::iterator trackIter = syncData->tracks.begin();
+	sync::Data::TrackContainer::iterator trackIter = document->tracks.begin();
 	for (int track = 0; track <= lastTrack; ++track, ++trackIter)
 	{
-		assert(trackIter != syncData->tracks.end());
+		assert(trackIter != document->tracks.end());
 		size_t trackIndex = trackIter->second;
-		const sync::Track &t = *syncData->actualTracks[trackIndex];
+		const sync::Track &t = *document->actualTracks[trackIndex];
 
 		if (track < firstTrack) continue;
 		for (int row = firstRow; row <= lastRow; ++row)
@@ -377,7 +374,7 @@ void TrackView::editCopy()
 	for (int track = selectLeft; track <= selectRight; ++track)
 	{
 		int localTrack = track - selectLeft;
-		const sync::Track &t = syncData->getTrack(track);
+		const sync::Track &t = document->getTrack(track);
 		for (int row = selectTop; row <= selectBottom; ++row)
 		{
 			int localRow = row - selectTop;
@@ -448,17 +445,17 @@ void TrackView::editPaste()
 		{
 			char *src = clipbuf + 2 * sizeof(int) + sizeof(size_t);
 			
-			SyncEditData::MultiCommand *multiCmd = new SyncEditData::MultiCommand();
+			SyncDocument::MultiCommand *multiCmd = new SyncDocument::MultiCommand();
 			for (int i = 0; i < buffer_size; ++i)
 			{
 				struct CopyEntry ce;
 				memcpy(&ce, src, sizeof(CopyEntry));
 				
-				SyncEditData::Command *cmd = syncData->getSetKeyFrameCommand(editTrack + ce.track, editRow + ce.row, ce.keyFrame);
+				SyncDocument::Command *cmd = document->getSetKeyFrameCommand(editTrack + ce.track, editRow + ce.row, ce.keyFrame);
 				multiCmd->addCommand(cmd);
 				src += sizeof(CopyEntry);
 			}
-			syncData->exec(multiCmd);
+			document->exec(multiCmd);
 		}
 		
 		GlobalUnlock(hmem);
@@ -548,9 +545,9 @@ void TrackView::setEditRow(int newEditRow)
 			selectStartRow   = selectStopRow   = editRow;
 			selectStartTrack = selectStopTrack = editTrack;
 		}
-		if (getSyncData()->clientPaused)
+		if (document->clientPaused)
 		{
-			getSyncData()->sendSetRowCommand(editRow);
+			document->sendSetRowCommand(editRow);
 		}
 	}
 	
@@ -683,16 +680,16 @@ LRESULT TrackView::onHScroll(UINT sbCode, int /*newPos*/)
 
 void TrackView::editEnterValue()
 {
-	if (int(editString.size()) > 0 && editTrack < int(syncData->getTrackCount()))
+	if (int(editString.size()) > 0 && editTrack < int(document->getTrackCount()))
 	{
-		sync::Track &t = syncData->getTrack(editTrack);
+		sync::Track &t = document->getTrack(editTrack);
 		
 		sync::Track::KeyFrame newKey;
 		if (t.isKeyFrame(editRow)) newKey = *t.getKeyFrame(editRow); // copy old key
 		newKey.value = float(_tstof(editString.c_str())); // modify value
 		
-		SyncEditData::Command *cmd = syncData->getSetKeyFrameCommand(editTrack, editRow, newKey);
-		syncData->exec(cmd);
+		SyncDocument::Command *cmd = document->getSetKeyFrameCommand(editTrack, editRow, newKey);
+		document->exec(cmd);
 		
 		editString.clear();
 //		invalidatePos(editTrack, editRow);
@@ -703,9 +700,9 @@ void TrackView::editEnterValue()
 
 void TrackView::editToggleInterpolationType()
 {
-	if (editTrack < int(syncData->getTrackCount()))
+	if (editTrack < int(document->getTrackCount()))
 	{
-		sync::Track &t = syncData->getTrack(editTrack);
+		sync::Track &t = document->getTrack(editTrack);
 		
 		// find key to modify
 		sync::Track::KeyFrameContainer::const_iterator upper = t.keyFrames.upper_bound(editRow);
@@ -731,8 +728,8 @@ void TrackView::editToggleInterpolationType()
 			(int(newKey.interpolationType) + 1) % sync::Track::KeyFrame::IT_COUNT
 		);
 		
-		SyncEditData::Command *cmd = syncData->getSetKeyFrameCommand(editTrack, int(lower->first), newKey);
-		syncData->exec(cmd);
+		SyncDocument::Command *cmd = document->getSetKeyFrameCommand(editTrack, int(lower->first), newKey);
+		document->exec(cmd);
 		
 		invalidateRange(editTrack, editTrack, int(lower->first), int(upper->first));
 	}
@@ -746,21 +743,21 @@ void TrackView::editDelete()
 	int selectTop    = min(selectStartRow, selectStopRow);
 	int selectBottom = max(selectStartRow, selectStopRow);
 
-	if (selectRight >= int(syncData->getTrackCount()))
+	if (selectRight >= int(document->getTrackCount()))
 	{
 		MessageBeep(0);
 		return;
 	}
 	
-	SyncEditData::MultiCommand *multiCmd = new SyncEditData::MultiCommand();
+	SyncDocument::MultiCommand *multiCmd = new SyncDocument::MultiCommand();
 	for (int track = selectLeft; track <= selectRight; ++track)
 	{
-		sync::Track &t = syncData->getTrack(track);
+		sync::Track &t = document->getTrack(track);
 		for (int row = selectTop; row <= selectBottom; ++row)
 		{
 			if (t.isKeyFrame(row))
 			{
-				SyncEditData::Command *cmd = new SyncEditData::DeleteCommand(track, row);
+				SyncDocument::Command *cmd = new SyncDocument::DeleteCommand(track, row);
 				multiCmd->addCommand(cmd);
 			}
 		}
@@ -773,7 +770,7 @@ void TrackView::editDelete()
 	}
 	else
 	{
-		syncData->exec(multiCmd);
+		document->exec(multiCmd);
 		InvalidateRect(getWin(), NULL, FALSE);
 //		invalidateRange(selectLeft, selectRight, selectTop, selectBottom);
 	}
@@ -786,10 +783,10 @@ void TrackView::editBiasValue(float amount)
 	int selectTop    = min(selectStartRow, selectStopRow);
 	int selectBottom = max(selectStartRow, selectStopRow);
 
-	SyncEditData::MultiCommand *multiCmd = new SyncEditData::MultiCommand();
+	SyncDocument::MultiCommand *multiCmd = new SyncDocument::MultiCommand();
 	for (int track = selectLeft; track <= selectRight; ++track)
 	{
-		sync::Track &t = syncData->getTrack(track);
+		sync::Track &t = document->getTrack(track);
 		for (int row = selectTop; row <= selectBottom; ++row)
 		{
 			if (t.isKeyFrame(row))
@@ -798,7 +795,7 @@ void TrackView::editBiasValue(float amount)
 				newKey.value += amount; // modify value
 				
 				// add sub-command
-				SyncEditData::Command *cmd = syncData->getSetKeyFrameCommand(track, row, newKey);
+				SyncDocument::Command *cmd = document->getSetKeyFrameCommand(track, row, newKey);
 				multiCmd->addCommand(cmd);
 			}
 		}
@@ -811,14 +808,14 @@ void TrackView::editBiasValue(float amount)
 	}
 	else
 	{
-		syncData->exec(multiCmd);
+		document->exec(multiCmd);
 		invalidateRange(selectLeft, selectRight, selectTop, selectBottom);
 	}
 }
 
 LRESULT TrackView::onKeyDown(UINT keyCode, UINT /*flags*/)
 {
-	if (editString.empty() && getSyncData()->clientPaused)
+	if (editString.empty() && document->clientPaused)
 	{
 		switch (keyCode)
 		{
@@ -898,7 +895,7 @@ LRESULT TrackView::onKeyDown(UINT keyCode, UINT /*flags*/)
 			invalidatePos(editTrack, editRow);
 			MessageBeep(0);
 		}
-		getSyncData()->sendPauseCommand( !getSyncData()->clientPaused );
+		document->sendPauseCommand( !document->clientPaused );
 		break;
 	}
 	return FALSE;
@@ -932,7 +929,7 @@ LRESULT TrackView::onChar(UINT keyCode, UINT flags)
 	case '7':
 	case '8':
 	case '9':
-		if (editTrack < int(syncData->getTrackCount()))
+		if (editTrack < int(document->getTrackCount()))
 		{
 			editString.push_back(char(keyCode));
 			invalidatePos(editTrack, editRow);
@@ -945,7 +942,7 @@ LRESULT TrackView::onChar(UINT keyCode, UINT flags)
 		break;
 
 	case 's':
-		syncData->sendSaveCommand();
+		document->sendSaveCommand();
 		break;
 	}
 	return FALSE;
@@ -995,13 +992,13 @@ LRESULT TrackView::windowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 		break;
 	
 	case WM_UNDO:
-		if (!syncData->undo()) MessageBeep(0);
+		if (!document->undo()) MessageBeep(0);
 		// unfortunately, we don't know how much to invalidate... so we'll just invalidate it all.
 		InvalidateRect(hwnd, NULL, FALSE);
 		break;
 	
 	case WM_REDO:
-		if (!syncData->redo()) MessageBeep(0);
+		if (!document->redo()) MessageBeep(0);
 		// unfortunately, we don't know how much to invalidate... so we'll just invalidate it all.
 		InvalidateRect(hwnd, NULL, FALSE);
 		break;
