@@ -373,8 +373,9 @@ void TrackView::editCopy()
 	std::vector<struct CopyEntry> copyEntries;
 	for (int track = selectLeft; track <= selectRight; ++track)
 	{
-		int localTrack = track - selectLeft;
-		const sync::Track &t = document->getTrack(track);
+		const size_t trackIndex  = document->getTrackIndexFromPos(track);
+		const sync::Track &t = document->getTrack(trackIndex);
+		
 		for (int row = selectTop; row <= selectBottom; ++row)
 		{
 			int localRow = row - selectTop;
@@ -384,7 +385,7 @@ void TrackView::editCopy()
 				assert(NULL != keyFrame);
 				
 				CopyEntry ce;
-				ce.track = localTrack;
+				ce.track = int(trackIndex);
 				ce.row = localRow;
 				ce.keyFrame = *keyFrame;
 				
@@ -682,13 +683,14 @@ void TrackView::editEnterValue()
 {
 	if (int(editString.size()) > 0 && editTrack < int(document->getTrackCount()))
 	{
-		sync::Track &t = document->getTrack(editTrack);
+		size_t trackIndex = document->getTrackIndexFromPos(editTrack);
+		sync::Track &t = document->getTrack(trackIndex);
 		
 		sync::Track::KeyFrame newKey;
 		if (t.isKeyFrame(editRow)) newKey = *t.getKeyFrame(editRow); // copy old key
 		newKey.value = float(_tstof(editString.c_str())); // modify value
 		
-		SyncDocument::Command *cmd = document->getSetKeyFrameCommand(editTrack, editRow, newKey);
+		SyncDocument::Command *cmd = document->getSetKeyFrameCommand(int(trackIndex), editRow, newKey);
 		document->exec(cmd);
 		
 		editString.clear();
@@ -702,7 +704,8 @@ void TrackView::editToggleInterpolationType()
 {
 	if (editTrack < int(document->getTrackCount()))
 	{
-		sync::Track &t = document->getTrack(editTrack);
+		size_t trackIndex = document->getTrackIndexFromPos(editTrack);
+		sync::Track &t = document->getTrack(trackIndex);
 		
 		// find key to modify
 		sync::Track::KeyFrameContainer::const_iterator upper = t.keyFrames.upper_bound(editRow);
@@ -728,7 +731,7 @@ void TrackView::editToggleInterpolationType()
 			(int(newKey.interpolationType) + 1) % sync::Track::KeyFrame::IT_COUNT
 		);
 		
-		SyncDocument::Command *cmd = document->getSetKeyFrameCommand(editTrack, int(lower->first), newKey);
+		SyncDocument::Command *cmd = document->getSetKeyFrameCommand(int(trackIndex), int(lower->first), newKey);
 		document->exec(cmd);
 		
 		invalidateRange(editTrack, editTrack, int(lower->first), int(upper->first));
@@ -752,12 +755,14 @@ void TrackView::editDelete()
 	SyncDocument::MultiCommand *multiCmd = new SyncDocument::MultiCommand();
 	for (int track = selectLeft; track <= selectRight; ++track)
 	{
-		sync::Track &t = document->getTrack(track);
+		size_t trackIndex = document->getTrackIndexFromPos(track);
+		sync::Track &t = document->getTrack(trackIndex);
+		
 		for (int row = selectTop; row <= selectBottom; ++row)
 		{
 			if (t.isKeyFrame(row))
 			{
-				SyncDocument::Command *cmd = new SyncDocument::DeleteCommand(track, row);
+				SyncDocument::Command *cmd = new SyncDocument::DeleteCommand(int(trackIndex), row);
 				multiCmd->addCommand(cmd);
 			}
 		}
@@ -786,7 +791,9 @@ void TrackView::editBiasValue(float amount)
 	SyncDocument::MultiCommand *multiCmd = new SyncDocument::MultiCommand();
 	for (int track = selectLeft; track <= selectRight; ++track)
 	{
-		sync::Track &t = document->getTrack(track);
+		size_t trackIndex = document->getTrackIndexFromPos(track);
+		sync::Track &t = document->getTrack(trackIndex);
+		
 		for (int row = selectTop; row <= selectBottom; ++row)
 		{
 			if (t.isKeyFrame(row))
@@ -795,7 +802,7 @@ void TrackView::editBiasValue(float amount)
 				newKey.value += amount; // modify value
 				
 				// add sub-command
-				SyncDocument::Command *cmd = document->getSetKeyFrameCommand(track, row, newKey);
+				SyncDocument::Command *cmd = document->getSetKeyFrameCommand(int(trackIndex), row, newKey);
 				multiCmd->addCommand(cmd);
 			}
 		}
@@ -943,6 +950,10 @@ LRESULT TrackView::onChar(UINT keyCode, UINT flags)
 
 	case 's':
 		document->sendSaveCommand();
+		break;
+	
+	case 'l':
+		document->load("test.xml");
 		break;
 	}
 	return FALSE;

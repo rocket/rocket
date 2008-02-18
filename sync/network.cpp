@@ -25,7 +25,6 @@ SOCKET clientConnect(SOCKET serverSocket)
 {
 	SOCKET clientSocket = accept(serverSocket,  NULL, NULL);
 	if (INVALID_SOCKET == clientSocket) return INVALID_SOCKET;
-	printf("%x\n", clientSocket);
 	
 	const char *expectedGreeting = clientGreeting;
 	char recievedGreeting[128];

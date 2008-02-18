@@ -42,11 +42,12 @@ Track &ClientDevice::getTrack(const std::string &trackName)
 {
 	sync::Data::TrackContainer::iterator iter = syncData.tracks.find(trackName);
 	if (iter != syncData.tracks.end()) return *syncData.actualTracks[iter->second];
-		
+	
 	unsigned char cmd = GET_TRACK;
 	send(serverSocket, (char*)&cmd, 1, 0);
 	
 	size_t clientIndex = syncData.actualTracks.size();
+	
 	send(serverSocket, (char*)&clientIndex, sizeof(size_t), 0);
 	
 	// send request data
@@ -90,12 +91,11 @@ bool ClientDevice::update(float row)
 						recv(serverSocket, (char*)&row,   sizeof(int), 0);
 						recv(serverSocket, (char*)&value, sizeof(float), 0);
 						recv(serverSocket, (char*)&interp, 1, 0);
-
 						
 						assert(interp >= 0);
 						assert(interp < Track::KeyFrame::IT_COUNT);
 						
-						sync::Track &t = syncData.getTrack(track);
+						sync::Track &t = *syncData.actualTracks[track];
 						t.setKeyFrame(row,
 							Track::KeyFrame(
 								value,

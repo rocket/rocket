@@ -9,7 +9,10 @@ using namespace sync;
 size_t Data::getTrackIndex(const std::basic_string<TCHAR> &name)
 {
 	TrackContainer::iterator iter = tracks.find(name);
-	if (iter != tracks.end()) return int(iter->second);
+	if (iter != tracks.end())
+	{
+		return iter->second;
+	}
 	
 	size_t index = actualTracks.size();
 	tracks[name] = index;
@@ -26,14 +29,16 @@ Track &Data::getTrack(const std::basic_string<TCHAR> &name)
 	return *actualTracks[index];
 }
 
-Track &Data::getTrack(size_t track)
+size_t Data::getTrackIndexFromPos(size_t track)
 {
 	assert(track >= 0);
 	assert(track < tracks.size());
 	
 	sync::Data::TrackContainer::iterator trackIter = tracks.begin();
 	for (size_t currTrack = 0; currTrack < track; ++currTrack, ++trackIter);
-	return *actualTracks[trackIter->second];
+	
+	assert(tracks.end() != trackIter);
+	return trackIter->second;
 }
 
 size_t Data::getTrackCount() const

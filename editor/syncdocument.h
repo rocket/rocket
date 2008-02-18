@@ -9,6 +9,9 @@
 #include <stack>
 #include <list>
 
+
+#import <msxml4.dll> named_guids
+
 class SyncDocument : public sync::Data
 {
 public:
@@ -31,6 +34,8 @@ public:
 	void sendDeleteKeyCommand(int track, int row)
 	{
 		if (INVALID_SOCKET == clientSocket) return;
+		if (clientRemap.count(track) == 0) return;
+		track = int(clientRemap[track]);
 		
 		unsigned char cmd = DELETE_KEY;
 		send(clientSocket, (char*)&cmd, 1, 0);
@@ -77,18 +82,19 @@ public:
 		
 		virtual void exec(SyncDocument *data)
 		{
-			sync::Track &t = data->getTrack(this->track);
-			assert(!t.isKeyFrame(row));
-			t.setKeyFrame(row, key);
-			
+			sync::Track *t = data->actualTracks[this->track];
+			assert(NULL != t);
+			assert(!t->isKeyFrame(row));
+			t->setKeyFrame(row, key);
 			data->sendSetKeyCommand(track, row, key); // update clients
 		}
 		
 		virtual void undo(SyncDocument *data)
 		{
-			sync::Track &t = data->getTrack(this->track);
-			assert(t.isKeyFrame(row));
-			t.deleteKeyFrame(row);
+			sync::Track *t = data->actualTracks[this->track];
+			assert(NULL != t);
+			assert(t->isKeyFrame(row));
+			t->deleteKeyFrame(row);
 			
 			data->sendDeleteKeyCommand(track, row); // update clients
 		}
@@ -248,6 +254,53 @@ public:
 		if (t.isKeyFrame(row)) cmd = new EditCommand(track, row, key);
 		else                   cmd = new InsertCommand(track, row, key);
 		return cmd;
+	}
+
+	void load(const std::string &fileName)
+	{
+		MSXML2::IXMLDOMDocumentPtr doc(MSXML2::CLSID_DOMDocument);
+		
+		try
+		{
+			doc->load(fileName.c_str());
+			MSXML2::IXMLDOMNodeListPtr trackNodes = doc->documentElement->selectNodes("track");
+			for (int i = 0; i < trackNodes->Getlength(); ++i)
+			{
+				MSXML2::IXMLDOMNodePtr trackNode = trackNodes->Getitem(i);
+				MSXML2::IXMLDOMNamedNodeMapPtr attribs = trackNode->Getattributes();
+				
+				std::string name = attribs->getNamedItem("name")->Gettext();
+				sync::Track &t = getTrack(name);
+				
+				MSXML2::IXMLDOMNodeListPtr rowNodes = trackNode->GetchildNodes();
+				for (int i = 0; i < rowNodes->Getlength(); ++i)
+				{
+					MSXML2::IXMLDOMNodePtr keyNode = rowNodes->Getitem(i);
+					std::string baseName = keyNode->GetbaseName();
+					if (baseName == "key")
+					{
+						MSXML2::IXMLDOMNamedNodeMapPtr rowAttribs = keyNode->Getattributes();
+						std::string rowString = rowAttribs->getNamedItem("row")->Gettext();
+						std::string valueString = rowAttribs->getNamedItem("value")->Gettext();
+						std::string interpolationString = rowAttribs->getNamedItem("interpolation")->Gettext();
+						
+						sync::Track::KeyFrame keyFrame(
+							float(atof(valueString.c_str())),
+							sync::Track::KeyFrame::InterpolationType(
+								atoi(interpolationString.c_str())
+							)
+						);
+						t.setKeyFrame(atoi(rowString.c_str()), keyFrame);
+					}
+				}
+			}
+		}
+		catch(_com_error &e)
+		{
+			char temp[256];
+			_snprintf(temp, 256, "Error loading: %s\n", (const char*)_bstr_t(e.Description()));
+			MessageBox(NULL, temp, NULL, MB_OK | MB_ICONERROR | MB_SETFOREGROUND);
+		}
 	}
 	
 	SOCKET clientSocket;

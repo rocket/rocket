@@ -234,19 +234,6 @@ static ATOM registerMainWindowClass(HINSTANCE hInstance)
 	return RegisterClassEx(&wc);
 }
 
-SyncDocument loadDocument()
-{
-	SyncDocument document;
-	for (int i = 0; i < 10; ++i)
-	{
-		std::string trackName = "balle";
-		
-		// find track
-		const sync::Track &track = document.getTrack(trackName);
-	}
-	return document;
-}
-
 int _tmain(int argc, _TCHAR* argv[])
 {
 #ifdef _DEBUG
@@ -258,6 +245,7 @@ int _tmain(int argc, _TCHAR* argv[])
 #endif
 	
 	HINSTANCE hInstance = GetModuleHandle(NULL);
+	CoInitialize(NULL);
 	
 #if 1
 	if (false == initNetwork())
@@ -317,7 +305,6 @@ int _tmain(int argc, _TCHAR* argv[])
 		CW_USEDEFAULT, CW_USEDEFAULT, // width, height
 		NULL, NULL, hInstance, NULL
 	);
-	printf("main window: %p\n", hwnd);
 	
 	if (NULL == hwnd)
 	{
@@ -326,15 +313,11 @@ int _tmain(int argc, _TCHAR* argv[])
 	}
 	
 	HACCEL accel = LoadAccelerators(hInstance, MAKEINTRESOURCE(IDR_ACCELERATOR));
-	printf("accel: %p\n", accel);
 	
 	ShowWindow(hwnd, TRUE);
 	UpdateWindow(hwnd);
 	
 #if 1
-	
-	printf("server socket %x\n", serverSocket);
-	
 	bool done = false;
 	SOCKET clientSocket = INVALID_SOCKET;
 	MSG msg;
@@ -427,7 +410,6 @@ int _tmain(int argc, _TCHAR* argv[])
 						{
 							int newRow = 0;
 							int ret = recv(clientSocket, (char*)&newRow, sizeof(int), 0);
-							printf("new row: %d\n", newRow);
 							trackView->setEditRow(newRow);
 						}
 						break;
