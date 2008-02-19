@@ -6,6 +6,12 @@
 
 using namespace sync;
 
+Data::~Data()
+{
+	for (size_t i = 0; i < actualTracks.size(); ++i)
+		delete actualTracks[i];
+}
+
 size_t Data::getTrackIndex(const std::basic_string<TCHAR> &name)
 {
 	TrackContainer::iterator iter = tracks.find(name);

@@ -20,6 +20,7 @@ namespace sync
 	class Data
 	{
 	public:
+		~Data();
 		size_t getTrackIndex(const std::basic_string<TCHAR> &name);
 		Track &getTrack(const std::basic_string<TCHAR> &name);
 
