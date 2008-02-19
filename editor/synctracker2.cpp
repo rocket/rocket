@@ -126,10 +126,11 @@ bool fileNameValid = false;
 
 void fileNew()
 {
-/*	document.purgeUnused(); */
-	trackView->selectAll();
-	trackView->editDelete();
-	trackView->selectNone();
+/*	document.purgeUnusedTracks(); */
+	for (size_t i = 0; i < document.getTrackCount(); ++i)
+	{
+		document.getTrack(i).truncate();
+	}
 	fileNameValid = false;
 	
 	document.clearUndoStack();
@@ -250,12 +251,12 @@ static LRESULT CALLBACK mainWindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARA
 		{
 		case ID_FILE_NEW:
 			fileNew();
-			InvalidateRect(hwnd, NULL, FALSE);
+			InvalidateRect(trackViewWin, NULL, FALSE);
 			break;
 			
 		case ID_FILE_OPEN:
 			fileOpen();
-			InvalidateRect(hwnd, NULL, FALSE);
+			InvalidateRect(trackViewWin, NULL, FALSE);
 			break;
 		
 		case ID_FILE_SAVE_AS:

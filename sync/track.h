@@ -42,6 +42,8 @@ namespace sync
 		void deleteKeyFrame(size_t row);
 		void setKeyFrame(size_t row, const KeyFrame &keyFrame);
 		
+		void truncate();
+		
 	// private:
 		
 		typedef std::map<size_t, struct KeyFrame> KeyFrameContainer;

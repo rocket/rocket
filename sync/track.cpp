@@ -102,3 +102,9 @@ void Track::setKeyFrame(size_t row, const KeyFrame &keyFrame)
 {
 	keyFrames[row] = keyFrame;
 }
+
+void Track::truncate()
+{
+	keyFrames.clear();
+}
+
