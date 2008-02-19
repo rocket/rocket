@@ -1067,7 +1067,7 @@ ATOM registerTrackViewWindowClass(HINSTANCE hInstance)
 	wc.cbWndExtra    = sizeof(TrackView*);
 	wc.hInstance     = hInstance;
 	wc.hIcon         = 0;
-	wc.hCursor       = LoadCursor(NULL, IDC_IBEAM);
+	wc.hCursor       = NULL; // LoadCursor(NULL, IDC_IBEAM);
 	wc.hbrBackground = (HBRUSH)0;
 	wc.lpszMenuName  = NULL;
 	wc.lpszClassName = trackViewWindowClassName;
