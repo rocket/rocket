@@ -949,11 +949,12 @@ LRESULT TrackView::onChar(UINT keyCode, UINT flags)
 		break;
 
 	case 's':
+		document->save("test.rocket");
 		document->sendSaveCommand();
 		break;
 	
 	case 'l':
-		document->load("test.xml");
+		document->load("test.rocket");
 		break;
 	}
 	return FALSE;

@@ -254,10 +254,9 @@ public:
 		return cmd;
 	}
 
-	void load(const std::string &fileName)
+	bool load(const std::string &fileName)
 	{
 		MSXML2::IXMLDOMDocumentPtr doc(MSXML2::CLSID_DOMDocument);
-		
 		try
 		{
 			doc->load(fileName.c_str());
@@ -298,7 +297,63 @@ public:
 			char temp[256];
 			_snprintf(temp, 256, "Error loading: %s\n", (const char*)_bstr_t(e.Description()));
 			MessageBox(NULL, temp, NULL, MB_OK | MB_ICONERROR | MB_SETFOREGROUND);
+			return false;
 		}
+		return true;
+	}
+
+	bool save(const std::string &fileName)
+	{
+		MSXML2::IXMLDOMDocumentPtr doc(MSXML2::CLSID_DOMDocument);
+		try
+		{
+			_variant_t varNodeType((short)MSXML2::NODE_ELEMENT);
+			MSXML2::IXMLDOMNodePtr rootNode = doc->createNode(varNodeType, _T("tracks"), _T(""));
+			doc->appendChild(rootNode);
+			
+			sync::Data::TrackContainer::iterator iter;
+			for (iter = tracks.begin(); iter != tracks.end(); ++iter)
+			{
+				size_t index = iter->second;
+				const sync::Track &track = getTrack(index);
+				
+				MSXML2::IXMLDOMElementPtr trackElem = doc->createElement(_T("track"));
+				trackElem->setAttribute(_T("name"), iter->first.c_str());
+				rootNode->appendChild(trackElem);
+				
+				sync::Track::KeyFrameContainer::const_iterator it;
+				for (it = track.keyFrames.begin(); it != track.keyFrames.end(); ++it)
+				{
+					char temp[256];
+					size_t row = it->first;
+					float value = it->second.value;
+					char interpolationType = char(it->second.interpolationType);
+					
+					MSXML2::IXMLDOMElementPtr keyElem = doc->createElement(_T("key"));
+					
+					_snprintf(temp, 256, "%d", row);
+					keyElem->setAttribute(_T("row"), temp);
+					
+					_snprintf(temp, 256, "%f", value);
+					keyElem->setAttribute(_T("value"), temp);
+					
+					_snprintf(temp, 256, "%d", interpolationType);
+					keyElem->setAttribute(_T("interpolation"), temp);
+					
+					trackElem->appendChild(keyElem);
+				}
+			}
+			
+			doc->save(fileName.c_str());
+		}
+		catch(_com_error &e)
+		{
+			char temp[256];
+			_snprintf(temp, 256, "Error loading: %s\n", (const char*)_bstr_t(e.Description()));
+			MessageBox(NULL, temp, NULL, MB_OK | MB_ICONERROR | MB_SETFOREGROUND);
+			return false;
+		}
+		return true;
 	}
 	
 	SOCKET clientSocket;

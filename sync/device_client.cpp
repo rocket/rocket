@@ -191,8 +191,6 @@ void ClientDevice::saveTracks()
 	for (iter = syncData.tracks.begin(); iter != syncData.tracks.end(); ++iter)
 	{
 		size_t index = iter->second;
-		
-		assert(index < syncData.getTrackCount());
 		const sync::Track &track = syncData.getTrack(index);
 		saveTrack(track, getTrackFileName(iter->first));
 	}
