@@ -461,7 +461,7 @@ int _tmain(int argc, _TCHAR* argv[])
 							// setup remap
 							document.clientRemap[serverIndex] = clientIndex;
 							
-							const sync::Track &track = *document.actualTracks[serverIndex];
+							const sync::Track &track = document.getTrack(serverIndex);
 							
 							sync::Track::KeyFrameContainer::const_iterator it;
 							for (it = track.keyFrames.begin(); it != track.keyFrames.end(); ++it)

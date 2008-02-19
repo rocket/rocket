@@ -40,14 +40,17 @@ ClientDevice::~ClientDevice()
 
 Track &ClientDevice::getTrack(const std::string &trackName)
 {
+/*	const size_t oldCount = syncData.getTrackCount();
+	Track &track = syncData.getTrack(trackName);
+	if (oldCount == syncData.getTrackCount()) return track; */
+
 	sync::Data::TrackContainer::iterator iter = syncData.tracks.find(trackName);
-	if (iter != syncData.tracks.end()) return *syncData.actualTracks[iter->second];
+	if (iter != syncData.tracks.end()) return syncData.getTrack(iter->second);
 	
 	unsigned char cmd = GET_TRACK;
 	send(serverSocket, (char*)&cmd, 1, 0);
 	
-	size_t clientIndex = syncData.actualTracks.size();
-	
+	size_t clientIndex = syncData.getTrackCount();
 	send(serverSocket, (char*)&clientIndex, sizeof(size_t), 0);
 	
 	// send request data
@@ -58,10 +61,10 @@ Track &ClientDevice::getTrack(const std::string &trackName)
 	send(serverSocket, name_str, int(name_len), 0);
 	
 	sync::Track *track = new sync::Track();
-	
 	syncData.actualTracks.push_back(track);
 	syncData.tracks[trackName] = clientIndex;
 	return *track;
+//	return track;
 }
 
 bool ClientDevice::update(float row)
@@ -95,7 +98,7 @@ bool ClientDevice::update(float row)
 						assert(interp >= 0);
 						assert(interp < Track::KeyFrame::IT_COUNT);
 						
-						sync::Track &t = *syncData.actualTracks[track];
+						sync::Track &t = syncData.getTrack(track);
 						t.setKeyFrame(row,
 							Track::KeyFrame(
 								value,

@@ -6,6 +6,18 @@ SyncDocument::~SyncDocument()
 	clearRedoStack();
 }
 
+size_t SyncDocument::getTrackIndexFromPos(size_t track) const
+{
+	assert(track < tracks.size());
+	
+	sync::Data::TrackContainer::const_iterator trackIter = tracks.begin();
+	for (size_t currTrack = 0; currTrack < track; ++currTrack, ++trackIter);
+	
+	assert(tracks.end() != trackIter);
+	return trackIter->second;
+}
+
+
 #import <msxml4.dll> named_guids
 
 bool SyncDocument::load(const std::string &fileName)

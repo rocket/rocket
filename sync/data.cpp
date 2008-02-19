@@ -34,17 +34,6 @@ Track &Data::getTrack(const std::basic_string<TCHAR> &name)
 	return *actualTracks[index];
 }
 
-size_t Data::getTrackIndexFromPos(size_t track)
-{
-	assert(track < tracks.size());
-	
-	sync::Data::TrackContainer::iterator trackIter = tracks.begin();
-	for (size_t currTrack = 0; currTrack < track; ++currTrack, ++trackIter);
-	
-	assert(tracks.end() != trackIter);
-	return trackIter->second;
-}
-
 size_t Data::getTrackCount() const
 {
 	return tracks.size();
