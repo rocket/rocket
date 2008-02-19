@@ -949,15 +949,6 @@ LRESULT TrackView::onChar(UINT keyCode, UINT flags)
 	case 'i':
 		editToggleInterpolationType();
 		break;
-
-	case 's':
-		document->save("test.rocket");
-		document->sendSaveCommand();
-		break;
-	
-	case 'l':
-		document->load("test.rocket");
-		break;
 	}
 	return FALSE;
 }

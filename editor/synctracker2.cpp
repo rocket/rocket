@@ -9,6 +9,7 @@
 #include <windows.h>
 #include <commctrl.h>
 #include <objbase.h>
+#include <commdlg.h>
 
 #include "trackview.h"
 #include <vector>
@@ -17,6 +18,7 @@ const TCHAR *mainWindowClassName = _T("MainWindow");
 TrackView *trackView;
 HWND trackViewWin;
 HWND statusBarWin;
+SyncDocument document;
 
 #define WM_SETROWS (WM_USER+1)
 #define WM_BIASSELECTION (WM_USER+2)
@@ -119,6 +121,67 @@ static LRESULT CALLBACK biasSelectionDialogProc(HWND hDlg, UINT message, WPARAM 
 	return FALSE;
 }
 
+char fileName[_MAX_FNAME + 1];
+bool fileNameValid = false;
+
+void fileNew()
+{
+	
+//	fileNameValid = false;
+}
+
+void fileOpen()
+{
+	fileName[0] = '\0';
+	
+	OPENFILENAME ofn;
+	ZeroMemory(&ofn, sizeof(ofn));
+	ofn.lStructSize = sizeof(ofn);
+	ofn.lpstrFile = fileName;
+	ofn.nMaxFile = _MAX_FNAME;
+	ofn.lpstrDefExt = "rocket";
+	ofn.lpstrFilter = "ROCKET File (*.rocket)\0*.rocket\0All Files (*.*)\0*.*\0\0";
+	ofn.Flags = OFN_SHOWHELP;
+	if (GetOpenFileName(&ofn))
+	{
+		if (document.load(fileName))
+		{
+			fileNameValid = true;
+			InvalidateRect(trackViewWin, NULL, FALSE);
+		}
+		else MessageBox(trackViewWin, _T("failed to open file"), NULL, MB_OK | MB_ICONERROR | MB_SETFOREGROUND);
+	}
+}
+
+void fileSaveAs()
+{
+	fileName[0] = '\0';
+	
+	OPENFILENAME ofn;
+	ZeroMemory(&ofn, sizeof(ofn));
+	ofn.lStructSize = sizeof(ofn);
+	ofn.lpstrFile = fileName;
+	ofn.nMaxFile = _MAX_FNAME;
+	ofn.lpstrDefExt = "rocket";
+	ofn.lpstrFilter = "ROCKET File (*.rocket)\0*.rocket\0All Files (*.*)\0*.*\0\0";
+	ofn.Flags = OFN_SHOWHELP | OFN_OVERWRITEPROMPT; 
+	
+	if (GetSaveFileName(&ofn))
+	{
+		if (document.save(fileName)) fileNameValid = true;
+		else MessageBox(trackViewWin, _T("Failed to save file"), NULL, MB_OK | MB_ICONERROR | MB_SETFOREGROUND);
+	}
+}
+
+void fileSave()
+{
+	if (!fileNameValid) fileSaveAs();
+	else if (document.save(fileName))
+	{
+		MessageBox(trackViewWin, _T("Failed to save file"), NULL, MB_OK | MB_ICONERROR | MB_SETFOREGROUND);
+	}
+}
+
 static LRESULT CALLBACK mainWindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
 	switch(msg)
@@ -176,10 +239,16 @@ static LRESULT CALLBACK mainWindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARA
 	case WM_COMMAND:
 		switch (LOWORD(wParam))
 		{
-		case ID_FILE_SAVE:
-		case ID_FILE_SAVE_AS:
 		case ID_FILE_OPEN:
-			MessageBox(trackViewWin, _T("Not implemented"), NULL, MB_OK | MB_ICONERROR | MB_SETFOREGROUND);
+			fileOpen();
+			break;
+		
+		case ID_FILE_SAVE_AS:
+			fileSaveAs();
+			break;
+		
+		case ID_FILE_SAVE:
+			fileSave();
 			break;
 		
 		case ID_FILE_EXIT:  PostQuitMessage(0); break;
@@ -283,8 +352,7 @@ int _tmain(int argc, _TCHAR* argv[])
 	} */
 #endif
 	
-	SyncDocument syncData;
-	syncData.clientSocket = INVALID_SOCKET;
+	document.clientSocket = INVALID_SOCKET;
 	
 	ATOM mainClass      = registerMainWindowClass(hInstance);
 	ATOM trackViewClass = registerTrackViewWindowClass(hInstance);
@@ -295,7 +363,7 @@ int _tmain(int argc, _TCHAR* argv[])
 	}
 	
 	trackView = new TrackView();
-	trackView->setDocument(&syncData);
+	trackView->setDocument(&document);
 	
 	HWND hwnd = CreateWindowEx(
 		0,
@@ -342,10 +410,10 @@ int _tmain(int argc, _TCHAR* argv[])
 				if (INVALID_SOCKET != clientSocket)
 				{
 					puts("connected.");
-					syncData.clientSocket = clientSocket;
-					syncData.clientRemap.clear();
-					syncData.sendPauseCommand(true);
-					syncData.sendSetRowCommand(trackView->getEditRow());
+					document.clientSocket = clientSocket;
+					document.clientRemap.clear();
+					document.sendPauseCommand(true);
+					document.sendSetRowCommand(trackView->getEditRow());
 				}
 			}
 		}
@@ -361,8 +429,8 @@ int _tmain(int argc, _TCHAR* argv[])
 				{
 					closesocket(clientSocket);
 					clientSocket = INVALID_SOCKET;
-					syncData.clientSocket = INVALID_SOCKET;
-					syncData.clientRemap.clear();
+					document.clientSocket = INVALID_SOCKET;
+					document.clientRemap.clear();
 					InvalidateRect(trackViewWin, NULL, FALSE);
 					break;
 				}
@@ -388,19 +456,19 @@ int _tmain(int argc, _TCHAR* argv[])
 							recv(clientSocket, &trackName[0], str_len, 0);
 							
 							// find track
-							size_t serverIndex = syncData.getTrackIndex(trackName.c_str());
+							size_t serverIndex = document.getTrackIndex(trackName.c_str());
 							
 							// setup remap
-							syncData.clientRemap[serverIndex] = clientIndex;
+							document.clientRemap[serverIndex] = clientIndex;
 							
-							const sync::Track &track = *syncData.actualTracks[serverIndex];
+							const sync::Track &track = *document.actualTracks[serverIndex];
 							
 							sync::Track::KeyFrameContainer::const_iterator it;
 							for (it = track.keyFrames.begin(); it != track.keyFrames.end(); ++it)
 							{
 								int row = int(it->first);
 								const sync::Track::KeyFrame &key = it->second;
-								syncData.sendSetKeyCommand(int(serverIndex), row, key);
+								document.sendSetKeyCommand(int(serverIndex), row, key);
 							}
 							
 							InvalidateRect(trackViewWin, NULL, FALSE);

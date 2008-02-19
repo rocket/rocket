@@ -265,7 +265,6 @@ public:
 	bool load(const std::string &fileName);
 	bool save(const std::string &fileName);
 	
-	
 	SOCKET clientSocket;
 	std::map<size_t, size_t> clientRemap;
 	bool clientPaused;
