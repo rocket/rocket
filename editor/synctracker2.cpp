@@ -266,6 +266,10 @@ static LRESULT CALLBACK mainWindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARA
 		case ID_FILE_SAVE:
 			fileSave();
 			break;
+
+		case ID_FILE_REMOTEEXPORT:
+			document.sendSaveCommand();
+			break;
 		
 		case ID_FILE_EXIT:  PostQuitMessage(0); break;
 		case ID_EDIT_UNDO:  SendMessage(trackViewWin, WM_UNDO,  0, 0); break;
