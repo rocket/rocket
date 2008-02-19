@@ -17,6 +17,9 @@ size_t SyncDocument::getTrackIndexFromPos(size_t track) const
 	return trackIter->second;
 }
 
+/* void SyncDocument::purgeUnused()
+{
+} */
 
 #import <msxml4.dll> named_guids
 

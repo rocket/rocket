@@ -264,6 +264,8 @@ public:
 	
 	size_t getTrackIndexFromPos(size_t track) const;
 	
+/*	void purgeUnused(); */
+	
 	bool load(const std::string &fileName);
 	bool save(const std::string &fileName);
 	

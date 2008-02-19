@@ -40,31 +40,21 @@ ClientDevice::~ClientDevice()
 
 Track &ClientDevice::getTrack(const std::string &trackName)
 {
-/*	const size_t oldCount = syncData.getTrackCount();
-	Track &track = syncData.getTrack(trackName);
-	if (oldCount == syncData.getTrackCount()) return track; */
-
 	sync::Data::TrackContainer::iterator iter = syncData.tracks.find(trackName);
 	if (iter != syncData.tracks.end()) return syncData.getTrack(iter->second);
 	
+	// send request data
 	unsigned char cmd = GET_TRACK;
 	send(serverSocket, (char*)&cmd, 1, 0);
-	
 	size_t clientIndex = syncData.getTrackCount();
 	send(serverSocket, (char*)&clientIndex, sizeof(size_t), 0);
-	
-	// send request data
 	size_t name_len = trackName.size();
 	send(serverSocket, (char*)&name_len, sizeof(size_t), 0);
-	
 	const char *name_str = trackName.c_str();
 	send(serverSocket, name_str, int(name_len), 0);
 	
-	sync::Track *track = new sync::Track();
-	syncData.actualTracks.push_back(track);
-	syncData.tracks[trackName] = clientIndex;
-	return *track;
-//	return track;
+	// insert new track
+	return syncData.getTrack(trackName);
 }
 
 bool ClientDevice::update(float row)

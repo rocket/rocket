@@ -126,8 +126,14 @@ bool fileNameValid = false;
 
 void fileNew()
 {
+/*	document.purgeUnused(); */
+	trackView->selectAll();
+	trackView->editDelete();
+	trackView->selectNone();
+	fileNameValid = false;
 	
-//	fileNameValid = false;
+	document.clearUndoStack();
+	document.clearRedoStack();
 }
 
 void fileOpen()
@@ -144,10 +150,13 @@ void fileOpen()
 	ofn.Flags = OFN_SHOWHELP;
 	if (GetOpenFileName(&ofn))
 	{
+		fileNew();
 		if (document.load(fileName))
 		{
+			document.clearUndoStack();
+			document.clearRedoStack();
+			
 			fileNameValid = true;
-			InvalidateRect(trackViewWin, NULL, FALSE);
 		}
 		else MessageBox(trackViewWin, _T("failed to open file"), NULL, MB_OK | MB_ICONERROR | MB_SETFOREGROUND);
 	}
@@ -239,8 +248,14 @@ static LRESULT CALLBACK mainWindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARA
 	case WM_COMMAND:
 		switch (LOWORD(wParam))
 		{
+		case ID_FILE_NEW:
+			fileNew();
+			InvalidateRect(hwnd, NULL, FALSE);
+			break;
+			
 		case ID_FILE_OPEN:
 			fileOpen();
+			InvalidateRect(hwnd, NULL, FALSE);
 			break;
 		
 		case ID_FILE_SAVE_AS:

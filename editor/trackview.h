@@ -27,10 +27,37 @@ public:
 	
 	void setRows(int rows);
 	int getRows() const { return rows; }
+
+	void editEnterValue();
+	void editDelete();
+	void editCopy();
+	void editCut();
+	void editPaste();
 	void editBiasValue(float amount);
+	void editToggleInterpolationType();
 	
 	void setEditRow(int newEditRow);
 	int  getEditRow() { return editRow; }
+	
+	void selectAll()
+	{
+		selectStartTrack = 0;
+		selectStopTrack = this->getTrackCount() - 1;
+		selectStartRow = 0;
+		selectStopRow = this->getRows() - 1;
+		
+		editTrack = 0;
+		editRow = 0;
+		
+		InvalidateRect(hwnd, NULL, FALSE);
+	}
+	
+	void selectNone()
+	{
+		selectStartTrack = selectStopTrack = editTrack;
+		selectStartRow = selectStopRow = editRow;
+		InvalidateRect(hwnd, NULL, FALSE);
+	}
 	
 private:
 	// some nasty hackery to forward the window messages
@@ -45,13 +72,6 @@ private:
 	LRESULT onSize(int width, int height);
 	LRESULT onKeyDown(UINT keyCode, UINT flags);
 	LRESULT onChar(UINT keyCode, UINT flags);
-	
-	void editEnterValue();
-	void editDelete();
-	void editCopy();
-	void editCut();
-	void editPaste();
-	void editToggleInterpolationType();
 	
 	void paintTracks(HDC hdc, RECT rcTracks);
 	void paintTopMargin(HDC hdc, RECT rcTracks);

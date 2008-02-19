@@ -747,12 +747,9 @@ void TrackView::editDelete()
 	int selectRight = max(selectStartTrack, selectStopTrack);
 	int selectTop    = min(selectStartRow, selectStopRow);
 	int selectBottom = max(selectStartRow, selectStopRow);
-
-	if (selectRight >= int(document->getTrackCount()))
-	{
-		MessageBeep(0);
-		return;
-	}
+	
+	if (0 == document->getTrackCount()) return;
+	assert(selectRight < int(document->getTrackCount()));
 	
 	SyncDocument::MultiCommand *multiCmd = new SyncDocument::MultiCommand();
 	for (int track = selectLeft; track <= selectRight; ++track)

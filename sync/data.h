@@ -35,7 +35,7 @@ namespace sync
 		
 		typedef std::map<const std::basic_string<TCHAR>, size_t> TrackContainer;
 		TrackContainer tracks;
-//	protected:
+	protected:
 		std::vector<Track*> actualTracks;
 	};
 }
