@@ -17,7 +17,7 @@ size_t SyncDocument::getTrackIndexFromPos(size_t track) const
 	return trackIter->second;
 }
 
-/* void SyncDocument::purgeUnused()
+/* void SyncDocument::purgeUnusedTracks()
 {
 } */
 
@@ -28,6 +28,8 @@ bool SyncDocument::load(const std::string &fileName)
 	MSXML2::IXMLDOMDocumentPtr doc(MSXML2::CLSID_DOMDocument);
 	try
 	{
+		SyncDocument::MultiCommand *multiCmd = new SyncDocument::MultiCommand();
+		
 		doc->load(fileName.c_str());
 		MSXML2::IXMLDOMNodeListPtr trackNodes = doc->documentElement->selectNodes("track");
 		for (int i = 0; i < trackNodes->Getlength(); ++i)
@@ -36,7 +38,7 @@ bool SyncDocument::load(const std::string &fileName)
 			MSXML2::IXMLDOMNamedNodeMapPtr attribs = trackNode->Getattributes();
 			
 			std::string name = attribs->getNamedItem("name")->Gettext();
-			sync::Track &t = getTrack(name);
+			size_t trackIndex = getTrackIndex(name);
 			
 			MSXML2::IXMLDOMNodeListPtr rowNodes = trackNode->GetchildNodes();
 			for (int i = 0; i < rowNodes->Getlength(); ++i)
@@ -56,10 +58,17 @@ bool SyncDocument::load(const std::string &fileName)
 							atoi(interpolationString.c_str())
 						)
 					);
-					t.setKeyFrame(atoi(rowString.c_str()), keyFrame);
+					multiCmd->addCommand(
+						this->getSetKeyFrameCommand(
+							int(trackIndex),
+							atoi(rowString.c_str()),
+							keyFrame
+						)
+					);
 				}
 			}
 		}
+		this->exec(multiCmd);
 	}
 	catch(_com_error &e)
 	{
