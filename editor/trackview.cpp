@@ -452,7 +452,9 @@ void TrackView::editPaste()
 				struct CopyEntry ce;
 				memcpy(&ce, src, sizeof(CopyEntry));
 				
-				SyncDocument::Command *cmd = document->getSetKeyFrameCommand(editTrack + ce.track, editRow + ce.row, ce.keyFrame);
+				size_t trackIndex = document->getTrackIndexFromPos(editTrack + ce.track);
+				
+				SyncDocument::Command *cmd = document->getSetKeyFrameCommand(int(trackIndex), editRow + ce.row, ce.keyFrame);
 				multiCmd->addCommand(cmd);
 				src += sizeof(CopyEntry);
 			}

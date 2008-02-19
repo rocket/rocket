@@ -13,6 +13,7 @@ class SyncDocument : public sync::Data
 {
 public:
 	SyncDocument() : sync::Data(), clientPaused(true) {}
+	~SyncDocument();
 	
 	void sendSetKeyCommand(int track, int row, const sync::Track::KeyFrame &key)
 	{
@@ -230,6 +231,16 @@ public:
 		undoStack.push(cmd);
 		cmd->exec(this);
 		return true;
+	}
+	
+	void clearUndoStack()
+	{
+		while (!undoStack.empty())
+		{
+			Command *cmd = undoStack.top();
+			undoStack.pop();
+			delete cmd;
+		}
 	}
 	
 	void clearRedoStack()

@@ -242,7 +242,7 @@ int _tmain(int argc, _TCHAR* argv[])
 	_CrtSetReportMode(_CRT_WARN, _CRTDBG_MODE_DEBUG);
 	_CrtSetReportMode(_CRT_ERROR, _CRTDBG_MODE_DEBUG);
 	_CrtSetReportMode(_CRT_ASSERT, _CRTDBG_MODE_DEBUG);
-//	_CrtSetBreakAlloc(137);
+//	_CrtSetBreakAlloc(254);
 #endif
 	
 	HINSTANCE hInstance = GetModuleHandle(NULL);
