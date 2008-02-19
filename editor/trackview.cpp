@@ -220,7 +220,7 @@ void TrackView::paintTracks(HDC hdc, RECT rcTracks)
 	{
 		assert(trackIter != document->tracks.end());
 		size_t trackIndex = trackIter->second;
-		const sync::Track &t = *document->actualTracks[trackIndex];
+		const sync::Track &t = document->getTrack(trackIndex);
 
 		if (track < firstTrack) continue;
 		for (int row = firstRow; row <= lastRow; ++row)

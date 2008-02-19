@@ -193,10 +193,8 @@ void ClientDevice::saveTracks()
 		size_t index = iter->second;
 		
 		assert(index < syncData.getTrackCount());
-		sync::Track *track = syncData.actualTracks[index];
-		
-		assert(NULL != track);
-		saveTrack(*track, getTrackFileName(iter->first));
+		const sync::Track &track = syncData.getTrack(index);
+		saveTrack(track, getTrackFileName(iter->first));
 	}
 }
 

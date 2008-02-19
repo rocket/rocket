@@ -23,7 +23,6 @@ size_t Data::getTrackIndex(const std::basic_string<TCHAR> &name)
 Track &Data::getTrack(const std::basic_string<TCHAR> &name)
 {
 	size_t index = getTrackIndex(name);
-	assert(index >= 0);
 	assert(index < int(actualTracks.size()));
 	assert(NULL != actualTracks[index]);
 	return *actualTracks[index];
@@ -31,7 +30,6 @@ Track &Data::getTrack(const std::basic_string<TCHAR> &name)
 
 size_t Data::getTrackIndexFromPos(size_t track)
 {
-	assert(track >= 0);
 	assert(track < tracks.size());
 	
 	sync::Data::TrackContainer::iterator trackIter = tracks.begin();

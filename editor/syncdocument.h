@@ -82,19 +82,17 @@ public:
 		
 		virtual void exec(SyncDocument *data)
 		{
-			sync::Track *t = data->actualTracks[this->track];
-			assert(NULL != t);
-			assert(!t->isKeyFrame(row));
-			t->setKeyFrame(row, key);
+			sync::Track &t = data->getTrack(this->track);
+			assert(!t.isKeyFrame(row));
+			t.setKeyFrame(row, key);
 			data->sendSetKeyCommand(track, row, key); // update clients
 		}
 		
 		virtual void undo(SyncDocument *data)
 		{
-			sync::Track *t = data->actualTracks[this->track];
-			assert(NULL != t);
-			assert(t->isKeyFrame(row));
-			t->deleteKeyFrame(row);
+			sync::Track &t = data->getTrack(this->track);
+			assert(t.isKeyFrame(row));
+			t.deleteKeyFrame(row);
 			
 			data->sendDeleteKeyCommand(track, row); // update clients
 		}
