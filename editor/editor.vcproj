@@ -188,6 +188,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\syncdocument.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\synctracker2.cpp"
 				>
 			</File>
