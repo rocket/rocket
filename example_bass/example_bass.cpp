@@ -71,6 +71,17 @@ int main(int argc, char *argv[])
 		sync::Track &clearRTrack = syncDevice->getTrack("clear.r");
 		sync::Track &clearGTrack = syncDevice->getTrack("clear.g");
 		sync::Track &clearBTrack = syncDevice->getTrack("clear.b");
+
+		sync::Track &camRotTrack  = syncDevice->getTrack("cam.rot");
+		sync::Track &camDistTrack = syncDevice->getTrack("cam.dist");
+
+		LPD3DXMESH cubeMesh = NULL;
+		if (FAILED(D3DXCreateBox(
+			device,
+			1.0f, 1.0f, 1.0f,
+			&cubeMesh, NULL
+			)))
+			return -1;
 		
 		// let's roll!
 		BASS_Start();
@@ -93,6 +104,25 @@ int main(int argc, char *argv[])
 			// paint the window
 			device->BeginScene();
 			device->Clear(0, 0, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER | D3DCLEAR_STENCIL, clearColor, 1.0f, 0);
+			
+/*			D3DXMATRIX world;
+			device->SetTransform(D3DTS_WORLD, &world); */
+			
+			float rot = camRotTrack.getValue(row);
+			float dist = camDistTrack.getValue(row);
+			D3DXVECTOR3 eye(sin(rot) * dist, 0, cos(rot) * dist);
+			D3DXVECTOR3 at(0, 0, 0);
+			D3DXVECTOR3 up(0, 1, 0);
+			D3DXMATRIX view;
+			D3DXMatrixLookAtLH(&view, &(eye + at), &at, &up);
+			device->SetTransform(D3DTS_WORLD, &view);
+			
+			D3DXMATRIX proj;
+			D3DXMatrixPerspectiveFovLH(&proj, D3DXToRadian(60), 4.0f / 3, 0.1f, 1000.f);
+			device->SetTransform(D3DTS_PROJECTION, &proj);
+			
+			cubeMesh->DrawSubset(0);
+			
 			device->EndScene();
 			device->Present(0, 0, 0, 0);
 			
