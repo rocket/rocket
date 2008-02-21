@@ -11,7 +11,12 @@
 #include <exception>
 #include <cmath>
 #include <cassert>
+
+#ifdef WIN32
 #include <tchar.h>
+#else
+#define TCHAR char
+#endif
 
 #include "track.h"
 

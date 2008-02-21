@@ -6,6 +6,11 @@
 #include "data.h"
 #include "network.h"
 
+#ifndef REMOTE_HOST
+#define REMOTE_HOST "localhost"
+#endif
+#define REMOTE_PORT 1338
+
 using namespace sync;
 
 class ClientDevice : public Device
@@ -14,8 +19,8 @@ public:
 	ClientDevice(const std::string &baseName, SOCKET serverSocket, Timer &timer) :
 		Device(baseName),
 		timer(timer),
-		serverSocket(serverSocket),
-		serverRow(-1)
+		serverRow(-1),
+		serverSocket(serverSocket)
 	{
 	}
 	
@@ -78,14 +83,13 @@ bool ClientDevice::update(float row)
 					{
 						int track, row;
 						float value;
-						char interp;
+						unsigned char interp;
 						
 						recv(serverSocket, (char*)&track, sizeof(int), 0);
 						recv(serverSocket, (char*)&row,   sizeof(int), 0);
 						recv(serverSocket, (char*)&value, sizeof(float), 0);
 						recv(serverSocket, (char*)&interp, 1, 0);
 						
-						assert(interp >= 0);
 						assert(interp < Track::KeyFrame::IT_COUNT);
 						
 						sync::Track &t = syncData.getTrack(track);
@@ -193,11 +197,14 @@ Device *sync::createDevice(const std::string &baseName, Timer &timer)
 {
 	if (false == initNetwork()) return NULL;
 	
-	struct hostent *myhost = gethostbyname("localhost");
+	struct hostent *host = gethostbyname(REMOTE_HOST);
+	if (NULL == host) return NULL;
+	printf("IP address: %s\n", inet_ntoa(*(struct in_addr*)host->h_addr_list[0]));
+	
 	struct sockaddr_in sain;
 	sain.sin_family = AF_INET;
-	sain.sin_port = htons(1338);
-	sain.sin_addr.s_addr= *( (unsigned long *)(myhost->h_addr_list[0]) );
+	sain.sin_port = htons(REMOTE_PORT);
+	sain.sin_addr.s_addr = ((struct in_addr *)(host->h_addr_list[0]))->s_addr;
 	
 	// connect to server
 	SOCKET serverSocket = serverConnect(&sain);

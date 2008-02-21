@@ -5,9 +5,21 @@
 #ifndef NETWORK_H
 #define NETWORK_H
 
+#ifdef WIN32
+
 #include <winsock2.h>
 #define WIN32_LEAN_AND_MEAN		// Exclude rarely-used stuff from Windows headers
 #include <windows.h>
+
+#else
+
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <netdb.h>
+#define SOCKET int
+#define INVALID_SOCKET -1
+
+#endif
 
 bool initNetwork();
 void closeNetwork();

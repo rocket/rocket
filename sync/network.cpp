@@ -4,18 +4,36 @@
 
 #include "network.h"
 #include <stdio.h>
+#include <string.h>
+
+#ifndef WIN32
+
+#include "../wifi9.h"
+#include <nds/jtypes.h>
+#include <dswifi9.h>
+#include <netdb.h>
+
+#endif
 
 bool initNetwork()
 {
+
+#ifdef WIN32
 	WSADATA wsaData;
 	if (0 != WSAStartup(MAKEWORD( 2, 0 ), &wsaData)) return false;
 	if (LOBYTE( wsaData.wVersion ) != 2 || HIBYTE( wsaData.wVersion ) != 0) return false;
+#endif
+
+	// unix sockets need no init
+	
 	return true;
 }
 
 void closeNetwork()
 {
+#ifdef WIN32
 	WSACleanup();
+#endif
 }
 
 static const char *clientGreeting = "hello, synctracker!";
