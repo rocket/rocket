@@ -821,6 +821,21 @@ void TrackView::editBiasValue(float amount)
 
 LRESULT TrackView::onKeyDown(UINT keyCode, UINT /*flags*/)
 {
+	if (!editString.empty())
+	{
+		switch(keyCode)
+		{
+		case VK_UP:
+		case VK_DOWN:
+		case VK_LEFT:
+		case VK_RIGHT:
+		case VK_PRIOR:
+		case VK_NEXT:
+		case VK_HOME:
+		case VK_END:
+			editEnterValue();
+		}
+	}
 	if (editString.empty() && document->clientPaused)
 	{
 		switch (keyCode)
