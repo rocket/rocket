@@ -855,7 +855,7 @@ LRESULT TrackView::onKeyDown(UINT keyCode, UINT /*flags*/)
 				if (GetKeyState(VK_SHIFT) < 0) bias = 100.0f;
 				editBiasValue(bias);
 			}
-			else setEditRow(editRow - windowRows / 2);
+			else setEditRow(editRow - 0x10);
 			break;
 		
 		case VK_NEXT:
@@ -865,7 +865,43 @@ LRESULT TrackView::onKeyDown(UINT keyCode, UINT /*flags*/)
 				if (GetKeyState(VK_SHIFT) < 0) bias = 100.0f;
 				editBiasValue(-bias);
 			}
-			else setEditRow(editRow + windowRows / 2);
+			else setEditRow(editRow + 0x10);
+			break;
+		case VK_HOME:
+			if (GetKeyState(VK_CONTROL) < 0)
+			{
+				setEditRow(0);
+			}
+			else
+			{
+				int remainder = editRow % 0x80;
+				if(remainder)
+				{
+					setEditRow(editRow - remainder);
+				}
+				else
+				{
+					setEditRow(editRow - 0x80);
+				}
+			}
+			break;
+		case VK_END:
+			if (GetKeyState(VK_CONTROL) < 0)
+			{
+				setEditRow(rows-1);
+			}
+			else
+			{
+				int remainder = editRow % 0x80;
+				if(remainder)
+				{
+					setEditRow(0x80 + editRow - remainder);
+				}
+				else
+				{
+					setEditRow(editRow + 0x80);
+				}
+			}
 			break;
 		}
 	}
