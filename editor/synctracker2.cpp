@@ -213,10 +213,12 @@ static LRESULT CALLBACK mainWindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARA
 				NULL                             // window data
 			);
 			
-			int statwidths[] = { 150, -1 };
+			int statwidths[] = { 150, 150 + 32, 150 + 32 * 2, 150 + 32 * 3, -1 };
 			SendMessage(statusBarWin, SB_SETPARTS, sizeof(statwidths) / sizeof(int), (LPARAM)statwidths);
 			SendMessage(statusBarWin, SB_SETTEXT, 0, (LPARAM)_T("Not connected"));
-			SendMessage(statusBarWin, SB_SETTEXT, 1, (LPARAM)_T("Hi there :)"));
+			SendMessage(statusBarWin, SB_SETTEXT, 1, (LPARAM)_T("0"));
+			SendMessage(statusBarWin, SB_SETTEXT, 2, (LPARAM)_T("0"));
+			SendMessage(statusBarWin, SB_SETTEXT, 3, (LPARAM)_T("---"));
 		}
 		break;
 	
@@ -295,6 +297,31 @@ static LRESULT CALLBACK mainWindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARA
 				if (FAILED(result)) MessageBox(NULL, _T("unable to create dialog box"), NULL, MB_OK | MB_ICONERROR | MB_SETFOREGROUND);
 			}
 			break;
+		}
+		break;
+	
+	case WM_ROWCHANGED:
+		{
+			TCHAR temp[256];
+			_sntprintf_s(temp, 256, _T("%d"), lParam );
+			SendMessage(statusBarWin, SB_SETTEXT, 1, (LPARAM)temp);
+		}
+		break;
+
+	case WM_TRACKCHANGED:
+		{
+			TCHAR temp[256];
+			_sntprintf_s(temp, 256, _T("%d"), lParam);
+			SendMessage(statusBarWin, SB_SETTEXT, 2, (LPARAM)temp);
+		}
+		break;
+
+	case WM_CURRVALDIRTY:
+		{
+			TCHAR temp[256];
+			if (document.getTrackCount() > 0) _sntprintf_s(temp, 256, _T("%f"), document.getTrack(document.getTrackIndexFromPos(trackView->getEditTrack())).getValue(float(trackView->getEditRow())));
+			else _sntprintf_s(temp, 256, _T("---"));
+			SendMessage(statusBarWin, SB_SETTEXT, 3, (LPARAM)temp);
 		}
 		break;
 	

@@ -562,6 +562,8 @@ void TrackView::setEditRow(int newEditRow)
 		{
 			document->sendSetRowCommand(editRow);
 		}
+		SendMessage(GetParent(getWin()), WM_ROWCHANGED, 0, editRow);
+		SendMessage(GetParent(getWin()), WM_CURRVALDIRTY, 0, 0);
 	}
 	
 	invalidateRow(oldEditRow);
@@ -592,6 +594,8 @@ void TrackView::setEditTrack(int newEditTrack)
 			selectStartRow   = selectStopRow   = editRow;
 			selectStartTrack = selectStopTrack = editTrack;
 		}
+		SendMessage(GetParent(getWin()), WM_TRACKCHANGED, 0, editTrack);
+		SendMessage(GetParent(getWin()), WM_CURRVALDIRTY, 0, 0);
 	}
 	
 	invalidateTrack(oldEditTrack);

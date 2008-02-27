@@ -11,7 +11,10 @@
 #include <stack>
 
 // custom messages
-#define WM_REDO (WM_USER + 1)
+#define WM_REDO         (WM_USER + 0x40 + 3)
+#define WM_ROWCHANGED   (WM_USER + 0x40 + 4)
+#define WM_TRACKCHANGED (WM_USER + 0x40 + 5)
+#define WM_CURRVALDIRTY (WM_USER + 0x40 + 6)
 
 class TrackView
 {
@@ -38,6 +41,9 @@ public:
 	
 	void setEditRow(int newEditRow);
 	int  getEditRow() { return editRow; }
+	
+	void setEditTrack(int newEditTrack);
+	int  getEditTrack() { return editTrack; }
 	
 	void selectAll()
 	{
@@ -127,8 +133,6 @@ private:
 		
 		InvalidateRect(hwnd, &rect, FALSE);
 	}
-	
-	void setEditTrack(int newEditTrack);
 	
 	int getScreenY(int row);
 	int getScreenX(int track);
