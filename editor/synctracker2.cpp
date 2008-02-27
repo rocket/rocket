@@ -213,7 +213,7 @@ static LRESULT CALLBACK mainWindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARA
 				NULL                             // window data
 			);
 			
-			int statwidths[] = { 150, 150 + 32, 150 + 32 * 2, 150 + 32 * 3, -1 };
+			int statwidths[] = { 150, 150 + 32, 150 + 32 * 2, 150 + 32 * 4, -1 };
 			SendMessage(statusBarWin, SB_SETPARTS, sizeof(statwidths) / sizeof(int), (LPARAM)statwidths);
 			SendMessage(statusBarWin, SB_SETTEXT, 0, (LPARAM)_T("Not connected"));
 			SendMessage(statusBarWin, SB_SETTEXT, 1, (LPARAM)_T("0"));
