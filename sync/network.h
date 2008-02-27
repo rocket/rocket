@@ -24,7 +24,8 @@
 bool initNetwork();
 void closeNetwork();
 
-SOCKET clientConnect(SOCKET serverSocket);
+// SOCKET clientConnect(SOCKET serverSocket);
+SOCKET clientConnect(SOCKET serverSocket, sockaddr_in *host = NULL);
 SOCKET serverConnect(struct sockaddr_in *addr);
 
 bool pollRead(SOCKET socket);

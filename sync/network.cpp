@@ -39,9 +39,11 @@ void closeNetwork()
 static const char *clientGreeting = "hello, synctracker!";
 static const char *serverGreeting = "hello, demo!";
 
-SOCKET clientConnect(SOCKET serverSocket)
+SOCKET clientConnect(SOCKET serverSocket, sockaddr_in *host)
 {
-	SOCKET clientSocket = accept(serverSocket,  NULL, NULL);
+	sockaddr_in hostTemp;
+	int hostSize = sizeof(sockaddr_in);
+	SOCKET clientSocket = accept(serverSocket, (sockaddr*)&hostTemp, &hostSize);
 	if (INVALID_SOCKET == clientSocket) return INVALID_SOCKET;
 	
 	const char *expectedGreeting = clientGreeting;
@@ -58,6 +60,7 @@ SOCKET clientConnect(SOCKET serverSocket)
 	const char *greeting = serverGreeting;
 	send(clientSocket, greeting, int(strlen(greeting)), 0);
 	
+	if (NULL != host) *host = hostTemp;
 	return clientSocket;
 }
 

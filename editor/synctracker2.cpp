@@ -213,9 +213,9 @@ static LRESULT CALLBACK mainWindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARA
 				NULL                             // window data
 			);
 			
-			int statwidths[] = { 100, -1 };
+			int statwidths[] = { 150, -1 };
 			SendMessage(statusBarWin, SB_SETPARTS, sizeof(statwidths) / sizeof(int), (LPARAM)statwidths);
-			SendMessage(statusBarWin, SB_SETTEXT, 0, (LPARAM)_T("Hi there :)"));
+			SendMessage(statusBarWin, SB_SETTEXT, 0, (LPARAM)_T("Not connected"));
 			SendMessage(statusBarWin, SB_SETTEXT, 1, (LPARAM)_T("Hi there :)"));
 		}
 		break;
@@ -425,16 +425,20 @@ int _tmain(int argc, _TCHAR* argv[])
 			// look for new clients
 			if (select(0, &fds, NULL, NULL, &timeout) > 0)
 			{
-				puts("accepting...");
-				clientSocket = clientConnect(serverSocket);
+				SendMessage(statusBarWin, SB_SETTEXT, 0, (LPARAM)_T("Accepting..."));
+				sockaddr_in client;
+				clientSocket = clientConnect(serverSocket, &client);
 				if (INVALID_SOCKET != clientSocket)
 				{
-					puts("connected.");
+					TCHAR temp[256];
+					_sntprintf_s(temp, 256, _T("Connected to %s"), inet_ntoa(client.sin_addr));
+					SendMessage(statusBarWin, SB_SETTEXT, 0, (LPARAM)temp);
 					document.clientSocket = clientSocket;
 					document.clientRemap.clear();
 					document.sendPauseCommand(true);
 					document.sendSetRowCommand(trackView->getEditRow());
 				}
+				else SendMessage(statusBarWin, SB_SETTEXT, 0, (LPARAM)_T("Not Connected."));
 			}
 		}
 		
@@ -452,6 +456,7 @@ int _tmain(int argc, _TCHAR* argv[])
 					document.clientSocket = INVALID_SOCKET;
 					document.clientRemap.clear();
 					InvalidateRect(trackViewWin, NULL, FALSE);
+					SendMessage(statusBarWin, SB_SETTEXT, 0, (LPARAM)_T("Not Connected."));
 					break;
 				}
 				else
