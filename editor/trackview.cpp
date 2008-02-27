@@ -10,8 +10,8 @@ static const TCHAR *trackViewWindowClassName = _T("TrackView");
 static const int topMarginHeight = 20;
 static const int leftMarginWidth = 60;
 
-static const int fontHeight = 16;
-static const int fontWidth = 6;
+static int fontHeight = 16;
+static int fontWidth = 6;
 
 static const int trackWidth = fontWidth * 16;
 static DWORD darken(DWORD col, float amt)
@@ -21,6 +21,16 @@ static DWORD darken(DWORD col, float amt)
 
 TrackView::TrackView()
 {
+	IniFile::load("rocket.ini", "GUI");
+
+	if(IniFile::check())
+	{
+		//read directly into variables, using their current values
+		//as defaults in case the ini file or the keys are not found.
+		IniFile::read(fontHeight, "fontHeight");
+		IniFile::read(fontWidth, "fontWidth");
+	}
+
 	scrollPosX = 0;
 	scrollPosY = 0;
 	windowWidth  = -1;

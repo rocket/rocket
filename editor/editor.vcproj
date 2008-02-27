@@ -60,7 +60,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="ws2_32.lib  comctl32.lib "
+				AdditionalDependencies="ws2_32.lib comctl32.lib comsupp.lib comsuppwd.lib"
 				LinkIncremental="2"
 				GenerateManifest="false"
 				GenerateDebugInformation="true"
@@ -183,6 +183,10 @@
 			>
 			<File
 				RelativePath="..\sync\data.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\inifile.cpp"
 				>
 			</File>
 			<File
