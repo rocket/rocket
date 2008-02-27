@@ -52,6 +52,7 @@ public:
 	
 	void sendPauseCommand(bool pause)
 	{
+		if (INVALID_SOCKET == clientSocket) return;
 		unsigned char cmd = PAUSE;
 		send(clientSocket, (char*)&cmd, 1, 0);
 		unsigned char flag = pause;

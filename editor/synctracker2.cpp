@@ -15,6 +15,7 @@
 #include <vector>
 const TCHAR *mainWindowClassName = _T("MainWindow");
 
+HWND hwnd;
 TrackView *trackView;
 HWND trackViewWin;
 HWND statusBarWin;
@@ -121,8 +122,14 @@ static LRESULT CALLBACK biasSelectionDialogProc(HWND hDlg, UINT message, WPARAM 
 	return FALSE;
 }
 
-char fileName[_MAX_FNAME + 1];
-bool fileNameValid = false;
+void setWindowFileName(const char *string)
+{
+	TCHAR temp[256];
+	_sntprintf_s(temp, 256, _T("GNU Rocket System - %s"), string);
+	SetWindowText(hwnd, temp);
+}
+
+std::string fileName;
 
 void fileNew()
 {
@@ -131,7 +138,8 @@ void fileNew()
 	{
 		document.getTrack(i).truncate();
 	}
-	fileNameValid = false;
+	setWindowFileName("Untitled");
+	fileName.clear();
 	
 	document.clearUndoStack();
 	document.clearRedoStack();
@@ -139,12 +147,13 @@ void fileNew()
 
 void fileOpen()
 {
-	fileName[0] = '\0';
+	char temp[_MAX_FNAME + 1];
+	temp[0] = '\0'; // clear string
 	
 	OPENFILENAME ofn;
 	ZeroMemory(&ofn, sizeof(ofn));
 	ofn.lStructSize = sizeof(ofn);
-	ofn.lpstrFile = fileName;
+	ofn.lpstrFile = temp;
 	ofn.nMaxFile = _MAX_FNAME;
 	ofn.lpstrDefExt = "rocket";
 	ofn.lpstrFilter = "ROCKET File (*.rocket)\0*.rocket\0All Files (*.*)\0*.*\0\0";
@@ -152,12 +161,13 @@ void fileOpen()
 	if (GetOpenFileName(&ofn))
 	{
 		fileNew();
-		if (document.load(fileName))
+		if (document.load(temp))
 		{
+			setWindowFileName(temp);
+			fileName = temp;
+			
 			document.clearUndoStack();
 			document.clearRedoStack();
-			
-			fileNameValid = true;
 		}
 		else MessageBox(trackViewWin, _T("failed to open file"), NULL, MB_OK | MB_ICONERROR | MB_SETFOREGROUND);
 	}
@@ -165,12 +175,13 @@ void fileOpen()
 
 void fileSaveAs()
 {
-	fileName[0] = '\0';
+	char temp[_MAX_FNAME + 1];
+	temp[0] = '\0';
 	
 	OPENFILENAME ofn;
 	ZeroMemory(&ofn, sizeof(ofn));
 	ofn.lStructSize = sizeof(ofn);
-	ofn.lpstrFile = fileName;
+	ofn.lpstrFile = temp;
 	ofn.nMaxFile = _MAX_FNAME;
 	ofn.lpstrDefExt = "rocket";
 	ofn.lpstrFilter = "ROCKET File (*.rocket)\0*.rocket\0All Files (*.*)\0*.*\0\0";
@@ -178,15 +189,19 @@ void fileSaveAs()
 	
 	if (GetSaveFileName(&ofn))
 	{
-		if (document.save(fileName)) fileNameValid = true;
+		if (document.save(temp))
+		{
+			setWindowFileName(temp);
+			fileName = temp;
+		}
 		else MessageBox(trackViewWin, _T("Failed to save file"), NULL, MB_OK | MB_ICONERROR | MB_SETFOREGROUND);
 	}
 }
 
 void fileSave()
 {
-	if (!fileNameValid) fileSaveAs();
-	else if (document.save(fileName))
+	if (fileName.empty()) fileSaveAs();
+	else if (!document.save(fileName.c_str()))
 	{
 		MessageBox(trackViewWin, _T("Failed to save file"), NULL, MB_OK | MB_ICONERROR | MB_SETFOREGROUND);
 	}
@@ -213,7 +228,7 @@ static LRESULT CALLBACK mainWindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARA
 				NULL                             // window data
 			);
 			
-			int statwidths[] = { 150, 150 + 32, 150 + 32 * 2, 150 + 32 * 4, -1 };
+			int statwidths[] = { 150, 150 + 32, 150 + 32 * 2, 150 + 32 * 4};
 			SendMessage(statusBarWin, SB_SETPARTS, sizeof(statwidths) / sizeof(int), (LPARAM)statwidths);
 			SendMessage(statusBarWin, SB_SETTEXT, 0, (LPARAM)_T("Not connected"));
 			SendMessage(statusBarWin, SB_SETTEXT, 1, (LPARAM)_T("0"));
@@ -412,10 +427,10 @@ int _tmain(int argc, _TCHAR* argv[])
 	trackView = new TrackView();
 	trackView->setDocument(&document);
 	
-	HWND hwnd = CreateWindowEx(
+	hwnd = CreateWindowEx(
 		0,
 		mainWindowClassName,
-		_T("SyncTracker 3000"),
+		_T("GNU Rocket System"),
 		WS_OVERLAPPEDWINDOW | WS_CLIPCHILDREN,
 		CW_USEDEFAULT, CW_USEDEFAULT, // x, y
 		CW_USEDEFAULT, CW_USEDEFAULT, // width, height
@@ -427,6 +442,8 @@ int _tmain(int argc, _TCHAR* argv[])
 		MessageBox(NULL, _T("Window Creation Failed!"), _T("Error!"), MB_OK | MB_ICONEXCLAMATION | MB_SETFOREGROUND);
 		return -1;
 	}
+	
+	fileNew();
 	
 	HACCEL accel = LoadAccelerators(hInstance, MAKEINTRESOURCE(IDR_ACCELERATOR));
 	
@@ -482,6 +499,7 @@ int _tmain(int argc, _TCHAR* argv[])
 					clientSocket = INVALID_SOCKET;
 					document.clientSocket = INVALID_SOCKET;
 					document.clientRemap.clear();
+					document.clientPaused = true;
 					InvalidateRect(trackViewWin, NULL, FALSE);
 					SendMessage(statusBarWin, SB_SETTEXT, 0, (LPARAM)_T("Not Connected."));
 					break;
