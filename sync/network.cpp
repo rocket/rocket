@@ -74,7 +74,8 @@ SOCKET serverConnect(struct sockaddr_in *addr)
 	
 	const char *expectedGreeting = serverGreeting;
 	char recievedGreeting[128];
-	recv(serverSocket, recievedGreeting, int(sizeof(recievedGreeting)), 0);
+	
+	recv(serverSocket, recievedGreeting, int(strlen(expectedGreeting)), 0);
 	if (strncmp(expectedGreeting, recievedGreeting, strlen(expectedGreeting)) != 0)
 	{
 		closesocket(serverSocket);
@@ -95,4 +96,28 @@ bool pollRead(SOCKET socket)
 	// look for new commands
 	return select(0, &fds, NULL, NULL, &timeout) > 0;
 }
+#if 0
+bool recvBlock(SOCKET socket, char *buffer, size_t length, int flags)
+{
+	size_t pos = 0;
+	while (pos < length)
+	{
+		int ret = recv(socket, &buffer[pos], int(length - pos), flags);
+		if (0 > ret) return false; // error
+		pos += ret;
+	}
+	return true;
+}
 
+bool sendBlock(SOCKET socket, const char *buffer, size_t length, int flags)
+{
+	size_t pos = 0;
+	while (pos < length)
+	{
+		int ret = send(socket, &buffer[pos], int(length - pos), flags);
+		if (0 > ret) return false; // error
+		pos += ret;
+	}
+	return true;
+}
+#endif

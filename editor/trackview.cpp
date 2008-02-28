@@ -361,7 +361,6 @@ struct CopyEntry
 	sync::Track::KeyFrame keyFrame;
 };
 
-
 void TrackView::editCopy()
 {
 	int selectLeft  = min(selectStartTrack, selectStopTrack);
@@ -395,7 +394,7 @@ void TrackView::editCopy()
 				assert(NULL != keyFrame);
 				
 				CopyEntry ce;
-				ce.track = int(trackIndex);
+				ce.track = track - selectLeft;
 				ce.row = localRow;
 				ce.keyFrame = *keyFrame;
 				
@@ -451,7 +450,7 @@ void TrackView::editPaste()
 		memcpy(&buffer_width,  clipbuf + 0,               sizeof(int));
 		memcpy(&buffer_height, clipbuf + sizeof(int),     sizeof(int));
 		memcpy(&buffer_size,   clipbuf + 2 * sizeof(int), sizeof(size_t));
-			
+		
 		if (buffer_size > 0)
 		{
 			char *src = clipbuf + 2 * sizeof(int) + sizeof(size_t);
@@ -461,12 +460,15 @@ void TrackView::editPaste()
 			{
 				struct CopyEntry ce;
 				memcpy(&ce, src, sizeof(CopyEntry));
-				
-				size_t trackIndex = document->getTrackIndexFromPos(editTrack + ce.track);
-				
-				SyncDocument::Command *cmd = document->getSetKeyFrameCommand(int(trackIndex), editRow + ce.row, ce.keyFrame);
-				multiCmd->addCommand(cmd);
 				src += sizeof(CopyEntry);
+				
+				size_t trackPos = editTrack + ce.track;
+				if (trackPos < document->getTrackCount())
+				{
+					size_t trackIndex = document->getTrackIndexFromPos(trackPos);
+					SyncDocument::Command *cmd = document->getSetKeyFrameCommand(int(trackIndex), editRow + ce.row, ce.keyFrame);
+					multiCmd->addCommand(cmd);
+				}
 			}
 			document->exec(multiCmd);
 		}

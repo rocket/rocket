@@ -481,6 +481,17 @@ int _tmain(int argc, _TCHAR* argv[])
 					document.clientRemap.clear();
 					document.sendPauseCommand(true);
 					document.sendSetRowCommand(trackView->getEditRow());
+#if 0
+					int flag = 1;
+					return setsockopt(
+						serverSocket,    /* socket affected */
+						IPPROTO_TCP,     /* set option at TCP level */
+						TCP_NODELAY,     /* name of option */
+						(char *) &flag,  /* the cast is historical cruft */
+						sizeof(int)      /* length of option value */
+					);
+#endif
+
 				}
 				else SendMessage(statusBarWin, SB_SETTEXT, 0, (LPARAM)_T("Not Connected."));
 			}
@@ -492,8 +503,7 @@ int _tmain(int argc, _TCHAR* argv[])
 			while (pollRead(clientSocket))
 			{
 				unsigned char cmd = 0;
-				int ret = recv(clientSocket, (char*)&cmd, 1, 0);
-				if (1 > ret)
+				if (0 > recv(clientSocket, (char*)&cmd, 1, 0))
 				{
 					closesocket(clientSocket);
 					clientSocket = INVALID_SOCKET;
@@ -511,14 +521,11 @@ int _tmain(int argc, _TCHAR* argv[])
 					case GET_TRACK:
 						{
 							size_t clientIndex = 0;
-							int ret = recv(clientSocket, (char*)&clientIndex, sizeof(int), 0);
+							recv(clientSocket, (char*)&clientIndex, sizeof(int), 0);
 							
 							// get len
 							int str_len = 0;
-							ret = recv(clientSocket, (char*)&str_len, sizeof(int), 0);
-							
-	//						int clientAddr = 0;
-	//						int ret = recv(clientSocket, (char*)&clientAddr, sizeof(int), 0);
+							recv(clientSocket, (char*)&str_len, sizeof(int), 0);
 							
 							// get string
 							std::string trackName;
@@ -548,7 +555,7 @@ int _tmain(int argc, _TCHAR* argv[])
 					case SET_ROW:
 						{
 							int newRow = 0;
-							int ret = recv(clientSocket, (char*)&newRow, sizeof(int), 0);
+							recv(clientSocket, (char*)&newRow, sizeof(int), 0);
 							trackView->setEditRow(newRow);
 						}
 						break;

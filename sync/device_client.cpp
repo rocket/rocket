@@ -69,8 +69,7 @@ bool ClientDevice::update(float row)
 	while (pollRead(serverSocket))
 	{
 		unsigned char cmd = 0;
-		int ret = recv(serverSocket, (char*)&cmd, 1, 0);
-		if (0 >= ret)
+		if (0 > recv(serverSocket, (char*)&cmd, 1, 0))
 		{
 			done = true;
 			break;

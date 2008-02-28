@@ -30,6 +30,11 @@ SOCKET serverConnect(struct sockaddr_in *addr);
 
 bool pollRead(SOCKET socket);
 
+#if 0
+bool recvBlock(SOCKET socket, char *buffer, size_t length, int flags);
+bool sendBlock(SOCKET socket, const char *buffer, size_t length, int flags);
+#endif
+
 enum RemoteCommand {
 	// server -> client
 	SET_KEY = 0,
