@@ -157,7 +157,7 @@ void fileOpen()
 	ofn.nMaxFile = _MAX_FNAME;
 	ofn.lpstrDefExt = "rocket";
 	ofn.lpstrFilter = "ROCKET File (*.rocket)\0*.rocket\0All Files (*.*)\0*.*\0\0";
-	ofn.Flags = OFN_SHOWHELP;
+	ofn.Flags = OFN_SHOWHELP | OFN_FILEMUSTEXIST;
 	if (GetOpenFileName(&ofn))
 	{
 		fileNew();
@@ -185,7 +185,7 @@ void fileSaveAs()
 	ofn.nMaxFile = _MAX_FNAME;
 	ofn.lpstrDefExt = "rocket";
 	ofn.lpstrFilter = "ROCKET File (*.rocket)\0*.rocket\0All Files (*.*)\0*.*\0\0";
-	ofn.Flags = OFN_SHOWHELP | OFN_OVERWRITEPROMPT; 
+	ofn.Flags = OFN_SHOWHELP | OFN_OVERWRITEPROMPT;
 	
 	if (GetSaveFileName(&ofn))
 	{
