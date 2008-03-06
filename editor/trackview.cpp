@@ -151,7 +151,7 @@ void TrackView::paintTopMargin(HDC hdc, RECT rcTracks)
 		
 		const std::basic_string<TCHAR> &trackName = trackIter->first;
 		
-		if (this->document->clientRemap.count(track) == 0) SetTextColor(hdc, GetSysColor(COLOR_GRAYTEXT));
+		if (this->document->clientRemap.count(document->getTrackIndexFromPos(track)) == 0) SetTextColor(hdc, GetSysColor(COLOR_GRAYTEXT));
 		else SetTextColor(hdc, GetSysColor(COLOR_WINDOWTEXT));
 		TextOut(hdc,
 			fillRect.left, 0,
