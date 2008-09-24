@@ -27,8 +27,53 @@ void closeNetwork();
 // SOCKET clientConnect(SOCKET serverSocket);
 SOCKET clientConnect(SOCKET serverSocket, sockaddr_in *host = NULL);
 SOCKET serverConnect(struct sockaddr_in *addr);
-
 bool pollRead(SOCKET socket);
+
+class NetworkSocket
+{
+public:
+	NetworkSocket(SOCKET socket = INVALID_SOCKET) : socket(socket) {}
+	
+	bool connected() const { return INVALID_SOCKET != socket; };
+	void disconnect()
+	{
+		closesocket(socket);
+		socket = INVALID_SOCKET;
+	}
+	
+	bool recv(char *buffer, size_t length, int flags)
+	{
+		if (!connected()) return false;
+		int ret = ::recv(socket, buffer, int(length), flags);
+		if (ret != length)
+		{
+			disconnect();
+			return false;
+		}
+		return true;
+	}
+	
+	bool send(const char *buffer, size_t length, int flags)
+	{
+		if (!connected()) return false;
+		int ret = ::send(socket, buffer, int(length), flags);
+		if (ret != length)
+		{
+			disconnect();
+			return false;
+		}
+		return true;
+	}
+	
+	bool pollRead()
+	{
+		if (!connected()) return false;
+		return ::pollRead(socket);
+	}
+	
+private:
+	SOCKET socket;
+};
 
 #if 0
 bool recvBlock(SOCKET socket, char *buffer, size_t length, int flags);

@@ -20,7 +20,7 @@ public:
 		Device(baseName),
 		timer(timer),
 		serverRow(-1),
-		serverSocket(serverSocket)
+		serverSocket(NetworkSocket(serverSocket))
 	{
 	}
 	
@@ -31,12 +31,12 @@ public:
 	
 private:
 	void saveTracks();
-
+	
 	sync::Data syncData;
 	Timer &timer;
 	
 	int    serverRow;
-	SOCKET serverSocket;
+	NetworkSocket serverSocket;
 };
 
 ClientDevice::~ClientDevice()
@@ -50,13 +50,13 @@ Track &ClientDevice::getTrack(const std::string &trackName)
 	
 	// send request data
 	unsigned char cmd = GET_TRACK;
-	send(serverSocket, (char*)&cmd, 1, 0);
+	serverSocket.send((char*)&cmd, 1, 0);
 	size_t clientIndex = syncData.getTrackCount();
-	send(serverSocket, (char*)&clientIndex, sizeof(size_t), 0);
+	serverSocket.send((char*)&clientIndex, sizeof(size_t), 0);
 	size_t name_len = trackName.size();
-	send(serverSocket, (char*)&name_len, sizeof(size_t), 0);
+	serverSocket.send((char*)&name_len, sizeof(size_t), 0);
 	const char *name_str = trackName.c_str();
-	send(serverSocket, name_str, int(name_len), 0);
+	serverSocket.send(name_str, int(name_len), 0);
 	
 	// insert new track
 	return syncData.getTrack(trackName);
@@ -66,28 +66,24 @@ bool ClientDevice::update(float row)
 {
 	bool done = false;
 	// look for new commands
-	while (pollRead(serverSocket))
+	while (serverSocket.pollRead())
 	{
 		unsigned char cmd = 0;
-		if (0 > recv(serverSocket, (char*)&cmd, 1, 0))
-		{
-			done = true;
-			break;
-		}
-		else
+		if (serverSocket.recv((char*)&cmd, 1, 0))
 		{
 			switch (cmd)
 			{
 				case SET_KEY:
 					{
-						int track, row;
-						float value;
-						unsigned char interp;
+						int track = 0, row = 0;
+						float value = 0.0f;
+						unsigned char interp = 0;
 						
-						recv(serverSocket, (char*)&track, sizeof(int), 0);
-						recv(serverSocket, (char*)&row,   sizeof(int), 0);
-						recv(serverSocket, (char*)&value, sizeof(float), 0);
-						recv(serverSocket, (char*)&interp, 1, 0);
+						serverSocket.recv((char*)&track, sizeof(int), 0);
+						serverSocket.recv((char*)&row,   sizeof(int), 0);
+						serverSocket.recv((char*)&value, sizeof(float), 0);
+						serverSocket.recv((char*)&interp, 1, 0);
+						if (!serverSocket.connected()) return true;
 						
 						assert(interp < Track::KeyFrame::IT_COUNT);
 						
@@ -103,9 +99,10 @@ bool ClientDevice::update(float row)
 				
 				case DELETE_KEY:
 					{
-						int track, row;
-						recv(serverSocket, (char*)&track, sizeof(int), 0);
-						recv(serverSocket, (char*)&row,   sizeof(int), 0);
+						int track = 0, row = 0;
+						serverSocket.recv((char*)&track, sizeof(int), 0);
+						serverSocket.recv((char*)&row,   sizeof(int), 0);
+						if (!serverSocket.connected()) return true;
 						
 						sync::Track &t = syncData.getTrack(track);
 						t.deleteKeyFrame(row);
@@ -115,7 +112,8 @@ bool ClientDevice::update(float row)
 				case SET_ROW:
 					{
 						int row;
-						recv(serverSocket, (char*)&row,   sizeof(int), 0);
+						serverSocket.recv((char*)&row,   sizeof(int), 0);
+						if (!serverSocket.connected()) return true;
 						timer.setRow(float(row));
 					}
 					break;
@@ -123,7 +121,8 @@ bool ClientDevice::update(float row)
 				case PAUSE:
 					{
 						char flag;
-						recv(serverSocket, (char*)&flag, 1, 0);
+						serverSocket.recv((char*)&flag, 1, 0);
+						if (!serverSocket.connected()) return true;
 						if (flag == 0) timer.play();
 						else           timer.pause();
 					}
@@ -143,16 +142,16 @@ bool ClientDevice::update(float row)
 	if (timer.isPlaying())
 	{
 		int newServerRow = int(floor(row));
-		if (serverRow != newServerRow)
+		if (serverRow != newServerRow && serverSocket.connected())
 		{
 			unsigned char cmd = SET_ROW;
-			send(serverSocket, (char*)&cmd, 1, 0);
-			send(serverSocket, (char*)&newServerRow, sizeof(int), 0);
+			serverSocket.send((char*)&cmd, 1, 0);
+			serverSocket.send((char*)&newServerRow, sizeof(int), 0);
 			serverRow = newServerRow;
 		}
 	}
 	
-	return !done;
+	return true;
 }
 
 static bool saveTrack(const sync::Track &track, std::string fileName)
