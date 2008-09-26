@@ -32,7 +32,8 @@ bool pollRead(SOCKET socket);
 class NetworkSocket
 {
 public:
-	NetworkSocket(SOCKET socket = INVALID_SOCKET) : socket(socket) {}
+	NetworkSocket() : socket(INVALID_SOCKET) {}
+	explicit NetworkSocket(SOCKET socket) : socket(socket) {}
 	
 	bool connected() const { return INVALID_SOCKET != socket; };
 	void disconnect()

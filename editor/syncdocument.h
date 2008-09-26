@@ -18,52 +18,53 @@ public:
 	
 	void sendSetKeyCommand(int track, int row, const sync::Track::KeyFrame &key)
 	{
-		if (INVALID_SOCKET == clientSocket) return;
+		if (!clientSocket.connected()) return;
 		if (clientRemap.count(track) == 0) return;
 		track = int(clientRemap[track]);
 		
 		unsigned char cmd = SET_KEY;
-		send(clientSocket, (char*)&cmd, 1, 0);
-		send(clientSocket, (char*)&track, sizeof(int), 0);
-		send(clientSocket, (char*)&row,   sizeof(int), 0);
-		send(clientSocket, (char*)&key.value, sizeof(float), 0);
-		send(clientSocket, (char*)&key.interpolationType, 1, 0);
+		clientSocket.send((char*)&cmd, 1, 0);
+		clientSocket.send((char*)&track, sizeof(int), 0);
+		clientSocket.send((char*)&row,   sizeof(int), 0);
+		clientSocket.send((char*)&key.value, sizeof(float), 0);
+		clientSocket.send((char*)&key.interpolationType, 1, 0);
 	}
 	
 	void sendDeleteKeyCommand(int track, int row)
 	{
-		if (INVALID_SOCKET == clientSocket) return;
+		if (!clientSocket.connected()) return;
 		if (clientRemap.count(track) == 0) return;
 		track = int(clientRemap[track]);
 		
 		unsigned char cmd = DELETE_KEY;
-		send(clientSocket, (char*)&cmd, 1, 0);
-		send(clientSocket, (char*)&track, sizeof(int), 0);
-		send(clientSocket, (char*)&row,   sizeof(int), 0);
+		clientSocket.send((char*)&cmd, 1, 0);
+		clientSocket.send((char*)&track, sizeof(int), 0);
+		clientSocket.send((char*)&row,   sizeof(int), 0);
 	}
 	
 	void sendSetRowCommand(int row)
 	{
-		if (INVALID_SOCKET == clientSocket) return;
+		if (!clientSocket.connected()) return;
 		unsigned char cmd = SET_ROW;
-		send(clientSocket, (char*)&cmd, 1, 0);
-		send(clientSocket, (char*)&row,   sizeof(int), 0);
+		clientSocket.send((char*)&cmd, 1, 0);
+		clientSocket.send((char*)&row,   sizeof(int), 0);
 	}
 	
 	void sendPauseCommand(bool pause)
 	{
-		if (INVALID_SOCKET == clientSocket) return;
+		if (!clientSocket.connected()) return;
 		unsigned char cmd = PAUSE;
-		send(clientSocket, (char*)&cmd, 1, 0);
+		clientSocket.send((char*)&cmd, 1, 0);
 		unsigned char flag = pause;
-		send(clientSocket, (char*)&flag, 1, 0);
+		clientSocket.send((char*)&flag, 1, 0);
 		clientPaused = pause;
 	}
 	
 	void sendSaveCommand()
 	{
+		if (!clientSocket.connected()) return;
 		unsigned char cmd = SAVE_TRACKS;
-		send(clientSocket, (char*)&cmd, 1, 0);
+		clientSocket.send((char*)&cmd, 1, 0);
 	}
 	
 	class Command
@@ -271,7 +272,7 @@ public:
 	bool load(const std::string &fileName);
 	bool save(const std::string &fileName);
 	
-	SOCKET clientSocket;
+	NetworkSocket clientSocket;
 	std::map<size_t, size_t> clientRemap;
 	bool clientPaused;
 	

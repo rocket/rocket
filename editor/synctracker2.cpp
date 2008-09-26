@@ -414,8 +414,6 @@ int _tmain(int argc, _TCHAR* argv[])
 	} */
 #endif
 	
-	document.clientSocket = INVALID_SOCKET;
-	
 	ATOM mainClass      = registerMainWindowClass(hInstance);
 	ATOM trackViewClass = registerTrackViewWindowClass(hInstance);
 	if (!mainClass || !trackViewClass)
@@ -452,13 +450,14 @@ int _tmain(int argc, _TCHAR* argv[])
 	
 #if 1
 	bool done = false;
-	SOCKET clientSocket = INVALID_SOCKET;
 	MSG msg;
+	bool guiConnected = false;
 	while (!done)
 	{
 #if 1
-		if (INVALID_SOCKET == clientSocket)
+		if (!document.clientSocket.connected())
 		{
+			SOCKET clientSocket = INVALID_SOCKET;
 			fd_set fds;
 			FD_ZERO(&fds);
 			FD_SET(serverSocket, &fds);
@@ -477,10 +476,11 @@ int _tmain(int argc, _TCHAR* argv[])
 					TCHAR temp[256];
 					_sntprintf_s(temp, 256, _T("Connected to %s"), inet_ntoa(client.sin_addr));
 					SendMessage(statusBarWin, SB_SETTEXT, 0, (LPARAM)temp);
-					document.clientSocket = clientSocket;
+					document.clientSocket = NetworkSocket(clientSocket);
 					document.clientRemap.clear();
 					document.sendPauseCommand(true);
 					document.sendSetRowCommand(trackView->getEditRow());
+					guiConnected = true;
 #if 0
 					int flag = 1;
 					return setsockopt(
@@ -491,46 +491,36 @@ int _tmain(int argc, _TCHAR* argv[])
 						sizeof(int)      /* length of option value */
 					);
 #endif
-
 				}
 				else SendMessage(statusBarWin, SB_SETTEXT, 0, (LPARAM)_T("Not Connected."));
 			}
 		}
 		
-		if (INVALID_SOCKET != clientSocket)
+		if (document.clientSocket.connected())
 		{
+			NetworkSocket &clientSocket = document.clientSocket;
+			
 			// look for new commands
-			while (pollRead(clientSocket))
+			while (clientSocket.pollRead())
 			{
 				unsigned char cmd = 0;
-				if (0 > recv(clientSocket, (char*)&cmd, 1, 0))
-				{
-					closesocket(clientSocket);
-					clientSocket = INVALID_SOCKET;
-					document.clientSocket = INVALID_SOCKET;
-					document.clientRemap.clear();
-					document.clientPaused = true;
-					InvalidateRect(trackViewWin, NULL, FALSE);
-					SendMessage(statusBarWin, SB_SETTEXT, 0, (LPARAM)_T("Not Connected."));
-					break;
-				}
-				else
+				if (clientSocket.recv((char*)&cmd, 1, 0))
 				{
 					switch (cmd)
 					{
 					case GET_TRACK:
 						{
 							size_t clientIndex = 0;
-							recv(clientSocket, (char*)&clientIndex, sizeof(int), 0);
+							clientSocket.recv((char*)&clientIndex, sizeof(int), 0);
 							
 							// get len
 							int str_len = 0;
-							recv(clientSocket, (char*)&str_len, sizeof(int), 0);
+							clientSocket.recv((char*)&str_len, sizeof(int), 0);
 							
 							// get string
 							std::string trackName;
 							trackName.resize(str_len);
-							recv(clientSocket, &trackName[0], str_len, 0);
+							clientSocket.recv(&trackName[0], str_len, 0);
 							
 							// find track
 							size_t serverIndex = document.getTrackIndex(trackName.c_str());
@@ -555,7 +545,7 @@ int _tmain(int argc, _TCHAR* argv[])
 					case SET_ROW:
 						{
 							int newRow = 0;
-							recv(clientSocket, (char*)&newRow, sizeof(int), 0);
+							clientSocket.recv((char*)&newRow, sizeof(int), 0);
 							trackView->setEditRow(newRow);
 						}
 						break;
@@ -563,6 +553,15 @@ int _tmain(int argc, _TCHAR* argv[])
 				}
 			}
 		}
+		
+		if (!document.clientSocket.connected() && guiConnected)
+		{
+			document.clientPaused = true;
+			InvalidateRect(trackViewWin, NULL, FALSE);
+			SendMessage(statusBarWin, SB_SETTEXT, 0, (LPARAM)_T("Not Connected."));
+			guiConnected = false;
+		}
+		
 #endif
 		while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
 		{
@@ -576,7 +575,6 @@ int _tmain(int argc, _TCHAR* argv[])
 		Sleep(1);
 	}
 	
-	closesocket(clientSocket);
 	closesocket(serverSocket);
 	closeNetwork();
 	
