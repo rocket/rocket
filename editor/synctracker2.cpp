@@ -523,7 +523,8 @@ int _tmain(int argc, _TCHAR* argv[])
 							clientSocket.recv(&trackName[0], str_len, 0);
 							
 							// find track
-							size_t serverIndex = document.getTrackIndex(trackName.c_str());
+							int serverIndex = document.getTrackIndex(trackName);
+							if (0 > serverIndex) serverIndex = int(document.createTrack(trackName));
 							
 							// setup remap
 							document.clientRemap[serverIndex] = clientIndex;

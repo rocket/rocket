@@ -12,6 +12,11 @@ namespace sync
 	class Track
 	{
 	public:
+		explicit Track(const std::string &name) : name(name)
+		{
+			
+		}
+		
 		struct KeyFrame
 		{
 			enum InterpolationType
@@ -44,10 +49,12 @@ namespace sync
 		
 		void truncate();
 		
-	// private:
+		const std::string &getName() const { return name; }
 		
 		typedef std::map<size_t, struct KeyFrame> KeyFrameContainer;
 		KeyFrameContainer keyFrames;
+	private:
+		std::string name;
 	};
 }
 

@@ -8,13 +8,7 @@ SyncDocument::~SyncDocument()
 
 size_t SyncDocument::getTrackIndexFromPos(size_t track) const
 {
-	assert(track < tracks.size());
-	
-	sync::Data::TrackContainer::const_iterator trackIter = tracks.begin();
-	for (size_t currTrack = 0; currTrack < track; ++currTrack, ++trackIter);
-	
-	assert(tracks.end() != trackIter);
-	return trackIter->second;
+	return track;
 }
 
 /* void SyncDocument::purgeUnusedTracks()
@@ -38,7 +32,10 @@ bool SyncDocument::load(const std::string &fileName)
 			MSXML2::IXMLDOMNamedNodeMapPtr attribs = trackNode->Getattributes();
 			
 			std::string name = attribs->getNamedItem("name")->Gettext();
-			size_t trackIndex = getTrackIndex(name);
+			
+			// look up track-name, create it if it doesn't exist
+			int trackIndex = getTrackIndex(name);
+			if (0 > trackIndex) trackIndex = int(createTrack(name));
 			
 			MSXML2::IXMLDOMNodeListPtr rowNodes = trackNode->GetchildNodes();
 			for (int i = 0; i < rowNodes->Getlength(); ++i)
@@ -89,14 +86,12 @@ bool SyncDocument::save(const std::string &fileName)
 		MSXML2::IXMLDOMNodePtr rootNode = doc->createNode(varNodeType, _T("tracks"), _T(""));
 		doc->appendChild(rootNode);
 		
-		sync::Data::TrackContainer::iterator iter;
-		for (iter = tracks.begin(); iter != tracks.end(); ++iter)
+		for (size_t i = 0; i < getTrackCount(); ++i)
 		{
-			size_t index = iter->second;
-			const sync::Track &track = getTrack(index);
+			const sync::Track &track = getTrack(i);
 			
 			MSXML2::IXMLDOMElementPtr trackElem = doc->createElement(_T("track"));
-			trackElem->setAttribute(_T("name"), iter->first.c_str());
+			trackElem->setAttribute(_T("name"), track.getName().c_str());
 			rootNode->appendChild(trackElem);
 			
 			sync::Track::KeyFrameContainer::const_iterator it;

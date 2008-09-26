@@ -35,7 +35,7 @@ private:
 	sync::Data syncData;
 	Timer &timer;
 	
-	int    serverRow;
+	int serverRow;
 	NetworkSocket serverSocket;
 };
 
@@ -45,8 +45,8 @@ ClientDevice::~ClientDevice()
 
 Track &ClientDevice::getTrack(const std::string &trackName)
 {
-	sync::Data::TrackContainer::iterator iter = syncData.tracks.find(trackName);
-	if (iter != syncData.tracks.end()) return syncData.getTrack(iter->second);
+	int index = syncData.getTrackIndex(trackName);
+	if (0 <= index) return syncData.getTrack(size_t(index));
 	
 	// send request data
 	unsigned char cmd = GET_TRACK;
@@ -59,7 +59,8 @@ Track &ClientDevice::getTrack(const std::string &trackName)
 	serverSocket.send(name_str, int(name_len), 0);
 	
 	// insert new track
-	return syncData.getTrack(trackName);
+	index = int(syncData.createTrack(trackName));
+	return syncData.getTrack(size_t(index));
 }
 
 bool ClientDevice::update(float row)
@@ -182,12 +183,10 @@ static bool saveTrack(const sync::Track &track, std::string fileName)
 
 void ClientDevice::saveTracks()
 {
-	sync::Data::TrackContainer::iterator iter;
-	for (iter = syncData.tracks.begin(); iter != syncData.tracks.end(); ++iter)
+	for (size_t i = 0; i < syncData.getTrackCount(); ++i)
 	{
-		size_t index = iter->second;
-		const sync::Track &track = syncData.getTrack(index);
-		saveTrack(track, getTrackFileName(iter->first));
+		const sync::Track &track = syncData.getTrack(i);
+		saveTrack(track, getTrackFileName(track.getName()));
 	}
 }
 

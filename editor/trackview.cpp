@@ -117,19 +117,14 @@ void TrackView::paintTopMargin(HDC hdc, RECT rcTracks)
 	DrawEdge(hdc, &fillRect, BDR_RAISEDINNER | BDR_RAISEDOUTER, BF_ADJUST | BF_BOTTOM);
 	FillRect(hdc, &fillRect, GetSysColorBrush(COLOR_3DFACE));
 	
-	int firstTrack = min(max(scrollPosX / trackWidth, 0), getTrackCount() - 1);
-	int lastTrack  = min(max(firstTrack + windowTracks + 1, 0), getTrackCount() - 1);
+	int startTrack = scrollPosX / trackWidth;
+	int endTrack  = min(startTrack + windowTracks, getTrackCount());
 	
-	SyncDocument *document = getDocument();
-	if (NULL == document) return;
-
 	SetTextColor(hdc, GetSysColor(COLOR_WINDOWTEXT));
 	
-	sync::Data::TrackContainer::iterator trackIter = document->tracks.begin();
-	for (int track = 0; track <= lastTrack; ++track, ++trackIter)
+	for (int track = startTrack; track < endTrack; ++track)
 	{
-		assert(trackIter != document->tracks.end());
-		if (track < firstTrack) continue;
+		sync::Track &t = document->getTrack(document->getTrackIndexFromPos(track));
 		
 		RECT topMargin;
 		
@@ -149,7 +144,7 @@ void TrackView::paintTopMargin(HDC hdc, RECT rcTracks)
 		DrawEdge(hdc, &fillRect, BDR_RAISEDINNER | BDR_RAISEDOUTER, BF_ADJUST | BF_LEFT | BF_RIGHT | BF_BOTTOM);
 		FillRect(hdc, &fillRect, bgBrush);
 		
-		const std::basic_string<TCHAR> &trackName = trackIter->first;
+		const std::basic_string<TCHAR> &trackName = t.getName();
 		
 		if (this->document->clientRemap.count(document->getTrackIndexFromPos(track)) == 0) SetTextColor(hdc, GetSysColor(COLOR_GRAYTEXT));
 		else SetTextColor(hdc, GetSysColor(COLOR_WINDOWTEXT));
@@ -175,9 +170,6 @@ void TrackView::paintTopMargin(HDC hdc, RECT rcTracks)
 void TrackView::paintTracks(HDC hdc, RECT rcTracks)
 {
 	TCHAR temp[256];
-	
-	int firstTrack = min(max(scrollPosX / trackWidth, 0), getTrackCount() - 1);
-	int lastTrack  = min(max(firstTrack + windowTracks + 1, 0), getTrackCount() - 1);
 	
 	int firstRow = editRow - windowRows / 2 - 1;
 	int lastRow  = editRow + windowRows / 2 + 1;
@@ -225,14 +217,13 @@ void TrackView::paintTracks(HDC hdc, RECT rcTracks)
 	int selectTop    = min(selectStartRow, selectStopRow);
 	int selectBottom = max(selectStartRow, selectStopRow);
 	
-	sync::Data::TrackContainer::iterator trackIter = document->tracks.begin();
-	for (int track = 0; track <= lastTrack; ++track, ++trackIter)
+	int startTrack = scrollPosX / trackWidth;
+	int endTrack  = min(startTrack + windowTracks, getTrackCount());
+	
+	for (int track = startTrack; track < endTrack; ++track)
 	{
-		assert(trackIter != document->tracks.end());
-		size_t trackIndex = trackIter->second;
-		const sync::Track &t = document->getTrack(trackIndex);
-
-		if (track < firstTrack) continue;
+		const sync::Track &t = document->getTrack(document->getTrackIndexFromPos(track));
+		
 		for (int row = firstRow; row <= lastRow; ++row)
 		{
 			RECT patternDataRect;

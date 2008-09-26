@@ -26,20 +26,27 @@ namespace sync
 	{
 	public:
 		~Data();
-		size_t getTrackIndex(const std::basic_string<TCHAR> &name);
-		Track &getTrack(const std::basic_string<TCHAR> &name);
 		
-		Track &getTrack(size_t track)
+		int
+		getTrackIndex(const std::basic_string<TCHAR> &name);
+		
+		size_t
+		createTrack(const std::basic_string<TCHAR> &name);
+		
+		Track &
+		getTrack(size_t track)
 		{
 			assert(track < actualTracks.size());
 			assert(NULL != actualTracks[track]);
 			return *actualTracks[track];
 		}
 		
-		size_t getTrackCount() const;
+		size_t
+		getTrackCount() const
+		{
+			return actualTracks.size();
+		}
 		
-		typedef std::map<const std::basic_string<TCHAR>, size_t> TrackContainer;
-		TrackContainer tracks;
 	protected:
 		std::vector<Track*> actualTracks;
 	};

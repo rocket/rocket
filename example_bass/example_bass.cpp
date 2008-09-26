@@ -17,19 +17,19 @@ class BassTimer : public sync::Timer
 public:
 	BassTimer(HSTREAM stream, float bpm, int rowsPerBeat) : stream(stream)
 	{
-		rowRate = (bpm / 60) * rowsPerBeat;
+		rowRate = (double(bpm) / 60) * rowsPerBeat;
 	}
 	
 	// BASS hooks
 	void  pause()           { BASS_ChannelPause(stream); }
 	void  play()            { BASS_ChannelPlay(stream, false); }
 	float getTime()         { return BASS_ChannelBytes2Seconds(stream, BASS_ChannelGetPosition(stream)); }
-	float getRow()          { return getTime() * rowRate; }
-	void  setRow(float row) { BASS_ChannelSetPosition(stream, BASS_ChannelSeconds2Bytes(stream, row / rowRate)); }
+	float getRow()          { return float(getTime() * rowRate); }
+	void  setRow(float row) { BASS_ChannelSetPosition(stream, BASS_ChannelSeconds2Bytes(stream, float(row / rowRate))); }
 	bool  isPlaying()       { return (BASS_ChannelIsActive(stream) == BASS_ACTIVE_PLAYING); }
 private:
 	HSTREAM stream;
-	float rowRate;
+	double rowRate;
 };
 
 #define WINDOWED 1
@@ -63,7 +63,7 @@ int main(int argc, char *argv[])
 		if (!stream) throw std::string("failed to open tune");
 		
 		// setup timer and construct sync-device
-		BassTimer timer(stream, 150.0f, 4);
+		BassTimer timer(stream, 150.0f, 8);
 		std::auto_ptr<sync::Device> syncDevice = std::auto_ptr<sync::Device>(sync::createDevice("sync", timer));
 		if (NULL == syncDevice.get()) throw std::string("something went wrong - failed to connect to host?");
 		

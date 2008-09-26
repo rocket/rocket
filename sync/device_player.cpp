@@ -62,12 +62,11 @@ static bool loadTrack(sync::Track &track, std::string fileName)
 
 Track &PlayerDevice::getTrack(const std::string &trackName)
 {
-	sync::Data::TrackContainer::iterator iter = syncData.tracks.find(trackName);
-	if (iter != syncData.tracks.end()) return syncData.getTrack(iter->second);
+	int trackIndex = syncData.getTrackIndex(trackName);
+	if (0 <= trackIndex) return syncData.getTrack(trackIndex);
 	
-	size_t trackIndex = syncData.getTrackIndex(trackName);
+	trackIndex = int(syncData.createTrack(trackName));
 	sync::Track &track = syncData.getTrack(trackIndex);
-	
 	loadTrack(track, getTrackFileName(trackName));
 	return track;
 }

@@ -12,29 +12,26 @@ Data::~Data()
 		delete actualTracks[i];
 }
 
-size_t Data::getTrackIndex(const std::basic_string<TCHAR> &name)
+size_t Data::createTrack(const std::basic_string<TCHAR> &name)
 {
-	TrackContainer::iterator iter = tracks.find(name);
-	if (iter != tracks.end())
-	{
-		return iter->second;
-	}
-	
+	assert(0 > getTrackIndex(name));
 	size_t index = actualTracks.size();
-	tracks[name] = index;
-	actualTracks.push_back(new sync::Track);
+	
+	// insert new track
+	actualTracks.push_back(new sync::Track(name));
+	
 	return index;
 }
 
-Track &Data::getTrack(const std::basic_string<TCHAR> &name)
+int Data::getTrackIndex(const std::basic_string<TCHAR> &name)
 {
-	size_t index = getTrackIndex(name);
-	assert(index < int(actualTracks.size()));
-	assert(NULL != actualTracks[index]);
-	return *actualTracks[index];
-}
-
-size_t Data::getTrackCount() const
-{
-	return tracks.size();
+	// search for track
+	size_t index;
+	for (index = 0; index < actualTracks.size(); ++index)
+	{
+		if (name == actualTracks[index]->getName()) return int(index);
+	}
+	
+	// not found
+	return -1;
 }
