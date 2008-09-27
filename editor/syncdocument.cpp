@@ -6,15 +6,6 @@ SyncDocument::~SyncDocument()
 	clearRedoStack();
 }
 
-size_t SyncDocument::getTrackIndexFromPos(size_t track) const
-{
-	return track;
-}
-
-/* void SyncDocument::purgeUnusedTracks()
-{
-} */
-
 #import <msxml4.dll> named_guids
 
 bool SyncDocument::load(const std::string &fileName)

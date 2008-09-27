@@ -8,17 +8,17 @@ using namespace sync;
 
 Data::~Data()
 {
-	for (size_t i = 0; i < actualTracks.size(); ++i)
-		delete actualTracks[i];
+	for (size_t i = 0; i < tracks.size(); ++i)
+		delete tracks[i];
 }
 
 size_t Data::createTrack(const std::basic_string<TCHAR> &name)
 {
 	assert(0 > getTrackIndex(name));
-	size_t index = actualTracks.size();
+	size_t index = tracks.size();
 	
 	// insert new track
-	actualTracks.push_back(new sync::Track(name));
+	tracks.push_back(new sync::Track(name));
 	
 	return index;
 }
@@ -27,9 +27,9 @@ int Data::getTrackIndex(const std::basic_string<TCHAR> &name)
 {
 	// search for track
 	size_t index;
-	for (index = 0; index < actualTracks.size(); ++index)
+	for (index = 0; index < tracks.size(); ++index)
 	{
-		if (name == actualTracks[index]->getName()) return int(index);
+		if (name == tracks[index]->getName()) return int(index);
 	}
 	
 	// not found

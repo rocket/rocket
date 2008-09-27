@@ -265,9 +265,10 @@ public:
 		return cmd;
 	}
 	
-	size_t getTrackIndexFromPos(size_t track) const;
-	
-/*	void purgeUnused(); */
+	size_t getTrackIndexFromPos(size_t track) const
+	{
+		return track;
+	}
 	
 	bool load(const std::string &fileName);
 	bool save(const std::string &fileName);

@@ -36,18 +36,18 @@ namespace sync
 		Track &
 		getTrack(size_t track)
 		{
-			assert(track < actualTracks.size());
-			assert(NULL != actualTracks[track]);
-			return *actualTracks[track];
+			assert(track < tracks.size());
+			assert(NULL != tracks[track]);
+			return *tracks[track];
 		}
 		
 		size_t
 		getTrackCount() const
 		{
-			return actualTracks.size();
+			return tracks.size();
 		}
 		
 	protected:
-		std::vector<Track*> actualTracks;
+		std::vector<Track*> tracks;
 	};
 }

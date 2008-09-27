@@ -437,7 +437,7 @@ int _tmain(int argc, _TCHAR* argv[])
 	
 	if (NULL == hwnd)
 	{
-		MessageBox(NULL, _T("Window Creation Failed!"), _T("Error!"), MB_OK | MB_ICONEXCLAMATION | MB_SETFOREGROUND);
+		MessageBox(NULL, _T("Window Creation Failed!"), NULL, MB_OK | MB_ICONEXCLAMATION | MB_SETFOREGROUND);
 		return -1;
 	}
 	
