@@ -524,7 +524,11 @@ int _tmain(int argc, _TCHAR* argv[])
 							
 							// find track
 							int serverIndex = document.getTrackIndex(trackName);
-							if (0 > serverIndex) serverIndex = int(document.createTrack(trackName));
+							if (0 > serverIndex)
+							{
+								serverIndex = int(document.createTrack(trackName));
+								document.trackOrder.push_back(serverIndex);
+							}
 							
 							// setup remap
 							document.clientRemap[serverIndex] = clientIndex;

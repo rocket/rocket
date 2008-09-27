@@ -867,8 +867,21 @@ LRESULT TrackView::onKeyDown(UINT keyCode, UINT /*flags*/)
 			else setEditRow(editRow + 1);
 			break;
 		
-		case VK_LEFT:  setEditTrack(editTrack - 1); break;
-		case VK_RIGHT: setEditTrack(editTrack + 1); break;
+		case VK_LEFT:
+			if (GetKeyState(VK_CONTROL) < 0 && 0 < editTrack)
+			{
+				std::swap(document->trackOrder[editTrack], document->trackOrder[editTrack - 1]);
+			}
+			setEditTrack(editTrack - 1);
+			break;
+		
+		case VK_RIGHT:
+			if (GetKeyState(VK_CONTROL) < 0 && document->trackOrder.size() > editTrack + 1)
+			{
+				std::swap(document->trackOrder[editTrack], document->trackOrder[editTrack + 1]);
+			}
+			setEditTrack(editTrack + 1);
+			break;
 		
 		case VK_PRIOR:
 			if (GetKeyState(VK_CONTROL) < 0)

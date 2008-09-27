@@ -267,7 +267,8 @@ public:
 	
 	size_t getTrackIndexFromPos(size_t track) const
 	{
-		return track;
+		assert(track < trackOrder.size());
+		return trackOrder[track];
 	}
 	
 	bool load(const std::string &fileName);
@@ -276,6 +277,8 @@ public:
 	NetworkSocket clientSocket;
 	std::map<size_t, size_t> clientRemap;
 	bool clientPaused;
+	
+	std::vector<size_t> trackOrder;
 	
 private:
 	std::stack<Command*> undoStack;
