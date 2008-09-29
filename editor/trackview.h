@@ -5,10 +5,7 @@
 #pragma once
 
 #include "syncdocument.h"
-
-#include <list>
 #include <string>
-#include <stack>
 
 // custom messages
 #define WM_REDO         (WM_USER + 0x40 + 3)

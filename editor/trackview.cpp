@@ -70,6 +70,9 @@ TrackView::~TrackView()
 	DeleteObject(bgDarkBrush);
 	DeleteObject(selectBaseBrush);
 	DeleteObject(selectDarkBrush);
+	DeleteObject(lerpPen);
+	DeleteObject(cosinePen);
+	DeleteObject(rampPen);
 	DeleteObject(editBrush);
 	DeleteObject(rowPen);
 	DeleteObject(rowSelectPen);
@@ -118,7 +121,7 @@ void TrackView::paintTopMargin(HDC hdc, RECT rcTracks)
 	FillRect(hdc, &fillRect, GetSysColorBrush(COLOR_3DFACE));
 	
 	int startTrack = scrollPosX / trackWidth;
-	int endTrack  = min(startTrack + windowTracks, getTrackCount());
+	int endTrack  = min(startTrack + windowTracks + 1, getTrackCount());
 	
 	SetTextColor(hdc, GetSysColor(COLOR_WINDOWTEXT));
 	
@@ -218,7 +221,7 @@ void TrackView::paintTracks(HDC hdc, RECT rcTracks)
 	int selectBottom = max(selectStartRow, selectStopRow);
 	
 	int startTrack = scrollPosX / trackWidth;
-	int endTrack  = min(startTrack + windowTracks, getTrackCount());
+	int endTrack  = min(startTrack + windowTracks + 1, getTrackCount());
 	
 	for (int track = startTrack; track < endTrack; ++track)
 	{
@@ -354,6 +357,12 @@ struct CopyEntry
 
 void TrackView::editCopy()
 {
+	if (0 == document->getTrackCount())
+	{
+		MessageBeep(-1);
+		return;
+	}
+	
 	int selectLeft  = min(selectStartTrack, selectStopTrack);
 	int selectRight = max(selectStartTrack, selectStopTrack);
 	int selectTop    = min(selectStartRow, selectStopRow);
@@ -418,13 +427,24 @@ void TrackView::editCopy()
 
 void TrackView::editCut()
 {
+	if (0 == document->getTrackCount())
+	{
+		MessageBeep(-1);
+		return;
+	}
+	
 	editCopy();
 	editDelete();
 }
 
 void TrackView::editPaste()
 {
-#if 1
+	if (0 == document->getTrackCount())
+	{
+		MessageBeep(-1);
+		return;
+	}
+	
 	if (FAILED(OpenClipboard(getWin())))
 	{
 		MessageBox(NULL, _T("Failed to open clipboard"), NULL, MB_OK);
@@ -467,10 +487,9 @@ void TrackView::editPaste()
 		GlobalUnlock(hmem);
 		clipbuf = NULL;
 	}
-	else MessageBeep(0);
+	else MessageBeep(-1);
 	
 	CloseClipboard();
-#endif
 }
 
 void TrackView::setupScrollBars()
@@ -706,7 +725,7 @@ void TrackView::editEnterValue()
 //		invalidatePos(editTrack, editRow);
 		InvalidateRect(getWin(), NULL, FALSE);
 	}
-	else MessageBeep(0);
+	else MessageBeep(-1);
 }
 
 void TrackView::editToggleInterpolationType()
@@ -721,7 +740,7 @@ void TrackView::editToggleInterpolationType()
 		// bounds check
 		if (upper == t.keyFrames.end())
 		{
-			MessageBeep(0);
+			MessageBeep(-1);
 			return;
 		}
 		
@@ -730,7 +749,7 @@ void TrackView::editToggleInterpolationType()
 		// bounds check again
 		if (lower == t.keyFrames.end())
 		{
-			MessageBeep(0);
+			MessageBeep(-1);
 			return;
 		}
 		
@@ -745,7 +764,7 @@ void TrackView::editToggleInterpolationType()
 		
 		invalidateRange(editTrack, editTrack, int(lower->first), int(upper->first));
 	}
-	else MessageBeep(0);
+	else MessageBeep(-1);
 }
 
 void TrackView::editDelete()
@@ -776,7 +795,7 @@ void TrackView::editDelete()
 	
 	if (0 == multiCmd->getSize())
 	{
-		MessageBeep(0);
+		MessageBeep(-1);
 		delete multiCmd;
 	}
 	else
@@ -794,9 +813,16 @@ void TrackView::editBiasValue(float amount)
 	int selectTop    = min(selectStartRow, selectStopRow);
 	int selectBottom = max(selectStartRow, selectStopRow);
 
+	if (0 == document->getTrackCount())
+	{
+		MessageBeep(-1);
+		return;
+	}
+	
 	SyncDocument::MultiCommand *multiCmd = new SyncDocument::MultiCommand();
 	for (int track = selectLeft; track <= selectRight; ++track)
 	{
+		assert(track < int(document->getTrackCount()));
 		size_t trackIndex = document->getTrackIndexFromPos(track);
 		sync::Track &t = document->getTrack(trackIndex);
 		
@@ -816,7 +842,7 @@ void TrackView::editBiasValue(float amount)
 	
 	if (0 == multiCmd->getSize())
 	{
-		MessageBeep(0);
+		MessageBeep(-1);
 		delete multiCmd;
 	}
 	else
@@ -852,7 +878,8 @@ LRESULT TrackView::onKeyDown(UINT keyCode, UINT /*flags*/)
 			{
 				float bias = 1.0f;
 				if (GetKeyState(VK_SHIFT) < 0) bias = 0.1f;
-				editBiasValue(bias);
+				if (int(document->trackOrder.size()) > editTrack) editBiasValue(bias);
+				else MessageBeep(-1);
 			}
 			else setEditRow(editRow - 1);
 			break;
@@ -862,23 +889,26 @@ LRESULT TrackView::onKeyDown(UINT keyCode, UINT /*flags*/)
 			{
 				float bias = 1.0f;
 				if (GetKeyState(VK_SHIFT) < 0) bias = 0.1f;
-				editBiasValue(-bias);
+				if (int(document->trackOrder.size()) > editTrack) editBiasValue(-bias);
+				else MessageBeep(-1);
 			}
 			else setEditRow(editRow + 1);
 			break;
 		
 		case VK_LEFT:
-			if (GetKeyState(VK_CONTROL) < 0 && 0 < editTrack)
+			if (GetKeyState(VK_CONTROL) < 0)
 			{
-				std::swap(document->trackOrder[editTrack], document->trackOrder[editTrack - 1]);
+				if (0 < editTrack) std::swap(document->trackOrder[editTrack], document->trackOrder[editTrack - 1]);
+				else MessageBeep(-1);
 			}
 			setEditTrack(editTrack - 1);
 			break;
 		
 		case VK_RIGHT:
-			if (GetKeyState(VK_CONTROL) < 0 && document->trackOrder.size() > editTrack + 1)
+			if (GetKeyState(VK_CONTROL) < 0)
 			{
-				std::swap(document->trackOrder[editTrack], document->trackOrder[editTrack + 1]);
+				if (int(document->trackOrder.size()) > editTrack + 1) std::swap(document->trackOrder[editTrack], document->trackOrder[editTrack + 1]);
+				else MessageBeep(-1);
 			}
 			setEditTrack(editTrack + 1);
 			break;
@@ -902,6 +932,7 @@ LRESULT TrackView::onKeyDown(UINT keyCode, UINT /*flags*/)
 			}
 			else setEditRow(editRow + 0x10);
 			break;
+		
 		case VK_HOME:
 			if (GetKeyState(VK_CONTROL) < 0)
 			{
@@ -920,6 +951,7 @@ LRESULT TrackView::onKeyDown(UINT keyCode, UINT /*flags*/)
 				}
 			}
 			break;
+		
 		case VK_END:
 			if (GetKeyState(VK_CONTROL) < 0)
 			{
@@ -952,7 +984,7 @@ LRESULT TrackView::onKeyDown(UINT keyCode, UINT /*flags*/)
 			editString.resize(editString.size() - 1);
 			invalidatePos(editTrack, editRow);
 		}
-		else MessageBeep(0);
+		else MessageBeep(-1);
 		break;
 	
 	case VK_CANCEL:
@@ -962,7 +994,7 @@ LRESULT TrackView::onKeyDown(UINT keyCode, UINT /*flags*/)
 			// return to old value (i.e don't clear)
 			editString.clear();
 			invalidatePos(editTrack, editRow);
-			MessageBeep(0);
+			MessageBeep(-1);
 		}
 		break;
 	case VK_SPACE:
@@ -970,7 +1002,7 @@ LRESULT TrackView::onKeyDown(UINT keyCode, UINT /*flags*/)
 		{
 			editString.clear();
 			invalidatePos(editTrack, editRow);
-			MessageBeep(0);
+			MessageBeep(-1);
 		}
 		document->sendPauseCommand( !document->clientPaused );
 		break;
@@ -993,7 +1025,7 @@ LRESULT TrackView::onChar(UINT keyCode, UINT flags)
 		// only one '.' allowed
 		if (std::string::npos != editString.find('.'))
 		{
-			MessageBeep(0);
+			MessageBeep(-1);
 			break;
 		}
 	case '0':
@@ -1011,7 +1043,7 @@ LRESULT TrackView::onChar(UINT keyCode, UINT flags)
 			editString.push_back(char(keyCode));
 			invalidatePos(editTrack, editRow);
 		}
-		else MessageBeep(0);
+		else MessageBeep(-1);
 		break;
 	
 	case 'i':
@@ -1065,13 +1097,13 @@ LRESULT TrackView::windowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 		break;
 	
 	case WM_UNDO:
-		if (!document->undo()) MessageBeep(0);
+		if (!document->undo()) MessageBeep(-1);
 		// unfortunately, we don't know how much to invalidate... so we'll just invalidate it all.
 		InvalidateRect(hwnd, NULL, FALSE);
 		break;
 	
 	case WM_REDO:
-		if (!document->redo()) MessageBeep(0);
+		if (!document->redo()) MessageBeep(-1);
 		// unfortunately, we don't know how much to invalidate... so we'll just invalidate it all.
 		InvalidateRect(hwnd, NULL, FALSE);
 		break;

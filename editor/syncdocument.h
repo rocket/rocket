@@ -9,6 +9,8 @@
 #include "inifile.h"
 #include <stack>
 #include <list>
+#include <vector>
+#include <map>
 
 class SyncDocument : public sync::Data
 {
