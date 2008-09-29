@@ -6,7 +6,7 @@ SyncDocument::~SyncDocument()
 	clearRedoStack();
 }
 
-#import <msxml4.dll> named_guids
+#import <msxml3.dll> named_guids
 
 bool SyncDocument::load(const std::string &fileName)
 {
