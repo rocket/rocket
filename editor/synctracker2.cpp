@@ -15,10 +15,10 @@
 #include <vector>
 const TCHAR *mainWindowClassName = _T("MainWindow");
 
-HWND hwnd;
-TrackView *trackView;
-HWND trackViewWin;
-HWND statusBarWin;
+HWND hwnd = NULL;
+TrackView *trackView = NULL;
+HWND trackViewWin = NULL;
+HWND statusBarWin = NULL;
 SyncDocument document;
 
 #define WM_SETROWS (WM_USER+1)
