@@ -82,7 +82,11 @@ BEGIN
         MENUITEM "&Save\tCtrl+S",               ID_FILE_SAVE
         MENUITEM "Save &As",                    ID_FILE_SAVE_AS
         MENUITEM SEPARATOR
-        MENUITEM "Remote Export\tCtrl+E",       ID_FILE_REMOTEEXPORT
+        MENUITEM "Remote &Export\tCtrl+E",      ID_FILE_REMOTEEXPORT
+        POPUP "Recent &Files"
+        BEGIN
+            MENUITEM "No recent files",             ID_RECENTFILES_NORECENTFILES, GRAYED
+        END
         MENUITEM SEPARATOR
         MENUITEM "E&xit",                       ID_FILE_EXIT
     END

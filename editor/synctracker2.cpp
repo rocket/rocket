@@ -207,6 +207,24 @@ void fileSave()
 	}
 }
 
+HMENU findSubMenuContaining(HMENU menu, UINT id)
+{
+	for (int i = 0; i < GetMenuItemCount(menu); ++i)
+	{
+		if (GetMenuItemID(menu, i) == id) return menu;
+		else
+		{
+			HMENU subMenu = GetSubMenu(menu, i);
+			if ((HMENU)0 != subMenu)
+			{
+				HMENU ret = findSubMenuContaining(subMenu, id);
+				if ((HMENU)0 != ret) return ret;
+			}
+		}
+	}
+	return (HMENU)0;
+}
+
 static LRESULT CALLBACK mainWindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
 	switch(msg)
@@ -234,6 +252,19 @@ static LRESULT CALLBACK mainWindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARA
 			SendMessage(statusBarWin, SB_SETTEXT, 1, (LPARAM)_T("0"));
 			SendMessage(statusBarWin, SB_SETTEXT, 2, (LPARAM)_T("0"));
 			SendMessage(statusBarWin, SB_SETTEXT, 3, (LPARAM)_T("---"));
+			
+#if 0
+			/* mock up a Recent Files menu */
+			HMENU lruFileMenu = findSubMenuContaining(GetMenu(hwnd), ID_RECENTFILES_NORECENTFILES);
+			RemoveMenu(lruFileMenu, 0, MF_BYPOSITION);
+			for (int i = 0; i < 5; ++i)
+			{
+				char temp[256];
+				_snprintf(temp, 256, "&%d test%d.ROCKET", i + 1, i);
+				InsertMenu(lruFileMenu, -1, MF_BYPOSITION | MF_STRING, ID_RECENTFILES_FILE1 + i, temp);
+			}
+			DrawMenuBar(hwnd);
+#endif
 		}
 		break;
 	
