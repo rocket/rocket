@@ -586,6 +586,8 @@ void TrackView::setEditRow(int newEditRow)
 
 void TrackView::setEditTrack(int newEditTrack)
 {
+	assert(size_t(newEditTrack) < document->getTrackCount());
+	
 	int oldEditTrack = editTrack;
 	editTrack = newEditTrack;
 	
@@ -901,7 +903,8 @@ LRESULT TrackView::onKeyDown(UINT keyCode, UINT /*flags*/)
 				if (0 < editTrack) std::swap(document->trackOrder[editTrack], document->trackOrder[editTrack - 1]);
 				else MessageBeep(-1);
 			}
-			setEditTrack(editTrack - 1);
+			if (0 != document->getTrackCount()) setEditTrack(editTrack - 1);
+			else MessageBeep(-1);
 			break;
 		
 		case VK_RIGHT:
@@ -910,7 +913,8 @@ LRESULT TrackView::onKeyDown(UINT keyCode, UINT /*flags*/)
 				if (int(document->trackOrder.size()) > editTrack + 1) std::swap(document->trackOrder[editTrack], document->trackOrder[editTrack + 1]);
 				else MessageBeep(-1);
 			}
-			setEditTrack(editTrack + 1);
+			if (0 != document->getTrackCount()) setEditTrack(editTrack + 1);
+			else MessageBeep(-1);
 			break;
 		
 		case VK_PRIOR:
