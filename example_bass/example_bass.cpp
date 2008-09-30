@@ -23,9 +23,9 @@ public:
 	// BASS hooks
 	void  pause()           { BASS_ChannelPause(stream); }
 	void  play()            { BASS_ChannelPlay(stream, false); }
-	float getTime()         { return BASS_ChannelBytes2Seconds(stream, BASS_ChannelGetPosition(stream)); }
+	float getTime()         { return float(BASS_ChannelBytes2Seconds(stream, BASS_ChannelGetPosition(stream, BASS_POS_BYTE))); }
 	float getRow()          { return float(getTime() * rowRate); }
-	void  setRow(float row) { BASS_ChannelSetPosition(stream, BASS_ChannelSeconds2Bytes(stream, float(row / rowRate))); }
+	void  setRow(float row) { BASS_ChannelSetPosition(stream, BASS_ChannelSeconds2Bytes(stream, float(row / rowRate)), BASS_POS_BYTE); }
 	bool  isPlaying()       { return (BASS_ChannelIsActive(stream) == BASS_ACTIVE_PLAYING); }
 private:
 	HSTREAM stream;
@@ -126,7 +126,7 @@ int main(int argc, char *argv[])
 			device->EndScene();
 			device->Present(0, 0, 0, 0);
 			
-			BASS_Update(); // decrease the chance of missing vsync
+			BASS_Update(0); // decrease the chance of missing vsync
 			MSG msg;
 			while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
 			{
