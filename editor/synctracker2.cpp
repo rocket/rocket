@@ -14,12 +14,14 @@
 #include "trackview.h"
 #include <vector>
 const TCHAR *mainWindowClassName = _T("MainWindow");
+const TCHAR *keyName = _T("SOFTWARE\\GNU Rocket");
 
 HWND hwnd = NULL;
 TrackView *trackView = NULL;
 HWND trackViewWin = NULL;
 HWND statusBarWin = NULL;
 SyncDocument document;
+HKEY regConfigKey = NULL;
 
 #define WM_SETROWS (WM_USER+1)
 #define WM_BIASSELECTION (WM_USER+2)
@@ -122,11 +124,106 @@ static LRESULT CALLBACK biasSelectionDialogProc(HWND hDlg, UINT message, WPARAM 
 	return FALSE;
 }
 
-void setWindowFileName(const char *string)
+void setWindowFileName(std::string fileName)
 {
-	TCHAR temp[256];
-	_sntprintf_s(temp, 256, _T("GNU Rocket System - %s"), string);
-	SetWindowText(hwnd, temp);
+	std::string windowTitle = std::string("GNU Rocket System - ") + fileName;
+	SetWindowText(hwnd, windowTitle.c_str());
+}
+
+bool setRegString(HKEY key, const std::string &name, const std::string &value)
+{
+	return ERROR_SUCCESS == RegSetValueEx(key, name.c_str(), 0, REG_SZ, (BYTE *)value.c_str(), (DWORD)value.size());
+}
+
+bool getRegString(HKEY key, const std::string &name, std::string &out)
+{
+	DWORD size = 0;
+	DWORD type = 0;
+	if (ERROR_SUCCESS != RegQueryValueEx(key, name.c_str(), 0, &type, (LPBYTE)NULL, &size)) return false;
+	if (REG_SZ != type) return false;
+	
+	out.resize(size);
+	DWORD ret = RegQueryValueEx(key, name.c_str(), 0, &type, (LPBYTE)&out[0], &size);
+	while (out.size() > 0 && out[out.size() - 1] == '\0') out.resize(out.size() - 1);
+	
+	assert(ret == ERROR_SUCCESS);
+	assert(REG_SZ == type);
+	assert(size == out.size() + 1);
+
+	return true;
+}
+
+std::list<std::string> mruList;
+
+std::string getMruEntryName(size_t i)
+{
+	std::string temp = std::string("RecentFile");
+	temp += char('0' + i);
+	return temp;
+}
+
+void initMruList()
+{
+	for (size_t i = 0; i < 5; ++i)
+	{
+		std::string fileName;
+		if (getRegString(regConfigKey, getMruEntryName(i), fileName))
+		{
+			mruList.push_back(fileName);
+		}
+	}
+}
+
+void saveMruList()
+{
+	std::list<std::string>::const_iterator it;
+	size_t i;
+	for (i = 0, it = mruList.begin(); it != mruList.end(); ++it, ++i)
+	{
+		assert(i <= 5);
+		setRegString(regConfigKey, getMruEntryName(i), *it);
+	}
+}
+
+void mruListInsert(const std::string fileName)
+{
+	mruList.remove(fileName); // remove, if present
+	mruList.push_front(fileName); // add to front
+	while (mruList.size() > 5) mruList.pop_back(); // remove old entries
+}
+
+HMENU findSubMenuContaining(HMENU menu, UINT id)
+{
+	for (int i = 0; i < GetMenuItemCount(menu); ++i)
+	{
+		if (GetMenuItemID(menu, i) == id) return menu;
+		else
+		{
+			HMENU subMenu = GetSubMenu(menu, i);
+			if ((HMENU)0 != subMenu)
+			{
+				HMENU ret = findSubMenuContaining(subMenu, id);
+				if ((HMENU)0 != ret) return ret;
+			}
+		}
+	}
+	return (HMENU)0;
+}
+
+HMENU mruFileMenu;
+
+void mruListUpdate()
+{
+	while (0 != RemoveMenu(mruFileMenu, 0, MF_BYPOSITION));
+	
+	std::list<std::string>::const_iterator it;
+	size_t i;
+	for (i = 0, it = mruList.begin(); it != mruList.end(); ++it, ++i)
+	{
+		assert(i <= 5);
+		AppendMenu(mruFileMenu, MF_STRING, ID_RECENTFILES_FILE1 + i, it->c_str());
+	}
+	DrawMenuBar(hwnd);
 }
 
 std::string fileName;
@@ -145,6 +242,26 @@ void fileNew()
 	document.clearRedoStack();
 }
 
+
+void loadDocument(const std::string &_fileName)
+{
+	fileNew();
+	if (document.load(_fileName))
+	{
+		setWindowFileName(_fileName.c_str());
+		fileName = _fileName;
+		
+		mruListInsert(_fileName);
+		mruListUpdate();
+		
+		document.clearUndoStack();
+		document.clearRedoStack();
+		
+		InvalidateRect(trackViewWin, NULL, FALSE);
+	}
+	else MessageBox(trackViewWin, _T("failed to open file"), NULL, MB_OK | MB_ICONERROR | MB_SETFOREGROUND);
+}
+
 void fileOpen()
 {
 	char temp[_MAX_FNAME + 1];
@@ -160,16 +277,7 @@ void fileOpen()
 	ofn.Flags = OFN_SHOWHELP | OFN_FILEMUSTEXIST;
 	if (GetOpenFileName(&ofn))
 	{
-		fileNew();
-		if (document.load(temp))
-		{
-			setWindowFileName(temp);
-			fileName = temp;
-			
-			document.clearUndoStack();
-			document.clearRedoStack();
-		}
-		else MessageBox(trackViewWin, _T("failed to open file"), NULL, MB_OK | MB_ICONERROR | MB_SETFOREGROUND);
+		loadDocument(temp);
 	}
 }
 
@@ -207,24 +315,6 @@ void fileSave()
 	}
 }
 
-HMENU findSubMenuContaining(HMENU menu, UINT id)
-{
-	for (int i = 0; i < GetMenuItemCount(menu); ++i)
-	{
-		if (GetMenuItemID(menu, i) == id) return menu;
-		else
-		{
-			HMENU subMenu = GetSubMenu(menu, i);
-			if ((HMENU)0 != subMenu)
-			{
-				HMENU ret = findSubMenuContaining(subMenu, id);
-				if ((HMENU)0 != ret) return ret;
-			}
-		}
-	}
-	return (HMENU)0;
-}
-
 static LRESULT CALLBACK mainWindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
 	switch(msg)
@@ -253,19 +343,27 @@ static LRESULT CALLBACK mainWindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARA
 			SendMessage(statusBarWin, SB_SETTEXT, 2, (LPARAM)_T("0"));
 			SendMessage(statusBarWin, SB_SETTEXT, 3, (LPARAM)_T("---"));
 			
-#if 0
-			/* mock up a Recent Files menu */
-			HMENU lruFileMenu = findSubMenuContaining(GetMenu(hwnd), ID_RECENTFILES_NORECENTFILES);
-			RemoveMenu(lruFileMenu, 0, MF_BYPOSITION);
-			for (int i = 0; i < 5; ++i)
+			if (ERROR_SUCCESS != RegOpenKey(HKEY_CURRENT_USER, keyName, &regConfigKey))
 			{
-				char temp[256];
-				_snprintf(temp, 256, "&%d test%d.ROCKET", i + 1, i);
-				InsertMenu(lruFileMenu, -1, MF_BYPOSITION | MF_STRING, ID_RECENTFILES_FILE1 + i, temp);
+				if (ERROR_SUCCESS != RegCreateKey(HKEY_CURRENT_USER, keyName, &regConfigKey))
+				{
+					printf("failed to create reg key\n");
+					exit(-1);
+				}
 			}
-			DrawMenuBar(hwnd);
-#endif
+
+			/* Recent Files menu */
+			mruFileMenu = findSubMenuContaining(GetMenu(hwnd), ID_RECENTFILES_NORECENTFILES);
+			initMruList();
+			if (mruList.size() > 0) mruListUpdate();
 		}
+		break;
+	
+	case WM_DESTROY:
+		saveMruList();
+		RegCloseKey(regConfigKey);
+		regConfigKey = NULL;
+		PostQuitMessage(0);
 		break;
 	
 	case WM_SIZE:
@@ -304,7 +402,6 @@ static LRESULT CALLBACK mainWindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARA
 			
 		case ID_FILE_OPEN:
 			fileOpen();
-			InvalidateRect(trackViewWin, NULL, FALSE);
 			break;
 		
 		case ID_FILE_SAVE_AS:
@@ -319,7 +416,30 @@ static LRESULT CALLBACK mainWindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARA
 			document.sendSaveCommand();
 			break;
 		
-		case ID_FILE_EXIT:  PostQuitMessage(0); break;
+		case ID_RECENTFILES_FILE1:
+		case ID_RECENTFILES_FILE2:
+		case ID_RECENTFILES_FILE3:
+		case ID_RECENTFILES_FILE4:
+		case ID_RECENTFILES_FILE5:
+			{
+				int index = LOWORD(wParam) - ID_RECENTFILES_FILE1;
+				std::list<std::string>::const_iterator it;
+				int i;
+				for (i = 0, it = mruList.begin(); it != mruList.end(); ++it, ++i)
+				{
+					if (i == index)
+					{
+						loadDocument(*it);
+						break;
+					}
+				}
+			}
+			break;
+		
+		case ID_FILE_EXIT:
+			DestroyWindow(hwnd);
+			break;
+		
 		case ID_EDIT_UNDO:  SendMessage(trackViewWin, WM_UNDO,  0, 0); break;
 		case ID_EDIT_REDO:  SendMessage(trackViewWin, WM_REDO,  0, 0); break;
 		case ID_EDIT_COPY:  SendMessage(trackViewWin, WM_COPY,  0, 0); break;
@@ -410,7 +530,25 @@ int _tmain(int argc, _TCHAR* argv[])
 	HINSTANCE hInstance = GetModuleHandle(NULL);
 	CoInitialize(NULL);
 	
-#if 1
+#if 0
+	{
+		DWORD test = 0xdeadbeef;
+		setRegString(key, "test", "hallaballa!");
+		RegSetValueEx(key, "test2", 0, REG_DWORD, (BYTE *)&test, sizeof(DWORD));
+		
+		DWORD type = 0;
+		DWORD test2 = 0;
+		DWORD size = sizeof(DWORD);
+		RegQueryValueEx(key, "test2", 0, &type, (LPBYTE)&test2, &size);
+		assert(REG_DWORD == type);
+		printf("%x\n", test2);
+		
+		std::string string;
+		if (getRegString(key, "test", string))
+			printf("\"%s\"\n", string.c_str());
+	}
+#endif
+	
 	if (false == initNetwork())
 	{
 		fputs("Failed to init WinSock", stderr);
@@ -436,14 +574,6 @@ int _tmain(int argc, _TCHAR* argv[])
 	
 	puts("listening...");
 	while ( listen( serverSocket, SOMAXCONN ) == SOCKET_ERROR );
-	
-/*	ULONG nonBlock = 1;
-	if (ioctlsocket(serverSocket, FIONBIO, &nonBlock) == SOCKET_ERROR)
-	{
-		printf("ioctlsocket() failed\n");
-		return 0;
-	} */
-#endif
 	
 	ATOM mainClass      = registerMainWindowClass(hInstance);
 	ATOM trackViewClass = registerTrackViewWindowClass(hInstance);
@@ -479,13 +609,11 @@ int _tmain(int argc, _TCHAR* argv[])
 	ShowWindow(hwnd, TRUE);
 	UpdateWindow(hwnd);
 	
-#if 1
 	bool done = false;
 	MSG msg;
 	bool guiConnected = false;
 	while (!done)
 	{
-#if 1
 		if (!document.clientSocket.connected())
 		{
 			SOCKET clientSocket = INVALID_SOCKET;
@@ -512,16 +640,6 @@ int _tmain(int argc, _TCHAR* argv[])
 					document.sendPauseCommand(true);
 					document.sendSetRowCommand(trackView->getEditRow());
 					guiConnected = true;
-#if 0
-					int flag = 1;
-					return setsockopt(
-						serverSocket,    /* socket affected */
-						IPPROTO_TCP,     /* set option at TCP level */
-						TCP_NODELAY,     /* name of option */
-						(char *) &flag,  /* the cast is historical cruft */
-						sizeof(int)      /* length of option value */
-					);
-#endif
 				}
 				else SendMessage(statusBarWin, SB_SETTEXT, 0, (LPARAM)_T("Not Connected."));
 			}
@@ -598,7 +716,6 @@ int _tmain(int argc, _TCHAR* argv[])
 			guiConnected = false;
 		}
 		
-#endif
 		while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
 		{
 			if (!TranslateAccelerator(hwnd, accel, &msg))
@@ -613,15 +730,6 @@ int _tmain(int argc, _TCHAR* argv[])
 	
 	closesocket(serverSocket);
 	closeNetwork();
-	
-#else
-	// Step 3: The Message Loop
-	while(GetMessage(&msg, NULL, 0, 0) > 0)
-	{
-		TranslateMessage(&msg);
-		DispatchMessage(&msg);
-	}
-#endif
 	
 	delete trackView;
 	trackView = NULL;
