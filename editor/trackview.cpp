@@ -970,41 +970,13 @@ LRESULT TrackView::onKeyDown(UINT keyCode, UINT /*flags*/)
 			break;
 		
 		case VK_HOME:
-			if (GetKeyState(VK_CONTROL) < 0)
-			{
-				setEditRow(0);
-			}
-			else
-			{
-				int remainder = editRow % 0x80;
-				if(remainder)
-				{
-					setEditRow(editRow - remainder);
-				}
-				else
-				{
-					setEditRow(editRow - 0x80);
-				}
-			}
+			if (GetKeyState(VK_CONTROL) < 0) setEditTrack(0);
+			else setEditRow(0);
 			break;
 		
 		case VK_END:
-			if (GetKeyState(VK_CONTROL) < 0)
-			{
-				setEditRow(rows-1);
-			}
-			else
-			{
-				int remainder = editRow % 0x80;
-				if(remainder)
-				{
-					setEditRow(0x80 + editRow - remainder);
-				}
-				else
-				{
-					setEditRow(editRow + 0x80);
-				}
-			}
+			if (GetKeyState(VK_CONTROL) < 0) setEditTrack(getTrackCount() - 1);
+			else setEditRow(rows - 1);
 			break;
 		}
 	}
