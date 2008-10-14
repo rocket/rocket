@@ -46,7 +46,7 @@ public:
 	void selectAll()
 	{
 		selectStartTrack = 0;
-		selectStopTrack = this->getTrackCount() - 1;
+		selectStopTrack = int(this->getTrackCount()) - 1;
 		selectStartRow = 0;
 		selectStopRow = this->getRows() - 1;
 		
@@ -133,7 +133,7 @@ private:
 	}
 	
 	int getScreenY(int row);
-	int getScreenX(int track);
+	int getScreenX(size_t track);
 	
 	size_t getTrackCount() const
 	{

@@ -83,9 +83,9 @@ int TrackView::getScreenY(int row)
 	return topMarginHeight + (row  * fontHeight) - scrollPosY;
 }
 
-int TrackView::getScreenX(int track)
+int TrackView::getScreenX(size_t track)
 {
-	return leftMarginWidth + (track * trackWidth) - scrollPosX;
+	return int(leftMarginWidth + (track * trackWidth)) - scrollPosX;
 }
 
 LRESULT TrackView::onCreate()
@@ -519,7 +519,7 @@ void TrackView::setupScrollBars()
 	si.nPos  = editTrack;
 	si.nPage = windowTracks;
 	si.nMin  = 0;
-	si.nMax  = getTrackCount() - 1 + windowTracks - 1;
+	si.nMax  = int(getTrackCount()) - 1 + windowTracks - 1;
 	SetScrollInfo(hwnd, SB_HORZ, &si, TRUE);
 }
 
@@ -697,7 +697,7 @@ LRESULT TrackView::onHScroll(UINT sbCode, int /*newPos*/)
 		break;
 	
 	case SB_RIGHT:
-		setEditTrack(getTrackCount() - 1);
+		setEditTrack(int(getTrackCount()) - 1);
 		break;
 	
 	case SB_LINELEFT:
