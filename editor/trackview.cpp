@@ -602,7 +602,7 @@ void TrackView::setEditRow(int newEditRow)
 
 void TrackView::setEditTrack(int newEditTrack)
 {
-	assert(size_t(newEditTrack) < getTrackCount());
+	if (0 == getTrackCount()) return;
 	
 	int oldEditTrack = editTrack;
 	editTrack = newEditTrack;
