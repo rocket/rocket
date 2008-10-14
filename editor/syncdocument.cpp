@@ -86,6 +86,8 @@ bool SyncDocument::save(const std::string &fileName)
 			
 			MSXML2::IXMLDOMElementPtr trackElem = doc->createElement(_T("track"));
 			trackElem->setAttribute(_T("name"), track.getName().c_str());
+			
+			rootNode->appendChild(doc->createTextNode("\n\t"));
 			rootNode->appendChild(trackElem);
 			
 			sync::Track::KeyFrameContainer::const_iterator it;
@@ -107,9 +109,13 @@ bool SyncDocument::save(const std::string &fileName)
 				_snprintf(temp, 256, "%d", interpolationType);
 				keyElem->setAttribute(_T("interpolation"), temp);
 				
+				trackElem->appendChild(doc->createTextNode("\n\t\t"));
 				trackElem->appendChild(keyElem);
 			}
+			if (0 != track.keyFrames.size()) trackElem->appendChild(doc->createTextNode("\n\t"));
 		}
+		if (0 != getTrackCount()) rootNode->appendChild(doc->createTextNode("\n"));
+		
 		doc->save(fileName.c_str());
 		savePointDelta = 0;
 		savePointUnreachable = false;
