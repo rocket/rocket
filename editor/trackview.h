@@ -27,7 +27,7 @@ public:
 	SyncDocument *getDocument() { return document; }
 	
 	void setRows(size_t rows);
-	int getRows() const
+	size_t getRows() const
 	{
 		if (NULL == document) return 0;
 		return document->getRows();

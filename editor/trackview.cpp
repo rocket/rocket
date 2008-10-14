@@ -331,7 +331,7 @@ void TrackView::paintTracks(HDC hdc, RECT rcTracks)
 	{
 		RECT rightMargin;
 		rightMargin.top    = getScreenY(0);
-		rightMargin.bottom = getScreenY(getRows());
+		rightMargin.bottom = getScreenY(int(getRows()));
 		rightMargin.left  = getScreenX(getTrackCount());
 		rightMargin.right = rcTracks.right;
 		FillRect( hdc, &rightMargin, GetSysColorBrush(COLOR_APPWORKSPACE));
@@ -339,7 +339,7 @@ void TrackView::paintTracks(HDC hdc, RECT rcTracks)
 	
 	{
 		RECT bottomPadding;
-		bottomPadding.top = getScreenY(getRows());
+		bottomPadding.top = getScreenY(int(getRows()));
 		bottomPadding.bottom = rcTracks.bottom;
 		bottomPadding.left = rcTracks.left;
 		bottomPadding.right = rcTracks.right;
@@ -512,7 +512,7 @@ void TrackView::setupScrollBars()
 	si.nPos  = editRow;
 	si.nPage = windowRows;
 	si.nMin  = 0;
-	si.nMax  = getRows() - 1 + windowRows - 1;
+	si.nMax  = int(getRows()) - 1 + windowRows - 1;
 	SetScrollInfo(hwnd, SB_VERT, &si, TRUE);
 	
 	si.fMask = SIF_POS | SIF_PAGE | SIF_RANGE | SIF_DISABLENOSCROLL;

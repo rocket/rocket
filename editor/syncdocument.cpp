@@ -128,7 +128,6 @@ bool SyncDocument::save(const std::string &fileName)
 		if (0 != getTrackCount()) rootNode->appendChild(doc->createTextNode(_T("\n")));
 		
 		doc->save(fileName.c_str());
-		doc->Release();
 		
 		savePointDelta = 0;
 		savePointUnreachable = false;

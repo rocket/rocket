@@ -194,6 +194,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\recentfiles.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\syncdocument.cpp"
 				>
 			</File>
