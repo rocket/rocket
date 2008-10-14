@@ -264,7 +264,7 @@ void loadDocument(const std::string &_fileName)
 		
 		InvalidateRect(trackViewWin, NULL, FALSE);
 	}
-	else MessageBox(trackViewWin, _T("failed to open file"), mainWindowTitle, MB_OK | MB_ICONERROR | MB_SETFOREGROUND);
+	else MessageBox(hwnd, _T("failed to open file"), mainWindowTitle, MB_OK | MB_ICONERROR | MB_SETFOREGROUND);
 }
 
 void fileOpen()
@@ -310,7 +310,7 @@ void fileSaveAs()
 			mruListInsert(temp);
 			mruListUpdate();
 		}
-		else MessageBox(trackViewWin, _T("Failed to save file"), mainWindowTitle, MB_OK | MB_ICONERROR | MB_SETFOREGROUND);
+		else MessageBox(hwnd, _T("Failed to save file"), mainWindowTitle, MB_OK | MB_ICONERROR | MB_SETFOREGROUND);
 	}
 }
 
@@ -319,7 +319,7 @@ void fileSave()
 	if (fileName.empty()) fileSaveAs();
 	else if (!document.save(fileName.c_str()))
 	{
-		MessageBox(trackViewWin, _T("Failed to save file"), mainWindowTitle, MB_OK | MB_ICONERROR | MB_SETFOREGROUND);
+		MessageBox(hwnd, _T("Failed to save file"), mainWindowTitle, MB_OK | MB_ICONERROR | MB_SETFOREGROUND);
 	}
 }
 
@@ -471,7 +471,7 @@ static LRESULT CALLBACK mainWindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARA
 				HINSTANCE hInstance = GetModuleHandle(NULL);
 				int rows = trackView->getRows();
 				INT_PTR result = DialogBoxParam(hInstance, MAKEINTRESOURCE(IDD_SETROWS), hwnd, (DLGPROC)setRowsDialogProc, (LPARAM)&rows);
-				if (FAILED(result)) MessageBox(NULL, _T("unable to create dialog box"), mainWindowTitle, MB_OK | MB_ICONERROR | MB_SETFOREGROUND);
+				if (FAILED(result)) MessageBox(hwnd, _T("unable to create dialog box"), mainWindowTitle, MB_OK | MB_ICONERROR | MB_SETFOREGROUND);
 			}
 			break;
 		
@@ -480,7 +480,7 @@ static LRESULT CALLBACK mainWindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARA
 				HINSTANCE hInstance = GetModuleHandle(NULL);
 				int initialBias = 0;
 				INT_PTR result = DialogBoxParam(hInstance, MAKEINTRESOURCE(IDD_BIASSELECTION), hwnd, (DLGPROC)biasSelectionDialogProc, (LPARAM)&initialBias);
-				if (FAILED(result)) MessageBox(NULL, _T("unable to create dialog box"), mainWindowTitle, MB_OK | MB_ICONERROR | MB_SETFOREGROUND);
+				if (FAILED(result)) MessageBox(hwnd, _T("unable to create dialog box"), mainWindowTitle, MB_OK | MB_ICONERROR | MB_SETFOREGROUND);
 			}
 			break;
 		}
