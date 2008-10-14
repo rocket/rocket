@@ -47,7 +47,7 @@ bool SyncDocument::load(const std::string &fileName)
 						)
 					);
 					multiCmd->addCommand(
-						this->getSetKeyFrameCommand(
+						new InsertCommand(
 							int(trackIndex),
 							atoi(rowString.c_str()),
 							keyFrame
