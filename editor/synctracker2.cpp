@@ -14,6 +14,7 @@
 #include "trackview.h"
 #include <vector>
 const TCHAR *mainWindowClassName = _T("MainWindow");
+const TCHAR *mainWindowTitle = _T("GNU Rocket System");
 const TCHAR *keyName = _T("SOFTWARE\\GNU Rocket");
 
 HWND hwnd = NULL;
@@ -315,6 +316,14 @@ void fileSave()
 	}
 }
 
+void attemptQuit()
+{
+	UINT res = MessageBox(hwnd, _T("Save before exit?"), mainWindowTitle, MB_YESNOCANCEL | MB_ICONQUESTION);
+	if (IDYES == res) fileSave();
+	if (IDCANCEL != res) DestroyWindow(hwnd);
+}
+
+
 static LRESULT CALLBACK mainWindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
 	switch(msg)
@@ -357,6 +366,10 @@ static LRESULT CALLBACK mainWindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARA
 			initMruList();
 			if (mruList.size() > 0) mruListUpdate();
 		}
+		break;
+
+	case WM_CLOSE:
+		attemptQuit();
 		break;
 	
 	case WM_DESTROY:
@@ -437,7 +450,7 @@ static LRESULT CALLBACK mainWindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARA
 			break;
 		
 		case ID_FILE_EXIT:
-			DestroyWindow(hwnd);
+			attemptQuit();
 			break;
 		
 		case ID_EDIT_UNDO:  SendMessage(trackViewWin, WM_UNDO,  0, 0); break;
@@ -584,7 +597,7 @@ int _tmain(int argc, _TCHAR* argv[])
 	hwnd = CreateWindowEx(
 		0,
 		mainWindowClassName,
-		_T("GNU Rocket System"),
+		mainWindowTitle,
 		WS_OVERLAPPEDWINDOW | WS_CLIPCHILDREN,
 		CW_USEDEFAULT, CW_USEDEFAULT, // x, y
 		CW_USEDEFAULT, CW_USEDEFAULT, // width, height
