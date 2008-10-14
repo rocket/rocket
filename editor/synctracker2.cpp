@@ -222,7 +222,11 @@ void mruListUpdate()
 	for (i = 0, it = mruList.begin(); it != mruList.end(); ++it, ++i)
 	{
 		assert(i <= 5);
-		AppendMenu(mruFileMenu, MF_STRING, ID_RECENTFILES_FILE1 + i, it->c_str());
+		std::string menuEntry = std::string("&");
+		menuEntry += char('1' + i);
+		menuEntry += " ";
+		menuEntry += *it;
+		AppendMenu(mruFileMenu, MF_STRING, ID_RECENTFILES_FILE1 + i, menuEntry.c_str());
 	}
 	DrawMenuBar(hwnd);
 }
@@ -302,6 +306,9 @@ void fileSaveAs()
 		{
 			setWindowFileName(temp);
 			fileName = temp;
+			
+			mruListInsert(temp);
+			mruListUpdate();
 		}
 		else MessageBox(trackViewWin, _T("Failed to save file"), NULL, MB_OK | MB_ICONERROR | MB_SETFOREGROUND);
 	}
