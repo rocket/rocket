@@ -12,6 +12,8 @@
 #include <commdlg.h>
 
 #include "trackview.h"
+#include "recentfiles.h"
+
 #include <vector>
 const TCHAR *mainWindowClassName = _T("MainWindow");
 const TCHAR *mainWindowTitle = _T("GNU Rocket System");
@@ -23,6 +25,7 @@ HWND trackViewWin = NULL;
 HWND statusBarWin = NULL;
 SyncDocument document;
 HKEY regConfigKey = NULL;
+RecentFiles mruFileList(NULL);
 
 #define WM_SETROWS (WM_USER+1)
 #define WM_BIASSELECTION (WM_USER+2)
@@ -131,68 +134,6 @@ void setWindowFileName(std::string fileName)
 	SetWindowText(hwnd, windowTitle.c_str());
 }
 
-bool setRegString(HKEY key, const std::string &name, const std::string &value)
-{
-	return ERROR_SUCCESS == RegSetValueEx(key, name.c_str(), 0, REG_SZ, (BYTE *)value.c_str(), (DWORD)value.size());
-}
-
-bool getRegString(HKEY key, const std::string &name, std::string &out)
-{
-	DWORD size = 0;
-	DWORD type = 0;
-	if (ERROR_SUCCESS != RegQueryValueEx(key, name.c_str(), 0, &type, (LPBYTE)NULL, &size)) return false;
-	if (REG_SZ != type) return false;
-	
-	out.resize(size);
-	DWORD ret = RegQueryValueEx(key, name.c_str(), 0, &type, (LPBYTE)&out[0], &size);
-	while (out.size() > 0 && out[out.size() - 1] == '\0') out.resize(out.size() - 1);
-	
-	assert(ret == ERROR_SUCCESS);
-	assert(REG_SZ == type);
-	assert(size == out.size() + 1);
-
-	return true;
-}
-
-std::list<std::string> mruList;
-
-std::string getMruEntryName(size_t i)
-{
-	std::string temp = std::string("RecentFile");
-	temp += char('0' + i);
-	return temp;
-}
-
-void initMruList()
-{
-	for (size_t i = 0; i < 5; ++i)
-	{
-		std::string fileName;
-		if (getRegString(regConfigKey, getMruEntryName(i), fileName))
-		{
-			mruList.push_back(fileName);
-		}
-	}
-}
-
-void saveMruList()
-{
-	std::list<std::string>::const_iterator it;
-	size_t i;
-	for (i = 0, it = mruList.begin(); it != mruList.end(); ++it, ++i)
-	{
-		assert(i <= 5);
-		setRegString(regConfigKey, getMruEntryName(i), *it);
-	}
-}
-
-void mruListInsert(const std::string fileName)
-{
-	mruList.remove(fileName); // remove, if present
-	mruList.push_front(fileName); // add to front
-	while (mruList.size() > 5) mruList.pop_back(); // remove old entries
-}
-
 HMENU findSubMenuContaining(HMENU menu, UINT id)
 {
 	for (int i = 0; i < GetMenuItemCount(menu); ++i)
@@ -209,26 +150,6 @@ HMENU findSubMenuContaining(HMENU menu, UINT id)
 		}
 	}
 	return (HMENU)0;
-}
-
-HMENU mruFileMenu;
-
-void mruListUpdate()
-{
-	while (0 != RemoveMenu(mruFileMenu, 0, MF_BYPOSITION));
-	
-	std::list<std::string>::const_iterator it;
-	size_t i;
-	for (i = 0, it = mruList.begin(); it != mruList.end(); ++it, ++i)
-	{
-		assert(i <= 5);
-		std::string menuEntry = std::string("&");
-		menuEntry += char('1' + i);
-		menuEntry += " ";
-		menuEntry += *it;
-		AppendMenu(mruFileMenu, MF_STRING, ID_RECENTFILES_FILE1 + i, menuEntry.c_str());
-	}
-	DrawMenuBar(hwnd);
 }
 
 std::string fileName;
@@ -256,8 +177,9 @@ void loadDocument(const std::string &_fileName)
 		setWindowFileName(_fileName.c_str());
 		fileName = _fileName;
 		
-		mruListInsert(_fileName);
-		mruListUpdate();
+		mruFileList.insert(_fileName);
+		mruFileList.update();
+		DrawMenuBar(hwnd);
 		
 		document.clearUndoStack();
 		document.clearRedoStack();
@@ -307,8 +229,9 @@ void fileSaveAs()
 			setWindowFileName(temp);
 			fileName = temp;
 			
-			mruListInsert(temp);
-			mruListUpdate();
+			mruFileList.insert(temp);
+			mruFileList.update();
+			DrawMenuBar(hwnd);
 		}
 		else MessageBox(hwnd, _T("Failed to save file"), mainWindowTitle, MB_OK | MB_ICONERROR | MB_SETFOREGROUND);
 	}
@@ -373,9 +296,8 @@ static LRESULT CALLBACK mainWindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARA
 			}
 
 			/* Recent Files menu */
-			mruFileMenu = findSubMenuContaining(GetMenu(hwnd), ID_RECENTFILES_NORECENTFILES);
-			initMruList();
-			if (mruList.size() > 0) mruListUpdate();
+			mruFileList = RecentFiles(findSubMenuContaining(GetMenu(hwnd), ID_RECENTFILES_NORECENTFILES));
+			mruFileList.load(regConfigKey);
 		}
 		break;
 
@@ -384,7 +306,7 @@ static LRESULT CALLBACK mainWindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARA
 		break;
 	
 	case WM_DESTROY:
-		saveMruList();
+		mruFileList.save(regConfigKey);
 		RegCloseKey(regConfigKey);
 		regConfigKey = NULL;
 		PostQuitMessage(0);
@@ -447,15 +369,10 @@ static LRESULT CALLBACK mainWindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARA
 		case ID_RECENTFILES_FILE5:
 			{
 				int index = LOWORD(wParam) - ID_RECENTFILES_FILE1;
-				std::list<std::string>::const_iterator it;
-				int i;
-				for (i = 0, it = mruList.begin(); it != mruList.end(); ++it, ++i)
+				std::string fileName;
+				if (mruFileList.getEntry(index, fileName))
 				{
-					if (i == index)
-					{
-						loadDocument(*it);
-						break;
-					}
+					loadDocument(fileName);
 				}
 			}
 			break;

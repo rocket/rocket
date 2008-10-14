@@ -228,6 +228,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\recentfiles.h"
+				>
+			</File>
+			<File
 				RelativePath=".\resource.h"
 				>
 			</File>
