@@ -26,7 +26,7 @@ public:
 	const SyncDocument *getDocument() const { return document; }
 	SyncDocument *getDocument() { return document; }
 	
-	void setRows(int rows);
+	void setRows(size_t rows);
 	int getRows() const { return rows; }
 
 	void editEnterValue();
@@ -48,7 +48,7 @@ public:
 		selectStartTrack = 0;
 		selectStopTrack = int(this->getTrackCount()) - 1;
 		selectStartRow = 0;
-		selectStopRow = this->getRows() - 1;
+		selectStopRow = int(this->getRows()) - 1;
 		
 		editTrack = 0;
 		editRow = 0;
@@ -132,8 +132,8 @@ private:
 		InvalidateRect(hwnd, &rect, FALSE);
 	}
 	
-	int getScreenY(int row);
-	int getScreenX(size_t track);
+	int getScreenY(int row) const;
+	int getScreenX(size_t track) const;
 	
 	size_t getTrackCount() const
 	{
@@ -165,7 +165,7 @@ private:
 	HWND hwnd;
 
 	UINT clipboardFormat;
-	int rows;
+	size_t rows;
 };
 
 ATOM registerTrackViewWindowClass(HINSTANCE hInstance);

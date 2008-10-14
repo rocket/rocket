@@ -78,12 +78,12 @@ TrackView::~TrackView()
 	DeleteObject(rowSelectPen);
 }
 
-int TrackView::getScreenY(int row)
+int TrackView::getScreenY(int row) const
 {
 	return topMarginHeight + (row  * fontHeight) - scrollPosY;
 }
 
-int TrackView::getScreenX(size_t track)
+int TrackView::getScreenX(size_t track) const
 {
 	return int(leftMarginWidth + (track * trackWidth)) - scrollPosX;
 }
@@ -184,8 +184,8 @@ void TrackView::paintTracks(HDC hdc, RECT rcTracks)
 	int firstRow = editRow - windowRows / 2 - 1;
 	int lastRow  = editRow + windowRows / 2 + 1;
 	/* clamp first & last row */
-	firstRow = min(max(firstRow, 0), rows - 1);
-	lastRow  = min(max(lastRow,  0), rows - 1);
+	firstRow = min(max(firstRow, 0), int(rows) - 1);
+	lastRow  = min(max(lastRow,  0), int(rows) - 1);
 	
 	SetBkMode(hdc, TRANSPARENT);
 	paintTopMargin(hdc, rcTracks);
@@ -571,7 +571,7 @@ void TrackView::setEditRow(int newEditRow)
 	editRow = newEditRow;
 	
 	// clamp to document
-	editRow = min(max(editRow, 0), rows - 1);
+	editRow = min(max(editRow, 0), int(rows) - 1);
 	
 	if (oldEditRow != editRow)
 	{
@@ -647,11 +647,11 @@ static int getScrollPos(HWND hwnd, int bar)
 	return int(si.nTrackPos);
 }
 
-void TrackView::setRows(int rows)
+void TrackView::setRows(size_t rows)
 {
 	this->rows = rows;
 	InvalidateRect(getWin(), NULL, FALSE);
-	setEditRow(min(editRow, rows - 1));
+	setEditRow(min(editRow, int(rows) - 1));
 }
 
 
