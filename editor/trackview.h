@@ -23,6 +23,7 @@ public:
 	HWND getWin(){ return hwnd; }
 	
 	void setDocument(SyncDocument *document) { this->document = document; }
+	const SyncDocument *getDocument() const { return document; }
 	SyncDocument *getDocument() { return document; }
 	
 	void setRows(int rows);
@@ -134,11 +135,11 @@ private:
 	int getScreenY(int row);
 	int getScreenX(int track);
 	
-	int getTrackCount()
+	size_t getTrackCount() const
 	{
-		sync::Data *syncData = getDocument();
-		if (NULL == syncData) return 0;
-		return int(syncData->getTrackCount());
+		const SyncDocument *doc = getDocument();
+		if (NULL == doc) return 0;
+		return int(doc->getTrackOrderCount());
 	};
 	
 	int selectStartTrack, selectStopTrack;

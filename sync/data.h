@@ -40,7 +40,15 @@ namespace sync
 			assert(NULL != tracks[track]);
 			return *tracks[track];
 		}
-		
+
+		const Track &
+		getTrack(size_t track) const
+		{
+			assert(track < tracks.size());
+			assert(NULL != tracks[track]);
+			return *tracks[track];
+		}
+
 		size_t
 		getTrackCount() const
 		{

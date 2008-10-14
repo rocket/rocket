@@ -26,11 +26,7 @@ bool SyncDocument::load(const std::string &fileName)
 			
 			// look up track-name, create it if it doesn't exist
 			int trackIndex = getTrackIndex(name);
-			if (0 > trackIndex)
-			{
-				trackIndex = int(createTrack(name));
-				trackOrder.push_back(trackIndex);
-			}
+			if (0 > trackIndex) trackIndex = int(createTrack(name));
 			
 			MSXML2::IXMLDOMNodeListPtr rowNodes = trackNode->GetchildNodes();
 			for (int i = 0; i < rowNodes->Getlength(); ++i)

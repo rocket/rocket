@@ -17,6 +17,13 @@ class SyncDocument : public sync::Data
 public:
 	SyncDocument() : sync::Data(), clientPaused(true) {}
 	~SyncDocument();
+
+	size_t createTrack(const std::basic_string<TCHAR> &name)
+	{
+		size_t index = sync::Data::createTrack(name);
+		trackOrder.push_back(index);
+		return index;
+	}
 	
 	void sendSetKeyCommand(int track, int row, const sync::Track::KeyFrame &key)
 	{
@@ -266,11 +273,23 @@ public:
 		else                   cmd = new InsertCommand(track, row, key);
 		return cmd;
 	}
+
+	size_t getTrackOrderCount() const
+	{
+		return trackOrder.size();
+	}
 	
 	size_t getTrackIndexFromPos(size_t track) const
 	{
 		assert(track < trackOrder.size());
 		return trackOrder[track];
+	}
+
+	void swapTrackOrder(size_t t1, size_t t2)
+	{
+		assert(t1 < trackOrder.size());
+		assert(t2 < trackOrder.size());
+		std::swap(trackOrder[t1], trackOrder[t2]);
 	}
 	
 	bool load(const std::string &fileName);
@@ -280,9 +299,8 @@ public:
 	std::map<size_t, size_t> clientRemap;
 	bool clientPaused;
 	
-	std::vector<size_t> trackOrder;
-	
 private:
+	std::vector<size_t> trackOrder;
 	std::stack<Command*> undoStack;
 	std::stack<Command*> redoStack;
 };

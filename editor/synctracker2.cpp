@@ -533,7 +533,6 @@ int _tmain(int argc, _TCHAR* argv[])
 #if 0
 	{
 		DWORD test = 0xdeadbeef;
-		setRegString(key, "test", "hallaballa!");
 		RegSetValueEx(key, "test2", 0, REG_DWORD, (BYTE *)&test, sizeof(DWORD));
 		
 		DWORD type = 0;
@@ -542,10 +541,6 @@ int _tmain(int argc, _TCHAR* argv[])
 		RegQueryValueEx(key, "test2", 0, &type, (LPBYTE)&test2, &size);
 		assert(REG_DWORD == type);
 		printf("%x\n", test2);
-		
-		std::string string;
-		if (getRegString(key, "test", string))
-			printf("\"%s\"\n", string.c_str());
 	}
 #endif
 	
@@ -673,11 +668,7 @@ int _tmain(int argc, _TCHAR* argv[])
 							
 							// find track
 							int serverIndex = document.getTrackIndex(trackName);
-							if (0 > serverIndex)
-							{
-								serverIndex = int(document.createTrack(trackName));
-								document.trackOrder.push_back(serverIndex);
-							}
+							if (0 > serverIndex) serverIndex = int(document.createTrack(trackName));
 							
 							// setup remap
 							document.clientRemap[serverIndex] = clientIndex;
