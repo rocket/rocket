@@ -325,9 +325,13 @@ void fileSave()
 
 void attemptQuit()
 {
-	UINT res = MessageBox(hwnd, _T("Save before exit?"), mainWindowTitle, MB_YESNOCANCEL | MB_ICONQUESTION);
-	if (IDYES == res) fileSave();
-	if (IDCANCEL != res) DestroyWindow(hwnd);
+	if (document.modified())
+	{
+		UINT res = MessageBox(hwnd, _T("Save before exit?"), mainWindowTitle, MB_YESNOCANCEL | MB_ICONQUESTION);
+		if (IDYES == res) fileSave();
+		if (IDCANCEL != res) DestroyWindow(hwnd);
+	}
+	else DestroyWindow(hwnd);
 }
 
 

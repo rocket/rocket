@@ -57,6 +57,8 @@ bool SyncDocument::load(const std::string &fileName)
 			}
 		}
 		this->exec(multiCmd);
+		savePointDelta = 0;
+		savePointUnreachable = false;
 	}
 	catch(_com_error &e)
 	{
@@ -108,13 +110,14 @@ bool SyncDocument::save(const std::string &fileName)
 				trackElem->appendChild(keyElem);
 			}
 		}
-		
 		doc->save(fileName.c_str());
+		savePointDelta = 0;
+		savePointUnreachable = false;
 	}
 	catch(_com_error &e)
 	{
 		char temp[256];
-		_snprintf(temp, 256, "Error loading: %s\n", (const char*)_bstr_t(e.Description()));
+		_snprintf(temp, 256, "Error saving: %s\n", (const char*)_bstr_t(e.Description()));
 		MessageBox(NULL, temp, NULL, MB_OK | MB_ICONERROR | MB_SETFOREGROUND);
 		return false;
 	}

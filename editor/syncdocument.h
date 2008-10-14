@@ -15,7 +15,7 @@
 class SyncDocument : public sync::Data
 {
 public:
-	SyncDocument() : sync::Data(), clientPaused(true) {}
+	SyncDocument() : sync::Data(), clientPaused(true), savePointDelta(0), savePointUnreachable(true) {}
 	~SyncDocument();
 
 	size_t createTrack(const std::basic_string<TCHAR> &name)
@@ -219,6 +219,9 @@ public:
 		undoStack.push(cmd);
 		cmd->exec(this);
 		clearRedoStack();
+
+		if (savePointDelta < 0) savePointUnreachable = true;
+		savePointDelta++;
 	}
 	
 	bool undo()
@@ -230,6 +233,9 @@ public:
 		
 		redoStack.push(cmd);
 		cmd->undo(this);
+		
+		savePointDelta--;
+		
 		return true;
 	}
 	
@@ -242,6 +248,9 @@ public:
 		
 		undoStack.push(cmd);
 		cmd->exec(this);
+
+		savePointDelta++;
+
 		return true;
 	}
 	
@@ -294,6 +303,12 @@ public:
 	
 	bool load(const std::string &fileName);
 	bool save(const std::string &fileName);
+
+	bool modified()
+	{
+		if (savePointUnreachable) return true;
+		return 0 != savePointDelta;
+	}
 	
 	NetworkSocket clientSocket;
 	std::map<size_t, size_t> clientRemap;
@@ -301,6 +316,11 @@ public:
 	
 private:
 	std::vector<size_t> trackOrder;
+
+	// undo / redo functionality
 	std::stack<Command*> undoStack;
 	std::stack<Command*> redoStack;
+	int savePointDelta;        // how many undos must be done to get to the last saved state
+	bool savePointUnreachable; // is the save-point reachable?
+
 };
