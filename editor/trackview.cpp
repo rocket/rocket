@@ -1109,15 +1109,6 @@ LRESULT TrackView::windowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	switch(msg)
 	{
 	case WM_CREATE:  return onCreate();
-	
-	case WM_CLOSE:
-		DestroyWindow(hwnd);
-		break;
-	
-	case WM_DESTROY:
-		PostQuitMessage(0);
-		break;
-	
 	case WM_SIZE:    return onSize(LOWORD(lParam), HIWORD(lParam));
 	case WM_VSCROLL: return onVScroll(LOWORD(wParam), getScrollPos(hwnd, SB_VERT));
 	case WM_HSCROLL: return onHScroll(LOWORD(wParam), getScrollPos(hwnd, SB_HORZ));
