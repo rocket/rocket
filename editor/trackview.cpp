@@ -738,12 +738,12 @@ void TrackView::editEnterValue()
 		sync::Track::KeyFrame newKey;
 		if (t.isKeyFrame(editRow)) newKey = *t.getKeyFrame(editRow); // copy old key
 		newKey.value = float(_tstof(editString.c_str())); // modify value
+		editString.clear();
 		
 		SyncDocument::Command *cmd = doc->getSetKeyFrameCommand(int(trackIndex), editRow, newKey);
 		doc->exec(cmd);
 		
-		editString.clear();
-//		invalidatePos(editTrack, editRow);
+		SendMessage(GetParent(getWin()), WM_CURRVALDIRTY, 0, 0);
 		InvalidateRect(getWin(), NULL, FALSE);
 	}
 	else MessageBeep(-1);
@@ -786,7 +786,8 @@ void TrackView::editToggleInterpolationType()
 		SyncDocument::Command *cmd = doc->getSetKeyFrameCommand(int(trackIndex), int(lower->first), newKey);
 		doc->exec(cmd);
 		
-		invalidateRange(editTrack, editTrack, int(lower->first), int(upper->first));
+		SendMessage(GetParent(getWin()), WM_CURRVALDIRTY, 0, 0);
+		InvalidateRect(getWin(), NULL, FALSE);
 	}
 	else MessageBeep(-1);
 }
@@ -828,8 +829,9 @@ void TrackView::editDelete()
 	else
 	{
 		doc->exec(multiCmd);
+		
+		SendMessage(GetParent(getWin()), WM_CURRVALDIRTY, 0, 0);
 		InvalidateRect(getWin(), NULL, FALSE);
-//		invalidateRange(selectLeft, selectRight, selectTop, selectBottom);
 	}
 }
 
@@ -878,6 +880,8 @@ void TrackView::editBiasValue(float amount)
 	else
 	{
 		doc->exec(multiCmd);
+		
+		SendMessage(GetParent(getWin()), WM_CURRVALDIRTY, 0, 0);
 		invalidateRange(selectLeft, selectRight, selectTop, selectBottom);
 	}
 }
@@ -975,7 +979,7 @@ LRESULT TrackView::onKeyDown(UINT keyCode, UINT /*flags*/)
 			break;
 		
 		case VK_END:
-			if (GetKeyState(VK_CONTROL) < 0) setEditTrack(getTrackCount() - 1);
+			if (GetKeyState(VK_CONTROL) < 0) setEditTrack(int(getTrackCount()) - 1);
 			else setEditRow(rows - 1);
 			break;
 		}
@@ -1092,6 +1096,7 @@ LRESULT TrackView::windowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	case WM_CUT:   editCut();   break;
 	case WM_PASTE:
 		editPaste();
+		SendMessage(GetParent(getWin()), WM_CURRVALDIRTY, 0, 0);
 		InvalidateRect(hwnd, NULL, FALSE);
 		break;
 	
