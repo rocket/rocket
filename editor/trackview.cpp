@@ -38,7 +38,6 @@ TrackView::TrackView()
 	
 	editRow = 0;
 	editTrack = 0;
-	rows = 0x80;
 	
 	selectStartTrack = selectStopTrack = 0;
 	selectStartRow = selectStopRow = 0;
@@ -183,9 +182,10 @@ void TrackView::paintTracks(HDC hdc, RECT rcTracks)
 	
 	int firstRow = editRow - windowRows / 2 - 1;
 	int lastRow  = editRow + windowRows / 2 + 1;
+	
 	/* clamp first & last row */
-	firstRow = min(max(firstRow, 0), int(rows) - 1);
-	lastRow  = min(max(lastRow,  0), int(rows) - 1);
+	firstRow = min(max(firstRow, 0), int(getRows()) - 1);
+	lastRow  = min(max(lastRow,  0), int(getRows()) - 1);
 	
 	SetBkMode(hdc, TRANSPARENT);
 	paintTopMargin(hdc, rcTracks);
@@ -331,7 +331,7 @@ void TrackView::paintTracks(HDC hdc, RECT rcTracks)
 	{
 		RECT rightMargin;
 		rightMargin.top    = getScreenY(0);
-		rightMargin.bottom = getScreenY(rows);
+		rightMargin.bottom = getScreenY(getRows());
 		rightMargin.left  = getScreenX(getTrackCount());
 		rightMargin.right = rcTracks.right;
 		FillRect( hdc, &rightMargin, GetSysColorBrush(COLOR_APPWORKSPACE));
@@ -339,7 +339,7 @@ void TrackView::paintTracks(HDC hdc, RECT rcTracks)
 	
 	{
 		RECT bottomPadding;
-		bottomPadding.top = getScreenY(rows);
+		bottomPadding.top = getScreenY(getRows());
 		bottomPadding.bottom = rcTracks.bottom;
 		bottomPadding.left = rcTracks.left;
 		bottomPadding.right = rcTracks.right;
@@ -512,7 +512,7 @@ void TrackView::setupScrollBars()
 	si.nPos  = editRow;
 	si.nPage = windowRows;
 	si.nMin  = 0;
-	si.nMax  = rows - 1 + windowRows - 1;
+	si.nMax  = getRows() - 1 + windowRows - 1;
 	SetScrollInfo(hwnd, SB_VERT, &si, TRUE);
 	
 	si.fMask = SIF_POS | SIF_PAGE | SIF_RANGE | SIF_DISABLENOSCROLL;
@@ -571,7 +571,7 @@ void TrackView::setEditRow(int newEditRow)
 	editRow = newEditRow;
 	
 	// clamp to document
-	editRow = min(max(editRow, 0), int(rows) - 1);
+	editRow = min(max(editRow, 0), int(getRows()) - 1);
 	
 	if (oldEditRow != editRow)
 	{
@@ -649,7 +649,7 @@ static int getScrollPos(HWND hwnd, int bar)
 
 void TrackView::setRows(size_t rows)
 {
-	this->rows = rows;
+	document->setRows(rows);
 	InvalidateRect(getWin(), NULL, FALSE);
 	setEditRow(min(editRow, int(rows) - 1));
 }
@@ -980,7 +980,7 @@ LRESULT TrackView::onKeyDown(UINT keyCode, UINT /*flags*/)
 		
 		case VK_END:
 			if (GetKeyState(VK_CONTROL) < 0) setEditTrack(int(getTrackCount()) - 1);
-			else setEditRow(rows - 1);
+			else setEditRow(int(getRows()) - 1);
 			break;
 		}
 	}

@@ -15,7 +15,7 @@
 class SyncDocument : public sync::Data
 {
 public:
-	SyncDocument() : sync::Data(), clientPaused(true), savePointDelta(0), savePointUnreachable(true) {}
+	SyncDocument() : sync::Data(), clientPaused(true), rows(128), savePointDelta(0), savePointUnreachable(true) {}
 	~SyncDocument();
 
 	size_t createTrack(const std::basic_string<TCHAR> &name)
@@ -313,10 +313,14 @@ public:
 	NetworkSocket clientSocket;
 	std::map<size_t, size_t> clientRemap;
 	bool clientPaused;
+
+	size_t getRows() const { return rows; }
+	void setRows(size_t rows) { this->rows = rows; }
 	
 private:
 	std::vector<size_t> trackOrder;
-
+	size_t rows;
+	
 	// undo / redo functionality
 	std::stack<Command*> undoStack;
 	std::stack<Command*> redoStack;

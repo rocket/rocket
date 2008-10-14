@@ -16,6 +16,14 @@ bool SyncDocument::load(const std::string &fileName)
 		SyncDocument::MultiCommand *multiCmd = new SyncDocument::MultiCommand();
 		
 		doc->load(fileName.c_str());
+		MSXML2::IXMLDOMNamedNodeMapPtr attribs = doc->documentElement->Getattributes();
+		MSXML2::IXMLDOMNodePtr rowsParam = attribs->getNamedItem("rows");
+		if (NULL != rowsParam)
+		{
+			std::string rowsString = rowsParam->Gettext();
+			this->setRows(atoi(rowsString.c_str()));
+		}
+		
 		MSXML2::IXMLDOMNodeListPtr trackNodes = doc->documentElement->selectNodes("track");
 		for (int i = 0; i < trackNodes->Getlength(); ++i)
 		{
@@ -76,9 +84,13 @@ bool SyncDocument::save(const std::string &fileName)
 	MSXML2::IXMLDOMDocumentPtr doc(MSXML2::CLSID_DOMDocument);
 	try
 	{
+		char temp[256];
 		_variant_t varNodeType((short)MSXML2::NODE_ELEMENT);
-		MSXML2::IXMLDOMNodePtr rootNode = doc->createNode(varNodeType, _T("tracks"), _T(""));
+		MSXML2::IXMLDOMElementPtr rootNode = doc->createElement(_T("tracks"));
 		doc->appendChild(rootNode);
+
+		_snprintf(temp, 256, "%d", getRows());
+		rootNode->setAttribute(_T("rows"), temp);
 		
 		for (size_t i = 0; i < getTrackCount(); ++i)
 		{
@@ -87,36 +99,37 @@ bool SyncDocument::save(const std::string &fileName)
 			MSXML2::IXMLDOMElementPtr trackElem = doc->createElement(_T("track"));
 			trackElem->setAttribute(_T("name"), track.getName().c_str());
 			
-			rootNode->appendChild(doc->createTextNode("\n\t"));
+			rootNode->appendChild(doc->createTextNode(_T("\n\t")));
 			rootNode->appendChild(trackElem);
 			
 			sync::Track::KeyFrameContainer::const_iterator it;
 			for (it = track.keyFrames.begin(); it != track.keyFrames.end(); ++it)
 			{
-				char temp[256];
 				size_t row = it->first;
 				float value = it->second.value;
 				char interpolationType = char(it->second.interpolationType);
 				
 				MSXML2::IXMLDOMElementPtr keyElem = doc->createElement(_T("key"));
 				
-				_snprintf(temp, 256, "%d", row);
+				_snprintf(temp, 256, _T("%d"), row);
 				keyElem->setAttribute(_T("row"), temp);
 				
-				_snprintf(temp, 256, "%f", value);
+				_snprintf(temp, 256, _T("%f"), value);
 				keyElem->setAttribute(_T("value"), temp);
 				
-				_snprintf(temp, 256, "%d", interpolationType);
+				_snprintf(temp, 256, _T("%d"), interpolationType);
 				keyElem->setAttribute(_T("interpolation"), temp);
 				
-				trackElem->appendChild(doc->createTextNode("\n\t\t"));
+				trackElem->appendChild(doc->createTextNode(_T("\n\t\t")));
 				trackElem->appendChild(keyElem);
 			}
-			if (0 != track.keyFrames.size()) trackElem->appendChild(doc->createTextNode("\n\t"));
+			if (0 != track.keyFrames.size()) trackElem->appendChild(doc->createTextNode(_T("\n\t")));
 		}
-		if (0 != getTrackCount()) rootNode->appendChild(doc->createTextNode("\n"));
+		if (0 != getTrackCount()) rootNode->appendChild(doc->createTextNode(_T("\n")));
 		
 		doc->save(fileName.c_str());
+		doc->Release();
+		
 		savePointDelta = 0;
 		savePointUnreachable = false;
 	}

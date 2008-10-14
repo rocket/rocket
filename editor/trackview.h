@@ -27,7 +27,11 @@ public:
 	SyncDocument *getDocument() { return document; }
 	
 	void setRows(size_t rows);
-	int getRows() const { return rows; }
+	int getRows() const
+	{
+		if (NULL == document) return 0;
+		return document->getRows();
+	}
 
 	void editEnterValue();
 	void editDelete();
@@ -165,7 +169,6 @@ private:
 	HWND hwnd;
 
 	UINT clipboardFormat;
-	size_t rows;
 };
 
 ATOM registerTrackViewWindowClass(HINSTANCE hInstance);
