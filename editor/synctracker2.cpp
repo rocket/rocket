@@ -184,6 +184,7 @@ void loadDocument(const std::string &_fileName)
 		document.clearUndoStack();
 		document.clearRedoStack();
 		
+		SendMessage(hwnd, WM_CURRVALDIRTY, 0, 0);
 		InvalidateRect(trackViewWin, NULL, FALSE);
 	}
 	else MessageBox(hwnd, _T("failed to open file"), mainWindowTitle, MB_OK | MB_ICONERROR | MB_SETFOREGROUND);
