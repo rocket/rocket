@@ -1,6 +1,8 @@
 #include "recentfiles.h"
 #include "resource.h"
 
+#define MAX_DIR_LEN 64
+
 static bool setRegString(HKEY key, const std::string &name, const std::string &value)
 {
 	return ERROR_SUCCESS == RegSetValueEx(key, name.c_str(), 0, REG_SZ, (BYTE *)value.c_str(), (DWORD)value.size());
@@ -59,7 +61,6 @@ void RecentFiles::insert(const std::string &fileName)
 void RecentFiles::update()
 {
 	while (0 != RemoveMenu(mruFileMenu, 0, MF_BYPOSITION));
-
 	std::list<std::string>::const_iterator it;
 	size_t i;
 	for (i = 0, it = mruList.begin(); it != mruList.end(); ++it, ++i)
@@ -68,7 +69,13 @@ void RecentFiles::update()
 		std::string menuEntry = std::string("&");
 		menuEntry += char('1' + i);
 		menuEntry += " ";
-		menuEntry += *it;
+		
+		TCHAR path[_MAX_PATH], drive[_MAX_DRIVE], dir[_MAX_DIR], fname[_MAX_FNAME], ext[_MAX_EXT];
+		_tsplitpath(it->c_str(), drive, dir, fname, ext);
+		if (_tcslen(dir) > MAX_DIR_LEN) _tcscpy(dir, _T("\\..."));
+		_tmakepath(path, drive, dir, fname, ext);
+		menuEntry += std::string(path);
+
 		AppendMenu(mruFileMenu, MF_STRING, ID_RECENTFILES_FILE1 + i, menuEntry.c_str());
 	}
 }
