@@ -130,7 +130,9 @@ static LRESULT CALLBACK biasSelectionDialogProc(HWND hDlg, UINT message, WPARAM 
 
 void setWindowFileName(std::string fileName)
 {
-	std::string windowTitle = std::string("GNU Rocket System - ") + fileName;
+	TCHAR drive[_MAX_DRIVE],dir[_MAX_DIR],fname[_MAX_FNAME],ext[_MAX_EXT];
+	_tsplitpath(fileName.c_str(), drive, dir, fname, ext);
+	std::string windowTitle = std::string(fname) + std::string(" - ") + std::string(mainWindowTitle);
 	SetWindowText(hwnd, windowTitle.c_str());
 }
 
@@ -391,7 +393,7 @@ static LRESULT CALLBACK mainWindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARA
 		case ID_EDIT_SETROWS:
 			{
 				HINSTANCE hInstance = GetModuleHandle(NULL);
-				int rows = trackView->getRows();
+				int rows = int(trackView->getRows());
 				INT_PTR result = DialogBoxParam(hInstance, MAKEINTRESOURCE(IDD_SETROWS), hwnd, (DLGPROC)setRowsDialogProc, (LPARAM)&rows);
 				if (FAILED(result)) MessageBox(hwnd, _T("unable to create dialog box"), mainWindowTitle, MB_OK | MB_ICONERROR | MB_SETFOREGROUND);
 			}
