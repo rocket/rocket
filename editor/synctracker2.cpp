@@ -229,6 +229,7 @@ void fileSaveAs()
 	{
 		if (document.save(temp))
 		{
+			document.sendSaveCommand();
 			setWindowFileName(temp);
 			fileName = temp;
 			
@@ -245,6 +246,7 @@ void fileSave()
 	if (fileName.empty()) fileSaveAs();
 	else if (!document.save(fileName.c_str()))
 	{
+		document.sendSaveCommand();
 		MessageBox(hwnd, _T("Failed to save file"), mainWindowTitle, MB_OK | MB_ICONERROR | MB_SETFOREGROUND);
 	}
 }
