@@ -90,7 +90,7 @@ public:
 		InsertCommand(int track, int row, const sync::Track::KeyFrame &key) : track(track), row(row), key(key) {}
 		~InsertCommand() {}
 		
-		virtual void exec(SyncDocument *data)
+		void exec(SyncDocument *data)
 		{
 			sync::Track &t = data->getTrack(this->track);
 			assert(!t.isKeyFrame(row));
@@ -98,7 +98,7 @@ public:
 			data->sendSetKeyCommand(track, row, key); // update clients
 		}
 		
-		virtual void undo(SyncDocument *data)
+		void undo(SyncDocument *data)
 		{
 			sync::Track &t = data->getTrack(this->track);
 			assert(t.isKeyFrame(row));
@@ -118,7 +118,7 @@ public:
 		DeleteCommand(int track, int row) : track(track), row(row) {}
 		~DeleteCommand() {}
 		
-		virtual void exec(SyncDocument *data)
+		void exec(SyncDocument *data)
 		{
 			sync::Track &t = data->getTrack(this->track);
 			assert(t.isKeyFrame(row));
@@ -128,7 +128,7 @@ public:
 			data->sendDeleteKeyCommand(track, row); // update clients
 		}
 		
-		virtual void undo(SyncDocument *data)
+		void undo(SyncDocument *data)
 		{
 			sync::Track &t = data->getTrack(this->track);
 			assert(!t.isKeyFrame(row));
@@ -149,7 +149,7 @@ public:
 		EditCommand(int track, int row, const sync::Track::KeyFrame &key) : track(track), row(row), key(key) {}
 		~EditCommand() {}
 		
-		virtual void exec(SyncDocument *data)
+		void exec(SyncDocument *data)
 		{
 			sync::Track &t = data->getTrack(this->track);
 			
@@ -163,7 +163,7 @@ public:
 			data->sendSetKeyCommand(track, row, key); // update clients
 		}
 		
-		virtual void undo(SyncDocument *data)
+		void undo(SyncDocument *data)
 		{
 			sync::Track &t = data->getTrack(this->track);
 			
@@ -198,13 +198,13 @@ public:
 		
 		size_t getSize() const { return commands.size(); }
 		
-		virtual void exec(SyncDocument *data)
+		void exec(SyncDocument *data)
 		{
 			std::list<Command*>::iterator it;
 			for (it = commands.begin(); it != commands.end(); ++it) (*it)->exec(data);
 		}
 		
-		virtual void undo(SyncDocument *data)
+		void undo(SyncDocument *data)
 		{
 			std::list<Command*>::reverse_iterator it;
 			for (it = commands.rbegin(); it != commands.rend(); ++it) (*it)->undo(data);
