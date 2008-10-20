@@ -206,8 +206,8 @@ public:
 		
 		virtual void undo(SyncDocument *data)
 		{
-			std::list<Command*>::iterator it;
-			for (it = commands.begin(); it != commands.end(); ++it) (*it)->undo(data);
+			std::list<Command*>::reverse_iterator it;
+			for (it = commands.rbegin(); it != commands.rend(); ++it) (*it)->undo(data);
 		}
 		
 	private:
