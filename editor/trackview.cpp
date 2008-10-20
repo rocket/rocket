@@ -475,27 +475,49 @@ void TrackView::editPaste()
 		memcpy(&buffer_height, clipbuf + sizeof(int),     sizeof(int));
 		memcpy(&buffer_size,   clipbuf + 2 * sizeof(int), sizeof(size_t));
 		
-		if (buffer_size > 0)
+		SyncDocument::MultiCommand *multiCmd = new SyncDocument::MultiCommand();
+		for (int t = 0; t < buffer_width; ++t)
 		{
-			char *src = clipbuf + 2 * sizeof(int) + sizeof(size_t);
+			size_t trackPos = editTrack + t;
+			if (trackPos >= getTrackCount()) continue;
 			
-			SyncDocument::MultiCommand *multiCmd = new SyncDocument::MultiCommand();
-			for (int i = 0; i < buffer_size; ++i)
+			size_t trackIndex = doc->getTrackIndexFromPos(trackPos);
+			const sync::Track &track = doc->getTrack(trackIndex);
+			
+			for (int r = 0; r < buffer_height; ++r)
 			{
-				struct CopyEntry ce;
-				memcpy(&ce, src, sizeof(CopyEntry));
-				src += sizeof(CopyEntry);
-				
-				size_t trackPos = editTrack + ce.track;
-				if (trackPos < getTrackCount())
+				int row = editRow + r;
+				if (track.isKeyFrame(row))
 				{
-					size_t trackIndex = doc->getTrackIndexFromPos(trackPos);
-					SyncDocument::Command *cmd = doc->getSetKeyFrameCommand(int(trackIndex), editRow + ce.row, ce.keyFrame);
-					multiCmd->addCommand(cmd);
+					multiCmd->addCommand(new SyncDocument::DeleteCommand(int(trackIndex), row));
 				}
 			}
-			doc->exec(multiCmd);
 		}
+		
+		char *src = clipbuf + 2 * sizeof(int) + sizeof(size_t);
+		for (int i = 0; i < buffer_size; ++i)
+		{
+			struct CopyEntry ce;
+			memcpy(&ce, src, sizeof(CopyEntry));
+			src += sizeof(CopyEntry);
+			
+			assert(ce.track >= 0);
+			assert(ce.track < buffer_width);
+			assert(ce.row >= 0);
+			assert(ce.row < buffer_height);
+			
+			size_t trackPos = editTrack + ce.track;
+			if (trackPos < getTrackCount())
+			{
+				size_t trackIndex = doc->getTrackIndexFromPos(trackPos);
+				size_t row = editRow + ce.row;
+				
+				// since we deleted all keyframes in the edit-box already, we can just insert this one. 
+				SyncDocument::Command *cmd = new SyncDocument::InsertCommand(int(trackIndex), int(row), ce.keyFrame);
+				multiCmd->addCommand(cmd);
+			}
+		}
+		doc->exec(multiCmd);
 		
 		GlobalUnlock(hmem);
 		clipbuf = NULL;
