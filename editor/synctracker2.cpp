@@ -299,13 +299,13 @@ static LRESULT CALLBACK mainWindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARA
 					exit(-1);
 				}
 			}
-
+			
 			/* Recent Files menu */
 			mruFileList = RecentFiles(findSubMenuContaining(GetMenu(hwnd), ID_RECENTFILES_NORECENTFILES));
 			mruFileList.load(regConfigKey);
 		}
 		break;
-
+	
 	case WM_CLOSE:
 		attemptQuit();
 		break;
@@ -362,7 +362,7 @@ static LRESULT CALLBACK mainWindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARA
 		case ID_FILE_SAVE:
 			fileSave();
 			break;
-
+		
 		case ID_FILE_REMOTEEXPORT:
 			document.sendSaveCommand();
 			break;
