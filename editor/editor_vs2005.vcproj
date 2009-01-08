@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="Windows-1252"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="8,00"
+	Version="8.00"
 	Name="sync_editor"
 	ProjectGUID="{76B44BC8-8BB4-4B6E-B2FA-7738C9E7F80B}"
 	RootNamespace="sync_editor"
@@ -62,7 +62,6 @@
 				Name="VCLinkerTool"
 				AdditionalDependencies="ws2_32.lib comctl32.lib comsupp.lib comsuppwd.lib"
 				LinkIncremental="2"
-				GenerateManifest="false"
 				GenerateDebugInformation="true"
 				SubSystem="1"
 				TargetMachine="1"
@@ -72,7 +71,6 @@
 			/>
 			<Tool
 				Name="VCManifestTool"
-				EmbedManifest="false"
 			/>
 			<Tool
 				Name="VCXDCMakeTool"

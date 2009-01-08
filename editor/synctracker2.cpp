@@ -11,6 +11,15 @@
 #include <objbase.h>
 #include <commdlg.h>
 
+// Windows XP look and feel. Seems to enable Vista look as well.
+#pragma comment(linker, \
+	"\"/manifestdependency:type='Win32' "\
+	"name='Microsoft.Windows.Common-Controls' "\
+	"version='6.0.0.0' "\
+	"processorArchitecture='*' "\
+	"publicKeyToken='6595b64144ccf1df' "\
+	"language='*'\"")
+
 #include "trackview.h"
 #include "recentfiles.h"
 
