@@ -46,7 +46,7 @@ int main(int argc, char *argv[])
 		if (NULL == d3d) throw std::string("update directx, fool.");
 		
 		// create a window
-		HWND hwnd = CreateWindowEx(0, "static", "BIG", WS_POPUP | WS_VISIBLE, 0, 0, width, height, 0, 0, GetModuleHandle(0), 0);
+		HWND hwnd = CreateWindowEx(0, "static", "GNU Rocket Example", WS_POPUP | WS_VISIBLE, 0, 0, width, height, 0, 0, GetModuleHandle(0), 0);
 		
 		// create the device
 		IDirect3DDevice9 *device = NULL;
@@ -56,14 +56,17 @@ int main(int argc, char *argv[])
 		
 		// init BASS
 		int soundDevice = 1;
-		if (!BASS_Init(soundDevice, 44100, BASS_DEVICE_LATENCY, 0, 0)) throw std::string("failed to init bass");
+		if (!BASS_Init(soundDevice, 44100, 0, hwnd, 0)) throw std::string("failed to init bass");
 		
 		// load tune
 		HSTREAM stream = BASS_StreamCreateFile(false, "tune.ogg", 0, 0, BASS_MP3_SETPOS | ((0 == soundDevice) ? BASS_STREAM_DECODE : 0));
 		if (!stream) throw std::string("failed to open tune");
 		
+		// let's just assume 150 BPM (this holds true for the included tune)
+		float bpm = 150.0f;
+		
 		// setup timer and construct sync-device
-		BassTimer timer(stream, 150.0f, 8);
+		BassTimer timer(stream, bpm, 8);
 		std::auto_ptr<sync::Device> syncDevice = std::auto_ptr<sync::Device>(sync::createDevice("sync", timer));
 		if (NULL == syncDevice.get()) throw std::string("something went wrong - failed to connect to host?");
 		
