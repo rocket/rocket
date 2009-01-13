@@ -32,7 +32,7 @@ public:
 		if (NULL == document) return 0;
 		return document->getRows();
 	}
-
+	
 	void editEnterValue();
 	void editDelete();
 	void editCopy();
@@ -167,7 +167,7 @@ private:
 	std::basic_string<TCHAR> editString;
 	
 	HWND hwnd;
-
+	
 	UINT clipboardFormat;
 };
 
