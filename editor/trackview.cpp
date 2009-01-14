@@ -7,13 +7,28 @@
 
 static const TCHAR *trackViewWindowClassName = _T("TrackView");
 
-static const int topMarginHeight = 20;
-static const int leftMarginWidth = 60;
-
 static DWORD darken(DWORD col, float amt)
 {
 	return RGB(GetRValue(col) * amt, GetGValue(col) * amt, GetBValue(col) * amt);
 }
+
+static int getMaxCharacterWidth(HDC hdc, TCHAR *chars, size_t len)
+{
+	int maxDigitWidth = 0;
+	for (size_t i = 0; i < len; ++i)
+	{
+		SIZE size;
+		GetTextExtentPoint32(hdc, &chars[i], 1, &size);
+		maxDigitWidth = max(maxDigitWidth, int(size.cx));
+	}
+	return maxDigitWidth;
+}
+
+static int getMaxCharacterWidthFromString(HDC hdc, TCHAR *chars)
+{
+	return getMaxCharacterWidth(hdc, chars, _tcslen(chars));
+}
+
 
 void TrackView::setFont(HFONT font)
 {
@@ -28,7 +43,10 @@ void TrackView::setFont(HFONT font)
 	
 	rowHeight = tm.tmHeight + tm.tmExternalLeading;
 	fontWidth = tm.tmAveCharWidth;
-	trackWidth = fontWidth * 16;
+	trackWidth = getMaxCharacterWidthFromString(hdc, _T("0123456789.")) * 16;
+	
+	topMarginHeight = rowHeight + 4;
+	leftMarginWidth = getMaxCharacterWidthFromString(hdc, _T("0123456789abcdefh")) * 8;
 }
 
 TrackView::TrackView()

@@ -155,6 +155,9 @@ private:
 	int rowHeight;
 	int fontWidth;
 	int trackWidth;
+	int topMarginHeight;
+	int leftMarginWidth;
+
 	
 	HBRUSH bgBaseBrush, bgDarkBrush;
 	HBRUSH selectBaseBrush, selectDarkBrush;
