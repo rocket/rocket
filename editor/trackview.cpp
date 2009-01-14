@@ -19,8 +19,15 @@ void TrackView::setFont(HFONT font)
 {
 	this->font = font;
 	
-	rowHeight = 16;
-	fontWidth = 6;
+	assert(NULL != hwnd);
+	HDC hdc = GetDC(hwnd);
+	SelectObject(hdc, font);
+	
+	TEXTMETRIC tm;
+	GetTextMetrics(hdc, &tm);
+	
+	rowHeight = tm.tmHeight + tm.tmExternalLeading;
+	fontWidth = tm.tmAveCharWidth;
 	trackWidth = fontWidth * 16;
 }
 
@@ -48,11 +55,6 @@ TrackView::TrackView()
 	selectStartRow = selectStopRow = 0;
 	
 	this->hwnd = NULL;
-	
-//	setFont((HFONT)GetStockObject(SYSTEM_FONT));
-	setFont((HFONT)GetStockObject(SYSTEM_FIXED_FONT));
-//	font = (HFONT)GetStockObject(SYSTEM_FONT);
-//	font = (HFONT)GetStockObject(SYSTEM_FIXED_FONT);
 	
 	bgBaseBrush = GetSysColorBrush(COLOR_WINDOW);
 	bgDarkBrush = CreateSolidBrush(darken(GetSysColor(COLOR_WINDOW), 0.9f));
@@ -99,6 +101,9 @@ int TrackView::getScreenX(size_t track) const
 
 LRESULT TrackView::onCreate()
 {
+//	setFont((HFONT)GetStockObject(SYSTEM_FONT));
+	setFont((HFONT)GetStockObject(SYSTEM_FIXED_FONT));
+
 	setupScrollBars();
 	return FALSE;
 }
