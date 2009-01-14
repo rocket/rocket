@@ -32,6 +32,8 @@ public:
 		if (NULL == document) return 0;
 		return document->getRows();
 	}
+
+	void setFont(HFONT font);
 	
 	void editEnterValue();
 	void editDelete();
@@ -149,6 +151,11 @@ private:
 	int selectStartTrack, selectStopTrack;
 	int selectStartRow, selectStopRow;
 	
+	HFONT font;
+	int rowHeight;
+	int fontWidth;
+	int trackWidth;
+
 	HBRUSH bgBaseBrush, bgDarkBrush;
 	HBRUSH selectBaseBrush, selectDarkBrush;
 	HPEN rowPen, rowSelectPen;

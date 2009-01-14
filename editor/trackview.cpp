@@ -10,13 +10,18 @@ static const TCHAR *trackViewWindowClassName = _T("TrackView");
 static const int topMarginHeight = 20;
 static const int leftMarginWidth = 60;
 
-static int rowHeight = 16;
-static int fontWidth = 6;
-
-static const int trackWidth = fontWidth * 16;
 static DWORD darken(DWORD col, float amt)
 {
 	return RGB(GetRValue(col) * amt, GetGValue(col) * amt, GetBValue(col) * amt);
+}
+
+void TrackView::setFont(HFONT font)
+{
+	this->font = font;
+	
+	rowHeight = 16;
+	fontWidth = 6;
+	trackWidth = fontWidth * 16;
 }
 
 TrackView::TrackView()
@@ -43,6 +48,11 @@ TrackView::TrackView()
 	selectStartRow = selectStopRow = 0;
 	
 	this->hwnd = NULL;
+	
+//	setFont((HFONT)GetStockObject(SYSTEM_FONT));
+	setFont((HFONT)GetStockObject(SYSTEM_FIXED_FONT));
+//	font = (HFONT)GetStockObject(SYSTEM_FONT);
+//	font = (HFONT)GetStockObject(SYSTEM_FIXED_FONT);
 	
 	bgBaseBrush = GetSysColorBrush(COLOR_WINDOW);
 	bgDarkBrush = CreateSolidBrush(darken(GetSysColor(COLOR_WINDOW), 0.9f));
@@ -98,8 +108,8 @@ LRESULT TrackView::onPaint()
 	PAINTSTRUCT ps;
 	HDC hdc = BeginPaint(hwnd, &ps);
 	
-	SelectObject(hdc, GetStockObject(SYSTEM_FIXED_FONT));
-//	SelectObject(hdc, GetStockObject(SYSTEM_FONT));
+//	SelectObject(hdc, GetStockObject(SYSTEM_FIXED_FONT));
+	SelectObject(hdc, font);
 	paintTracks(hdc, ps.rcPaint);
 	
 	EndPaint(hwnd, &ps);
