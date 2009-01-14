@@ -13,11 +13,11 @@
 
 // Windows XP look and feel. Seems to enable Vista look as well.
 #pragma comment(linker, \
-	"\"/manifestdependency:type='Win32' "\
-	"name='Microsoft.Windows.Common-Controls' "\
-	"version='6.0.0.0' "\
-	"processorArchitecture='*' "\
-	"publicKeyToken='6595b64144ccf1df' "\
+	"\"/manifestdependency:type='Win32' " \
+	"name='Microsoft.Windows.Common-Controls' " \
+	"version='6.0.0.0' " \
+	"processorArchitecture='*' " \
+	"publicKeyToken='6595b64144ccf1df' " \
 	"language='*'\"")
 
 #include "trackview.h"
@@ -167,7 +167,7 @@ std::string fileName;
 
 void fileNew()
 {
-/*	document.purgeUnusedTracks(); */
+	// document.purgeUnusedTracks();
 	for (size_t i = 0; i < document.getTrackCount(); ++i)
 	{
 		document.getTrack(i).truncate();
@@ -428,7 +428,7 @@ static LRESULT CALLBACK mainWindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARA
 			SendMessage(statusBarWin, SB_SETTEXT, 1, (LPARAM)temp);
 		}
 		break;
-
+	
 	case WM_TRACKCHANGED:
 		{
 			TCHAR temp[256];
@@ -436,7 +436,7 @@ static LRESULT CALLBACK mainWindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARA
 			SendMessage(statusBarWin, SB_SETTEXT, 2, (LPARAM)temp);
 		}
 		break;
-
+	
 	case WM_CURRVALDIRTY:
 		{
 			TCHAR temp[256];

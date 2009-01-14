@@ -29,26 +29,6 @@ static int getMaxCharacterWidthFromString(HDC hdc, TCHAR *chars)
 	return getMaxCharacterWidth(hdc, chars, _tcslen(chars));
 }
 
-
-void TrackView::setFont(HFONT font)
-{
-	this->font = font;
-	
-	assert(NULL != hwnd);
-	HDC hdc = GetDC(hwnd);
-	SelectObject(hdc, font);
-	
-	TEXTMETRIC tm;
-	GetTextMetrics(hdc, &tm);
-	
-	rowHeight = tm.tmHeight + tm.tmExternalLeading;
-	fontWidth = tm.tmAveCharWidth;
-	trackWidth = getMaxCharacterWidthFromString(hdc, _T("0123456789.")) * 16;
-	
-	topMarginHeight = rowHeight + 4;
-	leftMarginWidth = getMaxCharacterWidthFromString(hdc, _T("0123456789abcdefh")) * 8;
-}
-
 TrackView::TrackView()
 {
 	scrollPosX = 0;
@@ -72,7 +52,7 @@ TrackView::TrackView()
 	
 	rowPen       = CreatePen(PS_SOLID, 1, darken(GetSysColor(COLOR_WINDOW), 0.7f));
 	rowSelectPen = CreatePen(PS_SOLID, 1, darken(GetSysColor(COLOR_HIGHLIGHT), 0.7f));
-
+	
 	lerpPen   = CreatePen(PS_SOLID, 2, RGB(255, 0, 0));
 	cosinePen = CreatePen(PS_SOLID, 2, RGB(0, 255, 0));
 	rampPen   = CreatePen(PS_SOLID, 2, RGB(0, 0, 255));
@@ -95,6 +75,25 @@ TrackView::~TrackView()
 	DeleteObject(editBrush);
 	DeleteObject(rowPen);
 	DeleteObject(rowSelectPen);
+}
+
+void TrackView::setFont(HFONT font)
+{
+	this->font = font;
+	
+	assert(NULL != hwnd);
+	HDC hdc = GetDC(hwnd);
+	SelectObject(hdc, font);
+	
+	TEXTMETRIC tm;
+	GetTextMetrics(hdc, &tm);
+	
+	rowHeight = tm.tmHeight + tm.tmExternalLeading;
+	fontWidth = tm.tmAveCharWidth;
+	trackWidth = getMaxCharacterWidthFromString(hdc, _T("0123456789.")) * 16;
+	
+	topMarginHeight = rowHeight + 4;
+	leftMarginWidth = getMaxCharacterWidthFromString(hdc, _T("0123456789abcdefh")) * 8;
 }
 
 int TrackView::getScreenY(int row) const
@@ -200,7 +199,7 @@ void TrackView::paintTracks(HDC hdc, RECT rcTracks)
 {
 	const SyncDocument *doc = getDocument();
 	if (NULL == doc) return;
-
+	
 	TCHAR temp[256];
 	
 	int firstRow = editRow - windowRows / 2 - 1;
@@ -841,7 +840,7 @@ void TrackView::editDelete()
 {
 	SyncDocument *doc = getDocument();
 	if (NULL == doc) return;
-
+	
 	int selectLeft  = min(selectStartTrack, selectStopTrack);
 	int selectRight = max(selectStartTrack, selectStopTrack);
 	int selectTop    = min(selectStartRow, selectStopRow);
@@ -889,7 +888,7 @@ void TrackView::editBiasValue(float amount)
 	int selectRight = max(selectStartTrack, selectStopTrack);
 	int selectTop    = min(selectStartRow, selectStopRow);
 	int selectBottom = max(selectStartRow, selectStopRow);
-
+	
 	if (0 == getTrackCount())
 	{
 		MessageBeep(-1);
