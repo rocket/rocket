@@ -10,7 +10,7 @@ static const TCHAR *trackViewWindowClassName = _T("TrackView");
 static const int topMarginHeight = 20;
 static const int leftMarginWidth = 60;
 
-static int fontHeight = 16;
+static int rowHeight = 16;
 static int fontWidth = 6;
 
 static const int trackWidth = fontWidth * 16;
@@ -27,7 +27,7 @@ TrackView::TrackView()
 	{
 		//read directly into variables, using their current values
 		//as defaults in case the ini file or the keys are not found.
-		IniFile::read(fontHeight, "fontHeight");
+		IniFile::read(rowHeight, "fontHeight");
 		IniFile::read(fontWidth, "fontWidth");
 	}
 
@@ -79,7 +79,7 @@ TrackView::~TrackView()
 
 int TrackView::getScreenY(int row) const
 {
-	return topMarginHeight + (row  * fontHeight) - scrollPosY;
+	return topMarginHeight + (row * rowHeight) - scrollPosY;
 }
 
 int TrackView::getScreenX(size_t track) const
@@ -196,7 +196,7 @@ void TrackView::paintTracks(HDC hdc, RECT rcTracks)
 		leftMargin.left  = 0;
 		leftMargin.right = leftMarginWidth;
 		leftMargin.top    = getScreenY(row);
-		leftMargin.bottom = leftMargin.top + fontHeight;
+		leftMargin.bottom = leftMargin.top + rowHeight;
 		
 		if (!RectVisible(hdc, &leftMargin)) continue;
 		
@@ -240,7 +240,7 @@ void TrackView::paintTracks(HDC hdc, RECT rcTracks)
 			patternDataRect.left = getScreenX(track);
 			patternDataRect.right = patternDataRect.left + trackWidth;
 			patternDataRect.top = getScreenY(row);
-			patternDataRect.bottom = patternDataRect.top + fontHeight;
+			patternDataRect.bottom = patternDataRect.top + rowHeight;
 			
 			if (!RectVisible(hdc, &patternDataRect)) continue;
 			
@@ -619,7 +619,7 @@ void TrackView::setEditRow(int newEditRow)
 	invalidateRow(oldEditRow);
 	invalidateRow(editRow);
 	
-	setScrollPos(scrollPosX, (editRow * fontHeight) - ((windowHeight - topMarginHeight) / 2) + fontHeight / 2);
+	setScrollPos(scrollPosX, (editRow * rowHeight) - ((windowHeight - topMarginHeight) / 2) + rowHeight / 2);
 }
 
 void TrackView::setEditTrack(int newEditTrack)
@@ -1092,7 +1092,7 @@ LRESULT TrackView::onSize(int width, int height)
 	windowWidth  = width;
 	windowHeight = height;
 	
-	windowRows   = (height - topMarginHeight) / fontHeight;
+	windowRows   = (height - topMarginHeight) / rowHeight;
 	windowTracks = (width  - leftMarginWidth) / trackWidth;
 	
 	setEditRow(editRow);
