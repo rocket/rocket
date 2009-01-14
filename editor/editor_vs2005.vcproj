@@ -184,10 +184,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\inifile.cpp"
-				>
-			</File>
-			<File
 				RelativePath="..\sync\network.cpp"
 				>
 			</File>

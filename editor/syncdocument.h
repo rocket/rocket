@@ -6,7 +6,6 @@
 
 #include "../sync/network.h"
 #include "../sync/data.h"
-#include "inifile.h"
 #include <stack>
 #include <list>
 #include <vector>

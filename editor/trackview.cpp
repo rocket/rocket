@@ -51,16 +51,6 @@ void TrackView::setFont(HFONT font)
 
 TrackView::TrackView()
 {
-	IniFile::load("rocket.ini", "GUI");
-
-	if(IniFile::check())
-	{
-		//read directly into variables, using their current values
-		//as defaults in case the ini file or the keys are not found.
-		IniFile::read(rowHeight, "fontHeight");
-		IniFile::read(fontWidth, "fontWidth");
-	}
-
 	scrollPosX = 0;
 	scrollPosY = 0;
 	windowWidth  = -1;
