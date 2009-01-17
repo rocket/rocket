@@ -44,10 +44,10 @@ public:
 	void editToggleInterpolationType();
 	
 	void setEditRow(int newEditRow);
-	int  getEditRow() { return editRow; }
+	int  getEditRow() const { return editRow; }
 	
 	void setEditTrack(int newEditTrack);
-	int  getEditTrack() { return editTrack; }
+	int  getEditTrack() const { return editTrack; }
 	
 	void selectAll()
 	{
