@@ -3,31 +3,28 @@
  */
 
 #include "data.h"
-
-using namespace sync;
+using sync::Data;
 
 Data::~Data()
 {
-	for (size_t i = 0; i < tracks.size(); ++i)
-		delete tracks[i];
+	for (size_t i = 0; i < tracks.size(); ++i) delete tracks[i];
 }
 
 size_t Data::createTrack(const std::basic_string<TCHAR> &name)
 {
 	assert(0 > getTrackIndex(name));
-	size_t index = tracks.size();
 	
 	// insert new track
 	tracks.push_back(new sync::Track(name));
 	
-	return index;
+	assert(tracks.size() > 0);
+	return tracks.size() - 1;
 }
 
 int Data::getTrackIndex(const std::basic_string<TCHAR> &name)
 {
 	// search for track
-	size_t index;
-	for (index = 0; index < tracks.size(); ++index)
+	for (size_t index = 0; index < tracks.size(); ++index)
 	{
 		if (name == tracks[index]->getName()) return int(index);
 	}
