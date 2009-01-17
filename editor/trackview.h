@@ -20,7 +20,7 @@ public:
 	~TrackView();
 	
 	HWND create(HINSTANCE hInstance, HWND hwndParent);
-	HWND getWin(){ return hwnd; }
+	HWND getWin() const { return hwnd; }
 	
 	void setDocument(SyncDocument *document) { this->document = document; }
 	const SyncDocument *getDocument() const { return document; }
@@ -32,7 +32,7 @@ public:
 		if (NULL == document) return 0;
 		return document->getRows();
 	}
-
+	
 	void setFont(HFONT font);
 	
 	void editEnterValue();
@@ -51,13 +51,28 @@ public:
 	
 	void selectAll()
 	{
-		selectStartTrack = 0;
-		selectStopTrack = int(this->getTrackCount()) - 1;
-		selectStartRow = 0;
-		selectStopRow = int(this->getRows()) - 1;
+		selectStartTrack = int(this->getTrackCount()) - 1;
+		selectStopTrack = editTrack = 0;
+		selectStartRow = int(this->getRows()) - 1;
+		selectStopRow = editRow = 0;
 		
-		editTrack = 0;
-		editRow = 0;
+		InvalidateRect(hwnd, NULL, FALSE);
+	}
+	
+	void selectTrack(int track)
+	{
+		selectStartTrack = selectStopTrack = editTrack = track;
+		selectStartRow = int(this->getRows()) - 1;
+		selectStopRow = editRow = 0;
+		
+		InvalidateRect(hwnd, NULL, FALSE);
+	}
+	
+	void selectRow(int row)
+	{
+		selectStartTrack = int(this->getTrackCount()) - 1;
+		selectStopTrack = editTrack = 0;
+		selectStartRow = selectStopRow = editRow = row;
 		
 		InvalidateRect(hwnd, NULL, FALSE);
 	}

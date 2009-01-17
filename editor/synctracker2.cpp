@@ -372,6 +372,18 @@ static LRESULT CALLBACK mainWindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARA
 			fileSave();
 			break;
 		
+		case ID_EDIT_SELECTALL:
+			trackView->selectAll();
+			break;
+		
+		case ID_EDIT_SELECTTRACK:
+			trackView->selectTrack(trackView->getEditTrack());
+			break;
+		
+		case ID_EDIT_SELECTROW:
+			trackView->selectRow(trackView->getEditRow());
+			break;
+		
 		case ID_FILE_REMOTEEXPORT:
 			document.sendSaveCommand();
 			break;
