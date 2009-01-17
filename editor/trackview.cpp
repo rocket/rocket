@@ -266,15 +266,7 @@ void TrackView::paintTracks(HDC hdc, RECT rcTracks)
 			
 			if (!RectVisible(hdc, &patternDataRect)) continue;
 			
-			sync::Track::KeyFrame::InterpolationType interpolationType = sync::Track::KeyFrame::IT_STEP;
-			sync::Track::KeyFrameContainer::const_iterator upper = t.keyFrames.upper_bound(row);
-			sync::Track::KeyFrameContainer::const_iterator lower = upper;
-			if (lower != t.keyFrames.end())
-			{
-				lower--;
-				if (lower != t.keyFrames.end()) interpolationType = lower->second.interpolationType;
-			}
-			
+			sync::Track::KeyFrame::InterpolationType interpolationType = t.getInterpolationType(row);
 			bool selected = (track >= selectLeft && track <= selectRight) && (row >= selectTop && row <= selectBottom);
 			
 			HBRUSH baseBrush = bgBaseBrush;
@@ -803,33 +795,32 @@ void TrackView::editToggleInterpolationType()
 		size_t trackIndex = doc->getTrackIndexFromPos(editTrack);
 		sync::Track &t = doc->getTrack(trackIndex);
 		
-		// find key to modify
-		sync::Track::KeyFrameContainer::const_iterator upper = t.keyFrames.upper_bound(editRow);
-		// bounds check
-		if (upper == t.keyFrames.end())
+		// search backwards from editRow for the keyframe to modify
+		int row = editRow;
+		for (; row >= 0; --row) if (t.isKeyFrame(row)) break;
+		
+		// a negative row means no key was found
+		if (row < 0)
 		{
 			MessageBeep(-1);
 			return;
 		}
 		
-		sync::Track::KeyFrameContainer::const_iterator lower = upper;
-		lower--;
-		// bounds check again
-		if (lower == t.keyFrames.end())
-		{
-			MessageBeep(-1);
-			return;
-		}
+		// copy old key to new key
+		const sync::Track::KeyFrame *oldKey = t.getKeyFrame(row);
+		assert(NULL != oldKey);
+		sync::Track::KeyFrame newKey(*oldKey);
 		
-		sync::Track::KeyFrame newKey = lower->second;
 		// modify interpolation type
 		newKey.interpolationType = sync::Track::KeyFrame::InterpolationType(
 			(int(newKey.interpolationType) + 1) % sync::Track::KeyFrame::IT_COUNT
 		);
 		
-		SyncDocument::Command *cmd = doc->getSetKeyFrameCommand(int(trackIndex), int(lower->first), newKey);
+		// apply change to data-set
+		SyncDocument::Command *cmd = doc->getSetKeyFrameCommand(int(trackIndex), row, newKey);
 		doc->exec(cmd);
 		
+		// update user interface
 		SendMessage(GetParent(getWin()), WM_CURRVALDIRTY, 0, 0);
 		InvalidateRect(getWin(), NULL, FALSE);
 	}

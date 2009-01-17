@@ -103,7 +103,7 @@ bool SyncDocument::save(const std::string &fileName)
 			rootNode->appendChild(trackElem);
 			
 			sync::Track::KeyFrameContainer::const_iterator it;
-			for (it = track.keyFrames.begin(); it != track.keyFrames.end(); ++it)
+			for (it = track.keyFramesBegin(); it != track.keyFramesEnd(); ++it)
 			{
 				size_t row = it->first;
 				float value = it->second.value;
@@ -123,7 +123,7 @@ bool SyncDocument::save(const std::string &fileName)
 				trackElem->appendChild(doc->createTextNode(_T("\n\t\t")));
 				trackElem->appendChild(keyElem);
 			}
-			if (0 != track.keyFrames.size()) trackElem->appendChild(doc->createTextNode(_T("\n\t")));
+			if (0 != track.getKeyFrameCount()) trackElem->appendChild(doc->createTextNode(_T("\n\t")));
 		}
 		if (0 != getTrackCount()) rootNode->appendChild(doc->createTextNode(_T("\n")));
 		

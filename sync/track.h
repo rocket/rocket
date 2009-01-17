@@ -12,10 +12,7 @@ namespace sync
 	class Track
 	{
 	public:
-		explicit Track(const std::string &name) : name(name)
-		{
-			
-		}
+		explicit Track(const std::string &name) : name(name) { }
 		
 		struct KeyFrame
 		{
@@ -27,9 +24,9 @@ namespace sync
 				IT_RAMP,
 				IT_COUNT // max value
 			};
-
+			
 			KeyFrame() : value(0.0f), interpolationType(IT_STEP) {}
-			explicit KeyFrame(float value, InterpolationType interpolationType) :
+			KeyFrame(float value, InterpolationType interpolationType) :
 				value(value),
 				interpolationType(interpolationType)
 			{
@@ -52,8 +49,26 @@ namespace sync
 		const std::string &getName() const { return name; }
 		
 		typedef std::map<size_t, struct KeyFrame> KeyFrameContainer;
-		KeyFrameContainer keyFrames;
+		KeyFrameContainer::const_iterator keyFramesBegin() const { return keyFrames.begin(); }
+		KeyFrameContainer::const_iterator keyFramesEnd() const { return keyFrames.end(); }
+		size_t getKeyFrameCount() const { return keyFrames.size(); }
+		
+		KeyFrame::InterpolationType getInterpolationType(int row) const
+		{
+			KeyFrame::InterpolationType interpolationType = KeyFrame::IT_STEP;
+			{
+				KeyFrameContainer::const_iterator upper = keyFrames.upper_bound(row);
+				KeyFrameContainer::const_iterator lower = upper;
+				if (lower != keyFrames.end())
+				{
+					lower--;
+					if (lower != keyFrames.end()) interpolationType = lower->second.interpolationType;
+				}
+			}
+			return interpolationType;
+		}
 	private:
+		KeyFrameContainer keyFrames;
 		std::string name;
 	};
 }

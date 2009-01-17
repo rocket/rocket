@@ -631,7 +631,7 @@ int _tmain(int argc, _TCHAR* argv[])
 							const sync::Track &track = document.getTrack(serverIndex);
 							
 							sync::Track::KeyFrameContainer::const_iterator it;
-							for (it = track.keyFrames.begin(); it != track.keyFrames.end(); ++it)
+							for (it = track.keyFramesBegin(); it != track.keyFramesEnd(); ++it)
 							{
 								int row = int(it->first);
 								const sync::Track::KeyFrame &key = it->second;
