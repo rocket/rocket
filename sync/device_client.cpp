@@ -160,11 +160,11 @@ static bool saveTrack(const sync::Track &track, std::string fileName)
 	FILE *fp = fopen(fileName.c_str(), "wb");
 	if (NULL == fp) return false;
 	
-	size_t keyFrameCount = track.keyFrames.size();
+	size_t keyFrameCount = track.getKeyFrameCount();
 	fwrite(&keyFrameCount, sizeof(size_t), 1, fp);
 	
 	sync::Track::KeyFrameContainer::const_iterator it;
-	for (it = track.keyFrames.begin(); it != track.keyFrames.end(); ++it)
+	for (it = track.keyFramesBegin(); it != track.keyFramesEnd(); ++it)
 	{
 		size_t row = it->first;
 		float value = it->second.value;
