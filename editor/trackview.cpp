@@ -942,6 +942,38 @@ LRESULT TrackView::onKeyDown(UINT keyCode, UINT /*flags*/)
 		}
 	}
 	
+	if (editString.empty())
+	{
+		switch (keyCode)
+		{
+		case VK_LEFT:
+			if (GetKeyState(VK_CONTROL) < 0) {
+				if (0 < editTrack)
+					doc->swapTrackOrder(editTrack, editTrack - 1);
+				else
+					MessageBeep(-1);
+			}
+			if (0 != getTrackCount())
+				setEditTrack(editTrack - 1);
+			else
+				MessageBeep(-1);
+			break;
+		
+		case VK_RIGHT:
+			if (GetKeyState(VK_CONTROL) < 0) {
+				if (int(getTrackCount()) > editTrack + 1)
+					doc->swapTrackOrder(editTrack, editTrack + 1);
+				else
+					MessageBeep(-1);
+			}
+			if (0 != getTrackCount())
+				setEditTrack(editTrack + 1);
+			else
+				MessageBeep(-1);
+			break;
+		}
+	}
+
 	if (editString.empty() && doc->clientPaused)
 	{
 		switch (keyCode)
@@ -966,26 +998,6 @@ LRESULT TrackView::onKeyDown(UINT keyCode, UINT /*flags*/)
 				else MessageBeep(-1);
 			}
 			else setEditRow(editRow + 1);
-			break;
-		
-		case VK_LEFT:
-			if (GetKeyState(VK_CONTROL) < 0)
-			{
-				if (0 < editTrack) doc->swapTrackOrder(editTrack, editTrack - 1);
-				else MessageBeep(-1);
-			}
-			if (0 != getTrackCount()) setEditTrack(editTrack - 1);
-			else MessageBeep(-1);
-			break;
-		
-		case VK_RIGHT:
-			if (GetKeyState(VK_CONTROL) < 0)
-			{
-				if (int(getTrackCount()) > editTrack + 1) doc->swapTrackOrder(editTrack, editTrack + 1);
-				else MessageBeep(-1);
-			}
-			if (0 != getTrackCount()) setEditTrack(editTrack + 1);
-			else MessageBeep(-1);
 			break;
 		
 		case VK_PRIOR:
