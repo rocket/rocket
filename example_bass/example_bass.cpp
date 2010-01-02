@@ -9,28 +9,69 @@
 #include <memory>
 #include <exception>
 #include <cstdio>
-#include "../sync/device.h"
+#include <string>
+#include <stdarg.h>
+
+#include "../sync/sync.h"
 #include "bass.h"
 
-class BassTimer : public sync::Timer
+const float bpm = 150.0f; /* beats per minute */
+const int rpb = 8; /* rows per beat */
+const double row_rate = (double(bpm) / 60) * rpb;
+
+double bass_get_row(HSTREAM h)
 {
-public:
-	BassTimer(HSTREAM stream, float bpm, int rowsPerBeat) : stream(stream)
-	{
-		rowRate = (double(bpm) / 60) * rowsPerBeat;
-	}
-	
-	// BASS hooks
-	void  pause()           { BASS_ChannelPause(stream); }
-	void  play()            { BASS_ChannelPlay(stream, false); }
-	float getTime()         { return float(BASS_ChannelBytes2Seconds(stream, BASS_ChannelGetPosition(stream, BASS_POS_BYTE))); }
-	float getRow()          { return float(getTime() * rowRate); }
-	void  setRow(float row) { BASS_ChannelSetPosition(stream, BASS_ChannelSeconds2Bytes(stream, float(row / rowRate)), BASS_POS_BYTE); }
-	bool  isPlaying()       { return (BASS_ChannelIsActive(stream) == BASS_ACTIVE_PLAYING); }
-private:
-	HSTREAM stream;
-	double rowRate;
+	QWORD pos = BASS_ChannelGetPosition(h, BASS_POS_BYTE);
+	double time = BASS_ChannelBytes2Seconds(h, pos);
+	return time * row_rate;
+}
+
+#ifndef SYNC_PLAYER
+
+void bass_pause(void *d, int flag)
+{
+	if (flag)
+		BASS_ChannelPause((HSTREAM)d);
+	else
+		BASS_ChannelPlay((HSTREAM)d, false);
+}
+
+void bass_set_row(void *d, int row)
+{
+	QWORD pos = BASS_ChannelSeconds2Bytes((HSTREAM)d, row / row_rate);
+	BASS_ChannelSetPosition((HSTREAM)d, pos, BASS_POS_BYTE);
+}
+
+int bass_is_playing(void *d)
+{
+	return BASS_ChannelIsActive((HSTREAM)d) == BASS_ACTIVE_PLAYING;
+}
+
+struct sync_cb bass_cb = {
+	bass_pause,
+	bass_set_row,
+	bass_is_playing
 };
+
+#endif /* !defined(SYNC_PLAYER) */
+
+void die(const char *fmt, ...)
+{
+	char temp[4096];
+	va_list va;
+	va_start(va, fmt);
+	vfprintf(stderr, fmt, va);
+	vsnprintf(temp, sizeof(temp), fmt, va);
+	va_end(va);
+
+#ifdef _CONSOLE
+	fprintf(stderr, "*** error: %s\n", temp);
+#else
+	MessageBox(NULL, temp, mainWindowTitle, MB_OK | MB_ICONERROR);
+#endif
+
+	exit(EXIT_FAILURE);
+}
 
 #define WINDOWED 1
 const unsigned int width  = 800;
@@ -61,22 +102,22 @@ int main(int argc, char *argv[])
 		// load tune
 		HSTREAM stream = BASS_StreamCreateFile(false, "tune.ogg", 0, 0, BASS_MP3_SETPOS | ((0 == soundDevice) ? BASS_STREAM_DECODE : 0));
 		if (!stream) throw std::string("failed to open tune");
-		
-		// let's just assume 150 BPM (this holds true for the included tune)
-		float bpm = 150.0f;
-		
-		// setup timer and construct sync-device
-		BassTimer timer(stream, bpm, 8);
-		std::auto_ptr<sync::Device> syncDevice = std::auto_ptr<sync::Device>(sync::createDevice("sync", timer));
-		if (NULL == syncDevice.get()) throw std::string("something went wrong - failed to connect to host?");
-		
-		// get tracks
-		sync::Track &clearRTrack = syncDevice->getTrack("clear.r");
-		sync::Track &clearGTrack = syncDevice->getTrack("clear.g");
-		sync::Track &clearBTrack = syncDevice->getTrack("clear.b");
 
-		sync::Track &camRotTrack  = syncDevice->getTrack("cam.rot");
-		sync::Track &camDistTrack = syncDevice->getTrack("cam.dist");
+		sync_device *rocket = sync_create_device("sync");
+		if (!rocket)
+			die("something went wrong - failed to connect to host?");
+
+#ifndef SYNC_PLAYER
+		sync_set_callbacks(rocket, &bass_cb, (void *)stream);
+#endif
+
+		// get tracks
+		struct sync_track
+		    *clearRTrack = sync_get_track(rocket, "clear.r"),
+		    *clearGTrack = sync_get_track(rocket, "clear.g"),
+		    *clearBTrack = sync_get_track(rocket, "clear.b"),
+		    *camRotTrack  = sync_get_track(rocket, "cam.rot"),
+		    *camDistTrack = sync_get_track(rocket, "cam.dist");
 
 		LPD3DXMESH cubeMesh = NULL;
 		if (FAILED(D3DXCreateBox(
@@ -88,31 +129,31 @@ int main(int argc, char *argv[])
 		
 		// let's roll!
 		BASS_Start();
-		timer.play();
-		
+		BASS_ChannelPlay(stream, false);
+
 		bool done = false;
 		while (!done)
 		{
-			float row = float(timer.getRow());
-			if (!syncDevice->update(row)) done = true;
-			
+			double row = bass_get_row(stream);
+			sync_update(rocket, row);
+
 			// setup clear color
 			D3DXCOLOR clearColor(
-				clearRTrack.getValue(row),
-				clearGTrack.getValue(row),
-				clearBTrack.getValue(row),
+				sync_get_val(clearRTrack, row),
+				sync_get_val(clearGTrack, row),
+				sync_get_val(clearBTrack, row),
 				0.0
 			);
-			
+
 			// paint the window
 			device->BeginScene();
 			device->Clear(0, 0, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER | D3DCLEAR_STENCIL, clearColor, 1.0f, 0);
-			
+
 /*			D3DXMATRIX world;
 			device->SetTransform(D3DTS_WORLD, &world); */
-			
-			float rot = camRotTrack.getValue(row);
-			float dist = camDistTrack.getValue(row);
+
+			float rot = sync_get_val(camRotTrack, row);
+			float dist = sync_get_val(camDistTrack, row);
 			D3DXVECTOR3 eye(sin(rot) * dist, 0, cos(rot) * dist);
 			D3DXVECTOR3 at(0, 0, 0);
 			D3DXVECTOR3 up(0, 1, 0);
@@ -147,25 +188,11 @@ int main(int argc, char *argv[])
 		device->Release();
 		d3d->Release();
 		DestroyWindow(hwnd);
+	} catch (const std::exception &e) {
+		die(e.what());
+	} catch (const std::string &str) {
+		die(str.c_str());
 	}
-	catch (const std::exception &e)
-	{
-#ifdef _CONSOLE
-		fprintf(stderr, "*** error: %s\n", e.what());
-#else
-		MessageBox(NULL, e.what(), NULL, MB_OK | MB_ICONERROR | MB_SETFOREGROUND);
-#endif
-		ret = -1;
-	}
-	catch (const std::string &str)
-	{
-#ifdef _CONSOLE
-		fprintf(stderr, "*** error: %s\n", str.c_str());
-#else
-		MessageBox(NULL, e.what(), NULL, MB_OK | MB_ICONERROR | MB_SETFOREGROUND);
-#endif
-		ret = -1;
-	}
-	
-	return ret;
+
+	return 0;
 }

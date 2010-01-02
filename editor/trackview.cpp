@@ -4,6 +4,7 @@
 
 #include "trackview.h"
 #include <vector>
+#include <tchar.h>
 
 static const TCHAR *trackViewWindowClassName = _T("TrackView");
 
@@ -149,37 +150,31 @@ void TrackView::paintTopMargin(HDC hdc, RECT rcTracks)
 	
 	SetTextColor(hdc, GetSysColor(COLOR_WINDOWTEXT));
 	
-	for (int track = startTrack; track < endTrack; ++track)
-	{
+	for (int track = startTrack; track < endTrack; ++track) {
 		size_t index = doc->getTrackIndexFromPos(track);
-		const sync::Track &t = doc->getTrack(index);
-		
+		const sync_track *t = doc->tracks[index];
+
 		RECT topMargin;
-		
 		topMargin.top = 0;
 		topMargin.bottom = topMarginHeight;
-		
 		topMargin.left = getScreenX(track);
 		topMargin.right = topMargin.left + trackWidth;
-		
-		if (!RectVisible(hdc, &topMargin)) continue;
-		
+
+		if (!RectVisible(hdc, &topMargin))
+			continue;
+
 		RECT fillRect = topMargin;
-		
+
 		HBRUSH bgBrush = GetSysColorBrush(COLOR_3DFACE);
-		if (track == editTrack) bgBrush = editBrush;
-		
+		if (track == editTrack)
+			bgBrush = editBrush;
+
 		DrawEdge(hdc, &fillRect, BDR_RAISEDINNER | BDR_RAISEDOUTER, BF_ADJUST | BF_LEFT | BF_RIGHT | BF_BOTTOM);
 		FillRect(hdc, &fillRect, bgBrush);
-		
-		const std::basic_string<TCHAR> &trackName = t.getName();
-		
+
 		if (doc->clientRemap.count(doc->getTrackIndexFromPos(track)) == 0) SetTextColor(hdc, GetSysColor(COLOR_GRAYTEXT));
 		else SetTextColor(hdc, GetSysColor(COLOR_WINDOWTEXT));
-		TextOut(hdc,
-			fillRect.left, 0,
-			trackName.data(), int(trackName.length())
-		);
+		TextOut(hdc, fillRect.left, 0, t->name, int(strlen(t->name)));
 	}
 	
 	RECT topRightMargin;
@@ -252,23 +247,23 @@ void TrackView::paintTracks(HDC hdc, RECT rcTracks)
 	int startTrack = scrollPosX / trackWidth;
 	int endTrack  = min(startTrack + windowTracks + 1, int(getTrackCount()));
 	
-	for (int track = startTrack; track < endTrack; ++track)
-	{
-		const sync::Track &t = doc->getTrack(doc->getTrackIndexFromPos(track));
-		
-		for (int row = firstRow; row <= lastRow; ++row)
-		{
+	for (int track = startTrack; track < endTrack; ++track) {
+		const sync_track *t = doc->tracks[doc->getTrackIndexFromPos(track)];
+		for (int row = firstRow; row <= lastRow; ++row) {
 			RECT patternDataRect;
 			patternDataRect.left = getScreenX(track);
 			patternDataRect.right = patternDataRect.left + trackWidth;
 			patternDataRect.top = getScreenY(row);
 			patternDataRect.bottom = patternDataRect.top + rowHeight;
 			
-			if (!RectVisible(hdc, &patternDataRect)) continue;
-			
-			sync::Track::KeyFrame::InterpolationType interpolationType = t.getInterpolationType(row);
+			if (!RectVisible(hdc, &patternDataRect))
+				continue;
+
+			int idx = sync_find_key(t, row);
+			int fidx = idx >= 0 ? idx : -idx - 2;
+			key_type interpolationType = (fidx >= 0) ? t->keys[fidx].type : KEY_STEP;
 			bool selected = (track >= selectLeft && track <= selectRight) && (row >= selectTop && row <= selectBottom);
-			
+
 			HBRUSH baseBrush = bgBaseBrush;
 			HBRUSH darkBrush = bgDarkBrush;
 			if (selected)
@@ -281,56 +276,48 @@ void TrackView::paintTracks(HDC hdc, RECT rcTracks)
 			if (row % 8 == 0) bgBrush = darkBrush;
 			
 			RECT fillRect = patternDataRect;
-//			if (row == editRow && track == editTrack) DrawEdge(hdc, &fillRect, BDR_RAISEDINNER | BDR_SUNKENOUTER, BF_ADJUST | BF_TOP | BF_BOTTOM | BF_LEFT | BF_RIGHT);
 			FillRect( hdc, &fillRect, bgBrush);
-			if (row % 8 == 0)
-			{
+			if (row % 8 == 0) {
 				MoveToEx(hdc, patternDataRect.left, patternDataRect.top, (LPPOINT) NULL); 
 				if (selected) SelectObject(hdc, rowSelectPen);
 				else          SelectObject(hdc, rowPen);
 				LineTo(hdc,   patternDataRect.right, patternDataRect.top); 
 			}
 			
-			switch (interpolationType)
-			{
-			case sync::Track::KeyFrame::IT_LERP:
+			switch (interpolationType) {
+			case KEY_STEP:
+				break;
+			case KEY_LINEAR:
 				SelectObject(hdc, lerpPen);
 				break;
-			case sync::Track::KeyFrame::IT_COSINE:
+			case KEY_SMOOTH:
 				SelectObject(hdc, cosinePen);
 				break;
-			case sync::Track::KeyFrame::IT_RAMP:
+			case KEY_RAMP:
 				SelectObject(hdc, rampPen);
 				break;
-			case sync::Track::KeyFrame::IT_STEP:
-				break;
 			}
-			if (interpolationType != sync::Track::KeyFrame::IT_STEP)
-			{
+			if (interpolationType != KEY_STEP) {
 				MoveToEx(hdc, patternDataRect.right - 1, patternDataRect.top, (LPPOINT) NULL); 
 				LineTo(hdc,   patternDataRect.right - 1, patternDataRect.bottom);
 			}
-			
+
 			bool drawEditString = false;
-			if (row == editRow && track == editTrack)
-			{
+			if (row == editRow && track == editTrack) {
 				FrameRect(hdc, &fillRect, (HBRUSH)GetStockObject(BLACK_BRUSH));
-//				DrawFocusRect(hdc, &fillRect);
-//				Rectangle(hdc, fillRect.left, fillRect.top, fillRect.right, fillRect.bottom);
-				if (editString.size() > 0) drawEditString = true;
+				if (editString.size() > 0)
+					drawEditString = true;
 			}
-			
-			bool key = t.isKeyFrame(row);
-			
 			/* format the text */
-			if (drawEditString) _sntprintf_s(temp, 256, editString.c_str());
-			else if (!key) _sntprintf_s(temp, 256, _T("  ---"));
-			else
-			{
-				float val = t.getKeyFrame(row)->value;
+			if (drawEditString)
+				_sntprintf_s(temp, 256, editString.c_str());
+			else if (idx < 0)
+				_sntprintf_s(temp, 256, _T("  ---"));
+			else {
+				float val = t->keys[idx].value;
 				_sntprintf_s(temp, 256, _T("% .2f"), val);
 			}
-			
+
 			COLORREF oldCol;
 			if (selected) oldCol = SetTextColor(hdc, GetSysColor(COLOR_HIGHLIGHTTEXT));
 			TextOut(hdc,
@@ -372,8 +359,8 @@ void TrackView::paintTracks(HDC hdc, RECT rcTracks)
 
 struct CopyEntry
 {
-	int track, row;
-	sync::Track::KeyFrame keyFrame;
+	int track;
+	track_key keyFrame;
 };
 
 void TrackView::editCopy()
@@ -404,24 +391,17 @@ void TrackView::editCopy()
 	size_t cells = columns * rows;
 	
 	std::vector<struct CopyEntry> copyEntries;
-	for (int track = selectLeft; track <= selectRight; ++track)
-	{
+	for (int track = selectLeft; track <= selectRight; ++track) {
 		const size_t trackIndex  = doc->getTrackIndexFromPos(track);
-		const sync::Track &t = doc->getTrack(trackIndex);
-		
-		for (int row = selectTop; row <= selectBottom; ++row)
-		{
-			int localRow = row - selectTop;
-			if (t.isKeyFrame(row))
-			{
-				const sync::Track::KeyFrame *keyFrame = t.getKeyFrame(row);
-				assert(NULL != keyFrame);
-				
+		const sync_track *t = doc->tracks[trackIndex];
+
+		for (int row = selectTop; row <= selectBottom; ++row) {
+			int idx = sync_find_key(t, row);
+			if (idx >= 0) {
 				CopyEntry ce;
 				ce.track = track - selectLeft;
-				ce.row = localRow;
-				ce.keyFrame = *keyFrame;
-				
+				ce.keyFrame = t->keys[idx];
+				ce.keyFrame.row -= selectTop;
 				copyEntries.push_back(ce);
 			}
 		}
@@ -490,21 +470,16 @@ void TrackView::editPaste()
 		memcpy(&buffer_size,   clipbuf + 2 * sizeof(int), sizeof(size_t));
 		
 		SyncDocument::MultiCommand *multiCmd = new SyncDocument::MultiCommand();
-		for (int t = 0; t < buffer_width; ++t)
-		{
-			size_t trackPos = editTrack + t;
+		for (int i = 0; i < buffer_width; ++i) {
+			size_t trackPos = editTrack + i;
 			if (trackPos >= getTrackCount()) continue;
-			
+
 			size_t trackIndex = doc->getTrackIndexFromPos(trackPos);
-			const sync::Track &track = doc->getTrack(trackIndex);
-			
-			for (int r = 0; r < buffer_height; ++r)
-			{
-				int row = editRow + r;
-				if (track.isKeyFrame(row))
-				{
+			const sync_track *t = doc->tracks[trackIndex];
+			for (int j = 0; j < buffer_height; ++j) {
+				int row = editRow + j;
+				if (is_key_frame(t, row))
 					multiCmd->addCommand(new SyncDocument::DeleteCommand(int(trackIndex), row));
-				}
 			}
 		}
 		
@@ -517,17 +492,18 @@ void TrackView::editPaste()
 			
 			assert(ce.track >= 0);
 			assert(ce.track < buffer_width);
-			assert(ce.row >= 0);
-			assert(ce.row < buffer_height);
-			
+			assert(ce.keyFrame.row >= 0);
+			assert(ce.keyFrame.row < buffer_height);
+
 			size_t trackPos = editTrack + ce.track;
 			if (trackPos < getTrackCount())
 			{
 				size_t trackIndex = doc->getTrackIndexFromPos(trackPos);
-				size_t row = editRow + ce.row;
-				
+				track_key key = ce.keyFrame;
+				key.row += editRow;
+
 				// since we deleted all keyframes in the edit-box already, we can just insert this one. 
-				SyncDocument::Command *cmd = new SyncDocument::InsertCommand(int(trackIndex), int(row), ce.keyFrame);
+				SyncDocument::Command *cmd = new SyncDocument::InsertCommand(int(trackIndex), key);
 				multiCmd->addCommand(cmd);
 			}
 		}
@@ -769,16 +745,20 @@ void TrackView::editEnterValue()
 	if (int(editString.size()) > 0 && editTrack < int(getTrackCount()))
 	{
 		size_t trackIndex = doc->getTrackIndexFromPos(editTrack);
-		sync::Track &t = doc->getTrack(trackIndex);
-		
-		sync::Track::KeyFrame newKey;
-		if (t.isKeyFrame(editRow)) newKey = *t.getKeyFrame(editRow); // copy old key
+		const sync_track *t = doc->tracks[trackIndex];
+
+		track_key newKey;
+		newKey.type = KEY_STEP;
+		newKey.row = editRow;
+		int idx = sync_find_key(t, editRow);
+		if (idx >= 0)
+			newKey = t->keys[idx]; // copy old key
 		newKey.value = float(_tstof(editString.c_str())); // modify value
 		editString.clear();
-		
-		SyncDocument::Command *cmd = doc->getSetKeyFrameCommand(int(trackIndex), editRow, newKey);
+
+		SyncDocument::Command *cmd = doc->getSetKeyFrameCommand(int(trackIndex), newKey);
 		doc->exec(cmd);
-		
+
 		SendMessage(GetParent(getWin()), WM_CURRVALDIRTY, 0, 0);
 		InvalidateRect(getWin(), NULL, FALSE);
 	}
@@ -790,36 +770,25 @@ void TrackView::editToggleInterpolationType()
 	SyncDocument *doc = getDocument();
 	if (NULL == doc) return;
 	
-	if (editTrack < int(getTrackCount()))
-	{
+	if (editTrack < int(getTrackCount())) {
 		size_t trackIndex = doc->getTrackIndexFromPos(editTrack);
-		sync::Track &t = doc->getTrack(trackIndex);
-		
-		// search backwards from editRow for the keyframe to modify
-		int row = editRow;
-		for (; row >= 0; --row) if (t.isKeyFrame(row)) break;
-		
-		// a negative row means no key was found
-		if (row < 0)
-		{
+		const sync_track *t = doc->tracks[trackIndex];
+
+		int idx = key_idx_floor(t, editRow);
+		if (idx < 0) {
 			MessageBeep(-1);
 			return;
 		}
-		
-		// copy old key to new key
-		const sync::Track::KeyFrame *oldKey = t.getKeyFrame(row);
-		assert(NULL != oldKey);
-		sync::Track::KeyFrame newKey(*oldKey);
-		
-		// modify interpolation type
-		newKey.interpolationType = sync::Track::KeyFrame::InterpolationType(
-			(int(newKey.interpolationType) + 1) % sync::Track::KeyFrame::IT_COUNT
-		);
-		
+
+		// copy and modify
+		track_key newKey = t->keys[idx];
+		newKey.type = (enum key_type)
+		    ((newKey.type + 1) % KEY_TYPE_COUNT);
+
 		// apply change to data-set
-		SyncDocument::Command *cmd = doc->getSetKeyFrameCommand(int(trackIndex), row, newKey);
+		SyncDocument::Command *cmd = doc->getSetKeyFrameCommand(int(trackIndex), newKey);
 		doc->exec(cmd);
-		
+
 		// update user interface
 		SendMessage(GetParent(getWin()), WM_CURRVALDIRTY, 0, 0);
 		InvalidateRect(getWin(), NULL, FALSE);
@@ -841,15 +810,12 @@ void TrackView::editDelete()
 	assert(selectRight < int(getTrackCount()));
 	
 	SyncDocument::MultiCommand *multiCmd = new SyncDocument::MultiCommand();
-	for (int track = selectLeft; track <= selectRight; ++track)
-	{
+	for (int track = selectLeft; track <= selectRight; ++track) {
 		size_t trackIndex = doc->getTrackIndexFromPos(track);
-		sync::Track &t = doc->getTrack(trackIndex);
-		
-		for (int row = selectTop; row <= selectBottom; ++row)
-		{
-			if (t.isKeyFrame(row))
-			{
+		const sync_track *t = doc->tracks[trackIndex];
+
+		for (int row = selectTop; row <= selectBottom; ++row) {
+			if (is_key_frame(t, row)) {
 				SyncDocument::Command *cmd = new SyncDocument::DeleteCommand(int(trackIndex), row);
 				multiCmd->addCommand(cmd);
 			}
@@ -887,21 +853,19 @@ void TrackView::editBiasValue(float amount)
 	}
 	
 	SyncDocument::MultiCommand *multiCmd = new SyncDocument::MultiCommand();
-	for (int track = selectLeft; track <= selectRight; ++track)
-	{
+	for (int track = selectLeft; track <= selectRight; ++track) {
 		assert(track < int(getTrackCount()));
 		size_t trackIndex = doc->getTrackIndexFromPos(track);
-		sync::Track &t = doc->getTrack(trackIndex);
-		
-		for (int row = selectTop; row <= selectBottom; ++row)
-		{
-			if (t.isKeyFrame(row))
-			{
-				sync::Track::KeyFrame newKey = *t.getKeyFrame(row); // copy old key
-				newKey.value += amount; // modify value
-				
+		const sync_track *t = doc->tracks[trackIndex];
+
+		for (int row = selectTop; row <= selectBottom; ++row) {
+			int idx = sync_find_key(t, row);
+			if (idx >= 0) {
+				struct track_key k = t->keys[idx]; // copy old key
+				k.value += amount; // modify value
+
 				// add sub-command
-				SyncDocument::Command *cmd = doc->getSetKeyFrameCommand(int(trackIndex), row, newKey);
+				SyncDocument::Command *cmd = doc->getSetKeyFrameCommand(int(trackIndex), k);
 				multiCmd->addCommand(cmd);
 			}
 		}

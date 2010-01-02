@@ -10,32 +10,92 @@
 #include <list>
 #include <vector>
 #include <map>
+#include <cassert>
 
-class SyncDocument : public sync::Data
+class NetworkSocket
 {
 public:
-	SyncDocument() : sync::Data(), clientPaused(true), rows(128), savePointDelta(0), savePointUnreachable(true) {}
+	NetworkSocket() : socket(INVALID_SOCKET) {}
+	explicit NetworkSocket(SOCKET socket) : socket(socket) {}
+
+	bool connected() const
+	{
+		return INVALID_SOCKET != socket;
+	}
+
+	void disconnect()
+	{
+		closesocket(socket);
+		socket = INVALID_SOCKET;
+	}
+
+	bool recv(char *buffer, size_t length, int flags)
+	{
+		if (!connected())
+			return false;
+		int ret = ::recv(socket, buffer, int(length), flags);
+		if (ret != length) {
+			disconnect();
+			return false;
+		}
+		return true;
+	}
+
+	bool send(const char *buffer, size_t length, int flags)
+	{
+		if (!connected())
+			return false;
+		int ret = ::send(socket, buffer, int(length), flags);
+		if (ret != length) {
+			disconnect();
+			return false;
+		}
+		return true;
+	}
+
+	bool pollRead()
+	{
+		if (!connected())
+			return false;
+		return !!socket_poll(socket);
+	}
+
+private:
+	SOCKET socket;
+};
+
+class SyncDocument : public sync_data
+{
+public:
+	SyncDocument() : clientPaused(true), rows(128), savePointDelta(0), savePointUnreachable(true)
+	{
+		this->tracks = NULL;
+		this->num_tracks = 0;
+	}
+
 	~SyncDocument();
 
 	size_t createTrack(const std::basic_string<TCHAR> &name)
 	{
-		size_t index = sync::Data::createTrack(name);
+		size_t index = sync_create_track(this, name.c_str());
 		trackOrder.push_back(index);
 		return index;
 	}
 	
-	void sendSetKeyCommand(int track, int row, const sync::Track::KeyFrame &key)
+	void sendSetKeyCommand(int track, const struct track_key &key)
 	{
 		if (!clientSocket.connected()) return;
 		if (clientRemap.count(track) == 0) return;
 		track = int(clientRemap[track]);
-		
+
+		assert(key.type < KEY_TYPE_COUNT);
+
 		unsigned char cmd = SET_KEY;
 		clientSocket.send((char*)&cmd, 1, 0);
 		clientSocket.send((char*)&track, sizeof(int), 0);
-		clientSocket.send((char*)&row,   sizeof(int), 0);
+		clientSocket.send((char*)&key.row, sizeof(int), 0);
 		clientSocket.send((char*)&key.value, sizeof(float), 0);
-		clientSocket.send((char*)&key.interpolationType, 1, 0);
+		clientSocket.send((char*)&key.type, 1, 0);
 	}
 	
 	void sendDeleteKeyCommand(int track, int row)
@@ -86,29 +146,28 @@ public:
 	class InsertCommand : public Command
 	{
 	public:
-		InsertCommand(int track, int row, const sync::Track::KeyFrame &key) : track(track), row(row), key(key) {}
+		InsertCommand(int track, const track_key &key) : track(track), key(key) {}
 		~InsertCommand() {}
 		
 		void exec(SyncDocument *data)
 		{
-			sync::Track &t = data->getTrack(this->track);
-			assert(!t.isKeyFrame(row));
-			t.setKeyFrame(row, key);
-			data->sendSetKeyCommand(track, row, key); // update clients
+			sync_track *t = data->tracks[track];
+			assert(!is_key_frame(t, key.row));
+			sync_set_key(t, &key);
+			data->sendSetKeyCommand(track, key); // update clients
 		}
 		
 		void undo(SyncDocument *data)
 		{
-			sync::Track &t = data->getTrack(this->track);
-			assert(t.isKeyFrame(row));
-			t.deleteKeyFrame(row);
-			
-			data->sendDeleteKeyCommand(track, row); // update clients
+			sync_track *t = data->tracks[track];
+			assert(is_key_frame(t, key.row));
+			sync_del_key(t, key.row);
+			data->sendDeleteKeyCommand(track, key.row); // update clients
 		}
-		
+
 	private:
-		int track, row;
-		sync::Track::KeyFrame key;
+		int track;
+		track_key key;
 	};
 	
 	class DeleteCommand : public Command
@@ -119,62 +178,55 @@ public:
 		
 		void exec(SyncDocument *data)
 		{
-			sync::Track &t = data->getTrack(this->track);
-			assert(t.isKeyFrame(row));
-			oldKey = *t.getKeyFrame(row);
-			t.deleteKeyFrame(row);
-			
+			sync_track *t = data->tracks[track];
+			int idx = sync_find_key(t, row);
+			assert(idx >= 0);
+			oldKey = t->keys[idx];
+			sync_del_key(t, row);
 			data->sendDeleteKeyCommand(track, row); // update clients
 		}
 		
 		void undo(SyncDocument *data)
 		{
-			sync::Track &t = data->getTrack(this->track);
-			assert(!t.isKeyFrame(row));
-			t.setKeyFrame(row, oldKey);
-			
-			data->sendSetKeyCommand(track, row, oldKey); // update clients
+			sync_track *t = data->tracks[track];
+			assert(!is_key_frame(t, row));
+			sync_set_key(t, &oldKey);
+			data->sendSetKeyCommand(track, oldKey); // update clients
 		}
-		
+
 	private:
 		int track, row;
-		sync::Track::KeyFrame oldKey;
+		struct track_key oldKey;
 	};
 
 	
 	class EditCommand : public Command
 	{
 	public:
-		EditCommand(int track, int row, const sync::Track::KeyFrame &key) : track(track), row(row), key(key) {}
+		EditCommand(int track, const track_key &key) : track(track), key(key) {}
 		~EditCommand() {}
-		
+
 		void exec(SyncDocument *data)
 		{
-			sync::Track &t = data->getTrack(this->track);
-			
-			// store old key
-			assert(t.isKeyFrame(row));
-			oldKey = *t.getKeyFrame(row);
-			
-			// update
-			t.setKeyFrame(row, key);
-			
-			data->sendSetKeyCommand(track, row, key); // update clients
+			sync_track *t = data->tracks[track];
+			int idx = sync_find_key(t, key.row);
+			assert(idx >= 0);
+			oldKey = t->keys[idx];
+			sync_set_key(t, &key);
+			data->sendSetKeyCommand(track, key); // update clients
 		}
-		
+
 		void undo(SyncDocument *data)
 		{
-			sync::Track &t = data->getTrack(this->track);
-			
-			assert(t.isKeyFrame(row));
-			t.setKeyFrame(row, oldKey);
-			
-			data->sendSetKeyCommand(track, row, oldKey); // update clients
+			sync_track *t = data->tracks[track];
+			assert(is_key_frame(t, key.row));
+			sync_set_key(t, &oldKey);
+			data->sendSetKeyCommand(track, oldKey); // update clients
 		}
 		
 	private:
-		int track, row;
-		sync::Track::KeyFrame oldKey, key;
+		int track;
+		track_key oldKey, key;
 	};
 	
 	class MultiCommand : public Command
@@ -273,12 +325,12 @@ public:
 		}
 	}
 	
-	Command *getSetKeyFrameCommand(int track, int row, const sync::Track::KeyFrame &key)
+	Command *getSetKeyFrameCommand(int track, const track_key &key)
 	{
-		sync::Track &t = getTrack(track);
+		sync_track *t = tracks[track];
 		SyncDocument::Command *cmd;
-		if (t.isKeyFrame(row)) cmd = new EditCommand(track, row, key);
-		else                   cmd = new InsertCommand(track, row, key);
+		if (is_key_frame(t, key.row)) cmd = new EditCommand(track, key);
+		else                          cmd = new InsertCommand(track, key);
 		return cmd;
 	}
 

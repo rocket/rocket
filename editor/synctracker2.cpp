@@ -39,6 +39,7 @@ RecentFiles mruFileList(NULL);
 #define WM_SETROWS (WM_USER+1)
 #define WM_BIASSELECTION (WM_USER+2)
 
+#include "../sync/sync.h"
 #include "../sync/network.h"
 
 static LRESULT CALLBACK setRowsDialogProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
@@ -168,9 +169,12 @@ std::string fileName;
 void fileNew()
 {
 	// document.purgeUnusedTracks();
-	for (size_t i = 0; i < document.getTrackCount(); ++i)
+	for (size_t i = 0; i < document.num_tracks; ++i)
 	{
-		document.getTrack(i).truncate();
+		sync_track *t = document.tracks[i];
+		free(t->keys);
+		t->keys = NULL;
+		t->num_keys = 0;
 	}
 	setWindowFileName("Untitled");
 	fileName.clear();
@@ -452,8 +456,12 @@ static LRESULT CALLBACK mainWindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARA
 	case WM_CURRVALDIRTY:
 		{
 			TCHAR temp[256];
-			if (document.getTrackCount() > 0) _sntprintf_s(temp, 256, _T("%f"), document.getTrack(document.getTrackIndexFromPos(trackView->getEditTrack())).getValue(float(trackView->getEditRow())));
-			else _sntprintf_s(temp, 256, _T("---"));
+			if (document.num_tracks > 0) {
+				sync_track *t = document.tracks[document.getTrackIndexFromPos(trackView->getEditTrack())];
+				float row = float(trackView->getEditRow());
+				_sntprintf_s(temp, 256, _T("%f"), sync_get_val(t, row));
+			} else
+				_sntprintf_s(temp, 256, _T("---"));
 			SendMessage(statusBarWin, SB_SETTEXT, 3, (LPARAM)temp);
 		}
 		break;
@@ -484,13 +492,52 @@ static ATOM registerMainWindowClass(HINSTANCE hInstance)
 	return RegisterClassEx(&wc);
 }
 
+#include <stdarg.h>
+void die(const char *fmt, ...)
+{
+	char temp[4096];
+	va_list va;
+	va_start(va, fmt);
+	vfprintf(stderr, fmt, va);
+	vsnprintf(temp, sizeof(temp), fmt, va);
+	va_end(va);
+
+	MessageBox(NULL, temp, mainWindowTitle, MB_OK | MB_ICONERROR);
+	exit(EXIT_FAILURE);
+}
+
+SOCKET clientConnect(SOCKET serverSocket, sockaddr_in *host)
+{
+	sockaddr_in hostTemp;
+	int hostSize = sizeof(sockaddr_in);
+	SOCKET clientSocket = accept(serverSocket, (sockaddr*)&hostTemp, &hostSize);
+	if (INVALID_SOCKET == clientSocket) return INVALID_SOCKET;
+
+	const char *expectedGreeting = client_greet;
+	char recievedGreeting[128];
+
+	recv(clientSocket, recievedGreeting, int(strlen(expectedGreeting)), 0);
+
+	if (strncmp(expectedGreeting, recievedGreeting, strlen(expectedGreeting)) != 0)
+	{
+		closesocket(clientSocket);
+		return INVALID_SOCKET;
+	}
+
+	const char *greeting = server_greet;
+	send(clientSocket, greeting, int(strlen(greeting)), 0);
+
+	if (NULL != host) *host = hostTemp;
+	return clientSocket;
+}
+
 int _tmain(int argc, _TCHAR* argv[])
 {
 #ifdef _DEBUG
 	_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
-	_CrtSetReportMode(_CRT_WARN, _CRTDBG_MODE_DEBUG);
+/*	_CrtSetReportMode(_CRT_WARN, _CRTDBG_MODE_DEBUG);
 	_CrtSetReportMode(_CRT_ERROR, _CRTDBG_MODE_DEBUG);
-	_CrtSetReportMode(_CRT_ASSERT, _CRTDBG_MODE_DEBUG);
+	_CrtSetReportMode(_CRT_ASSERT, _CRTDBG_MODE_DEBUG); */
 //	_CrtSetBreakAlloc(254);
 #endif
 	
@@ -510,41 +557,32 @@ int _tmain(int argc, _TCHAR* argv[])
 		printf("%x\n", test2);
 	}
 #endif
-	
-	if (false == initNetwork())
-	{
-		fputs("Failed to init WinSock", stderr);
-		exit(1);
-	}
-	
-	SOCKET serverSocket = socket( AF_INET, SOCK_STREAM, 0 );
-	
+
+	if (!init_network())
+		die("Failed to init network");
+
+	SOCKET serverSocket = socket(AF_INET, SOCK_STREAM, 0);
+
 	struct sockaddr_in sin;
-	memset( &sin, 0, sizeof sin );
-	
+	memset(&sin, 0, sizeof sin);
+
 	sin.sin_family = AF_INET;
 	sin.sin_addr.s_addr = INADDR_ANY;
 	sin.sin_port = htons( 1338 );
-	
+
 	puts("binding...");
 	if (SOCKET_ERROR == bind( serverSocket, (struct sockaddr *)&sin, sizeof(sin)))
-	{
-		MessageBox(NULL, _T("Could not start server"), mainWindowTitle, MB_OK | MB_ICONERROR | MB_SETFOREGROUND);
-		fputs("Coult not start server", stderr);
-		return -1;
-	}
-	
+		die("Could not start server");
+
 	puts("listening...");
-	while ( listen( serverSocket, SOMAXCONN ) == SOCKET_ERROR );
-	
+	while (listen(serverSocket, SOMAXCONN) == SOCKET_ERROR)
+		; /* nothing */
+
 	ATOM mainClass      = registerMainWindowClass(hInstance);
 	ATOM trackViewClass = registerTrackViewWindowClass(hInstance);
 	if (!mainClass || !trackViewClass)
-	{
-		MessageBox(NULL, _T("Window Registration Failed!"), mainWindowTitle, MB_OK | MB_ICONERROR | MB_SETFOREGROUND);
-		return -1;
-	}
-	
+		die("Window Registration Failed!");
+
 	trackView = new TrackView();
 	trackView->setDocument(&document);
 	
@@ -557,13 +595,10 @@ int _tmain(int argc, _TCHAR* argv[])
 		CW_USEDEFAULT, CW_USEDEFAULT, // width, height
 		NULL, NULL, hInstance, NULL
 	);
-	
+
 	if (NULL == hwnd)
-	{
-		MessageBox(NULL, _T("Window Creation Failed!"), mainWindowTitle, MB_OK | MB_ICONEXCLAMATION | MB_SETFOREGROUND);
-		return -1;
-	}
-	
+		die("Window Creation Failed!");
+
 	fileNew();
 	
 	HACCEL accel = LoadAccelerators(hInstance, MAKEINTRESOURCE(IDR_ACCELERATOR));
@@ -634,22 +669,16 @@ int _tmain(int argc, _TCHAR* argv[])
 							clientSocket.recv(&trackName[0], str_len, 0);
 							
 							// find track
-							int serverIndex = document.getTrackIndex(trackName);
+							int serverIndex = sync_find_track(&document, trackName.c_str());
 							if (0 > serverIndex) serverIndex = int(document.createTrack(trackName));
 							
 							// setup remap
 							document.clientRemap[serverIndex] = clientIndex;
-							
-							const sync::Track &track = document.getTrack(serverIndex);
-							
-							sync::Track::KeyFrameContainer::const_iterator it;
-							for (it = track.keyFramesBegin(); it != track.keyFramesEnd(); ++it)
-							{
-								int row = int(it->first);
-								const sync::Track::KeyFrame &key = it->second;
-								document.sendSetKeyCommand(int(serverIndex), row, key);
-							}
-							
+
+							const sync_track *t = document.tracks[serverIndex];
+							for (int i = 0; i < (int)t->num_keys; ++i)
+								document.sendSetKeyCommand(int(serverIndex), t->keys[i]);
+
 							InvalidateRect(trackViewWin, NULL, FALSE);
 						}
 						break;
@@ -685,13 +714,13 @@ int _tmain(int argc, _TCHAR* argv[])
 		}
 		Sleep(1);
 	}
-	
+
 	closesocket(serverSocket);
-	closeNetwork();
-	
+	close_network();
+
 	delete trackView;
 	trackView = NULL;
-	
+
 	UnregisterClass(mainWindowClassName, hInstance);
 	return int(msg.wParam);
 }

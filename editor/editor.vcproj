@@ -179,11 +179,7 @@
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
 			>
 			<File
-				RelativePath="..\sync\data.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\sync\network.cpp"
+				RelativePath="..\sync\data.c"
 				>
 			</File>
 			<File
@@ -199,7 +195,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\sync\track.cpp"
+				RelativePath="..\sync\track.c"
 				>
 			</File>
 			<File
@@ -234,6 +230,10 @@
 			</File>
 			<File
 				RelativePath="..\stdafx.h"
+				>
+			</File>
+			<File
+				RelativePath="..\sync\sync.h"
 				>
 			</File>
 			<File
