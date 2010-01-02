@@ -51,7 +51,7 @@ int main(int argc, char *argv[])
 		// create the device
 		IDirect3DDevice9 *device = NULL;
 		static D3DPRESENT_PARAMETERS present_parameters = {width, height, D3DFMT_X8R8G8B8, 3, D3DMULTISAMPLE_NONE, 0, D3DSWAPEFFECT_DISCARD, 0, WINDOWED, 1, D3DFMT_D24S8, 0, WINDOWED ? 0 : D3DPRESENT_RATE_DEFAULT, 0};
-		if (D3D_OK != d3d->CreateDevice(D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, hwnd, D3DCREATE_HARDWARE_VERTEXPROCESSING, &present_parameters, &device))
+		if (D3D_OK != d3d->CreateDevice(D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, hwnd, D3DCREATE_SOFTWARE_VERTEXPROCESSING, &present_parameters, &device))
 			throw std::string("could not create device. you computer SUCKS!");
 		
 		// init BASS
