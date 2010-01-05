@@ -4,7 +4,6 @@
 
 #pragma once
 
-#include "../sync/network.h"
 #include "../sync/data.h"
 #include <stack>
 #include <list>

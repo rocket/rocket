@@ -40,7 +40,6 @@ RecentFiles mruFileList(NULL);
 #define WM_BIASSELECTION (WM_USER+2)
 
 #include "../sync/sync.h"
-#include "../sync/network.h"
 
 static LRESULT CALLBACK setRowsDialogProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 {
@@ -558,7 +557,8 @@ int _tmain(int argc, _TCHAR* argv[])
 	}
 #endif
 
-	if (!init_network())
+	WSADATA wsa;
+	if (0 != WSAStartup(MAKEWORD(2, 0), &wsa))
 		die("Failed to init network");
 
 	SOCKET serverSocket = socket(AF_INET, SOCK_STREAM, 0);
@@ -716,7 +716,7 @@ int _tmain(int argc, _TCHAR* argv[])
 	}
 
 	closesocket(serverSocket);
-	close_network();
+	WSACleanup();
 
 	delete trackView;
 	trackView = NULL;

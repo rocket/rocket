@@ -298,10 +298,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\sync\network.h"
-				>
-			</File>
-			<File
 				RelativePath=".\sync\sync.h"
 				>
 			</File>

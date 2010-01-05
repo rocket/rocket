@@ -8,10 +8,6 @@
 #include "track.h"
 #include "data.h"
 
-#ifndef SYNC_PLAYER
-#include "network.h"
-#endif
-
 #ifdef __cplusplus
 extern "C" {
 #endif

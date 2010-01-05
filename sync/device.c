@@ -28,25 +28,44 @@ const char *sync_track_path(const char *base, const char *name)
 static SOCKET server_connect(const char *host, int nport)
 {
 	struct hostent *he;
-	struct sockaddr_in addr;
-	char greet[128];
-	SOCKET sock;
+	struct sockaddr_in sa;
+	char greet[128], **ap;
+	SOCKET sock = INVALID_SOCKET;
 
-	if (!init_network())
-		return INVALID_SOCKET;
+#ifdef WIN32
+	static int need_init = 1;
+	if (need_init) {
+		WSADATA wsa;
+		if (WSAStartup(MAKEWORD(2, 0), &wsa))
+			return INVALID_SOCKET;
+		need_init = 0;
+	}
+#endif
 
 	he = gethostbyname(host);
 	if (!he)
 		return INVALID_SOCKET;
 
-	addr.sin_family = AF_INET;
-	addr.sin_port = htons(nport);
-	addr.sin_addr.s_addr = ((struct in_addr *)(he->h_addr_list[0]))->s_addr;
+	for (ap = he->h_addr_list; *ap; ++ap) {
+		sa.sin_family = he->h_addrtype;
+		sa.sin_port = htons(nport);
+		memcpy(&sa.sin_addr, *ap, he->h_length);
 
-	sock = socket(AF_INET, SOCK_STREAM, 0);
-	connect(sock, (struct sockaddr *)&addr, sizeof(struct sockaddr_in));
+		sock = socket(he->h_addrtype, SOCK_STREAM, 0);
+		if (sock == INVALID_SOCKET)
+			continue;
+
+		if (connect(sock, (struct sockaddr *)&sa, sizeof(sa)) >= 0)
+			break;
+
+		closesocket(sock);
+		sock = INVALID_SOCKET;
+	}
+
+	if (sock == INVALID_SOCKET)
+		return INVALID_SOCKET;
+
 	send(sock, client_greet, (int)strlen(client_greet), 0);
-
 	recv(sock, greet, (int)strlen(server_greet), 0);
 	if (!strncmp(server_greet, greet, strlen(server_greet)))
 		return sock;
@@ -171,27 +190,40 @@ static int hanle_set_key_cmd(SOCKET sock, struct sync_data *data)
 	ret += recv(sock, (char *)&key.value, sizeof(float), 0);
 	ret += recv(sock, (char *)&type, 1, 0);
 	if (ret != sizeof(int) * 2 + sizeof(float) + 1)
-		return 1;
+		return 0;
 
 	assert(type < KEY_TYPE_COUNT);
 	assert(track < (int)data->num_tracks);
-
 	key.type = (enum key_type)type;
 	sync_set_key(data->tracks[track], &key);
-	return 0;
+	return 1;
 }
 
 static int hanle_del_key_cmd(SOCKET sock, struct sync_data *data)
 {
 	int ret, track, row;
+
 	ret  = recv(sock, (char *)&track, sizeof(int), 0);
 	ret += recv(sock, (char *)&row,   sizeof(int), 0);
 	if (ret != sizeof(int) * 2)
-		return 1;
+		return 0;
 
 	assert(track < (int)data->num_tracks);
-
 	sync_del_key(data->tracks[track], row);
+	return 1;
+}
+
+static int purge_and_rerequest(struct sync_device *d)
+{
+	int i;
+	for (i = 0; i < (int)d->data.num_tracks; ++i) {
+		free(d->data.tracks[i]->keys);
+		d->data.tracks[i]->keys = NULL;
+		d->data.tracks[i]->num_keys = 0;
+
+		if (request_track_data(d->sock, d->data.tracks[i]->name, i));
+			return 1;
+	}
 	return 0;
 }
 
@@ -199,45 +231,36 @@ void sync_update(struct sync_device *d, double row)
 {
 	if (d->sock == INVALID_SOCKET) {
 		d->sock = server_connect(REMOTE_HOST, REMOTE_PORT);
-		if (d->sock != INVALID_SOCKET) {
-			int i;
-			for (i = 0; i < (int)d->data.num_tracks; ++i) {
-				/* throw out old data */
-				free(d->data.tracks[i]->keys);
-				d->data.tracks[i]->keys = NULL;
-				d->data.tracks[i]->num_keys = 0;
-				/* request new data */
-				request_track_data(d->sock,
-				    d->data.tracks[i]->name, i);
-			}
-		}
+		if (purge_and_rerequest(d))
+			goto sockerr;
 	}
 
 	/* look for new commands */
 	while (d->sock != INVALID_SOCKET && socket_poll(d->sock)) {
 		unsigned char cmd = 0, flag;
-		int err = 1, row;
-		if (!recv(d->sock, (char *)&cmd, 1, 0)) {
-			d->sock = INVALID_SOCKET;
-			break;
-		}
+		int row;
+		if (!recv(d->sock, (char *)&cmd, 1, 0))
+			goto sockerr;
 
-		switch (cmd)
-		{
+		switch (cmd) {
 		case SET_KEY:
-			err = hanle_set_key_cmd(d->sock, &d->data);
+			if (hanle_set_key_cmd(d->sock, &d->data))
+				goto sockerr;
 			break;
 		case DELETE_KEY:
-			err = hanle_del_key_cmd(d->sock, &d->data);
+			if (hanle_del_key_cmd(d->sock, &d->data))
+				goto sockerr;
 			break;
 		case SET_ROW:
-			err = recv(d->sock, (char *)&row, sizeof(int), 0) != sizeof(int);
-			if (!err && d->cb && d->cb->set_row)
+			if (recv(d->sock, (char *)&row, sizeof(int), 0) != sizeof(int))
+				goto sockerr;
+			if (d->cb && d->cb->set_row)
 				d->cb->set_row(d->cb_param, row);
 			break;
 		case PAUSE:
-			err = recv(d->sock, (char *)&flag, 1, 0) != 1;
-			if (!err && d->cb && d->cb->pause)
+			if (recv(d->sock, (char *)&flag, 1, 0) != 1)
+				goto sockerr;
+			if (d->cb && d->cb->pause)
 				d->cb->pause(d->cb_param, flag);
 			break;
 		case SAVE_TRACKS:
@@ -245,10 +268,7 @@ void sync_update(struct sync_device *d, double row)
 			break;
 		default:
 			fprintf(stderr, "unknown cmd: %02x\n", cmd);
-		}
-		if (err) {
-			d->sock = INVALID_SOCKET;
-			break;
+			goto sockerr;
 		}
 	}
 
@@ -259,11 +279,15 @@ void sync_update(struct sync_device *d, double row)
 			int ret = send(d->sock, (char*)&cmd, 1, 0);
 			ret += send(d->sock, (char*)&nrow, sizeof(int), 0);
 			if (ret != sizeof(int) + 1)
-				d->sock = INVALID_SOCKET;
-			else
-				d->row = nrow;
+				goto sockerr;
+			d->row = nrow;
 		}
 	}
+	return;
+
+sockerr:
+	d->sock = INVALID_SOCKET;
+	return;
 }
 
 #endif
