@@ -197,6 +197,22 @@ static int hanle_del_key_cmd(SOCKET sock, struct sync_data *data)
 
 void sync_update(struct sync_device *d, double row)
 {
+	if (d->sock == INVALID_SOCKET) {
+		d->sock = server_connect(REMOTE_HOST, REMOTE_PORT);
+		if (d->sock != INVALID_SOCKET) {
+			int i;
+			for (i = 0; i < (int)d->data.num_tracks; ++i) {
+				/* throw out old data */
+				free(d->data.tracks[i]->keys);
+				d->data.tracks[i]->keys = NULL;
+				d->data.tracks[i]->num_keys = 0;
+				/* request new data */
+				request_track_data(d->sock,
+				    d->data.tracks[i]->name, i);
+			}
+		}
+	}
+
 	/* look for new commands */
 	while (d->sock != INVALID_SOCKET && socket_poll(d->sock)) {
 		unsigned char cmd = 0, flag;
