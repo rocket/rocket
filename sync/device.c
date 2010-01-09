@@ -99,6 +99,12 @@ struct sync_device *sync_create_device(const char *base)
 	return d;
 }
 
+void sync_destroy_device(struct sync_device *d)
+{
+	free(d->base);
+	sync_data_deinit(&d->data);
+}
+
 #ifdef SYNC_PLAYER
 
 static int load_track_data(struct sync_track *t, const char *path)

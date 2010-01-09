@@ -13,7 +13,7 @@ extern "C" {
 #endif
 
 struct sync_device {
-	const char *base;
+	char *base;
 	struct sync_data data;
 
 #ifndef SYNC_PLAYER

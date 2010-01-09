@@ -13,6 +13,7 @@ struct sync_device;
 struct sync_track;
 
 struct sync_device *sync_create_device(const char *);
+void sync_destroy_device(struct sync_device *);
 
 #ifndef SYNC_PLAYER
 struct sync_cb {
