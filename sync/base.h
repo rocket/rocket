@@ -20,6 +20,7 @@
  #include <netdb.h>
  #define SOCKET int
  #define INVALID_SOCKET -1
+ #define closesocket(x) close(x)
 #endif
 
 static const char *client_greet = "hello, synctracker!";
