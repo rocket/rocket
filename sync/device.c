@@ -103,6 +103,7 @@ void sync_destroy_device(struct sync_device *d)
 {
 	free(d->base);
 	sync_data_deinit(&d->data);
+	free(d);
 }
 
 #ifdef SYNC_PLAYER
