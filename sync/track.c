@@ -1,5 +1,5 @@
 /* Copyright (C) 2010 Erik Faye-Lund and Egbert Teeselink
- * For conditions of distribution and use, see copyright notice in LICENSE.TXT
+ * For conditions of distribution and use, see copyright notice in COPYING
  */
 
 #include <stdlib.h>
