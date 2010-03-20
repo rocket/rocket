@@ -228,7 +228,7 @@ static int purge_and_rerequest(struct sync_device *d)
 		d->data.tracks[i]->keys = NULL;
 		d->data.tracks[i]->num_keys = 0;
 
-		if (request_track_data(d->sock, d->data.tracks[i]->name, i));
+		if (request_track_data(d->sock, d->data.tracks[i]->name, i))
 			return 1;
 	}
 	return 0;
