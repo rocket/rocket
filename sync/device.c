@@ -238,7 +238,7 @@ void sync_update(struct sync_device *d, double row)
 {
 	if (d->sock == INVALID_SOCKET) {
 		d->sock = server_connect(REMOTE_HOST, REMOTE_PORT);
-		if (purge_and_rerequest(d))
+		if (d->sock != INVALID_SOCKET && purge_and_rerequest(d))
 			goto sockerr;
 	}
 
