@@ -251,11 +251,11 @@ void sync_update(struct sync_device *d, double row)
 
 		switch (cmd) {
 		case SET_KEY:
-			if (hanle_set_key_cmd(d->sock, &d->data))
+			if (!hanle_set_key_cmd(d->sock, &d->data))
 				goto sockerr;
 			break;
 		case DELETE_KEY:
-			if (hanle_del_key_cmd(d->sock, &d->data))
+			if (!hanle_del_key_cmd(d->sock, &d->data))
 				goto sockerr;
 			break;
 		case SET_ROW:
