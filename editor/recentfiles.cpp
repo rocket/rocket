@@ -1,5 +1,7 @@
+#include "../sync/base.h"
 #include "recentfiles.h"
 #include "resource.h"
+#include <assert.h>
 
 #define MAX_DIR_LEN 64
 
