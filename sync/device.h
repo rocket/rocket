@@ -23,7 +23,6 @@ struct sync_device {
 	SOCKET sock;
 #endif
 };
-const char *sync_track_path(const char *base, const char *name);
 
 #ifdef __cplusplus
 }

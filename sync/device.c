@@ -8,7 +8,7 @@
 #include <assert.h>
 #include <math.h>
 
-const char *sync_track_path(const char *base, const char *name)
+static const char *sync_track_path(const char *base, const char *name)
 {
 	static char temp[FILENAME_MAX];
 	strncpy(temp, base, sizeof(temp));
