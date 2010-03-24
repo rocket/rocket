@@ -74,7 +74,7 @@ public:
 
 	~SyncDocument();
 
-	size_t createTrack(const std::basic_string<TCHAR> &name)
+	size_t createTrack(const std::string &name)
 	{
 		size_t index = sync_create_track(this, name.c_str());
 		trackOrder.push_back(index);

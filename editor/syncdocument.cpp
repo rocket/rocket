@@ -1,6 +1,5 @@
 #include "syncdocument.h"
 #include <string>
-#include <tchar.h>
 
 SyncDocument::~SyncDocument()
 {
@@ -81,19 +80,19 @@ bool SyncDocument::save(const std::string &fileName)
 	{
 		char temp[256];
 		_variant_t varNodeType((short)MSXML2::NODE_ELEMENT);
-		MSXML2::IXMLDOMElementPtr rootNode = doc->createElement(_T("tracks"));
+		MSXML2::IXMLDOMElementPtr rootNode = doc->createElement("tracks");
 		doc->appendChild(rootNode);
 
 		_snprintf(temp, 256, "%d", getRows());
-		rootNode->setAttribute(_T("rows"), temp);
+		rootNode->setAttribute("rows", temp);
 
 		for (size_t i = 0; i < num_tracks; ++i) {
 			const sync_track *t = tracks[i];
 
-			MSXML2::IXMLDOMElementPtr trackElem = doc->createElement(_T("track"));
-			trackElem->setAttribute(_T("name"), t->name);
+			MSXML2::IXMLDOMElementPtr trackElem = doc->createElement("track");
+			trackElem->setAttribute("name", t->name);
 
-			rootNode->appendChild(doc->createTextNode(_T("\n\t")));
+			rootNode->appendChild(doc->createTextNode("\n\t"));
 			rootNode->appendChild(trackElem);
 
 			for (int i = 0; i < (int)t->num_keys; ++i) {
@@ -101,25 +100,25 @@ bool SyncDocument::save(const std::string &fileName)
 				float value = t->keys[i].value;
 				char interpolationType = char(t->keys[i].type);
 
-				MSXML2::IXMLDOMElementPtr keyElem = doc->createElement(_T("key"));
+				MSXML2::IXMLDOMElementPtr keyElem = doc->createElement("key");
 				
-				_snprintf(temp, 256, _T("%d"), row);
-				keyElem->setAttribute(_T("row"), temp);
+				_snprintf(temp, 256, "%d", row);
+				keyElem->setAttribute("row", temp);
 
-				_snprintf(temp, 256, _T("%f"), value);
-				keyElem->setAttribute(_T("value"), temp);
+				_snprintf(temp, 256, "%f", value);
+				keyElem->setAttribute("value", temp);
 
-				_snprintf(temp, 256, _T("%d"), interpolationType);
-				keyElem->setAttribute(_T("interpolation"), temp);
+				_snprintf(temp, 256, "%d", interpolationType);
+				keyElem->setAttribute("interpolation", temp);
 
-				trackElem->appendChild(doc->createTextNode(_T("\n\t\t")));
+				trackElem->appendChild(doc->createTextNode("\n\t\t"));
 				trackElem->appendChild(keyElem);
 			}
 			if (t->num_keys)
-				trackElem->appendChild(doc->createTextNode(_T("\n\t")));
+				trackElem->appendChild(doc->createTextNode("\n\t"));
 		}
 		if (0 != num_tracks)
-			rootNode->appendChild(doc->createTextNode(_T("\n")));
+			rootNode->appendChild(doc->createTextNode("\n"));
 		
 		doc->save(fileName.c_str());
 		

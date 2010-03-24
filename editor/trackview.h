@@ -189,7 +189,7 @@ private:
 	
 	SyncDocument *document;
 	
-	std::basic_string<TCHAR> editString;
+	std::string editString;
 	
 	HWND hwnd;
 	

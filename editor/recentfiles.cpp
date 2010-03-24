@@ -70,10 +70,10 @@ void RecentFiles::update()
 		menuEntry += char('1' + i);
 		menuEntry += " ";
 		
-		TCHAR path[_MAX_PATH], drive[_MAX_DRIVE], dir[_MAX_DIR], fname[_MAX_FNAME], ext[_MAX_EXT];
-		_tsplitpath(it->c_str(), drive, dir, fname, ext);
-		if (_tcslen(dir) > MAX_DIR_LEN) _tcscpy(dir, _T("\\..."));
-		_tmakepath(path, drive, dir, fname, ext);
+		char path[_MAX_PATH], drive[_MAX_DRIVE], dir[_MAX_DIR], fname[_MAX_FNAME], ext[_MAX_EXT];
+		_splitpath(it->c_str(), drive, dir, fname, ext);
+		if (strlen(dir) > MAX_DIR_LEN) strcpy(dir, "\\...");
+		_makepath(path, drive, dir, fname, ext);
 		menuEntry += std::string(path);
 
 		AppendMenu(mruFileMenu, MF_STRING, ID_RECENTFILES_FILE1 + i, menuEntry.c_str());

@@ -24,9 +24,9 @@
 #include "recentfiles.h"
 
 #include <vector>
-const TCHAR *mainWindowClassName = _T("MainWindow");
-const TCHAR *mainWindowTitle = _T("GNU Rocket System");
-const TCHAR *keyName = _T("SOFTWARE\\GNU Rocket");
+const char *mainWindowClassName = "MainWindow";
+const char *mainWindowTitle = "GNU Rocket System";
+const char *keyName = "SOFTWARE\\GNU Rocket";
 
 HWND hwnd = NULL;
 TrackView *trackView = NULL;
@@ -51,8 +51,8 @@ static LRESULT CALLBACK setRowsDialogProc(HWND hDlg, UINT message, WPARAM wParam
 			assert(NULL != rows);
 			
 			/* create row-string */
-			TCHAR temp[256];
-			_sntprintf_s(temp, 256, _T("%d"), *rows);
+			char temp[256];
+			_snprintf_s(temp, 256, "%d", *rows);
 			
 			/* set initial row count */
 			SetDlgItemText(hDlg, IDC_SETROWS_EDIT, temp);
@@ -64,9 +64,9 @@ static LRESULT CALLBACK setRowsDialogProc(HWND hDlg, UINT message, WPARAM wParam
 		if (LOWORD(wParam) == IDOK)
 		{
 			/* get value */
-			TCHAR temp[256];
+			char temp[256];
 			GetDlgItemText(hDlg, IDC_SETROWS_EDIT, temp, 256);
-			int result = _tstoi(temp);
+			int result = atoi(temp);
 			
 			/* update editor */
 			SendMessage(GetParent(hDlg), WM_SETROWS, 0, result);
@@ -100,8 +100,8 @@ static LRESULT CALLBACK biasSelectionDialogProc(HWND hDlg, UINT message, WPARAM 
 			assert(NULL != intialBias);
 			
 			/* create bias-string */
-			TCHAR temp[256];
-			_sntprintf_s(temp, 256, _T("%d"), *intialBias);
+			char temp[256];
+			_snprintf(temp, 256, "%d", *intialBias);
 			
 			/* set initial bias */
 			SetDlgItemText(hDlg, IDC_SETROWS_EDIT, temp);
@@ -112,9 +112,9 @@ static LRESULT CALLBACK biasSelectionDialogProc(HWND hDlg, UINT message, WPARAM 
 		if (LOWORD(wParam) == IDOK)
 		{
 			/* get value */
-			TCHAR temp[256];
+			char temp[256];
 			GetDlgItemText(hDlg, IDC_BIASSELECTION_EDIT, temp, 256);
-			int bias = _tstoi(temp);
+			int bias = atoi(temp);
 			
 			/* update editor */
 			SendMessage(GetParent(hDlg), WM_BIASSELECTION, 0, LPARAM(bias));
@@ -139,8 +139,8 @@ static LRESULT CALLBACK biasSelectionDialogProc(HWND hDlg, UINT message, WPARAM 
 
 void setWindowFileName(std::string fileName)
 {
-	TCHAR drive[_MAX_DRIVE],dir[_MAX_DIR],fname[_MAX_FNAME],ext[_MAX_EXT];
-	_tsplitpath(fileName.c_str(), drive, dir, fname, ext);
+	char drive[_MAX_DRIVE],dir[_MAX_DIR],fname[_MAX_FNAME],ext[_MAX_EXT];
+	_splitpath(fileName.c_str(), drive, dir, fname, ext);
 	std::string windowTitle = std::string(fname) + std::string(" - ") + std::string(mainWindowTitle);
 	SetWindowText(hwnd, windowTitle.c_str());
 }
@@ -201,7 +201,7 @@ void loadDocument(const std::string &_fileName)
 		SendMessage(hwnd, WM_CURRVALDIRTY, 0, 0);
 		InvalidateRect(trackViewWin, NULL, FALSE);
 	}
-	else MessageBox(hwnd, _T("failed to open file"), mainWindowTitle, MB_OK | MB_ICONERROR | MB_SETFOREGROUND);
+	else MessageBox(hwnd, "failed to open file", mainWindowTitle, MB_OK | MB_ICONERROR | MB_SETFOREGROUND);
 }
 
 void fileOpen()
@@ -249,7 +249,7 @@ void fileSaveAs()
 			mruFileList.update();
 			DrawMenuBar(hwnd);
 		}
-		else MessageBox(hwnd, _T("Failed to save file"), mainWindowTitle, MB_OK | MB_ICONERROR | MB_SETFOREGROUND);
+		else MessageBox(hwnd, "Failed to save file", mainWindowTitle, MB_OK | MB_ICONERROR | MB_SETFOREGROUND);
 	}
 }
 
@@ -259,7 +259,7 @@ void fileSave()
 	else if (!document.save(fileName.c_str()))
 	{
 		document.sendSaveCommand();
-		MessageBox(hwnd, _T("Failed to save file"), mainWindowTitle, MB_OK | MB_ICONERROR | MB_SETFOREGROUND);
+		MessageBox(hwnd, "Failed to save file", mainWindowTitle, MB_OK | MB_ICONERROR | MB_SETFOREGROUND);
 	}
 }
 
@@ -267,7 +267,7 @@ void attemptQuit()
 {
 	if (document.modified())
 	{
-		UINT res = MessageBox(hwnd, _T("Save before exit?"), mainWindowTitle, MB_YESNOCANCEL | MB_ICONQUESTION);
+		UINT res = MessageBox(hwnd, "Save before exit?", mainWindowTitle, MB_YESNOCANCEL | MB_ICONQUESTION);
 		if (IDYES == res) fileSave();
 		if (IDCANCEL != res) DestroyWindow(hwnd);
 	}
@@ -298,10 +298,10 @@ static LRESULT CALLBACK mainWindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARA
 			
 			int statwidths[] = { 150, 150 + 32, 150 + 32 * 2, 150 + 32 * 4};
 			SendMessage(statusBarWin, SB_SETPARTS, sizeof(statwidths) / sizeof(int), (LPARAM)statwidths);
-			SendMessage(statusBarWin, SB_SETTEXT, 0, (LPARAM)_T("Not connected"));
-			SendMessage(statusBarWin, SB_SETTEXT, 1, (LPARAM)_T("0"));
-			SendMessage(statusBarWin, SB_SETTEXT, 2, (LPARAM)_T("0"));
-			SendMessage(statusBarWin, SB_SETTEXT, 3, (LPARAM)_T("---"));
+			SendMessage(statusBarWin, SB_SETTEXT, 0, (LPARAM)"Not connected");
+			SendMessage(statusBarWin, SB_SETTEXT, 1, (LPARAM)"0");
+			SendMessage(statusBarWin, SB_SETTEXT, 2, (LPARAM)"0");
+			SendMessage(statusBarWin, SB_SETTEXT, 3, (LPARAM)"---");
 			
 			if (ERROR_SUCCESS != RegOpenKey(HKEY_CURRENT_USER, keyName, &regConfigKey))
 			{
@@ -421,7 +421,7 @@ static LRESULT CALLBACK mainWindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARA
 				HINSTANCE hInstance = GetModuleHandle(NULL);
 				int rows = int(trackView->getRows());
 				INT_PTR result = DialogBoxParam(hInstance, MAKEINTRESOURCE(IDD_SETROWS), hwnd, (DLGPROC)setRowsDialogProc, (LPARAM)&rows);
-				if (FAILED(result)) MessageBox(hwnd, _T("unable to create dialog box"), mainWindowTitle, MB_OK | MB_ICONERROR | MB_SETFOREGROUND);
+				if (FAILED(result)) MessageBox(hwnd, "unable to create dialog box", mainWindowTitle, MB_OK | MB_ICONERROR | MB_SETFOREGROUND);
 			}
 			break;
 		
@@ -430,7 +430,7 @@ static LRESULT CALLBACK mainWindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARA
 				HINSTANCE hInstance = GetModuleHandle(NULL);
 				int initialBias = 0;
 				INT_PTR result = DialogBoxParam(hInstance, MAKEINTRESOURCE(IDD_BIASSELECTION), hwnd, (DLGPROC)biasSelectionDialogProc, (LPARAM)&initialBias);
-				if (FAILED(result)) MessageBox(hwnd, _T("unable to create dialog box"), mainWindowTitle, MB_OK | MB_ICONERROR | MB_SETFOREGROUND);
+				if (FAILED(result)) MessageBox(hwnd, "unable to create dialog box", mainWindowTitle, MB_OK | MB_ICONERROR | MB_SETFOREGROUND);
 			}
 			break;
 		}
@@ -438,29 +438,29 @@ static LRESULT CALLBACK mainWindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARA
 	
 	case WM_ROWCHANGED:
 		{
-			TCHAR temp[256];
-			_sntprintf_s(temp, 256, _T("%d"), lParam );
+			char temp[256];
+			_snprintf_s(temp, 256, "%d", lParam );
 			SendMessage(statusBarWin, SB_SETTEXT, 1, (LPARAM)temp);
 		}
 		break;
 	
 	case WM_TRACKCHANGED:
 		{
-			TCHAR temp[256];
-			_sntprintf_s(temp, 256, _T("%d"), lParam);
+			char temp[256];
+			_snprintf_s(temp, 256, "%d", lParam);
 			SendMessage(statusBarWin, SB_SETTEXT, 2, (LPARAM)temp);
 		}
 		break;
 	
 	case WM_CURRVALDIRTY:
 		{
-			TCHAR temp[256];
+			char temp[256];
 			if (document.num_tracks > 0) {
 				sync_track *t = document.tracks[document.getTrackIndexFromPos(trackView->getEditTrack())];
 				float row = float(trackView->getEditRow());
-				_sntprintf_s(temp, 256, _T("%f"), sync_get_val(t, row));
+				_snprintf_s(temp, 256, "%f", sync_get_val(t, row));
 			} else
-				_sntprintf_s(temp, 256, _T("---"));
+				_snprintf_s(temp, 256, "---");
 			SendMessage(statusBarWin, SB_SETTEXT, 3, (LPARAM)temp);
 		}
 		break;
@@ -530,7 +530,7 @@ SOCKET clientConnect(SOCKET serverSocket, sockaddr_in *host)
 	return clientSocket;
 }
 
-int _tmain(int argc, _TCHAR* argv[])
+int main(int argc, char* argv[])
 {
 #ifdef _DEBUG
 	_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
@@ -624,13 +624,13 @@ int _tmain(int argc, _TCHAR* argv[])
 			// look for new clients
 			if (select(0, &fds, NULL, NULL, &timeout) > 0)
 			{
-				SendMessage(statusBarWin, SB_SETTEXT, 0, (LPARAM)_T("Accepting..."));
+				SendMessage(statusBarWin, SB_SETTEXT, 0, (LPARAM)"Accepting...");
 				sockaddr_in client;
 				clientSocket = clientConnect(serverSocket, &client);
 				if (INVALID_SOCKET != clientSocket)
 				{
-					TCHAR temp[256];
-					_sntprintf_s(temp, 256, _T("Connected to %s"), inet_ntoa(client.sin_addr));
+					char temp[256];
+					_snprintf_s(temp, 256, "Connected to %s", inet_ntoa(client.sin_addr));
 					SendMessage(statusBarWin, SB_SETTEXT, 0, (LPARAM)temp);
 					document.clientSocket = NetworkSocket(clientSocket);
 					document.clientRemap.clear();
@@ -638,7 +638,7 @@ int _tmain(int argc, _TCHAR* argv[])
 					document.sendSetRowCommand(trackView->getEditRow());
 					guiConnected = true;
 				}
-				else SendMessage(statusBarWin, SB_SETTEXT, 0, (LPARAM)_T("Not Connected."));
+				else SendMessage(statusBarWin, SB_SETTEXT, 0, (LPARAM)"Not Connected.");
 			}
 		}
 		
@@ -699,7 +699,7 @@ int _tmain(int argc, _TCHAR* argv[])
 		{
 			document.clientPaused = true;
 			InvalidateRect(trackViewWin, NULL, FALSE);
-			SendMessage(statusBarWin, SB_SETTEXT, 0, (LPARAM)_T("Not Connected."));
+			SendMessage(statusBarWin, SB_SETTEXT, 0, (LPARAM)"Not Connected.");
 			guiConnected = false;
 		}
 		

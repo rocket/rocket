@@ -4,16 +4,15 @@
 
 #include "trackview.h"
 #include <vector>
-#include <tchar.h>
 
-static const TCHAR *trackViewWindowClassName = _T("TrackView");
+static const char *trackViewWindowClassName = "TrackView";
 
 static DWORD darken(DWORD col, float amt)
 {
 	return RGB(GetRValue(col) * amt, GetGValue(col) * amt, GetBValue(col) * amt);
 }
 
-static int getMaxCharacterWidth(HDC hdc, TCHAR *chars, size_t len)
+static int getMaxCharacterWidth(HDC hdc, char *chars, size_t len)
 {
 	int maxDigitWidth = 0;
 	for (size_t i = 0; i < len; ++i)
@@ -25,9 +24,9 @@ static int getMaxCharacterWidth(HDC hdc, TCHAR *chars, size_t len)
 	return maxDigitWidth;
 }
 
-static int getMaxCharacterWidthFromString(HDC hdc, TCHAR *chars)
+static int getMaxCharacterWidthFromString(HDC hdc, char *chars)
 {
-	return getMaxCharacterWidth(hdc, chars, _tcslen(chars));
+	return getMaxCharacterWidth(hdc, chars, strlen(chars));
 }
 
 TrackView::TrackView()
@@ -60,7 +59,7 @@ TrackView::TrackView()
 	
 	editBrush = CreateSolidBrush(RGB(255, 255, 0)); // yellow
 	
-	clipboardFormat = RegisterClipboardFormat(_T("syncdata"));
+	clipboardFormat = RegisterClipboardFormat("syncdata");
 	assert(0 != clipboardFormat);
 }
 
@@ -91,10 +90,10 @@ void TrackView::setFont(HFONT font)
 	
 	rowHeight = tm.tmHeight + tm.tmExternalLeading;
 	fontWidth = tm.tmAveCharWidth;
-	trackWidth = getMaxCharacterWidthFromString(hdc, _T("0123456789.")) * 16;
+	trackWidth = getMaxCharacterWidthFromString(hdc, "0123456789.") * 16;
 	
 	topMarginHeight = rowHeight + 4;
-	leftMarginWidth = getMaxCharacterWidthFromString(hdc, _T("0123456789abcdefh")) * 8;
+	leftMarginWidth = getMaxCharacterWidthFromString(hdc, "0123456789abcdefh") * 8;
 }
 
 int TrackView::getScreenY(int row) const
@@ -195,7 +194,7 @@ void TrackView::paintTracks(HDC hdc, RECT rcTracks)
 	const SyncDocument *doc = getDocument();
 	if (NULL == doc) return;
 	
-	TCHAR temp[256];
+	char temp[256];
 	
 	int firstRow = editRow - windowRows / 2 - 1;
 	int lastRow  = editRow + windowRows / 2 + 1;
@@ -230,10 +229,10 @@ void TrackView::paintTracks(HDC hdc, RECT rcTracks)
 /*		if ((row % 4) == 0) SetTextColor(hdc, GetSysColor(COLOR_BTNTEXT));
 		else                SetTextColor(hdc, GetSysColor(COLOR_GRAYTEXT)); */
 		
-		_sntprintf_s(temp, 256, _T("%0*Xh"), 5, row);
+		_snprintf_s(temp, 256, "%0*Xh", 5, row);
 		TextOut(hdc,
 			leftMargin.left, leftMargin.top,
-			temp, int(_tcslen(temp))
+			temp, int(strlen(temp))
 		);
 	}
 	
@@ -310,19 +309,19 @@ void TrackView::paintTracks(HDC hdc, RECT rcTracks)
 			}
 			/* format the text */
 			if (drawEditString)
-				_sntprintf_s(temp, 256, editString.c_str());
+				_snprintf_s(temp, 256, editString.c_str());
 			else if (idx < 0)
-				_sntprintf_s(temp, 256, _T("  ---"));
+				_snprintf_s(temp, 256, "  ---");
 			else {
 				float val = t->keys[idx].value;
-				_sntprintf_s(temp, 256, _T("% .2f"), val);
+				_snprintf_s(temp, 256, "% .2f", val);
 			}
 
 			COLORREF oldCol;
 			if (selected) oldCol = SetTextColor(hdc, GetSysColor(COLOR_HIGHLIGHTTEXT));
 			TextOut(hdc,
 				patternDataRect.left, patternDataRect.top,
-				temp, int(_tcslen(temp))
+				temp, int(strlen(temp))
 			);
 			if (selected) SetTextColor(hdc, oldCol);
 		}
@@ -381,7 +380,7 @@ void TrackView::editCopy()
 	
 	if (FAILED(OpenClipboard(getWin())))
 	{
-		MessageBox(NULL, _T("Failed to open clipboard"), NULL, MB_OK);
+		MessageBox(NULL, "Failed to open clipboard", NULL, MB_OK);
 		return;
 	}
 	
@@ -454,7 +453,7 @@ void TrackView::editPaste()
 	
 	if (FAILED(OpenClipboard(getWin())))
 	{
-		MessageBox(NULL, _T("Failed to open clipboard"), NULL, MB_OK);
+		MessageBox(NULL, "Failed to open clipboard", NULL, MB_OK);
 		return;
 	}
 	
@@ -753,7 +752,7 @@ void TrackView::editEnterValue()
 		int idx = sync_find_key(t, editRow);
 		if (idx >= 0)
 			newKey = t->keys[idx]; // copy old key
-		newKey.value = float(_tstof(editString.c_str())); // modify value
+		newKey.value = float(atof(editString.c_str())); // modify value
 		editString.clear();
 
 		SyncDocument::Command *cmd = doc->getSetKeyFrameCommand(int(trackIndex), newKey);
@@ -1197,7 +1196,7 @@ HWND TrackView::create(HINSTANCE hInstance, HWND hwndParent)
 {
 	HWND hwnd = CreateWindowEx(
 		WS_EX_CLIENTEDGE,
-		trackViewWindowClassName, _T(""),
+		trackViewWindowClassName, "",
 		WS_VSCROLL | WS_HSCROLL | WS_CHILD | WS_VISIBLE,
 		CW_USEDEFAULT, CW_USEDEFAULT, // x, y
 		CW_USEDEFAULT, CW_USEDEFAULT, // width, height
