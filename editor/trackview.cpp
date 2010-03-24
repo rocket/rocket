@@ -4,6 +4,11 @@
 
 #include "trackview.h"
 #include <vector>
+#include <algorithm>
+#include <stdio.h>
+
+using std::min;
+using std::max;
 
 static const char *trackViewWindowClassName = "TrackView";
 
@@ -229,7 +234,7 @@ void TrackView::paintTracks(HDC hdc, RECT rcTracks)
 /*		if ((row % 4) == 0) SetTextColor(hdc, GetSysColor(COLOR_BTNTEXT));
 		else                SetTextColor(hdc, GetSysColor(COLOR_GRAYTEXT)); */
 		
-		_snprintf_s(temp, 256, "%0*Xh", 5, row);
+		snprintf(temp, 256, "%0*Xh", 5, row);
 		TextOut(hdc,
 			leftMargin.left, leftMargin.top,
 			temp, int(strlen(temp))
@@ -309,12 +314,12 @@ void TrackView::paintTracks(HDC hdc, RECT rcTracks)
 			}
 			/* format the text */
 			if (drawEditString)
-				_snprintf_s(temp, 256, editString.c_str());
+				snprintf(temp, 256, editString.c_str());
 			else if (idx < 0)
-				_snprintf_s(temp, 256, "  ---");
+				snprintf(temp, 256, "  ---");
 			else {
 				float val = t->keys[idx].value;
-				_snprintf_s(temp, 256, "% .2f", val);
+				snprintf(temp, 256, "% .2f", val);
 			}
 
 			COLORREF oldCol;
@@ -348,7 +353,7 @@ void TrackView::paintTracks(HDC hdc, RECT rcTracks)
 	
 	{
 		RECT topPadding;
-		topPadding.top = max(rcTracks.top, topMarginHeight);
+		topPadding.top = max(int(rcTracks.top), topMarginHeight);
 		topPadding.bottom = getScreenY(0);
 		topPadding.left = rcTracks.left;
 		topPadding.right = rcTracks.right;
@@ -1130,7 +1135,7 @@ LRESULT TrackView::windowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	return FALSE;
 }
 
-static LRESULT CALLBACK trackViewWindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
+LRESULT CALLBACK trackViewWindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
 	// Get the TrackView instance (if any)
 #pragma warning(suppress:4312) /* remove a pointless warning */

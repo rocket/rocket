@@ -8,11 +8,13 @@
 #ifdef _MSC_VER
 #define inline __inline
 #define strdup _strdup
+#define snprintf _snprintf
 #endif
 
 #ifdef WIN32
- #include <winsock2.h>
  #define WIN32_LEAN_AND_MEAN
+ #define NOMINMAX
+ #include <winsock2.h>
  #include <windows.h>
 #else
  #include <sys/socket.h>

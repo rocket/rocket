@@ -86,7 +86,7 @@ public:
 	
 private:
 	// some nasty hackery to forward the window messages
-	friend static LRESULT CALLBACK trackViewWindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
+	friend LRESULT CALLBACK trackViewWindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
 	LRESULT windowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
 	
 	// events
@@ -108,10 +108,10 @@ private:
 	void invalidateRange(int startTrack, int stopTrack, int startRow, int stopRow)
 	{
 		RECT rect;
-		rect.left  = getScreenX(min(startTrack, stopTrack));
-		rect.right = getScreenX(max(startTrack, stopTrack) + 1);
-		rect.top    = getScreenY(min(startRow, stopRow));
-		rect.bottom = getScreenY(max(startRow, stopRow) + 1);
+		rect.left  = getScreenX(std::min(startTrack, stopTrack));
+		rect.right = getScreenX(std::max(startTrack, stopTrack) + 1);
+		rect.top    = getScreenY(std::min(startRow, stopRow));
+		rect.bottom = getScreenY(std::max(startRow, stopRow) + 1);
 		InvalidateRect(hwnd, &rect, FALSE);
 	}
 	

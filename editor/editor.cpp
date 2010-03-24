@@ -2,14 +2,14 @@
  * For conditions of distribution and use, see copyright notice in COPYING
  */
 
+#include "../sync/base.h"
 #include <afxres.h>
 #include "resource.h"
 
-#define WIN32_LEAN_AND_MEAN
-#include <windows.h>
 #include <commctrl.h>
 #include <objbase.h>
 #include <commdlg.h>
+#include <stdio.h>
 
 // Windows XP look and feel. Seems to enable Vista look as well.
 #pragma comment(linker, \
@@ -53,7 +53,7 @@ static LRESULT CALLBACK setRowsDialogProc(HWND hDlg, UINT message, WPARAM wParam
 			
 			/* create row-string */
 			char temp[256];
-			_snprintf_s(temp, 256, "%d", *rows);
+			snprintf(temp, 256, "%d", *rows);
 			
 			/* set initial row count */
 			SetDlgItemText(hDlg, IDC_SETROWS_EDIT, temp);
@@ -440,7 +440,7 @@ static LRESULT CALLBACK mainWindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARA
 	case WM_ROWCHANGED:
 		{
 			char temp[256];
-			_snprintf_s(temp, 256, "%d", lParam );
+			snprintf(temp, 256, "%d", lParam );
 			SendMessage(statusBarWin, SB_SETTEXT, 1, (LPARAM)temp);
 		}
 		break;
@@ -448,7 +448,7 @@ static LRESULT CALLBACK mainWindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARA
 	case WM_TRACKCHANGED:
 		{
 			char temp[256];
-			_snprintf_s(temp, 256, "%d", lParam);
+			snprintf(temp, 256, "%d", lParam);
 			SendMessage(statusBarWin, SB_SETTEXT, 2, (LPARAM)temp);
 		}
 		break;
@@ -459,9 +459,9 @@ static LRESULT CALLBACK mainWindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARA
 			if (document.num_tracks > 0) {
 				sync_track *t = document.tracks[document.getTrackIndexFromPos(trackView->getEditTrack())];
 				float row = float(trackView->getEditRow());
-				_snprintf_s(temp, 256, "%f", sync_get_val(t, row));
+				snprintf(temp, 256, "%f", sync_get_val(t, row));
 			} else
-				_snprintf_s(temp, 256, "---");
+				snprintf(temp, 256, "---");
 			SendMessage(statusBarWin, SB_SETTEXT, 3, (LPARAM)temp);
 		}
 		break;
@@ -631,7 +631,7 @@ int main(int argc, char* argv[])
 				if (INVALID_SOCKET != clientSocket)
 				{
 					char temp[256];
-					_snprintf_s(temp, 256, "Connected to %s", inet_ntoa(client.sin_addr));
+					snprintf(temp, 256, "Connected to %s", inet_ntoa(client.sin_addr));
 					SendMessage(statusBarWin, SB_SETTEXT, 0, (LPARAM)temp);
 					document.clientSocket = NetworkSocket(clientSocket);
 					document.clientRemap.clear();
