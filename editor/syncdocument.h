@@ -351,8 +351,8 @@ public:
 		std::swap(trackOrder[t1], trackOrder[t2]);
 	}
 	
-	bool load(const std::string &fileName);
-	bool save(const std::string &fileName);
+	bool load(const std::wstring &fileName);
+	bool save(const std::wstring &fileName);
 
 	bool modified()
 	{

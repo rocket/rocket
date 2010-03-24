@@ -10,7 +10,7 @@ SyncDocument::~SyncDocument()
 
 #import <msxml3.dll> named_guids
 
-bool SyncDocument::load(const std::string &fileName)
+bool SyncDocument::load(const std::wstring &fileName)
 {
 	MSXML2::IXMLDOMDocumentPtr doc(MSXML2::CLSID_DOMDocument);
 	try
@@ -73,7 +73,7 @@ bool SyncDocument::load(const std::string &fileName)
 	return true;
 }
 
-bool SyncDocument::save(const std::string &fileName)
+bool SyncDocument::save(const std::wstring &fileName)
 {
 	MSXML2::IXMLDOMDocumentPtr doc(MSXML2::CLSID_DOMDocument);
 	try

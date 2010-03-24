@@ -24,8 +24,9 @@
 #include "recentfiles.h"
 
 #include <vector>
-const char *mainWindowClassName = "MainWindow";
-const char *mainWindowTitle = "GNU Rocket System";
+const wchar_t *mainWindowClassName = L"MainWindow";
+const char    *mainWindowTitle  =  "GNU Rocket System";
+const wchar_t *mainWindowTitleW = L"GNU Rocket System";
 const char *keyName = "SOFTWARE\\GNU Rocket";
 
 HWND hwnd = NULL;
@@ -137,12 +138,12 @@ static LRESULT CALLBACK biasSelectionDialogProc(HWND hDlg, UINT message, WPARAM 
 	return FALSE;
 }
 
-void setWindowFileName(std::string fileName)
+void setWindowFileName(std::wstring fileName)
 {
-	char drive[_MAX_DRIVE],dir[_MAX_DIR],fname[_MAX_FNAME],ext[_MAX_EXT];
-	_splitpath(fileName.c_str(), drive, dir, fname, ext);
-	std::string windowTitle = std::string(fname) + std::string(" - ") + std::string(mainWindowTitle);
-	SetWindowText(hwnd, windowTitle.c_str());
+	wchar_t drive[_MAX_DRIVE],dir[_MAX_DIR],fname[_MAX_FNAME],ext[_MAX_EXT];
+	_wsplitpath(fileName.c_str(), drive, dir, fname, ext);
+	std::wstring windowTitle = std::wstring(fname) + std::wstring(L" - ") + std::wstring(mainWindowTitleW);
+	SetWindowTextW(hwnd, windowTitle.c_str());
 }
 
 HMENU findSubMenuContaining(HMENU menu, UINT id)
@@ -163,7 +164,7 @@ HMENU findSubMenuContaining(HMENU menu, UINT id)
 	return (HMENU)0;
 }
 
-std::string fileName;
+std::wstring fileName;
 
 void fileNew()
 {
@@ -175,7 +176,7 @@ void fileNew()
 		t->keys = NULL;
 		t->num_keys = 0;
 	}
-	setWindowFileName("Untitled");
+	setWindowFileName(L"Untitled");
 	fileName.clear();
 	
 	document.clearUndoStack();
@@ -183,7 +184,7 @@ void fileNew()
 }
 
 
-void loadDocument(const std::string &_fileName)
+void loadDocument(const std::wstring &_fileName)
 {
 	fileNew();
 	if (document.load(_fileName))
@@ -206,18 +207,18 @@ void loadDocument(const std::string &_fileName)
 
 void fileOpen()
 {
-	char temp[_MAX_FNAME + 1];
-	temp[0] = '\0'; // clear string
-	
-	OPENFILENAME ofn;
+	wchar_t temp[_MAX_FNAME + 1];
+	temp[0] = L'\0'; // clear string
+
+	OPENFILENAMEW ofn;
 	ZeroMemory(&ofn, sizeof(ofn));
 	ofn.lStructSize = sizeof(ofn);
 	ofn.lpstrFile = temp;
 	ofn.nMaxFile = _MAX_FNAME;
-	ofn.lpstrDefExt = "rocket";
-	ofn.lpstrFilter = "ROCKET File (*.rocket)\0*.rocket\0All Files (*.*)\0*.*\0\0";
+	ofn.lpstrDefExt = L"rocket";
+	ofn.lpstrFilter = L"ROCKET File (*.rocket)\0*.rocket\0All Files (*.*)\0*.*\0\0";
 	ofn.Flags = OFN_SHOWHELP | OFN_FILEMUSTEXIST;
-	if (GetOpenFileName(&ofn))
+	if (GetOpenFileNameW(&ofn))
 	{
 		loadDocument(temp);
 	}
@@ -225,19 +226,19 @@ void fileOpen()
 
 void fileSaveAs()
 {
-	char temp[_MAX_FNAME + 1];
+	wchar_t temp[_MAX_FNAME + 1];
 	temp[0] = '\0';
 	
-	OPENFILENAME ofn;
+	OPENFILENAMEW ofn;
 	ZeroMemory(&ofn, sizeof(ofn));
 	ofn.lStructSize = sizeof(ofn);
 	ofn.lpstrFile = temp;
 	ofn.nMaxFile = _MAX_FNAME;
-	ofn.lpstrDefExt = "rocket";
-	ofn.lpstrFilter = "ROCKET File (*.rocket)\0*.rocket\0All Files (*.*)\0*.*\0\0";
+	ofn.lpstrDefExt = L"rocket";
+	ofn.lpstrFilter = L"ROCKET File (*.rocket)\0*.rocket\0All Files (*.*)\0*.*\0\0";
 	ofn.Flags = OFN_SHOWHELP | OFN_OVERWRITEPROMPT;
 	
-	if (GetSaveFileName(&ofn))
+	if (GetSaveFileNameW(&ofn))
 	{
 		if (document.save(temp))
 		{
@@ -398,7 +399,7 @@ static LRESULT CALLBACK mainWindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARA
 		case ID_RECENTFILES_FILE5:
 			{
 				int index = LOWORD(wParam) - ID_RECENTFILES_FILE1;
-				std::string fileName;
+				std::wstring fileName;
 				if (mruFileList.getEntry(index, fileName))
 				{
 					loadDocument(fileName);
@@ -466,16 +467,16 @@ static LRESULT CALLBACK mainWindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARA
 		break;
 	
 	default:
-		return DefWindowProc(hwnd, msg, wParam, lParam);
+		return DefWindowProcW(hwnd, msg, wParam, lParam);
 	}
 	return 0;
 }
 
 static ATOM registerMainWindowClass(HINSTANCE hInstance)
 {
-	WNDCLASSEX wc;
+	WNDCLASSEXW wc;
 	
-	wc.cbSize        = sizeof(WNDCLASSEX);
+	wc.cbSize        = sizeof(wc);
 	wc.style         = 0;
 	wc.lpfnWndProc   = mainWindowProc;
 	wc.cbClsExtra    = 0;
@@ -484,11 +485,11 @@ static ATOM registerMainWindowClass(HINSTANCE hInstance)
 	wc.hIcon         = LoadIcon(NULL, IDI_APPLICATION);
 	wc.hCursor       = LoadCursor(NULL, IDC_ARROW);
 	wc.hbrBackground = (HBRUSH)0;
-	wc.lpszMenuName  = MAKEINTRESOURCE(IDR_MENU);
+	wc.lpszMenuName  = MAKEINTRESOURCEW(IDR_MENU);
 	wc.lpszClassName = mainWindowClassName;
 	wc.hIconSm       = LoadIcon(NULL, IDI_APPLICATION);
 	
-	return RegisterClassEx(&wc);
+	return RegisterClassExW(&wc);
 }
 
 #include <stdarg.h>
@@ -586,10 +587,10 @@ int main(int argc, char* argv[])
 	trackView = new TrackView();
 	trackView->setDocument(&document);
 	
-	hwnd = CreateWindowEx(
+	hwnd = CreateWindowExW(
 		0,
 		mainWindowClassName,
-		mainWindowTitle,
+		mainWindowTitleW,
 		WS_OVERLAPPEDWINDOW | WS_CLIPCHILDREN,
 		CW_USEDEFAULT, CW_USEDEFAULT, // x, y
 		CW_USEDEFAULT, CW_USEDEFAULT, // width, height
@@ -721,6 +722,6 @@ int main(int argc, char* argv[])
 	delete trackView;
 	trackView = NULL;
 
-	UnregisterClass(mainWindowClassName, hInstance);
+	UnregisterClassW(mainWindowClassName, hInstance);
 	return int(msg.wParam);
 }

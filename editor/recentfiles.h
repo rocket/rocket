@@ -9,7 +9,7 @@ public:
 
 	void load(HKEY key);
 	void save(HKEY key);
-	void insert(const std::string &fileName);
+	void insert(const std::wstring &fileName);
 	void update();
 
 	size_t getEntryCount() const 
@@ -17,16 +17,16 @@ public:
 		return mruList.size();
 	}
 
-	bool getEntry(size_t index, std::string &out) const;
+	bool getEntry(size_t index, std::wstring &out) const;
 
 private:
-	static std::string getEntryName(size_t i)
+	static std::wstring getEntryName(size_t i)
 	{
-		std::string temp = std::string("RecentFile");
-		temp += char('0' + i);
+		std::wstring temp = std::wstring(L"RecentFile");
+		temp += char(L'0' + i);
 		return temp;
 	}
 
-	std::list<std::string> mruList;
+	std::list<std::wstring> mruList;
 	HMENU mruFileMenu;
 };
