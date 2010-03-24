@@ -12,7 +12,7 @@ static DWORD darken(DWORD col, float amt)
 	return RGB(GetRValue(col) * amt, GetGValue(col) * amt, GetBValue(col) * amt);
 }
 
-static int getMaxCharacterWidth(HDC hdc, char *chars, size_t len)
+static int getMaxCharacterWidth(HDC hdc, const char *chars, size_t len)
 {
 	int maxDigitWidth = 0;
 	for (size_t i = 0; i < len; ++i)
@@ -24,7 +24,7 @@ static int getMaxCharacterWidth(HDC hdc, char *chars, size_t len)
 	return maxDigitWidth;
 }
 
-static int getMaxCharacterWidthFromString(HDC hdc, char *chars)
+static int getMaxCharacterWidthFromString(HDC hdc, const char *chars)
 {
 	return getMaxCharacterWidth(hdc, chars, strlen(chars));
 }
