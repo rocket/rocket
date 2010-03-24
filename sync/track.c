@@ -22,7 +22,7 @@ static float key_linear(const struct track_key k[2], double row)
 static float key_smooth(const struct track_key k[2], double row)
 {
 	double t = (row - k[0].row) / (k[1].row - k[0].row);
-	t = (1.0 - cos(t * M_PI)) * 0.5;
+	t = t * t * (3 - 2 * t);
 	return (float)(k[0].value + (k[1].value - k[0].value) * t);
 }
 
