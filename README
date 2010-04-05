@@ -24,6 +24,9 @@ web-sites:
 http://msdn.microsoft.com/directx/
 http://www.un4seen.com/
 
+The BASS SDK is installed by copying bass.dll, bass.h and bass.lib to the
+example_bass-folder.
+
 Once the prerequisites are installed, the example can be compiled much like
 the editor; by opening examples.sln and selecting "Build" -> "Build Solution"
 from the menu.
