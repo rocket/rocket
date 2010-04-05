@@ -275,6 +275,28 @@ void attemptQuit()
 	else DestroyWindow(hwnd);
 }
 
+static HWND createStatusBar(HINSTANCE hInstance, HWND hpwnd)
+{
+	HWND hwnd = CreateWindowEx(
+		0,                               // no extended styles
+		STATUSCLASSNAME,                 // status bar
+		(LPCTSTR)NULL,                   // no text
+		SBARS_SIZEGRIP | WS_VISIBLE | WS_CHILD, // styles
+		0, 0, 0, 0,                      // x, y, cx, cy
+		hpwnd,                           // parent window
+		NULL,                            // menu
+		hInstance,                       // instance
+		NULL                             // window data
+	);
+
+	int statwidths[] = { 150, 150 + 32, 150 + 32 * 2, 150 + 32 * 4, 150 + 32 * 6};
+	SendMessage(hwnd, SB_SETPARTS, sizeof(statwidths) / sizeof(int), (LPARAM)statwidths);
+	SendMessage(hwnd, SB_SETTEXT, 0, (LPARAM)"Not connected");
+	SendMessage(hwnd, SB_SETTEXT, 1, (LPARAM)"0");
+	SendMessage(hwnd, SB_SETTEXT, 2, (LPARAM)"0");
+	SendMessage(hwnd, SB_SETTEXT, 3, (LPARAM)"---");
+	return hwnd;
+}
 
 static LRESULT CALLBACK mainWindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
@@ -285,25 +307,8 @@ static LRESULT CALLBACK mainWindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARA
 			HINSTANCE hInstance = GetModuleHandle(NULL);
 			trackViewWin = trackView->create(hInstance, hwnd);
 			InitCommonControls();
-			statusBarWin = CreateWindowEx(
-				0,                               // no extended styles
-				STATUSCLASSNAME,                 // status bar
-				(LPCTSTR)NULL,                   // no text 
-				SBARS_SIZEGRIP | WS_VISIBLE | WS_CHILD, // styles
-				0, 0, 0, 0,                      // x, y, cx, cy
-				hwnd,                            // parent window
-				NULL,                            // menu
-				hInstance,                       // instance
-				NULL                             // window data
-			);
-			
-			int statwidths[] = { 150, 150 + 32, 150 + 32 * 2, 150 + 32 * 4, 150 + 32 * 6};
-			SendMessage(statusBarWin, SB_SETPARTS, sizeof(statwidths) / sizeof(int), (LPARAM)statwidths);
-			SendMessage(statusBarWin, SB_SETTEXT, 0, (LPARAM)"Not connected");
-			SendMessage(statusBarWin, SB_SETTEXT, 1, (LPARAM)"0");
-			SendMessage(statusBarWin, SB_SETTEXT, 2, (LPARAM)"0");
-			SendMessage(statusBarWin, SB_SETTEXT, 3, (LPARAM)"---");
-			
+			statusBarWin = createStatusBar(hInstance, hwnd);
+
 			if (ERROR_SUCCESS != RegOpenKey(HKEY_CURRENT_USER, keyName, &regConfigKey))
 			{
 				if (ERROR_SUCCESS != RegCreateKey(HKEY_CURRENT_USER, keyName, &regConfigKey))
