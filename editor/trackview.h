@@ -102,7 +102,11 @@ private:
 	LRESULT onSize(int width, int height);
 	LRESULT onKeyDown(UINT keyCode, UINT flags);
 	LRESULT onChar(UINT keyCode, UINT flags);
-	
+	LRESULT onSetCursor(HWND win, UINT hitTest, UINT message);
+	LRESULT onLButtonDown(UINT flags, POINTS pos);
+	LRESULT onLButtonUp(UINT flags, POINTS pos);
+	LRESULT onMouseMove(UINT flags, POINTS pos);
+
 	void paintTracks(HDC hdc, RECT rcTracks);
 	void paintTopMargin(HDC hdc, RECT rcTracks);
 	
@@ -160,7 +164,8 @@ private:
 	
 	int getScreenY(int row) const;
 	int getScreenX(size_t track) const;
-	
+	int getTrackFromX(int x) const;
+
 	size_t getTrackCount() const
 	{
 		const SyncDocument *doc = getDocument();
@@ -184,6 +189,7 @@ private:
 	HPEN rowPen, rowSelectPen;
 	HBRUSH editBrush;
 	HPEN lerpPen, cosinePen, rampPen;
+	HCURSOR handCursor;
 	
 	/* cursor position */
 	int editRow, editTrack;
@@ -199,6 +205,7 @@ private:
 	HWND hwnd;
 	
 	UINT clipboardFormat;
+	int anchorTrack;
 };
 
 ATOM registerTrackViewWindowClass(HINSTANCE hInstance);

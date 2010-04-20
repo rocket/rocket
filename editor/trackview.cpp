@@ -63,7 +63,9 @@ TrackView::TrackView()
 	rampPen   = CreatePen(PS_SOLID, 2, RGB(0, 0, 255));
 	
 	editBrush = CreateSolidBrush(RGB(255, 255, 0)); // yellow
-	
+
+	handCursor = LoadCursor(NULL, IDC_HAND);
+
 	clipboardFormat = RegisterClipboardFormat("syncdata");
 	assert(0 != clipboardFormat);
 }
@@ -110,6 +112,19 @@ int TrackView::getScreenX(size_t track) const
 {
 	return int(leftMarginWidth + (track * trackWidth)) - scrollPosX;
 }
+
+inline int divfloor(int a, int b)
+{
+	if (a < 0)
+		return -abs(a) / b - 1;
+	return a / b;
+}
+
+int TrackView::getTrackFromX(int x) const
+{
+	return divfloor(x + scrollPosX - leftMarginWidth, trackWidth);
+}
+
 
 LRESULT TrackView::onCreate()
 {
@@ -1098,6 +1113,67 @@ LRESULT TrackView::onSize(int width, int height)
 	return FALSE;
 }
 
+LRESULT TrackView::onSetCursor(HWND win, UINT hitTest, UINT message)
+{
+	POINT cpos;
+	GetCursorPos(&cpos);
+	ScreenToClient(hwnd, &cpos);
+	int track = getTrackFromX(cpos.x);
+	if (cpos.y < topMarginHeight &&
+	    track >= 0 && track < int(getTrackCount())) {
+		SetCursor(handCursor);
+		return TRUE;
+	}
+	return DefWindowProc(this->hwnd, WM_SETCURSOR, (WPARAM)hwnd,
+	    MAKELPARAM(hitTest, message));
+}
+
+LRESULT TrackView::onLButtonDown(UINT flags, POINTS pos)
+{
+	int track = getTrackFromX(pos.x);
+	if (pos.y < topMarginHeight &&
+	    track >= 0 && track < int(getTrackCount())) {
+		setEditTrack(track, false);
+		SetCapture(hwnd);
+		anchorTrack = track;
+	}
+	return FALSE;
+}
+
+LRESULT TrackView::onLButtonUp(UINT flags, POINTS pos)
+{
+	ReleaseCapture();
+	setEditTrack(editTrack);
+	return FALSE;
+}
+
+LRESULT TrackView::onMouseMove(UINT flags, POINTS pos)
+{
+	if (GetCapture() == hwnd) {
+		SyncDocument *doc = getDocument();
+		const int posTrack = getTrackFromX(pos.x),
+		    trackCount = getTrackCount();
+
+		if (!doc || posTrack < 0 || posTrack >= trackCount)
+			return FALSE;
+
+		if (posTrack > anchorTrack) {
+			for (int i = anchorTrack; i < posTrack; ++i)
+				doc->swapTrackOrder(i, i + 1);
+			anchorTrack = posTrack;
+			setEditTrack(posTrack);
+			InvalidateRect(hwnd, NULL, FALSE);
+		} else if (posTrack < anchorTrack) {
+			for (int i = anchorTrack; i > posTrack; --i)
+				doc->swapTrackOrder(i, i - 1);
+			anchorTrack = posTrack;
+			setEditTrack(posTrack);
+			InvalidateRect(hwnd, NULL, FALSE);
+		}
+	}
+	return FALSE;
+}
+
 LRESULT TrackView::windowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
 	assert(hwnd == this->hwnd);
@@ -1111,7 +1187,16 @@ LRESULT TrackView::windowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	case WM_PAINT:   return onPaint();
 	case WM_KEYDOWN: return onKeyDown((UINT)wParam, (UINT)lParam);
 	case WM_CHAR:    return onChar((UINT)wParam, (UINT)lParam);
-	
+	case WM_LBUTTONDOWN:
+		return onLButtonDown((UINT)wParam, MAKEPOINTS(lParam));
+	case WM_LBUTTONUP:
+		return onLButtonUp((UINT)wParam, MAKEPOINTS(lParam));
+	case WM_MOUSEMOVE:
+		return onMouseMove((UINT)wParam, MAKEPOINTS(lParam));
+	case WM_SETCURSOR:
+		return onSetCursor((HWND)wParam, LOWORD(lParam),
+		    HIWORD(lParam));
+
 	case WM_COPY:  editCopy();  break;
 	case WM_CUT:   editCut();   break;
 	case WM_PASTE:
