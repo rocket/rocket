@@ -199,7 +199,8 @@ void loadDocument(const std::wstring &_fileName)
 		
 		document.clearUndoStack();
 		document.clearRedoStack();
-		
+		trackView->setDocument(&document);
+
 		SendMessage(hwnd, WM_CURRVALDIRTY, 0, 0);
 		InvalidateRect(trackViewWin, NULL, FALSE);
 	}
