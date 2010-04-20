@@ -29,6 +29,7 @@ const char    *mainWindowTitle  =  "GNU Rocket System";
 const wchar_t *mainWindowTitleW = L"GNU Rocket System";
 const char *keyName = "SOFTWARE\\GNU Rocket";
 
+HINSTANCE hInstance;
 HWND hwnd = NULL;
 TrackView *trackView = NULL;
 HWND trackViewWin = NULL;
@@ -282,7 +283,6 @@ static LRESULT CALLBACK mainWindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARA
 	{
 	case WM_CREATE:
 		{
-			HINSTANCE hInstance = GetModuleHandle(NULL);
 			trackViewWin = trackView->create(hInstance, hwnd);
 			InitCommonControls();
 			statusBarWin = CreateWindowEx(
@@ -419,7 +419,6 @@ static LRESULT CALLBACK mainWindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARA
 		
 		case ID_EDIT_SETROWS:
 			{
-				HINSTANCE hInstance = GetModuleHandle(NULL);
 				int rows = int(trackView->getRows());
 				INT_PTR result = DialogBoxParam(hInstance, MAKEINTRESOURCE(IDD_SETROWS), hwnd, (DLGPROC)setRowsDialogProc, (LPARAM)&rows);
 				if (FAILED(result)) MessageBox(hwnd, "unable to create dialog box", mainWindowTitle, MB_OK | MB_ICONERROR | MB_SETFOREGROUND);
@@ -428,7 +427,6 @@ static LRESULT CALLBACK mainWindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARA
 		
 		case ID_EDIT_BIAS:
 			{
-				HINSTANCE hInstance = GetModuleHandle(NULL);
 				int initialBias = 0;
 				INT_PTR result = DialogBoxParam(hInstance, MAKEINTRESOURCE(IDD_BIASSELECTION), hwnd, (DLGPROC)biasSelectionDialogProc, (LPARAM)&initialBias);
 				if (FAILED(result)) MessageBox(hwnd, "unable to create dialog box", mainWindowTitle, MB_OK | MB_ICONERROR | MB_SETFOREGROUND);
@@ -541,7 +539,7 @@ int main(int argc, char* argv[])
 //	_CrtSetBreakAlloc(254);
 #endif
 	
-	HINSTANCE hInstance = GetModuleHandle(NULL);
+	hInstance = GetModuleHandle(NULL);
 	CoInitialize(NULL);
 	
 #if 0
