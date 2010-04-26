@@ -616,7 +616,7 @@ void TrackView::setEditRow(int newEditRow)
 	setScrollPos(scrollPosX, (editRow * rowHeight) - ((windowHeight - topMarginHeight) / 2) + rowHeight / 2);
 }
 
-void TrackView::setEditTrack(int newEditTrack)
+void TrackView::setEditTrack(int newEditTrack, bool autoscroll)
 {
 	if (0 == getTrackCount()) return;
 	
@@ -646,14 +646,19 @@ void TrackView::setEditTrack(int newEditTrack)
 	
 	invalidateTrack(oldEditTrack);
 	invalidateTrack(editTrack);
-	
-	int firstTrack = scrollPosX / trackWidth;
-	int lastTrack  = firstTrack + windowTracks;
-	
-	int newFirstTrack = firstTrack;
-	if (editTrack >= lastTrack) newFirstTrack = editTrack - (lastTrack - firstTrack - 1);
-	if (editTrack < firstTrack) newFirstTrack = editTrack;
-	setScrollPos(newFirstTrack * trackWidth, scrollPosY);
+
+	if (autoscroll) {
+		int firstTrack = scrollPosX / trackWidth;
+		int lastTrack  = firstTrack + windowTracks;
+
+		int newFirstTrack = firstTrack;
+		if (editTrack >= lastTrack)
+			newFirstTrack = editTrack - lastTrack + firstTrack + 1;
+		if (editTrack < firstTrack)
+			newFirstTrack = editTrack;
+		setScrollPos(newFirstTrack * trackWidth, scrollPosY);
+	} else
+		setupScrollBars();
 }
 
 static int getScrollPos(HWND hwnd, int bar)
