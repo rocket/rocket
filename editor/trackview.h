@@ -21,8 +21,13 @@ public:
 	
 	HWND create(HINSTANCE hInstance, HWND hwndParent);
 	HWND getWin() const { return hwnd; }
-	
-	void setDocument(SyncDocument *document) { this->document = document; }
+
+	void setDocument(SyncDocument *document)
+	{
+		this->document = document;
+		this->setupScrollBars();
+	}
+
 	const SyncDocument *getDocument() const { return document; }
 	SyncDocument *getDocument() { return document; }
 	
