@@ -234,7 +234,7 @@ static int purge_and_rerequest(struct sync_device *d)
 	return 0;
 }
 
-void sync_update(struct sync_device *d, double row)
+void sync_update(struct sync_device *d, int row)
 {
 	if (d->sock == INVALID_SOCKET) {
 		d->sock = server_connect(REMOTE_HOST, REMOTE_PORT);
@@ -280,14 +280,13 @@ void sync_update(struct sync_device *d, double row)
 	}
 
 	if (d->cb && d->cb->is_playing && d->cb->is_playing(d->cb_param)) {
-		int nrow = (int)floor(row);
-		if (d->row != nrow && d->sock != INVALID_SOCKET) {
+		if (d->row != row && d->sock != INVALID_SOCKET) {
 			unsigned char cmd = SET_ROW;
 			int ret = send(d->sock, (char*)&cmd, 1, 0);
-			ret += send(d->sock, (char*)&nrow, sizeof(int), 0);
+			ret += send(d->sock, (char*)&row, sizeof(int), 0);
 			if (ret != sizeof(int) + 1)
 				goto sockerr;
-			d->row = nrow;
+			d->row = row;
 		}
 	}
 	return;

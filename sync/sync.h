@@ -24,7 +24,7 @@ struct sync_cb {
 void sync_set_callbacks(struct sync_device *, struct sync_cb *, void *);
 #endif /* !defined(SYNC_PLAYER) */
 
-void sync_update(struct sync_device *, double);
+void sync_update(struct sync_device *, int);
 const struct sync_track *sync_get_track(struct sync_device *, const char *);
 float sync_get_val(const struct sync_track *, double);
 
