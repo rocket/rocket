@@ -29,7 +29,7 @@ const char    *mainWindowTitle  =  "GNU Rocket System";
 const wchar_t *mainWindowTitleW = L"GNU Rocket System";
 const char *keyName = "SOFTWARE\\GNU Rocket";
 
-HINSTANCE hInstance;
+HINSTANCE hInst;
 HWND hwnd = NULL;
 TrackView *trackView = NULL;
 HWND trackViewWin = NULL;
@@ -306,9 +306,9 @@ static LRESULT CALLBACK mainWindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARA
 	{
 	case WM_CREATE:
 		{
-			trackViewWin = trackView->create(hInstance, hwnd);
+			trackViewWin = trackView->create(hInst, hwnd);
 			InitCommonControls();
-			statusBarWin = createStatusBar(hInstance, hwnd);
+			statusBarWin = createStatusBar(hInst, hwnd);
 
 			if (ERROR_SUCCESS != RegOpenKey(HKEY_CURRENT_USER, keyName, &regConfigKey))
 			{
@@ -426,7 +426,7 @@ static LRESULT CALLBACK mainWindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARA
 		case ID_EDIT_SETROWS:
 			{
 				int rows = int(trackView->getRows());
-				INT_PTR result = DialogBoxParam(hInstance, MAKEINTRESOURCE(IDD_SETROWS), hwnd, (DLGPROC)setRowsDialogProc, (LPARAM)&rows);
+				INT_PTR result = DialogBoxParam(hInst, MAKEINTRESOURCE(IDD_SETROWS), hwnd, (DLGPROC)setRowsDialogProc, (LPARAM)&rows);
 				if (FAILED(result)) MessageBox(hwnd, "unable to create dialog box", mainWindowTitle, MB_OK | MB_ICONERROR | MB_SETFOREGROUND);
 			}
 			break;
@@ -434,7 +434,7 @@ static LRESULT CALLBACK mainWindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARA
 		case ID_EDIT_BIAS:
 			{
 				int initialBias = 0;
-				INT_PTR result = DialogBoxParam(hInstance, MAKEINTRESOURCE(IDD_BIASSELECTION), hwnd, (DLGPROC)biasSelectionDialogProc, (LPARAM)&initialBias);
+				INT_PTR result = DialogBoxParam(hInst, MAKEINTRESOURCE(IDD_BIASSELECTION), hwnd, (DLGPROC)biasSelectionDialogProc, (LPARAM)&initialBias);
 				if (FAILED(result)) MessageBox(hwnd, "unable to create dialog box", mainWindowTitle, MB_OK | MB_ICONERROR | MB_SETFOREGROUND);
 			}
 			break;
@@ -546,7 +546,8 @@ SOCKET clientConnect(SOCKET serverSocket, sockaddr_in *host)
 	return clientSocket;
 }
 
-int main(int argc, char* argv[])
+int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
+    LPSTR lpCmdLine, int nShowCmd)
 {
 #ifdef _DEBUG
 	_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
@@ -556,7 +557,7 @@ int main(int argc, char* argv[])
 //	_CrtSetBreakAlloc(254);
 #endif
 	
-	hInstance = GetModuleHandle(NULL);
+	hInst = hInstance;
 	CoInitialize(NULL);
 
 	WSADATA wsa;
@@ -572,11 +573,9 @@ int main(int argc, char* argv[])
 	sin.sin_addr.s_addr = INADDR_ANY;
 	sin.sin_port = htons( 1338 );
 
-	puts("binding...");
 	if (SOCKET_ERROR == bind( serverSocket, (struct sockaddr *)&sin, sizeof(sin)))
 		die("Could not start server");
 
-	puts("listening...");
 	while (listen(serverSocket, SOMAXCONN) == SOCKET_ERROR)
 		; /* nothing */
 
