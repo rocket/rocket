@@ -118,10 +118,12 @@ int main(int argc, char *argv[])
 
 	sync_device *rocket = sync_create_device("sync");
 	if (!rocket)
-		die("something went wrong - failed to connect to host?");
+		die("out of memory?");
 
 #ifndef SYNC_PLAYER
 	sync_set_callbacks(rocket, &bass_cb, (void *)stream);
+	if (sync_connect(rocket, "localhost", SYNC_DEFAULT_PORT))
+		die("failed to connect to host");
 #endif
 
 	/* get tracks */
@@ -144,7 +146,8 @@ int main(int argc, char *argv[])
 	while (!done) {
 		double row = bass_get_row(stream);
 #ifndef SYNC_PLAYER
-		sync_update(rocket, (int)floor(row));
+		if (sync_update(rocket, (int)floor(row)))
+			sync_connect(rocket, "localhost", SYNC_DEFAULT_PORT);
 #endif
 
 		/* draw */

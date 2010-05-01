@@ -20,11 +20,6 @@ static const char *sync_track_path(const char *base, const char *name)
 
 #ifndef SYNC_PLAYER
 
-#ifndef REMOTE_HOST
-#define REMOTE_HOST "localhost"
-#endif
-#define REMOTE_PORT 1338
-
 static SOCKET server_connect(const char *host, int nport)
 {
 	struct hostent *he;
@@ -93,7 +88,7 @@ struct sync_device *sync_create_device(const char *base)
 #ifndef SYNC_PLAYER
 	d->cb = d->cb_param = NULL;
 	d->row = -1;
-	d->sock = server_connect(REMOTE_HOST, REMOTE_PORT);
+	d->sock = INVALID_SOCKET;
 #endif
 
 	return d;
@@ -230,16 +225,25 @@ static int purge_and_rerequest(struct sync_device *d)
 	return 0;
 }
 
+int sync_connect(struct sync_device *d, const char *host, int port)
+{
+	if (d->sock != INVALID_SOCKET)
+		closesocket(d->sock);
+
+	d->sock = server_connect(host, port);
+	if (d->sock == INVALID_SOCKET)
+		return 1;
+
+	return purge_and_rerequest(d);
+}
+
 int sync_update(struct sync_device *d, int row)
 {
-	if (d->sock == INVALID_SOCKET) {
-		d->sock = server_connect(REMOTE_HOST, REMOTE_PORT);
-		if (d->sock != INVALID_SOCKET && purge_and_rerequest(d))
-			goto sockerr;
-	}
+	if (d->sock == INVALID_SOCKET)
+		return 1;
 
 	/* look for new commands */
-	while (d->sock != INVALID_SOCKET && socket_poll(d->sock)) {
+	while (socket_poll(d->sock)) {
 		unsigned char cmd = 0, flag;
 		int row;
 		if (!recv(d->sock, (char *)&cmd, 1, 0))
@@ -288,6 +292,7 @@ int sync_update(struct sync_device *d, int row)
 	return 0;
 
 sockerr:
+	closesocket(d->sock);
 	d->sock = INVALID_SOCKET;
 	return 1;
 }
