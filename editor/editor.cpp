@@ -560,6 +560,51 @@ SOCKET clientConnect(SOCKET serverSocket, sockaddr_in *host)
 	return clientSocket;
 }
 
+void processCommand(NetworkSocket &sock)
+{
+	size_t clientIndex = 0;
+	int strLen, serverIndex, newRow;
+	std::string trackName;
+	const sync_track *t;
+	unsigned char cmd = 0;
+	if (sock.recv((char*)&cmd, 1, 0)) {
+		switch (cmd) {
+		case GET_TRACK:
+			// read data
+			sock.recv((char *)&clientIndex, sizeof(int), 0);
+			sock.recv((char *)&strLen, sizeof(int), 0);
+			trackName.resize(strLen);
+			sock.recv(&trackName[0], strLen, 0);
+			if (!sock.connected())
+				return;
+
+			// find track
+			serverIndex = sync_find_track(&document,
+			    trackName.c_str());
+			if (0 > serverIndex)
+				serverIndex =
+				    int(document.createTrack(trackName));
+
+			// setup remap
+			document.clientRemap[serverIndex] = clientIndex;
+
+			// send key-frames
+			t = document.tracks[serverIndex];
+			for (int i = 0; i < (int)t->num_keys; ++i)
+				document.sendSetKeyCommand(int(serverIndex),
+				    t->keys[i]);
+
+			InvalidateRect(trackViewWin, NULL, FALSE);
+			break;
+
+		case SET_ROW:
+			sock.recv((char*)&newRow, sizeof(int), 0);
+			trackView->setEditRow(newRow);
+			break;
+		}
+	}
+}
+
 int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
     LPSTR lpCmdLine, int nShowCmd)
 {
@@ -663,51 +708,7 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 			
 			// look for new commands
 			while (clientSocket.pollRead())
-			{
-				unsigned char cmd = 0;
-				if (clientSocket.recv((char*)&cmd, 1, 0))
-				{
-					switch (cmd)
-					{
-					case GET_TRACK:
-						{
-							size_t clientIndex = 0;
-							clientSocket.recv((char*)&clientIndex, sizeof(int), 0);
-							
-							// get len
-							int str_len = 0;
-							clientSocket.recv((char*)&str_len, sizeof(int), 0);
-							
-							// get string
-							std::string trackName;
-							trackName.resize(str_len);
-							clientSocket.recv(&trackName[0], str_len, 0);
-							
-							// find track
-							int serverIndex = sync_find_track(&document, trackName.c_str());
-							if (0 > serverIndex) serverIndex = int(document.createTrack(trackName));
-							
-							// setup remap
-							document.clientRemap[serverIndex] = clientIndex;
-
-							const sync_track *t = document.tracks[serverIndex];
-							for (int i = 0; i < (int)t->num_keys; ++i)
-								document.sendSetKeyCommand(int(serverIndex), t->keys[i]);
-
-							InvalidateRect(trackViewWin, NULL, FALSE);
-						}
-						break;
-					
-					case SET_ROW:
-						{
-							int newRow = 0;
-							clientSocket.recv((char*)&newRow, sizeof(int), 0);
-							trackView->setEditRow(newRow);
-						}
-						break;
-					}
-				}
-			}
+				processCommand(clientSocket);
 		}
 		
 		if (!document.clientSocket.connected() && guiConnected)
