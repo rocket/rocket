@@ -558,20 +558,6 @@ int main(int argc, char* argv[])
 	
 	hInstance = GetModuleHandle(NULL);
 	CoInitialize(NULL);
-	
-#if 0
-	{
-		DWORD test = 0xdeadbeef;
-		RegSetValueEx(key, "test2", 0, REG_DWORD, (BYTE *)&test, sizeof(DWORD));
-		
-		DWORD type = 0;
-		DWORD test2 = 0;
-		DWORD size = sizeof(DWORD);
-		RegQueryValueEx(key, "test2", 0, &type, (LPBYTE)&test2, &size);
-		assert(REG_DWORD == type);
-		printf("%x\n", test2);
-	}
-#endif
 
 	WSADATA wsa;
 	if (0 != WSAStartup(MAKEWORD(2, 0), &wsa))
