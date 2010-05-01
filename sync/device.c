@@ -131,10 +131,6 @@ static int load_track_data(struct sync_track *t, const char *path)
 	return 0;
 }
 
-void sync_update(struct sync_device *d, double row)
-{
-}
-
 #else
 
 void sync_set_callbacks(struct sync_device *d, struct sync_cb *cb, void *cb_param)

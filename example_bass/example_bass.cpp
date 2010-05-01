@@ -143,7 +143,9 @@ int main(int argc, char *argv[])
 	bool done = false;
 	while (!done) {
 		double row = bass_get_row(stream);
+#ifndef SYNC_PLAYER
 		sync_update(rocket, (int)floor(row));
+#endif
 
 		/* draw */
 
