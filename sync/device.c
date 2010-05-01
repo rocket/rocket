@@ -230,7 +230,7 @@ static int purge_and_rerequest(struct sync_device *d)
 	return 0;
 }
 
-void sync_update(struct sync_device *d, int row)
+int sync_update(struct sync_device *d, int row)
 {
 	if (d->sock == INVALID_SOCKET) {
 		d->sock = server_connect(REMOTE_HOST, REMOTE_PORT);
@@ -285,11 +285,11 @@ void sync_update(struct sync_device *d, int row)
 			d->row = row;
 		}
 	}
-	return;
+	return 0;
 
 sockerr:
 	d->sock = INVALID_SOCKET;
-	return;
+	return 1;
 }
 
 #endif
