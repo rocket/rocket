@@ -60,7 +60,6 @@ void die(const char *fmt, ...)
 	char temp[4096];
 	va_list va;
 	va_start(va, fmt);
-	vfprintf(stderr, fmt, va);
 	vsnprintf(temp, sizeof(temp), fmt, va);
 	va_end(va);
 
