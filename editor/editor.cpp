@@ -10,6 +10,7 @@
 #include <objbase.h>
 #include <commdlg.h>
 #include <stdio.h>
+#include <stdarg.h>
 
 // Windows XP look and feel. Seems to enable Vista look as well.
 #pragma comment(linker, \
@@ -28,6 +29,30 @@ const wchar_t *mainWindowClassName = L"MainWindow";
 const char    *mainWindowTitle  =  "GNU Rocket System";
 const wchar_t *mainWindowTitleW = L"GNU Rocket System";
 const char *keyName = "SOFTWARE\\GNU Rocket";
+
+void verror(const char *fmt, va_list va)
+{
+	char temp[4096];
+	vsnprintf(temp, sizeof(temp), fmt, va);
+	MessageBox(NULL, temp, mainWindowTitle, MB_OK | MB_ICONERROR);
+}
+
+void error(const char *fmt, ...)
+{
+	va_list va;
+	va_start(va, fmt);
+	verror(fmt, va);
+	va_end(va);
+}
+
+void die(const char *fmt, ...)
+{
+	va_list va;
+	va_start(va, fmt);
+	verror(fmt, va);
+	va_end(va);
+	exit(EXIT_FAILURE);
+}
 
 HINSTANCE hInst;
 HWND hwnd = NULL;
@@ -204,7 +229,8 @@ void loadDocument(const std::wstring &_fileName)
 		SendMessage(hwnd, WM_CURRVALDIRTY, 0, 0);
 		InvalidateRect(trackViewWin, NULL, FALSE);
 	}
-	else MessageBox(hwnd, "failed to open file", mainWindowTitle, MB_OK | MB_ICONERROR | MB_SETFOREGROUND);
+	else
+		error("failed to open file");
 }
 
 void fileOpen()
@@ -252,7 +278,8 @@ void fileSaveAs()
 			mruFileList.update();
 			DrawMenuBar(hwnd);
 		}
-		else MessageBox(hwnd, "Failed to save file", mainWindowTitle, MB_OK | MB_ICONERROR | MB_SETFOREGROUND);
+		else
+			error("Failed to save file");
 	}
 }
 
@@ -262,7 +289,7 @@ void fileSave()
 	else if (!document.save(fileName.c_str()))
 	{
 		document.sendSaveCommand();
-		MessageBox(hwnd, "Failed to save file", mainWindowTitle, MB_OK | MB_ICONERROR | MB_SETFOREGROUND);
+		error("Failed to save file");
 	}
 }
 
@@ -313,10 +340,7 @@ static LRESULT CALLBACK mainWindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARA
 			if (ERROR_SUCCESS != RegOpenKey(HKEY_CURRENT_USER, keyName, &regConfigKey))
 			{
 				if (ERROR_SUCCESS != RegCreateKey(HKEY_CURRENT_USER, keyName, &regConfigKey))
-				{
-					printf("failed to create reg key\n");
-					exit(-1);
-				}
+					die("failed to create registry key");
 			}
 			
 			/* Recent Files menu */
@@ -427,7 +451,8 @@ static LRESULT CALLBACK mainWindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARA
 			{
 				int rows = int(trackView->getRows());
 				INT_PTR result = DialogBoxParam(hInst, MAKEINTRESOURCE(IDD_SETROWS), hwnd, (DLGPROC)setRowsDialogProc, (LPARAM)&rows);
-				if (FAILED(result)) MessageBox(hwnd, "unable to create dialog box", mainWindowTitle, MB_OK | MB_ICONERROR | MB_SETFOREGROUND);
+				if (FAILED(result))
+					error("unable to create dialog box");
 			}
 			break;
 		
@@ -435,7 +460,8 @@ static LRESULT CALLBACK mainWindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARA
 			{
 				int initialBias = 0;
 				INT_PTR result = DialogBoxParam(hInst, MAKEINTRESOURCE(IDD_BIASSELECTION), hwnd, (DLGPROC)biasSelectionDialogProc, (LPARAM)&initialBias);
-				if (FAILED(result)) MessageBox(hwnd, "unable to create dialog box", mainWindowTitle, MB_OK | MB_ICONERROR | MB_SETFOREGROUND);
+				if (FAILED(result))
+					error("unable to create dialog box");
 			}
 			break;
 		}
@@ -505,20 +531,6 @@ static ATOM registerMainWindowClass(HINSTANCE hInstance)
 	wc.hIconSm       = LoadIcon(NULL, IDI_APPLICATION);
 	
 	return RegisterClassExW(&wc);
-}
-
-#include <stdarg.h>
-void die(const char *fmt, ...)
-{
-	char temp[4096];
-	va_list va;
-	va_start(va, fmt);
-	vfprintf(stderr, fmt, va);
-	vsnprintf(temp, sizeof(temp), fmt, va);
-	va_end(va);
-
-	MessageBox(NULL, temp, mainWindowTitle, MB_OK | MB_ICONERROR);
-	exit(EXIT_FAILURE);
 }
 
 SOCKET clientConnect(SOCKET serverSocket, sockaddr_in *host)
