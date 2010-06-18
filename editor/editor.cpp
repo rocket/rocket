@@ -10,6 +10,7 @@
 #include <objbase.h>
 #include <commdlg.h>
 #include <stdio.h>
+#include <stdarg.h>
 
 // Windows XP look and feel. Seems to enable Vista look as well.
 #pragma comment(linker, \
@@ -29,7 +30,31 @@ const char    *mainWindowTitle  =  "GNU Rocket System";
 const wchar_t *mainWindowTitleW = L"GNU Rocket System";
 const char *keyName = "SOFTWARE\\GNU Rocket";
 
-HINSTANCE hInstance;
+void verror(const char *fmt, va_list va)
+{
+	char temp[4096];
+	vsnprintf(temp, sizeof(temp), fmt, va);
+	MessageBox(NULL, temp, mainWindowTitle, MB_OK | MB_ICONERROR);
+}
+
+void error(const char *fmt, ...)
+{
+	va_list va;
+	va_start(va, fmt);
+	verror(fmt, va);
+	va_end(va);
+}
+
+void die(const char *fmt, ...)
+{
+	va_list va;
+	va_start(va, fmt);
+	verror(fmt, va);
+	va_end(va);
+	exit(EXIT_FAILURE);
+}
+
+HINSTANCE hInst;
 HWND hwnd = NULL;
 TrackView *trackView = NULL;
 HWND trackViewWin = NULL;
@@ -204,7 +229,8 @@ void loadDocument(const std::wstring &_fileName)
 		SendMessage(hwnd, WM_CURRVALDIRTY, 0, 0);
 		InvalidateRect(trackViewWin, NULL, FALSE);
 	}
-	else MessageBox(hwnd, "failed to open file", mainWindowTitle, MB_OK | MB_ICONERROR | MB_SETFOREGROUND);
+	else
+		error("failed to open file");
 }
 
 void fileOpen()
@@ -252,7 +278,8 @@ void fileSaveAs()
 			mruFileList.update();
 			DrawMenuBar(hwnd);
 		}
-		else MessageBox(hwnd, "Failed to save file", mainWindowTitle, MB_OK | MB_ICONERROR | MB_SETFOREGROUND);
+		else
+			error("Failed to save file");
 	}
 }
 
@@ -262,7 +289,7 @@ void fileSave()
 	else if (!document.save(fileName.c_str()))
 	{
 		document.sendSaveCommand();
-		MessageBox(hwnd, "Failed to save file", mainWindowTitle, MB_OK | MB_ICONERROR | MB_SETFOREGROUND);
+		error("Failed to save file");
 	}
 }
 
@@ -306,17 +333,14 @@ static LRESULT CALLBACK mainWindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARA
 	{
 	case WM_CREATE:
 		{
-			trackViewWin = trackView->create(hInstance, hwnd);
+			trackViewWin = trackView->create(hInst, hwnd);
 			InitCommonControls();
-			statusBarWin = createStatusBar(hInstance, hwnd);
+			statusBarWin = createStatusBar(hInst, hwnd);
 
 			if (ERROR_SUCCESS != RegOpenKey(HKEY_CURRENT_USER, keyName, &regConfigKey))
 			{
 				if (ERROR_SUCCESS != RegCreateKey(HKEY_CURRENT_USER, keyName, &regConfigKey))
-				{
-					printf("failed to create reg key\n");
-					exit(-1);
-				}
+					die("failed to create registry key");
 			}
 			
 			/* Recent Files menu */
@@ -426,16 +450,18 @@ static LRESULT CALLBACK mainWindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARA
 		case ID_EDIT_SETROWS:
 			{
 				int rows = int(trackView->getRows());
-				INT_PTR result = DialogBoxParam(hInstance, MAKEINTRESOURCE(IDD_SETROWS), hwnd, (DLGPROC)setRowsDialogProc, (LPARAM)&rows);
-				if (FAILED(result)) MessageBox(hwnd, "unable to create dialog box", mainWindowTitle, MB_OK | MB_ICONERROR | MB_SETFOREGROUND);
+				INT_PTR result = DialogBoxParam(hInst, MAKEINTRESOURCE(IDD_SETROWS), hwnd, (DLGPROC)setRowsDialogProc, (LPARAM)&rows);
+				if (FAILED(result))
+					error("unable to create dialog box");
 			}
 			break;
 		
 		case ID_EDIT_BIAS:
 			{
 				int initialBias = 0;
-				INT_PTR result = DialogBoxParam(hInstance, MAKEINTRESOURCE(IDD_BIASSELECTION), hwnd, (DLGPROC)biasSelectionDialogProc, (LPARAM)&initialBias);
-				if (FAILED(result)) MessageBox(hwnd, "unable to create dialog box", mainWindowTitle, MB_OK | MB_ICONERROR | MB_SETFOREGROUND);
+				INT_PTR result = DialogBoxParam(hInst, MAKEINTRESOURCE(IDD_BIASSELECTION), hwnd, (DLGPROC)biasSelectionDialogProc, (LPARAM)&initialBias);
+				if (FAILED(result))
+					error("unable to create dialog box");
 			}
 			break;
 		}
@@ -507,20 +533,6 @@ static ATOM registerMainWindowClass(HINSTANCE hInstance)
 	return RegisterClassExW(&wc);
 }
 
-#include <stdarg.h>
-void die(const char *fmt, ...)
-{
-	char temp[4096];
-	va_list va;
-	va_start(va, fmt);
-	vfprintf(stderr, fmt, va);
-	vsnprintf(temp, sizeof(temp), fmt, va);
-	va_end(va);
-
-	MessageBox(NULL, temp, mainWindowTitle, MB_OK | MB_ICONERROR);
-	exit(EXIT_FAILURE);
-}
-
 SOCKET clientConnect(SOCKET serverSocket, sockaddr_in *host)
 {
 	sockaddr_in hostTemp;
@@ -546,7 +558,8 @@ SOCKET clientConnect(SOCKET serverSocket, sockaddr_in *host)
 	return clientSocket;
 }
 
-int main(int argc, char* argv[])
+int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
+    LPSTR lpCmdLine, int nShowCmd)
 {
 #ifdef _DEBUG
 	_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
@@ -556,22 +569,8 @@ int main(int argc, char* argv[])
 //	_CrtSetBreakAlloc(254);
 #endif
 	
-	hInstance = GetModuleHandle(NULL);
+	hInst = hInstance;
 	CoInitialize(NULL);
-	
-#if 0
-	{
-		DWORD test = 0xdeadbeef;
-		RegSetValueEx(key, "test2", 0, REG_DWORD, (BYTE *)&test, sizeof(DWORD));
-		
-		DWORD type = 0;
-		DWORD test2 = 0;
-		DWORD size = sizeof(DWORD);
-		RegQueryValueEx(key, "test2", 0, &type, (LPBYTE)&test2, &size);
-		assert(REG_DWORD == type);
-		printf("%x\n", test2);
-	}
-#endif
 
 	WSADATA wsa;
 	if (0 != WSAStartup(MAKEWORD(2, 0), &wsa))
@@ -586,11 +585,9 @@ int main(int argc, char* argv[])
 	sin.sin_addr.s_addr = INADDR_ANY;
 	sin.sin_port = htons( 1338 );
 
-	puts("binding...");
 	if (SOCKET_ERROR == bind( serverSocket, (struct sockaddr *)&sin, sizeof(sin)))
 		die("Could not start server");
 
-	puts("listening...");
 	while (listen(serverSocket, SOMAXCONN) == SOCKET_ERROR)
 		; /* nothing */
 
