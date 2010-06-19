@@ -71,4 +71,15 @@ static inline int xrecv(SOCKET s, void *buf, size_t len, int flags)
 	return recv(s, (char *)buf, len, flags) != (int)len;
 }
 
+#ifdef NEED_STRDUP
+static inline char *rocket_strdup(const char *str)
+{
+	char *ret = malloc(strlen(str) + 1);
+	if (ret)
+		strcpy(ret, str);
+	return ret;
+}
+#define strdup rocket_strdup
+#endif
+
 #endif /* SYNC_BASE_H */
