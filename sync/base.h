@@ -10,15 +10,19 @@
  #define strdup _strdup
  #define snprintf _snprintf
  typedef unsigned int uint32_t;
+#elif defined(__GNUC__)
+ #define inline __inline
+ #include <stdint.h>
 #endif
 
-#ifdef WIN32
+#ifdef _WIN32
  #define WIN32_LEAN_AND_MEAN
  #define NOMINMAX
  #include <winsock2.h>
  #include <windows.h>
 #else
  #include <sys/socket.h>
+ #include <sys/time.h>
  #include <netinet/in.h>
  #include <netdb.h>
  #define SOCKET int
