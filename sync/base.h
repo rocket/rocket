@@ -48,4 +48,14 @@ static inline int socket_poll(SOCKET socket)
 	return select(0, &fds, NULL, NULL, &to) > 0;
 }
 
+static inline int xsend(SOCKET s, const void *buf, size_t len, int flags)
+{
+	return send(s, (const char *)buf, len, flags) != (int)len;
+}
+
+static inline int xrecv(SOCKET s, void *buf, size_t len, int flags)
+{
+	return recv(s, (char *)buf, len, flags) != (int)len;
+}
+
 #endif /* SYNC_BASE_H */

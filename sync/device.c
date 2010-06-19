@@ -60,8 +60,10 @@ static SOCKET server_connect(const char *host, int nport)
 	if (sock == INVALID_SOCKET)
 		return INVALID_SOCKET;
 
-	send(sock, client_greet, (int)strlen(client_greet), 0);
-	recv(sock, greet, (int)strlen(server_greet), 0);
+	if (xsend(sock, client_greet, strlen(client_greet), 0) ||
+	    xrecv(sock, greet, strlen(server_greet), 0))
+		return INVALID_SOCKET;
+
 	if (!strncmp(server_greet, greet, strlen(server_greet)))
 		return sock;
 
@@ -164,30 +166,26 @@ static void save_tracks(const char *base, struct sync_data *data)
 
 static int request_track_data(SOCKET sock, const char *name, int idx)
 {
-	int ret;
 	unsigned char cmd = GET_TRACK;
 	size_t name_len = strlen(name);
 
 	/* send request data */
-	ret  = send(sock, (char *)&cmd, 1, 0);
-	ret += send(sock, (char *)&idx, sizeof(int), 0);
-	ret += send(sock, (char *)&name_len, sizeof(size_t), 0);
-	ret += send(sock, name, (int)name_len, 0);
-
-	return ret != 1 + sizeof(size_t) * 2 + name_len;
+	return xsend(sock, (char *)&cmd, 1, 0) ||
+	       xsend(sock, (char *)&idx, sizeof(int), 0) ||
+	       xsend(sock, (char *)&name_len, sizeof(size_t), 0) ||
+	       xsend(sock, name, (int)name_len, 0);
 }
 
 static int hanle_set_key_cmd(SOCKET sock, struct sync_data *data)
 {
-	int ret, track;
+	int track;
 	struct track_key key;
 	unsigned char type;
 
-	ret  = recv(sock, (char *)&track, sizeof(int), 0);
-	ret += recv(sock, (char *)&key.row, sizeof(int), 0);
-	ret += recv(sock, (char *)&key.value, sizeof(float), 0);
-	ret += recv(sock, (char *)&type, 1, 0);
-	if (ret != sizeof(int) * 2 + sizeof(float) + 1)
+	if (xrecv(sock, (char *)&track, sizeof(int), 0) ||
+	    xrecv(sock, (char *)&key.row, sizeof(int), 0) ||
+	    xrecv(sock, (char *)&key.value, sizeof(float), 0) ||
+	    xrecv(sock, (char *)&type, 1, 0))
 		return 0;
 
 	assert(type < KEY_TYPE_COUNT);
@@ -199,11 +197,10 @@ static int hanle_set_key_cmd(SOCKET sock, struct sync_data *data)
 
 static int hanle_del_key_cmd(SOCKET sock, struct sync_data *data)
 {
-	int ret, track, row;
+	int track, row;
 
-	ret  = recv(sock, (char *)&track, sizeof(int), 0);
-	ret += recv(sock, (char *)&row,   sizeof(int), 0);
-	if (ret != sizeof(int) * 2)
+	if (xrecv(sock, (char *)&track, sizeof(int), 0) ||
+	    xrecv(sock, (char *)&row,   sizeof(int), 0))
 		return 0;
 
 	assert(track < (int)data->num_tracks);
@@ -246,7 +243,7 @@ int sync_update(struct sync_device *d, int row)
 	while (socket_poll(d->sock)) {
 		unsigned char cmd = 0, flag;
 		int row;
-		if (!recv(d->sock, (char *)&cmd, 1, 0))
+		if (xrecv(d->sock, (char *)&cmd, 1, 0))
 			goto sockerr;
 
 		switch (cmd) {
@@ -259,13 +256,13 @@ int sync_update(struct sync_device *d, int row)
 				goto sockerr;
 			break;
 		case SET_ROW:
-			if (recv(d->sock, (char *)&row, sizeof(int), 0) != sizeof(int))
+			if (xrecv(d->sock, (char *)&row, sizeof(int), 0))
 				goto sockerr;
 			if (d->cb && d->cb->set_row)
 				d->cb->set_row(d->cb_param, row);
 			break;
 		case PAUSE:
-			if (recv(d->sock, (char *)&flag, 1, 0) != 1)
+			if (xrecv(d->sock, (char *)&flag, 1, 0))
 				goto sockerr;
 			if (d->cb && d->cb->pause)
 				d->cb->pause(d->cb_param, flag);
@@ -282,9 +279,8 @@ int sync_update(struct sync_device *d, int row)
 	if (d->cb && d->cb->is_playing && d->cb->is_playing(d->cb_param)) {
 		if (d->row != row && d->sock != INVALID_SOCKET) {
 			unsigned char cmd = SET_ROW;
-			int ret = send(d->sock, (char*)&cmd, 1, 0);
-			ret += send(d->sock, (char*)&row, sizeof(int), 0);
-			if (ret != sizeof(int) + 1)
+			if (xsend(d->sock, (char*)&cmd, 1, 0) ||
+			    xsend(d->sock, (char*)&row, sizeof(int), 0))
 				goto sockerr;
 			d->row = row;
 		}
