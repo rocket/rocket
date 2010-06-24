@@ -67,7 +67,7 @@ void die(const char *fmt, ...)
 #ifdef _CONSOLE
 	fprintf(stderr, "*** error: %s\n", temp);
 #else
-	MessageBox(NULL, temp, mainWindowTitle, MB_OK | MB_ICONERROR);
+	MessageBox(NULL, temp, NULL, MB_OK | MB_ICONERROR);
 #endif
 
 	exit(EXIT_FAILURE);
