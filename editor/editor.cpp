@@ -252,7 +252,7 @@ void fileOpen()
 	}
 }
 
-void fileSaveAs()
+bool fileSaveAs()
 {
 	wchar_t temp[_MAX_FNAME + 1];
 	temp[0] = '\0';
@@ -266,10 +266,8 @@ void fileSaveAs()
 	ofn.lpstrFilter = L"ROCKET File (*.rocket)\0*.rocket\0All Files (*.*)\0*.*\0\0";
 	ofn.Flags = OFN_SHOWHELP | OFN_OVERWRITEPROMPT;
 	
-	if (GetSaveFileNameW(&ofn))
-	{
-		if (document.save(temp))
-		{
+	if (GetSaveFileNameW(&ofn)) {
+		if (document.save(temp)) {
 			document.sendSaveCommand();
 			setWindowFileName(temp);
 			fileName = temp;
@@ -277,20 +275,24 @@ void fileSaveAs()
 			mruFileList.insert(temp);
 			mruFileList.update();
 			DrawMenuBar(hwnd);
-		}
-		else
+			return true;
+		} else
 			error("Failed to save file");
 	}
+	return false;
 }
 
-void fileSave()
+bool fileSave()
 {
-	if (fileName.empty()) fileSaveAs();
-	else if (!document.save(fileName.c_str()))
-	{
+	if (fileName.empty())
+		return fileSaveAs();
+
+	if (!document.save(fileName.c_str())) {
 		document.sendSaveCommand();
 		error("Failed to save file");
+		return false;
 	}
+	return true;
 }
 
 void attemptQuit()
@@ -298,8 +300,8 @@ void attemptQuit()
 	if (document.modified())
 	{
 		UINT res = MessageBox(hwnd, "Save before exit?", mainWindowTitle, MB_YESNOCANCEL | MB_ICONQUESTION);
-		if (IDYES == res) fileSave();
-		if (IDCANCEL != res) DestroyWindow(hwnd);
+		if ((IDYES == res && fileSave()) || (IDNO == res))
+			DestroyWindow(hwnd);
 	}
 	else DestroyWindow(hwnd);
 }
