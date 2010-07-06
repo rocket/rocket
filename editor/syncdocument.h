@@ -4,7 +4,10 @@
 
 #pragma once
 
+extern "C" {
 #include "../sync/data.h"
+}
+
 #include <stack>
 #include <list>
 #include <vector>

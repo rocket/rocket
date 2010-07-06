@@ -9,10 +9,6 @@
 #include <stdlib.h>
 #include "base.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 enum key_type {
 	KEY_STEP,   /* stay constant */
 	KEY_LINEAR, /* lerp to the next value */
@@ -51,9 +47,5 @@ static inline int is_key_frame(const struct sync_track *t, size_t row)
 }
 
 #endif /* !defined(SYNC_PLAYER) */
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif /* SYNC_TRACK_H */

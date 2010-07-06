@@ -8,10 +8,6 @@
 #include "track.h"
 #include "data.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 struct sync_device {
 	char *base;
 	struct sync_data data;
@@ -23,9 +19,5 @@ struct sync_device {
 	SOCKET sock;
 #endif
 };
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif /* SYNC_DEVICE_H */

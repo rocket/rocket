@@ -7,10 +7,6 @@
 
 #include "track.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 struct sync_data {
 	struct sync_track **tracks;
 	size_t num_tracks;
@@ -27,9 +23,5 @@ static inline int sync_find_track(struct sync_data *data, const char *name)
 
 void sync_data_deinit(struct sync_data *);
 int sync_create_track(struct sync_data *, const char *);
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif /* SYNC_DATA_H */
