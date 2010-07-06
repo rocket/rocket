@@ -89,8 +89,8 @@ int main(int argc, char *argv[])
 		0, TRUE, 1, D3DFMT_D24S8, 0, 0
 	};
 
-	struct sync_track *clear_r, *clear_g, *clear_b;
-	struct sync_track *cam_rot, *cam_dist;
+	const struct sync_track *clear_r, *clear_g, *clear_b;
+	const struct sync_track *cam_rot, *cam_dist;
 
 	/* initialize directx */
 	d3d = Direct3DCreate9(D3D_SDK_VERSION);

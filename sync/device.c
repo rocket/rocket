@@ -299,7 +299,8 @@ sockerr:
 
 #endif
 
-struct sync_track *sync_get_track(struct sync_device *d, const char *name)
+const struct sync_track *sync_get_track(struct sync_device *d,
+    const char *name)
 {
 	struct sync_track *t;
 	int idx = sync_find_track(&d->data, name);
