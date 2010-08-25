@@ -26,8 +26,8 @@
  #define closesocket(x) close(x)
 #endif
 
-static const char *client_greet = "hello, synctracker!";
-static const char *server_greet = "hello, demo!";
+#define CLIENT_GREET "hello, synctracker!"
+#define SERVER_GREET "hello, demo!"
 
 enum {
 	SET_KEY = 0,

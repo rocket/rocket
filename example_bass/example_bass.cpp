@@ -168,7 +168,8 @@ int main(int argc, char *argv[])
 		D3DXVECTOR3 at(0, 0, 0);
 		D3DXVECTOR3 up(0, 1, 0);
 		D3DXMATRIX view;
-		D3DXMatrixLookAtLH(&view, &(eye + at), &at, &up);
+		D3DXVECTOR3 dir = eye + at;
+		D3DXMatrixLookAtLH(&view, &dir, &at, &up);
 		dev->SetTransform(D3DTS_VIEW, &view);
 		
 		D3DXMATRIX proj;

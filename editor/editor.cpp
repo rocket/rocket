@@ -542,7 +542,7 @@ SOCKET clientConnect(SOCKET serverSocket, sockaddr_in *host)
 	SOCKET clientSocket = accept(serverSocket, (sockaddr*)&hostTemp, &hostSize);
 	if (INVALID_SOCKET == clientSocket) return INVALID_SOCKET;
 
-	const char *expectedGreeting = client_greet;
+	const char *expectedGreeting = CLIENT_GREET;
 	char recievedGreeting[128];
 
 	recv(clientSocket, recievedGreeting, int(strlen(expectedGreeting)), 0);
@@ -553,7 +553,7 @@ SOCKET clientConnect(SOCKET serverSocket, sockaddr_in *host)
 		return INVALID_SOCKET;
 	}
 
-	const char *greeting = server_greet;
+	const char *greeting = SERVER_GREET;
 	send(clientSocket, greeting, int(strlen(greeting)), 0);
 
 	if (NULL != host) *host = hostTemp;

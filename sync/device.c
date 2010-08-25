@@ -60,11 +60,11 @@ static SOCKET server_connect(const char *host, unsigned short nport)
 	if (sock == INVALID_SOCKET)
 		return INVALID_SOCKET;
 
-	if (xsend(sock, client_greet, strlen(client_greet), 0) ||
-	    xrecv(sock, greet, strlen(server_greet), 0))
+	if (xsend(sock, CLIENT_GREET, strlen(CLIENT_GREET), 0) ||
+	    xrecv(sock, greet, strlen(SERVER_GREET), 0))
 		return INVALID_SOCKET;
 
-	if (!strncmp(server_greet, greet, strlen(server_greet)))
+	if (!strncmp(SERVER_GREET, greet, strlen(SERVER_GREET)))
 		return sock;
 
 	closesocket(sock);
@@ -200,7 +200,7 @@ static int handle_set_key_cmd(SOCKET sock, struct sync_data *data)
 	key.value = v.f;
 
 	assert(type < KEY_TYPE_COUNT);
-	assert(track < (int)data->num_tracks);
+	assert(track < data->num_tracks);
 	key.type = (enum key_type)type;
 	sync_set_key(data->tracks[track], &key);
 	return 1;
@@ -217,7 +217,7 @@ static int handle_del_key_cmd(SOCKET sock, struct sync_data *data)
 	track = ntohl(track);
 	row = ntohl(row);
 
-	assert(track < (int)data->num_tracks);
+	assert(track < data->num_tracks);
 	sync_del_key(data->tracks[track], row);
 	return 1;
 }
