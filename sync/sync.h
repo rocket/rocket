@@ -23,7 +23,7 @@ struct sync_cb {
 };
 void sync_set_callbacks(struct sync_device *, struct sync_cb *, void *);
 #define SYNC_DEFAULT_PORT 1338
-int sync_connect(struct sync_device *, const char *, int port);
+int sync_connect(struct sync_device *, const char *, unsigned short);
 int sync_update(struct sync_device *, int);
 #endif /* !defined(SYNC_PLAYER) */
 

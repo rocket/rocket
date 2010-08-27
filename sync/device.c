@@ -20,7 +20,7 @@ static const char *sync_track_path(const char *base, const char *name)
 
 #ifndef SYNC_PLAYER
 
-static SOCKET server_connect(const char *host, int nport)
+static SOCKET server_connect(const char *host, unsigned short nport)
 {
 	struct hostent *he;
 	struct sockaddr_in sa;
@@ -222,7 +222,7 @@ static int purge_and_rerequest(struct sync_device *d)
 	return 0;
 }
 
-int sync_connect(struct sync_device *d, const char *host, int port)
+int sync_connect(struct sync_device *d, const char *host, unsigned short port)
 {
 	if (d->sock != INVALID_SOCKET)
 		closesocket(d->sock);
