@@ -43,7 +43,15 @@ static inline int socket_poll(SOCKET socket)
 	fd_set fds;
 
 	FD_ZERO(&fds);
+
+#ifdef _MSC_VER
+#pragma warning(push)
+#pragma warning(disable: 4127)
+#endif
 	FD_SET(socket, &fds);
+#ifdef _MSC_VER
+#pragma warning(pop)
+#endif
 
 	return select(0, &fds, NULL, NULL, &to) > 0;
 }
