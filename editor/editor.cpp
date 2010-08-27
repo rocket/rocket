@@ -605,8 +605,8 @@ void processCommand(NetworkSocket &sock)
 	}
 }
 
-int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
-    LPSTR lpCmdLine, int nShowCmd)
+int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/,
+    LPSTR /*lpCmdLine*/, int /*nShowCmd*/)
 {
 #ifdef _DEBUG
 	_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
@@ -676,6 +676,7 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 			SOCKET clientSocket = INVALID_SOCKET;
 			fd_set fds;
 			FD_ZERO(&fds);
+#pragma warning(suppress: 4127)
 			FD_SET(serverSocket, &fds);
 			struct timeval timeout;
 			timeout.tv_sec = 0;

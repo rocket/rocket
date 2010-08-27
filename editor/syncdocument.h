@@ -37,7 +37,7 @@ public:
 		if (!connected())
 			return false;
 		int ret = ::recv(socket, buffer, int(length), flags);
-		if (ret != length) {
+		if (ret != int(length)) {
 			disconnect();
 			return false;
 		}
@@ -49,7 +49,7 @@ public:
 		if (!connected())
 			return false;
 		int ret = ::send(socket, buffer, int(length), flags);
-		if (ret != length) {
+		if (ret != int(length)) {
 			disconnect();
 			return false;
 		}

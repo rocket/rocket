@@ -387,9 +387,8 @@ void TrackView::editCopy()
 	const SyncDocument *doc = getDocument();
 	if (NULL == doc) return;
 	
-	if (0 == getTrackCount())
-	{
-		MessageBeep(-1);
+	if (0 == getTrackCount()) {
+		MessageBeep(~0U);
 		return;
 	}
 	
@@ -403,12 +402,7 @@ void TrackView::editCopy()
 		MessageBox(NULL, "Failed to open clipboard", NULL, MB_OK);
 		return;
 	}
-	
-	// gather data
-	int rows = selectBottom - selectTop + 1;
-	int columns = selectRight - selectLeft + 1;
-	size_t cells = columns * rows;
-	
+
 	std::vector<struct CopyEntry> copyEntries;
 	for (int track = selectLeft; track <= selectRight; ++track) {
 		const size_t trackIndex  = doc->getTrackIndexFromPos(track);
@@ -450,9 +444,8 @@ void TrackView::editCopy()
 
 void TrackView::editCut()
 {
-	if (0 == getTrackCount())
-	{
-		MessageBeep(-1);
+	if (0 == getTrackCount()) {
+		MessageBeep(~0U);
 		return;
 	}
 	
@@ -465,9 +458,8 @@ void TrackView::editPaste()
 	SyncDocument *doc = getDocument();
 	if (NULL == doc) return;
 	
-	if (0 == getTrackCount())
-	{
-		MessageBeep(-1);
+	if (0 == getTrackCount()) {
+		MessageBeep(~0U);
 		return;
 	}
 	
@@ -531,7 +523,8 @@ void TrackView::editPaste()
 		GlobalUnlock(hmem);
 		clipbuf = NULL;
 	}
-	else MessageBeep(-1);
+	else
+		MessageBeep(~0U);
 	
 	CloseClipboard();
 }
@@ -786,7 +779,8 @@ void TrackView::editEnterValue()
 		SendMessage(GetParent(getWin()), WM_CURRVALDIRTY, 0, 0);
 		InvalidateRect(getWin(), NULL, FALSE);
 	}
-	else MessageBeep(-1);
+	else
+		MessageBeep(~0U);
 }
 
 void TrackView::editToggleInterpolationType()
@@ -800,7 +794,7 @@ void TrackView::editToggleInterpolationType()
 
 		int idx = key_idx_floor(t, editRow);
 		if (idx < 0) {
-			MessageBeep(-1);
+			MessageBeep(~0U);
 			return;
 		}
 
@@ -817,7 +811,8 @@ void TrackView::editToggleInterpolationType()
 		SendMessage(GetParent(getWin()), WM_CURRVALDIRTY, 0, 0);
 		InvalidateRect(getWin(), NULL, FALSE);
 	}
-	else MessageBeep(-1);
+	else
+		MessageBeep(~0U);
 }
 
 void TrackView::editDelete()
@@ -846,9 +841,8 @@ void TrackView::editDelete()
 		}
 	}
 	
-	if (0 == multiCmd->getSize())
-	{
-		MessageBeep(-1);
+	if (0 == multiCmd->getSize()) {
+		MessageBeep(~0U);
 		delete multiCmd;
 	}
 	else
@@ -870,9 +864,8 @@ void TrackView::editBiasValue(float amount)
 	int selectTop    = min(selectStartRow, selectStopRow);
 	int selectBottom = max(selectStartRow, selectStopRow);
 	
-	if (0 == getTrackCount())
-	{
-		MessageBeep(-1);
+	if (0 == getTrackCount()) {
+		MessageBeep(~0U);
 		return;
 	}
 	
@@ -895,9 +888,8 @@ void TrackView::editBiasValue(float amount)
 		}
 	}
 	
-	if (0 == multiCmd->getSize())
-	{
-		MessageBeep(-1);
+	if (0 == multiCmd->getSize()) {
+		MessageBeep(~0U);
 		delete multiCmd;
 	}
 	else
@@ -939,12 +931,12 @@ LRESULT TrackView::onKeyDown(UINT keyCode, UINT /*flags*/)
 				if (0 < editTrack)
 					doc->swapTrackOrder(editTrack, editTrack - 1);
 				else
-					MessageBeep(-1);
+					MessageBeep(~0U);
 			}
 			if (0 != getTrackCount())
 				setEditTrack(editTrack - 1);
 			else
-				MessageBeep(-1);
+				MessageBeep(~0U);
 			break;
 		
 		case VK_RIGHT:
@@ -952,12 +944,12 @@ LRESULT TrackView::onKeyDown(UINT keyCode, UINT /*flags*/)
 				if (int(getTrackCount()) > editTrack + 1)
 					doc->swapTrackOrder(editTrack, editTrack + 1);
 				else
-					MessageBeep(-1);
+					MessageBeep(~0U);
 			}
 			if (0 != getTrackCount())
 				setEditTrack(editTrack + 1);
 			else
-				MessageBeep(-1);
+				MessageBeep(~0U);
 			break;
 		}
 	}
@@ -972,7 +964,8 @@ LRESULT TrackView::onKeyDown(UINT keyCode, UINT /*flags*/)
 				float bias = 1.0f;
 				if (GetKeyState(VK_SHIFT) < 0) bias = 0.1f;
 				if (int(getTrackCount()) > editTrack) editBiasValue(bias);
-				else MessageBeep(-1);
+				else
+					MessageBeep(~0U);
 			}
 			else setEditRow(editRow - 1);
 			break;
@@ -983,7 +976,8 @@ LRESULT TrackView::onKeyDown(UINT keyCode, UINT /*flags*/)
 				float bias = 1.0f;
 				if (GetKeyState(VK_SHIFT) < 0) bias = 0.1f;
 				if (int(getTrackCount()) > editTrack) editBiasValue(-bias);
-				else MessageBeep(-1);
+				else
+					MessageBeep(~0U);
 			}
 			else setEditRow(editRow + 1);
 			break;
@@ -1031,25 +1025,24 @@ LRESULT TrackView::onKeyDown(UINT keyCode, UINT /*flags*/)
 			editString.resize(editString.size() - 1);
 			invalidatePos(editTrack, editRow);
 		}
-		else MessageBeep(-1);
+		else
+			MessageBeep(~0U);
 		break;
 	
 	case VK_CANCEL:
 	case VK_ESCAPE:
-		if (!editString.empty())
-		{
+		if (!editString.empty()) {
 			// return to old value (i.e don't clear)
 			editString.clear();
 			invalidatePos(editTrack, editRow);
-			MessageBeep(-1);
+			MessageBeep(~0U);
 		}
 		break;
 	case VK_SPACE:
-		if (!editString.empty())
-		{
+		if (!editString.empty()) {
 			editString.clear();
 			invalidatePos(editTrack, editRow);
-			MessageBeep(-1);
+			MessageBeep(~0U);
 		}
 		doc->sendPauseCommand( !doc->clientPaused );
 		break;
@@ -1057,7 +1050,7 @@ LRESULT TrackView::onKeyDown(UINT keyCode, UINT /*flags*/)
 	return FALSE;
 }
 
-LRESULT TrackView::onChar(UINT keyCode, UINT flags)
+LRESULT TrackView::onChar(UINT keyCode, UINT /*flags*/)
 {
 	switch (char(keyCode))
 	{
@@ -1070,9 +1063,8 @@ LRESULT TrackView::onChar(UINT keyCode, UINT flags)
 		break;
 	case '.':
 		// only one '.' allowed
-		if (std::string::npos != editString.find('.'))
-		{
-			MessageBeep(-1);
+		if (std::string::npos != editString.find('.')) {
+			MessageBeep(~0U);
 			break;
 		}
 	case '0':
@@ -1090,7 +1082,8 @@ LRESULT TrackView::onChar(UINT keyCode, UINT flags)
 			editString.push_back(char(keyCode));
 			invalidatePos(editTrack, editRow);
 		}
-		else MessageBeep(-1);
+		else
+			MessageBeep(~0U);
 		break;
 	
 	case 'i':
@@ -1113,7 +1106,7 @@ LRESULT TrackView::onSize(int width, int height)
 	return FALSE;
 }
 
-LRESULT TrackView::onSetCursor(HWND win, UINT hitTest, UINT message)
+LRESULT TrackView::onSetCursor(HWND /*win*/, UINT hitTest, UINT message)
 {
 	POINT cpos;
 	GetCursorPos(&cpos);
@@ -1128,7 +1121,7 @@ LRESULT TrackView::onSetCursor(HWND win, UINT hitTest, UINT message)
 	    MAKELPARAM(hitTest, message));
 }
 
-LRESULT TrackView::onLButtonDown(UINT flags, POINTS pos)
+LRESULT TrackView::onLButtonDown(UINT /*flags*/, POINTS pos)
 {
 	int track = getTrackFromX(pos.x);
 	if (pos.y < topMarginHeight &&
@@ -1140,14 +1133,14 @@ LRESULT TrackView::onLButtonDown(UINT flags, POINTS pos)
 	return FALSE;
 }
 
-LRESULT TrackView::onLButtonUp(UINT flags, POINTS pos)
+LRESULT TrackView::onLButtonUp(UINT /*flags*/, POINTS /*pos*/)
 {
 	ReleaseCapture();
 	setEditTrack(editTrack);
 	return FALSE;
 }
 
-LRESULT TrackView::onMouseMove(UINT flags, POINTS pos)
+LRESULT TrackView::onMouseMove(UINT /*flags*/, POINTS pos)
 {
 	if (GetCapture() == hwnd) {
 		SyncDocument *doc = getDocument();
@@ -1207,14 +1200,16 @@ LRESULT TrackView::windowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	
 	case WM_UNDO:
 		if (NULL == getDocument()) return FALSE;
-		if (!getDocument()->undo()) MessageBeep(-1);
+		if (!getDocument()->undo())
+			MessageBeep(~0U);
 		// unfortunately, we don't know how much to invalidate... so we'll just invalidate it all.
 		InvalidateRect(hwnd, NULL, FALSE);
 		break;
 	
 	case WM_REDO:
 		if (NULL == getDocument()) return FALSE;
-		if (!getDocument()->redo()) MessageBeep(-1);
+		if (!getDocument()->redo())
+			MessageBeep(~0U);
 		// unfortunately, we don't know how much to invalidate... so we'll just invalidate it all.
 		InvalidateRect(hwnd, NULL, FALSE);
 		break;
