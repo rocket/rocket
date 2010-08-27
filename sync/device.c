@@ -164,29 +164,31 @@ static void save_tracks(const char *base, struct sync_data *data)
 	}
 }
 
-static int request_track_data(SOCKET sock, const char *name, int idx)
+static int request_track_data(SOCKET sock, const char *name, uint32_t idx)
 {
 	unsigned char cmd = GET_TRACK;
-	size_t name_len = strlen(name);
+	uint32_t name_len = strlen(name);
 
 	/* send request data */
 	return xsend(sock, (char *)&cmd, 1, 0) ||
-	       xsend(sock, (char *)&idx, sizeof(int), 0) ||
-	       xsend(sock, (char *)&name_len, sizeof(size_t), 0) ||
+	       xsend(sock, (char *)&idx, sizeof(idx), 0) ||
+	       xsend(sock, (char *)&name_len, sizeof(name_len), 0) ||
 	       xsend(sock, name, (int)name_len, 0);
 }
 
 static int hanle_set_key_cmd(SOCKET sock, struct sync_data *data)
 {
-	int track;
+	uint32_t track, row;
 	struct track_key key;
 	unsigned char type;
 
-	if (xrecv(sock, (char *)&track, sizeof(int), 0) ||
-	    xrecv(sock, (char *)&key.row, sizeof(int), 0) ||
+	if (xrecv(sock, (char *)&track, sizeof(track), 0) ||
+	    xrecv(sock, (char *)&row, sizeof(row), 0) ||
 	    xrecv(sock, (char *)&key.value, sizeof(float), 0) ||
 	    xrecv(sock, (char *)&type, 1, 0))
 		return 0;
+
+	key.row = row;
 
 	assert(type < KEY_TYPE_COUNT);
 	assert(track < (int)data->num_tracks);
@@ -197,10 +199,10 @@ static int hanle_set_key_cmd(SOCKET sock, struct sync_data *data)
 
 static int hanle_del_key_cmd(SOCKET sock, struct sync_data *data)
 {
-	int track, row;
+	uint32_t track, row;
 
-	if (xrecv(sock, (char *)&track, sizeof(int), 0) ||
-	    xrecv(sock, (char *)&row,   sizeof(int), 0))
+	if (xrecv(sock, (char *)&track, sizeof(track), 0) ||
+	    xrecv(sock, (char *)&row, sizeof(row), 0))
 		return 0;
 
 	assert(track < (int)data->num_tracks);
@@ -242,7 +244,7 @@ int sync_update(struct sync_device *d, int row)
 	/* look for new commands */
 	while (socket_poll(d->sock)) {
 		unsigned char cmd = 0, flag;
-		int row;
+		uint32_t row;
 		if (xrecv(d->sock, (char *)&cmd, 1, 0))
 			goto sockerr;
 
@@ -256,7 +258,7 @@ int sync_update(struct sync_device *d, int row)
 				goto sockerr;
 			break;
 		case SET_ROW:
-			if (xrecv(d->sock, (char *)&row, sizeof(int), 0))
+			if (xrecv(d->sock, (char *)&row, sizeof(row), 0))
 				goto sockerr;
 			if (d->cb && d->cb->set_row)
 				d->cb->set_row(d->cb_param, row);
@@ -279,8 +281,9 @@ int sync_update(struct sync_device *d, int row)
 	if (d->cb && d->cb->is_playing && d->cb->is_playing(d->cb_param)) {
 		if (d->row != row && d->sock != INVALID_SOCKET) {
 			unsigned char cmd = SET_ROW;
+			uint32_t nrow = row;
 			if (xsend(d->sock, (char*)&cmd, 1, 0) ||
-			    xsend(d->sock, (char*)&row, sizeof(int), 0))
+			    xsend(d->sock, (char*)&nrow, sizeof(nrow), 0))
 				goto sockerr;
 			d->row = row;
 		}

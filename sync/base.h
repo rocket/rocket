@@ -6,9 +6,10 @@
 #define SYNC_BASE_H
 
 #ifdef _MSC_VER
-#define inline __inline
-#define strdup _strdup
-#define snprintf _snprintf
+ #define inline __inline
+ #define strdup _strdup
+ #define snprintf _snprintf
+ typedef unsigned int uint32_t;
 #endif
 
 #ifdef WIN32
