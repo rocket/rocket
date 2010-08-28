@@ -167,28 +167,37 @@ static void save_tracks(const char *base, struct sync_data *data)
 static int request_track_data(SOCKET sock, const char *name, uint32_t idx)
 {
 	unsigned char cmd = GET_TRACK;
-	uint32_t name_len = strlen(name);
+	uint32_t name_len = htonl(strlen(name));
+	idx = htonl(idx);
 
 	/* send request data */
 	return xsend(sock, (char *)&cmd, 1, 0) ||
 	       xsend(sock, (char *)&idx, sizeof(idx), 0) ||
 	       xsend(sock, (char *)&name_len, sizeof(name_len), 0) ||
-	       xsend(sock, name, (int)name_len, 0);
+	       xsend(sock, name, (int)strlen(name), 0);
 }
 
 static int hanle_set_key_cmd(SOCKET sock, struct sync_data *data)
 {
 	uint32_t track, row;
+	union {
+		float f;
+		uint32_t i;
+	} v;
 	struct track_key key;
 	unsigned char type;
 
 	if (xrecv(sock, (char *)&track, sizeof(track), 0) ||
 	    xrecv(sock, (char *)&row, sizeof(row), 0) ||
-	    xrecv(sock, (char *)&key.value, sizeof(float), 0) ||
+	    xrecv(sock, (char *)&v.i, sizeof(v.i), 0) ||
 	    xrecv(sock, (char *)&type, 1, 0))
 		return 0;
 
-	key.row = row;
+	track = ntohl(track);
+	v.i = ntohl(v.i);
+
+	key.row = ntohl(row);
+	key.value = v.f;
 
 	assert(type < KEY_TYPE_COUNT);
 	assert(track < (int)data->num_tracks);
@@ -204,6 +213,9 @@ static int hanle_del_key_cmd(SOCKET sock, struct sync_data *data)
 	if (xrecv(sock, (char *)&track, sizeof(track), 0) ||
 	    xrecv(sock, (char *)&row, sizeof(row), 0))
 		return 0;
+
+	track = ntohl(track);
+	row = ntohl(row);
 
 	assert(track < (int)data->num_tracks);
 	sync_del_key(data->tracks[track], row);
@@ -261,7 +273,7 @@ int sync_update(struct sync_device *d, int row)
 			if (xrecv(d->sock, (char *)&row, sizeof(row), 0))
 				goto sockerr;
 			if (d->cb && d->cb->set_row)
-				d->cb->set_row(d->cb_param, row);
+				d->cb->set_row(d->cb_param, ntohl(row));
 			break;
 		case PAUSE:
 			if (xrecv(d->sock, (char *)&flag, 1, 0))
@@ -281,7 +293,7 @@ int sync_update(struct sync_device *d, int row)
 	if (d->cb && d->cb->is_playing && d->cb->is_playing(d->cb_param)) {
 		if (d->row != row && d->sock != INVALID_SOCKET) {
 			unsigned char cmd = SET_ROW;
-			uint32_t nrow = row;
+			uint32_t nrow = htonl(row);
 			if (xsend(d->sock, (char*)&cmd, 1, 0) ||
 			    xsend(d->sock, (char*)&nrow, sizeof(nrow), 0))
 				goto sockerr;

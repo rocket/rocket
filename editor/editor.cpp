@@ -573,6 +573,9 @@ void processCommand(NetworkSocket &sock)
 			// read data
 			sock.recv((char *)&clientIndex, sizeof(int), 0);
 			sock.recv((char *)&strLen, sizeof(int), 0);
+			clientIndex = ntohl(clientIndex);
+			strLen = ntohl(strLen);
+
 			trackName.resize(strLen);
 			sock.recv(&trackName[0], strLen, 0);
 			if (!sock.connected())
@@ -599,7 +602,7 @@ void processCommand(NetworkSocket &sock)
 
 		case SET_ROW:
 			sock.recv((char*)&newRow, sizeof(int), 0);
-			trackView->setEditRow(newRow);
+			trackView->setEditRow(ntohl(newRow));
 			break;
 		}
 	}

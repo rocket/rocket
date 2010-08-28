@@ -85,19 +85,27 @@ public:
 		return index;
 	}
 	
-	void sendSetKeyCommand(int track, const struct track_key &key)
+	void sendSetKeyCommand(uint32_t track, const struct track_key &key)
 	{
 		if (!clientSocket.connected()) return;
 		if (clientRemap.count(track) == 0) return;
-		track = int(clientRemap[track]);
+		track = htonl(clientRemap[track]);
+		uint32_t row = htonl(key.row);
+
+		union {
+			float f;
+			uint32_t i;
+		} v;
+		v.f = key.value;
+		v.i = htonl(v.i);
 
 		assert(key.type < KEY_TYPE_COUNT);
 
 		unsigned char cmd = SET_KEY;
 		clientSocket.send((char*)&cmd, 1, 0);
-		clientSocket.send((char*)&track, sizeof(int), 0);
-		clientSocket.send((char*)&key.row, sizeof(int), 0);
-		clientSocket.send((char*)&key.value, sizeof(float), 0);
+		clientSocket.send((char*)&track, sizeof(track), 0);
+		clientSocket.send((char*)&row, sizeof(row), 0);
+		clientSocket.send((char*)&v.i, sizeof(v.i), 0);
 		clientSocket.send((char*)&key.type, 1, 0);
 	}
 	
@@ -105,8 +113,10 @@ public:
 	{
 		if (!clientSocket.connected()) return;
 		if (clientRemap.count(track) == 0) return;
-		track = int(clientRemap[track]);
-		
+
+		track = htonl(int(clientRemap[track]));
+		row = htonl(row);
+
 		unsigned char cmd = DELETE_KEY;
 		clientSocket.send((char*)&cmd, 1, 0);
 		clientSocket.send((char*)&track, sizeof(int), 0);
@@ -117,8 +127,9 @@ public:
 	{
 		if (!clientSocket.connected()) return;
 		unsigned char cmd = SET_ROW;
+		row = htonl(row);
 		clientSocket.send((char*)&cmd, 1, 0);
-		clientSocket.send((char*)&row,   sizeof(int), 0);
+		clientSocket.send((char*)&row, sizeof(int), 0);
 	}
 	
 	void sendPauseCommand(bool pause)
