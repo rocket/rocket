@@ -633,9 +633,10 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/,
 
 	sin.sin_family = AF_INET;
 	sin.sin_addr.s_addr = INADDR_ANY;
-	sin.sin_port = htons( 1338 );
+	sin.sin_port = htons(1338);
 
-	if (SOCKET_ERROR == bind( serverSocket, (struct sockaddr *)&sin, sizeof(sin)))
+	if (SOCKET_ERROR == bind(serverSocket, (struct sockaddr *)&sin,
+	    sizeof(sin)))
 		die("Could not start server");
 
 	while (listen(serverSocket, SOMAXCONN) == SOCKET_ERROR)
