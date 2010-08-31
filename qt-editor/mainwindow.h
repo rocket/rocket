@@ -4,6 +4,8 @@
 #include <QtGui/QMainWindow>
 #include "ui_mainwindow.h"
 
+class TrackView;
+
 class MainWindow : public QMainWindow {
 	Q_OBJECT
 
@@ -13,6 +15,8 @@ public:
 
 private:
 	Ui::MainWindowClass ui;
+
+	TrackView *trackView;
 };
 
 #endif // MAINWINDOW_H
