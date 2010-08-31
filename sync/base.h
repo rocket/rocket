@@ -54,7 +54,7 @@ static inline int socket_poll(SOCKET socket)
 #pragma warning(pop)
 #endif
 
-	return select(0, &fds, NULL, NULL, &to) > 0;
+	return select(socket + 1, &fds, NULL, NULL, &to) > 0;
 }
 
 static inline int xsend(SOCKET s, const void *buf, size_t len, int flags)
