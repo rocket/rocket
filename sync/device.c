@@ -177,7 +177,7 @@ static int request_track_data(SOCKET sock, const char *name, uint32_t idx)
 	       xsend(sock, name, (int)strlen(name), 0);
 }
 
-static int hanle_set_key_cmd(SOCKET sock, struct sync_data *data)
+static int handle_set_key_cmd(SOCKET sock, struct sync_data *data)
 {
 	uint32_t track, row;
 	union {
@@ -206,7 +206,7 @@ static int hanle_set_key_cmd(SOCKET sock, struct sync_data *data)
 	return 1;
 }
 
-static int hanle_del_key_cmd(SOCKET sock, struct sync_data *data)
+static int handle_del_key_cmd(SOCKET sock, struct sync_data *data)
 {
 	uint32_t track, row;
 
@@ -262,11 +262,11 @@ int sync_update(struct sync_device *d, int row)
 
 		switch (cmd) {
 		case SET_KEY:
-			if (!hanle_set_key_cmd(d->sock, &d->data))
+			if (!handle_set_key_cmd(d->sock, &d->data))
 				goto sockerr;
 			break;
 		case DELETE_KEY:
-			if (!hanle_del_key_cmd(d->sock, &d->data))
+			if (!handle_del_key_cmd(d->sock, &d->data))
 				goto sockerr;
 			break;
 		case SET_ROW:
