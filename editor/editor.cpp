@@ -575,10 +575,11 @@ void processCommand(NetworkSocket &sock)
 			sock.recv((char *)&strLen, sizeof(int), 0);
 			clientIndex = ntohl(clientIndex);
 			strLen = ntohl(strLen);
+			if (!sock.connected())
+				return;
 
 			trackName.resize(strLen);
-			sock.recv(&trackName[0], strLen, 0);
-			if (!sock.connected())
+			if (!sock.recv(&trackName[0], strLen, 0))
 				return;
 
 			// find track
