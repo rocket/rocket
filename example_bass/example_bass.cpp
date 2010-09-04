@@ -158,7 +158,8 @@ int main(int argc, char *argv[])
 	/* init BASS */
 	if (!BASS_Init(-1, 44100, 0, 0, 0))
 		die("failed to init bass");
-	stream = BASS_StreamCreateFile(false, "tune.ogg", 0, 0, 0);
+	stream = BASS_StreamCreateFile(false, "tune.ogg", 0, 0,
+	    BASS_STREAM_PRESCAN);
 	if (!stream)
 		die("failed to open tune");
 
