@@ -3,7 +3,7 @@
  */
 
 #include "../sync/base.h"
-#include <afxres.h>
+#include "afxres.h"
 #include "resource.h"
 
 #include <commctrl.h>
