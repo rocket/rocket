@@ -25,6 +25,7 @@
  #include <sys/time.h>
  #include <netinet/in.h>
  #include <netdb.h>
+ #include <unistd.h>
  #define SOCKET int
  #define INVALID_SOCKET -1
  #define closesocket(x) close(x)
