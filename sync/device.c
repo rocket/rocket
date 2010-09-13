@@ -157,15 +157,13 @@ void sync_save_tracks(const struct sync_device *d)
 	}
 }
 
-static int request_track_data(SOCKET sock, const char *name, uint32_t idx)
+static int request_track_data(SOCKET sock, const char *name)
 {
 	unsigned char cmd = GET_TRACK;
 	uint32_t name_len = htonl(strlen(name));
-	idx = htonl(idx);
 
 	/* send request data */
 	return xsend(sock, (char *)&cmd, 1, 0) ||
-	       xsend(sock, (char *)&idx, sizeof(idx), 0) ||
 	       xsend(sock, (char *)&name_len, sizeof(name_len), 0) ||
 	       xsend(sock, name, (int)strlen(name), 0);
 }
@@ -223,7 +221,7 @@ static int purge_and_rerequest(struct sync_device *d)
 		d->data.tracks[i]->keys = NULL;
 		d->data.tracks[i]->num_keys = 0;
 
-		if (request_track_data(d->sock, d->data.tracks[i]->name, i))
+		if (request_track_data(d->sock, d->data.tracks[i]->name))
 			return 1;
 	}
 	return 0;
@@ -318,7 +316,7 @@ const struct sync_track *sync_get_track(struct sync_device *d,
 #if SYNC_PLAYER
 	load_track_data(t, sync_track_path(d->base, name));
 #else
-	request_track_data(d->sock, name, idx);
+	request_track_data(d->sock, name);
 #endif
 
 	return t;

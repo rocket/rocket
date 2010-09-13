@@ -561,9 +561,9 @@ SOCKET clientConnect(SOCKET serverSocket, sockaddr_in *host)
 	return clientSocket;
 }
 
+size_t clientIndex;
 void processCommand(NetworkSocket &sock)
 {
-	size_t clientIndex = 0;
 	int strLen, serverIndex, newRow;
 	std::string trackName;
 	const sync_track *t;
@@ -572,9 +572,7 @@ void processCommand(NetworkSocket &sock)
 		switch (cmd) {
 		case GET_TRACK:
 			// read data
-			sock.recv((char *)&clientIndex, sizeof(int), 0);
 			sock.recv((char *)&strLen, sizeof(int), 0);
-			clientIndex = ntohl(clientIndex);
 			strLen = ntohl(strLen);
 			if (!sock.connected())
 				return;
@@ -591,7 +589,7 @@ void processCommand(NetworkSocket &sock)
 				    int(document.createTrack(trackName));
 
 			// setup remap
-			document.clientRemap[serverIndex] = clientIndex;
+			document.clientRemap[serverIndex] = clientIndex++;
 
 			// send key-frames
 			t = document.tracks[serverIndex];
@@ -701,6 +699,7 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/,
 					SendMessage(statusBarWin, SB_SETTEXT, 0, (LPARAM)temp);
 					document.clientSocket = NetworkSocket(clientSocket);
 					document.clientRemap.clear();
+					clientIndex = 0;
 					document.sendPauseCommand(true);
 					document.sendSetRowCommand(trackView->getEditRow());
 					guiConnected = true;
