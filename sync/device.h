@@ -13,8 +13,6 @@ struct sync_device {
 	struct sync_data data;
 
 #ifndef SYNC_PLAYER
-	struct sync_cb *cb;
-	void *cb_param;
 	int row;
 	SOCKET sock;
 #endif

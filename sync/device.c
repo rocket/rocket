@@ -88,7 +88,6 @@ struct sync_device *sync_create_device(const char *base)
 	d->data.num_tracks = 0;
 
 #ifndef SYNC_PLAYER
-	d->cb = d->cb_param = NULL;
 	d->row = -1;
 	d->sock = INVALID_SOCKET;
 #endif
@@ -129,12 +128,6 @@ static int load_track_data(struct sync_track *t, const char *path)
 }
 
 #else
-
-void sync_set_callbacks(struct sync_device *d, struct sync_cb *cb, void *cb_param)
-{
-	d->cb = cb;
-	d->cb_param = cb_param;
-}
 
 static int save_track(const struct sync_track *t, const char *path)
 {
@@ -248,7 +241,8 @@ int sync_connect(struct sync_device *d, const char *host, unsigned short port)
 	return purge_and_rerequest(d);
 }
 
-int sync_update(struct sync_device *d, int row)
+int sync_update(struct sync_device *d, int row, struct sync_cb *cb,
+    void *cb_param)
 {
 	if (d->sock == INVALID_SOCKET)
 		return 1;
@@ -272,14 +266,14 @@ int sync_update(struct sync_device *d, int row)
 		case SET_ROW:
 			if (xrecv(d->sock, (char *)&row, sizeof(row), 0))
 				goto sockerr;
-			if (d->cb && d->cb->set_row)
-				d->cb->set_row(d->cb_param, ntohl(row));
+			if (cb && cb->set_row)
+				cb->set_row(cb_param, ntohl(row));
 			break;
 		case PAUSE:
 			if (xrecv(d->sock, (char *)&flag, 1, 0))
 				goto sockerr;
-			if (d->cb && d->cb->pause)
-				d->cb->pause(d->cb_param, flag);
+			if (cb && cb->pause)
+				cb->pause(cb_param, flag);
 			break;
 		case SAVE_TRACKS:
 			sync_save_tracks(d);
@@ -290,7 +284,7 @@ int sync_update(struct sync_device *d, int row)
 		}
 	}
 
-	if (d->cb && d->cb->is_playing && d->cb->is_playing(d->cb_param)) {
+	if (cb && cb->is_playing && cb->is_playing(cb_param)) {
 		if (d->row != row && d->sock != INVALID_SOCKET) {
 			unsigned char cmd = SET_ROW;
 			uint32_t nrow = htonl(row);
