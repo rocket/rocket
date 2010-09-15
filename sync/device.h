@@ -5,7 +5,6 @@
 #ifndef SYNC_DEVICE_H
 #define SYNC_DEVICE_H
 
-#include "track.h"
 #include "data.h"
 
 struct sync_device {
