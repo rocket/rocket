@@ -104,7 +104,7 @@ void sync_destroy_device(struct sync_device *d)
 
 #ifdef SYNC_PLAYER
 
-static int get_track_data(struct sync_device *d, struct sync_track *t)
+static int get_track_data(const struct sync_device *d, struct sync_track *t)
 {
 	int i;
 	FILE *fp = fopen(sync_track_path(d->base, t->name), "rb");
@@ -157,7 +157,7 @@ void sync_save_tracks(const struct sync_device *d)
 	}
 }
 
-static int get_track_data(struct sync_device *d, struct sync_track *t)
+static int get_track_data(const struct sync_device *d, struct sync_track *t)
 {
 	unsigned char cmd = GET_TRACK;
 	uint32_t name_len = htonl(strlen(t->name));

@@ -12,7 +12,8 @@ struct sync_data {
 	size_t num_tracks;
 };
 
-static inline int sync_find_track(struct sync_data *data, const char *name)
+static inline int sync_find_track(const struct sync_data *data,
+    const char *name)
 {
 	int i;
 	for (i = 0; i < (int)data->num_tracks; ++i)
