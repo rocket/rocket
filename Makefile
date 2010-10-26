@@ -18,5 +18,5 @@ clean:
 	$(RM) -rf $(SYNC_OBJS) lib
 
 lib/librocket.a: $(SYNC_OBJS)
-	@mkdir lib
+	@mkdir -p lib
 	$(AR) $(ARFLAGS) $@ $<
