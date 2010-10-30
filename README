@@ -35,8 +35,8 @@ Using the editor
 ----------------
 The GNU Rocket editor is laid out like a music-tracker; tracks (or columns)
 and rows. Each track represents a separate "variable" in the demo, over the
-entire time-domain of the demo. Each row represents a specific point in time.
-Each row consists of a set of key-frames, which are interpolated over time
+entire time-domain of the demo. Each row represents a specific point in time,
+and consists of a set of key-frames. The key-frames are interpolated over time
 according to their interpolation modes.
 
 Keyboard shortcuts
