@@ -183,15 +183,15 @@
 				>
 			</File>
 			<File
+				RelativePath=".\editor.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\recentfiles.cpp"
 				>
 			</File>
 			<File
 				RelativePath=".\syncdocument.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\editor.cpp"
 				>
 			</File>
 			<File
