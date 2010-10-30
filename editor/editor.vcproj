@@ -250,6 +250,10 @@
 				RelativePath=".\editor.rc"
 				>
 			</File>
+			<File
+				RelativePath=".\appicon.ico"
+				>
+			</File>
 		</Filter>
 	</Files>
 	<Globals>

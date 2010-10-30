@@ -518,20 +518,20 @@ static LRESULT CALLBACK mainWindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARA
 static ATOM registerMainWindowClass(HINSTANCE hInstance)
 {
 	WNDCLASSEXW wc;
-	
+
 	wc.cbSize        = sizeof(wc);
 	wc.style         = 0;
 	wc.lpfnWndProc   = mainWindowProc;
 	wc.cbClsExtra    = 0;
 	wc.cbWndExtra    = 0;
 	wc.hInstance     = hInstance;
-	wc.hIcon         = LoadIcon(NULL, IDI_APPLICATION);
+	wc.hIcon         = LoadIcon(hInstance, IDI_APPLICATION);
 	wc.hCursor       = LoadCursor(NULL, IDC_ARROW);
 	wc.hbrBackground = (HBRUSH)0;
 	wc.lpszMenuName  = MAKEINTRESOURCEW(IDR_MENU);
 	wc.lpszClassName = mainWindowClassName;
-	wc.hIconSm       = LoadIcon(NULL, IDI_APPLICATION);
-	
+	wc.hIconSm       = wc.hIcon;
+
 	return RegisterClassExW(&wc);
 }
 
