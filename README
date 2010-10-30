@@ -39,6 +39,22 @@ entire time-domain of the demo. Each row represents a specific point in time,
 and consists of a set of key-frames. The key-frames are interpolated over time
 according to their interpolation modes.
 
+Interpolation modes
+-------------------
+Each key-frame has an interpolation mode associated with it, and that
+interpolation mode is valid until the next key-frame is reached. The different
+interpolation modes are the following:
+
+* Step   : This is the simplest mode, and always returns the key's value.
+* Linear : This does a linear interpolation between the current and the next
+           key's values.
+* Smooth : This interpolates in a smooth fashion, the exact function is what
+           is usually called "smoothstep". Do not confuse this mode with
+           splines; this only interpolates smoothly between two different
+           values, it does not try to calculate tangents or any such things.
+* Ramp   : This is similar to "Linear", but additionally applies an
+           exponentiation of the interpolation factor.
+
 Keyboard shortcuts
 -------------------
 Some of the GNU Rocket editor's features are available through the menu and
