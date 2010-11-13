@@ -195,16 +195,17 @@ std::wstring fileName;
 void fileNew()
 {
 	// document.purgeUnusedTracks();
-	for (size_t i = 0; i < document.num_tracks; ++i)
-	{
+	SyncDocument::MultiCommand *multiCmd = new SyncDocument::MultiCommand();
+	for (size_t i = 0; i < document.num_tracks; ++i) {
 		sync_track *t = document.tracks[i];
-		free(t->keys);
-		t->keys = NULL;
-		t->num_keys = 0;
+		for (size_t j = 0; j < t->num_keys; ++j)
+			multiCmd->addCommand(new SyncDocument::DeleteCommand(i, t->keys[j].row));
 	}
+	document.exec(multiCmd);
+
 	setWindowFileName(L"Untitled");
 	fileName.clear();
-	
+
 	document.clearUndoStack();
 	document.clearRedoStack();
 }
