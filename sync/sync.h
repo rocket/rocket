@@ -25,6 +25,7 @@ void sync_set_callbacks(struct sync_device *, struct sync_cb *, void *);
 #define SYNC_DEFAULT_PORT 1338
 int sync_connect(struct sync_device *, const char *, unsigned short);
 int sync_update(struct sync_device *, int);
+void sync_save_tracks(const struct sync_device *);
 #endif /* !defined(SYNC_PLAYER) */
 
 const struct sync_track *sync_get_track(struct sync_device *, const char *);

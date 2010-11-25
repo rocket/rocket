@@ -194,6 +194,11 @@ int main(int argc, char *argv[])
 		}
 	}
 
+#ifndef SYNC_PLAYER
+	sync_save_tracks(rocket);
+#endif
+	sync_destroy_device(rocket);
+
 	BASS_StreamFree(stream);
 	BASS_Free();
 

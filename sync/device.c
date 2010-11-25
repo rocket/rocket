@@ -155,12 +155,12 @@ static int save_track(const struct sync_track *t, const char *path)
 	return 0;
 }
 
-static void save_tracks(const char *base, struct sync_data *data)
+void sync_save_tracks(const struct sync_device *d)
 {
 	int i;
-	for (i = 0; i < (int)data->num_tracks; ++i) {
-		const struct sync_track *t = data->tracks[i];
-		save_track(t, sync_track_path(base, t->name));
+	for (i = 0; i < (int)d->data.num_tracks; ++i) {
+		const struct sync_track *t = d->data.tracks[i];
+		save_track(t, sync_track_path(d->base, t->name));
 	}
 }
 
@@ -282,7 +282,7 @@ int sync_update(struct sync_device *d, int row)
 				d->cb->pause(d->cb_param, flag);
 			break;
 		case SAVE_TRACKS:
-			save_tracks(d->base, &d->data);
+			sync_save_tracks(d);
 			break;
 		default:
 			fprintf(stderr, "unknown cmd: %02x\n", cmd);
