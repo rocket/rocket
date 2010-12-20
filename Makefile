@@ -24,7 +24,6 @@ else
 endif
 
 LIB_OBJS = \
-	lib/data.o \
 	lib/device.o \
 	lib/track.o
 

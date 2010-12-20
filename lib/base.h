@@ -38,15 +38,4 @@ enum {
 	SAVE_TRACKS = 5
 };
 
-#ifdef NEED_STRDUP
-static inline char *rocket_strdup(const char *str)
-{
-	char *ret = malloc(strlen(str) + 1);
-	if (ret)
-		strcpy(ret, str);
-	return ret;
-}
-#define strdup rocket_strdup
-#endif
-
 #endif /* SYNC_BASE_H */
