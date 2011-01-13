@@ -10,12 +10,12 @@
 #include <SDL.h>
 #undef main /* avoid SDL's nasty SDLmain hack */
 #include <SDL_opengl.h>
+#include <bass.h>
 #include <stdio.h>
 #include <stdarg.h>
 #include <math.h>
 
 #include "../sync/sync.h"
-#include "bass.h"
 
 static const float bpm = 150.0f; /* beats per minute */
 static const int rpb = 8; /* rows per beat */
