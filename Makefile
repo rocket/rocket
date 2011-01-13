@@ -19,4 +19,4 @@ clean:
 
 lib/librocket.a: $(SYNC_OBJS)
 	@mkdir -p lib
-	$(AR) $(ARFLAGS) $@ $<
+	$(AR) $(ARFLAGS) $@ $^
