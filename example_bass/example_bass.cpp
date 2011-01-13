@@ -1,13 +1,18 @@
 /* Copyright (C) 2007-2008 Erik Faye-Lund and Egbert Teeselink
  * For conditions of distribution and use, see copyright notice in COPYING
+ * sdl+opengl examle by rasmus/loonies http://visualizethis.tumblr.com 2011
  */
 
+#ifdef _WIN32
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
-#include <d3d9.h>
-#include <d3dx9.h>
+#endif
+#include <SDL.h>
+#undef main /* avoid SDL's nasty SDLmain hack */
+#include <SDL_opengl.h>
 #include <stdio.h>
 #include <stdarg.h>
+#include <math.h>
 
 #include "../sync/sync.h"
 #include "bass.h"
@@ -60,7 +65,7 @@ static void die(const char *fmt, ...)
 	vsnprintf(temp, sizeof(temp), fmt, va);
 	va_end(va);
 
-#ifdef _CONSOLE
+#if !defined(_WIN32) || defined(_CONSOLE)
 	fprintf(stderr, "*** error: %s\n", temp);
 #else
 	MessageBox(NULL, temp, NULL, MB_OK | MB_ICONERROR);
@@ -72,42 +77,83 @@ static void die(const char *fmt, ...)
 static const unsigned int width  = 800;
 static const unsigned int height = 600;
 
+SDL_Surface *setup_sdl()
+{
+	if (SDL_Init(SDL_INIT_VIDEO))
+		die("%s", SDL_GetError());
+
+	SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
+	SDL_GL_SetAttribute(SDL_GL_RED_SIZE, 8);
+	SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE, 8);
+	SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE, 8);
+	SDL_GL_SetAttribute(SDL_GL_ALPHA_SIZE, 8);
+	SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 16);
+	SDL_GL_SetAttribute(SDL_GL_SWAP_CONTROL, 1);
+
+	return SDL_SetVideoMode(width, height, 32, SDL_OPENGL);
+}
+
+void draw_cube()
+{
+	glBegin(GL_QUADS);
+
+	// Front Face
+	glColor3ub(255, 0, 0);
+	glVertex3f(-1.0f, -1.0f,  1.0f);
+	glVertex3f( 1.0f, -1.0f,  1.0f);
+	glVertex3f( 1.0f,  1.0f,  1.0f);
+	glVertex3f(-1.0f,  1.0f,  1.0f);
+
+	// Back Face
+	glColor3ub(0, 255, 0);
+	glVertex3f(-1.0f, -1.0f, -1.0f);
+	glVertex3f(-1.0f,  1.0f, -1.0f);
+	glVertex3f( 1.0f,  1.0f, -1.0f);
+	glVertex3f( 1.0f, -1.0f, -1.0f);
+
+	// Top Face
+	glColor3ub(0, 0, 255);
+	glVertex3f(-1.0f,  1.0f, -1.0f);
+	glVertex3f(-1.0f,  1.0f,  1.0f);
+	glVertex3f( 1.0f,  1.0f,  1.0f);
+	glVertex3f( 1.0f,  1.0f, -1.0f);
+
+	// Bottom Face
+	glColor3ub(255, 255, 0);
+	glVertex3f(-1.0f, -1.0f, -1.0f);
+	glVertex3f( 1.0f, -1.0f, -1.0f);
+	glVertex3f( 1.0f, -1.0f,  1.0f);
+	glVertex3f(-1.0f, -1.0f,  1.0f);
+
+	// Right face
+	glColor3ub(255, 0, 255);
+	glVertex3f( 1.0f, -1.0f, -1.0f);
+	glVertex3f( 1.0f,  1.0f, -1.0f);
+	glVertex3f( 1.0f,  1.0f,  1.0f);
+	glVertex3f( 1.0f, -1.0f,  1.0f);
+
+	// Left Face
+	glColor3ub(255, 255, 255);
+	glVertex3f(-1.0f, -1.0f, -1.0f);
+	glVertex3f(-1.0f, -1.0f,  1.0f);
+	glVertex3f(-1.0f,  1.0f,  1.0f);
+	glVertex3f(-1.0f,  1.0f, -1.0f);
+
+	glEnd();
+}
+
 int main(int argc, char *argv[])
 {
-	IDirect3D9 *d3d;
-	IDirect3DDevice9 *dev;
-	HWND hwnd;
+	SDL_Surface *screen;
 	HSTREAM stream;
-
-	static D3DPRESENT_PARAMETERS present_parameters = {
-		width, height, D3DFMT_X8R8G8B8, 3,
-		D3DMULTISAMPLE_NONE, 0, D3DSWAPEFFECT_DISCARD,
-		0, TRUE, 1, D3DFMT_D24S8, 0, 0
-	};
 
 	const struct sync_track *clear_r, *clear_g, *clear_b;
 	const struct sync_track *cam_rot, *cam_dist;
 
-	/* initialize directx */
-	d3d = Direct3DCreate9(D3D_SDK_VERSION);
-	if (!d3d)
-		die("update directx, fool.");
-
-	/* create a window */
-	hwnd = CreateWindowEx(0, "static", "GNU Rocket Example",
-	    WS_POPUP | WS_VISIBLE, 0, 0, width, height, 0, 0,
-	    GetModuleHandle(0), 0);
-	if (!hwnd)
-		die("failed to create window");
-
-	/* create the device */
-	if (FAILED(d3d->CreateDevice(D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL,
-	    hwnd, D3DCREATE_SOFTWARE_VERTEXPROCESSING, &present_parameters,
-	    &dev)))
-		die("could not create device. you computer SUCKS!");
+	screen = setup_sdl();
 
 	/* init BASS */
-	if (!BASS_Init(-1, 44100, 0, hwnd, 0))
+	if (!BASS_Init(-1, 44100, 0, 0, 0))
 		die("failed to init bass");
 	stream = BASS_StreamCreateFile(false, "tune.ogg", 0, 0, 0);
 	if (!stream)
@@ -130,11 +176,6 @@ int main(int argc, char *argv[])
 	cam_rot = sync_get_track(rocket, "cam.rot"),
 	cam_dist = sync_get_track(rocket, "cam.dist");
 
-	LPD3DXMESH cubeMesh = NULL;
-	if (FAILED(D3DXCreateBox(dev, 1.0f, 1.0f, 1.0f,
-		&cubeMesh, NULL)))
-		return -1;
-
 	/* let's roll! */
 	BASS_Start();
 	BASS_ChannelPlay(stream, false);
@@ -149,44 +190,38 @@ int main(int argc, char *argv[])
 
 		/* draw */
 
-		D3DXCOLOR clearColor(
-			sync_get_val(clear_r, row),
-			sync_get_val(clear_g, row),
-			sync_get_val(clear_b, row),
-			0.0
-		);
-
-		dev->BeginScene();
-		dev->Clear(0, 0, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER | D3DCLEAR_STENCIL, clearColor, 1.0f, 0);
+		glClearColor(sync_get_val(clear_r, row),
+		             sync_get_val(clear_g, row),
+		             sync_get_val(clear_b, row), 1.0f);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		float rot = sync_get_val(cam_rot, row);
 		float dist = sync_get_val(cam_dist, row);
-		D3DXVECTOR3 eye(sin(rot) * dist, 0, cos(rot) * dist);
-		D3DXVECTOR3 at(0, 0, 0);
-		D3DXVECTOR3 up(0, 1, 0);
-		D3DXMATRIX view;
-		D3DXVECTOR3 dir = eye + at;
-		D3DXMatrixLookAtLH(&view, &dir, &at, &up);
-		dev->SetTransform(D3DTS_VIEW, &view);
-		
-		D3DXMATRIX proj;
-		D3DXMatrixPerspectiveFovLH(&proj, D3DXToRadian(60), 4.0f / 3, 0.1f, 1000.f);
-		dev->SetTransform(D3DTS_PROJECTION, &proj);
 
-		cubeMesh->DrawSubset(0);
+		glMatrixMode(GL_PROJECTION);
+		glLoadIdentity();
+		gluPerspective(60.0f, 4.0f / 3, 0.1f, 100.0f);
 
-		dev->EndScene();
-		dev->Present(0, 0, 0, 0);
+		glMatrixMode(GL_MODELVIEW);
+		glLoadIdentity();
+		glPushMatrix();
+		gluLookAt(sin(rot) * dist, 0, cos(rot) * dist,
+		          0, 0, 0,
+		          0, 1, 0);
+
+		glEnable(GL_DEPTH_TEST);
+		draw_cube();
+
+		glPopMatrix();
+		SDL_GL_SwapBuffers();
 
 		BASS_Update(0); /* decrease the chance of missing vsync */
-		MSG msg;
-		while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) {
-			TranslateMessage(&msg);
-			DispatchMessage(&msg);
 
-			if (WM_QUIT == msg.message ||
-			    (WM_KEYDOWN == msg.message &&
-			    VK_ESCAPE == LOWORD(msg.wParam)))
+		SDL_Event e;
+		while (SDL_PollEvent(&e)) {
+			if (e.type == SDL_QUIT ||
+			    (e.type == SDL_KEYDOWN &&
+			    e.key.keysym.sym == SDLK_ESCAPE))
 				done = true;
 		}
 	}
@@ -198,10 +233,7 @@ int main(int argc, char *argv[])
 
 	BASS_StreamFree(stream);
 	BASS_Free();
-
-	dev->Release();
-	d3d->Release();
-	DestroyWindow(hwnd);
+	SDL_Quit();
 
 	return 0;
 }
