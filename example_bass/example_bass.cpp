@@ -15,11 +15,11 @@
 #include "../sync/sync.h"
 #include "bass.h"
 
-const float bpm = 150.0f; /* beats per minute */
-const int rpb = 8; /* rows per beat */
-const double row_rate = (double(bpm) / 60) * rpb;
+static const float bpm = 150.0f; /* beats per minute */
+static const int rpb = 8; /* rows per beat */
+static const double row_rate = (double(bpm) / 60) * rpb;
 
-double bass_get_row(HSTREAM h)
+static double bass_get_row(HSTREAM h)
 {
 	QWORD pos = BASS_ChannelGetPosition(h, BASS_POS_BYTE);
 	double time = BASS_ChannelBytes2Seconds(h, pos);
@@ -28,7 +28,7 @@ double bass_get_row(HSTREAM h)
 
 #ifndef SYNC_PLAYER
 
-void bass_pause(void *d, int flag)
+static void bass_pause(void *d, int flag)
 {
 	if (flag)
 		BASS_ChannelPause((HSTREAM)d);
@@ -36,18 +36,18 @@ void bass_pause(void *d, int flag)
 		BASS_ChannelPlay((HSTREAM)d, false);
 }
 
-void bass_set_row(void *d, int row)
+static void bass_set_row(void *d, int row)
 {
 	QWORD pos = BASS_ChannelSeconds2Bytes((HSTREAM)d, row / row_rate);
 	BASS_ChannelSetPosition((HSTREAM)d, pos, BASS_POS_BYTE);
 }
 
-int bass_is_playing(void *d)
+static int bass_is_playing(void *d)
 {
 	return BASS_ChannelIsActive((HSTREAM)d) == BASS_ACTIVE_PLAYING;
 }
 
-struct sync_cb bass_cb = {
+static struct sync_cb bass_cb = {
 	bass_pause,
 	bass_set_row,
 	bass_is_playing
@@ -55,7 +55,7 @@ struct sync_cb bass_cb = {
 
 #endif /* !defined(SYNC_PLAYER) */
 
-void die(const char *fmt, ...)
+static void die(const char *fmt, ...)
 {
 	char temp[4096];
 	va_list va;
@@ -72,8 +72,8 @@ void die(const char *fmt, ...)
 	exit(EXIT_FAILURE);
 }
 
-const unsigned int width  = 800;
-const unsigned int height = 600;
+static const unsigned int width  = 800;
+static const unsigned int height = 600;
 
 int main(int argc, char *argv[])
 {
