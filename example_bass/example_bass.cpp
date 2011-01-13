@@ -6,10 +6,7 @@
 #include <windows.h>
 #include <d3d9.h>
 #include <d3dx9.h>
-#include <memory>
-#include <exception>
-#include <cstdio>
-#include <string>
+#include <stdio.h>
 #include <stdarg.h>
 
 #include "../sync/sync.h"
