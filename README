@@ -14,18 +14,19 @@ select "Build" -> "Build Solution" from the menu to build the editor.
 Compile Example
 ---------------
 GNU Rocket contains an example client called example_bass. This is a simple
-Direct3D 9.0 and BASS audio library application, that demonstrates how to
+OpenGL, SDL 1.2 and BASS audio library application, that demonstrates how to
 use the GNU Rocket API.
 
 Before compiling the example, you need to make sure you have recent
-Microsoft DirectX and BASS SDKs. These can be downloaded from the following
-web-sites:
+SDL and BASS libraries and includes. These can be downloaded from the
+following web-sites:
 
-http://msdn.microsoft.com/directx/
+http://www.libsdl.org/
 http://www.un4seen.com/
 
-The BASS SDK is installed by copying bass.dll, bass.h and bass.lib to the
-example_bass-folder.
+The header files and libraries can be installed local to the project by
+copying all .lib-files to the example_bass/lib/, all .h files to
+example_bass/inclide/, and all .dll files to the example_bass/.
 
 Once the prerequisites are installed, the example can be compiled much like
 the editor; by opening examples.sln and selecting "Build" -> "Build Solution"
