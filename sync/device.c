@@ -11,10 +11,11 @@
 static const char *sync_track_path(const char *base, const char *name)
 {
 	static char temp[FILENAME_MAX];
-	strncpy(temp, base, sizeof(temp));
-	strncat(temp, "_", sizeof(temp));
-	strncat(temp, name, sizeof(temp));
-	strncat(temp, ".track", sizeof(temp));
+	strncpy(temp, base, sizeof(temp) - 1);
+	temp[sizeof(temp) - 1] = '\0';
+	strncat(temp, "_", sizeof(temp) - 1);
+	strncat(temp, name, sizeof(temp) - 1);
+	strncat(temp, ".track", sizeof(temp) - 1);
 	return temp;
 }
 
