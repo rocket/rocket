@@ -32,21 +32,24 @@ static double bass_get_row(HSTREAM h)
 
 static void bass_pause(void *d, int flag)
 {
+	HSTREAM h = *((HSTREAM *)d);
 	if (flag)
-		BASS_ChannelPause((HSTREAM)d);
+		BASS_ChannelPause(h);
 	else
-		BASS_ChannelPlay((HSTREAM)d, false);
+		BASS_ChannelPlay(h, false);
 }
 
 static void bass_set_row(void *d, int row)
 {
-	QWORD pos = BASS_ChannelSeconds2Bytes((HSTREAM)d, row / row_rate);
-	BASS_ChannelSetPosition((HSTREAM)d, pos, BASS_POS_BYTE);
+	HSTREAM h = *((HSTREAM *)d);
+	QWORD pos = BASS_ChannelSeconds2Bytes(h, row / row_rate);
+	BASS_ChannelSetPosition(h, pos, BASS_POS_BYTE);
 }
 
 static int bass_is_playing(void *d)
 {
-	return BASS_ChannelIsActive((HSTREAM)d) == BASS_ACTIVE_PLAYING;
+	HSTREAM h = *((HSTREAM *)d);
+	return BASS_ChannelIsActive(h) == BASS_ACTIVE_PLAYING;
 }
 
 static struct sync_cb bass_cb = {
@@ -164,7 +167,7 @@ int main(int argc, char *argv[])
 		die("out of memory?");
 
 #ifndef SYNC_PLAYER
-	sync_set_callbacks(rocket, &bass_cb, (void *)stream);
+	sync_set_callbacks(rocket, &bass_cb, (void *)&stream);
 	if (sync_connect(rocket, "localhost", SYNC_DEFAULT_PORT))
 		die("failed to connect to host");
 #endif
