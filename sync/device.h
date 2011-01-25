@@ -5,7 +5,6 @@
 #ifndef SYNC_DEVICE_H
 #define SYNC_DEVICE_H
 
-#include "track.h"
 #include "data.h"
 
 struct sync_device {
@@ -13,8 +12,6 @@ struct sync_device {
 	struct sync_data data;
 
 #ifndef SYNC_PLAYER
-	struct sync_cb *cb;
-	void *cb_param;
 	int row;
 	SOCKET sock;
 #endif
