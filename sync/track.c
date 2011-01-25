@@ -36,16 +36,21 @@ static float key_ramp(const struct track_key k[2], double row)
 float sync_get_val(const struct sync_track *t, double row)
 {
 	int idx, irow;
+
+	/* If we have no keys at all, return a constant 0 */
 	if (!t->num_keys)
 		return 0.0f;
 
 	irow = (int)floor(row);
 	idx = key_idx_floor(t, irow);
+
+	/* at the edges, return the first/last value */
 	if (idx < 0)
 		return t->keys[0].value;
 	if (idx > (int)t->num_keys - 2)
 		return t->keys[t->num_keys - 1].value;
 
+	/* interpolate according to key-type */
 	switch (t->keys[idx].type) {
 	case KEY_STEP:
 		return t->keys[idx].value;
@@ -64,6 +69,8 @@ float sync_get_val(const struct sync_track *t, double row)
 int sync_find_key(const struct sync_track *t, int row)
 {
 	int lo = 0, hi = t->num_keys;
+
+	/* binary search, t->keys is sorted by row */
 	while (lo < hi) {
 		int mi = (lo + hi) / 2;
 		assert(mi != hi);
@@ -73,8 +80,11 @@ int sync_find_key(const struct sync_track *t, int row)
 		else if (t->keys[mi].row > row)
 			hi = mi;
 		else
-			return mi;
+			return mi; /* exact hit */
 	}
+	assert(lo == hi);
+
+	/* return first key after row, negated and biased (to allow -0) */
 	return -lo - 1;
 }
 
@@ -83,6 +93,7 @@ int sync_set_key(struct sync_track *t, const struct track_key *k)
 {
 	int idx = sync_find_key(t, k->row);
 	if (idx < 0) {
+		/* no exact hit, we need to allocate a new key */
 		void *tmp;
 		idx = -idx - 1;
 		tmp = realloc(t->keys, sizeof(struct track_key) *
