@@ -110,12 +110,12 @@ static int get_track_data(const struct sync_device *d, struct sync_track *t)
 	int i;
 	FILE *fp = fopen(sync_track_path(d->base, t->name), "rb");
 	if (!fp)
-		return 1;
+		return -1;
 
 	fread(&t->num_keys, sizeof(size_t), 1, fp);
 	t->keys = malloc(sizeof(struct track_key) * t->num_keys);
 	if (!t->keys)
-		return 1;
+		return -1;
 
 	for (i = 0; i < (int)t->num_keys; ++i) {
 		struct track_key *key = t->keys + i;
@@ -137,7 +137,7 @@ static int save_track(const struct sync_track *t, const char *path)
 	int i;
 	FILE *fp = fopen(path, "wb");
 	if (!fp)
-		return 1;
+		return -1;
 
 	fwrite(&t->num_keys, sizeof(size_t), 1, fp);
 	for (i = 0; i < (int)t->num_keys; ++i) {
@@ -166,9 +166,12 @@ static int get_track_data(const struct sync_device *d, struct sync_track *t)
 	uint32_t name_len = htonl(strlen(t->name));
 
 	/* send request data */
-	return xsend(d->sock, (char *)&cmd, 1, 0) ||
-	       xsend(d->sock, (char *)&name_len, sizeof(name_len), 0) ||
-	       xsend(d->sock, t->name, (int)strlen(t->name), 0);
+	if (xsend(d->sock, (char *)&cmd, 1, 0) ||
+	    xsend(d->sock, (char *)&name_len, sizeof(name_len), 0) ||
+	    xsend(d->sock, t->name, (int)strlen(t->name), 0))
+		return -1;
+
+	return 0;
 }
 
 static int handle_set_key_cmd(SOCKET sock, struct sync_data *data)
@@ -185,7 +188,7 @@ static int handle_set_key_cmd(SOCKET sock, struct sync_data *data)
 	    xrecv(sock, (char *)&row, sizeof(row), 0) ||
 	    xrecv(sock, (char *)&v.i, sizeof(v.i), 0) ||
 	    xrecv(sock, (char *)&type, 1, 0))
-		return 0;
+		return -1;
 
 	track = ntohl(track);
 	v.i = ntohl(v.i);
@@ -196,7 +199,7 @@ static int handle_set_key_cmd(SOCKET sock, struct sync_data *data)
 	assert(type < KEY_TYPE_COUNT);
 	assert(track < data->num_tracks);
 	key.type = (enum key_type)type;
-	return !sync_set_key(data->tracks[track], &key);
+	return sync_set_key(data->tracks[track], &key);
 }
 
 static int handle_del_key_cmd(SOCKET sock, struct sync_data *data)
@@ -205,13 +208,13 @@ static int handle_del_key_cmd(SOCKET sock, struct sync_data *data)
 
 	if (xrecv(sock, (char *)&track, sizeof(track), 0) ||
 	    xrecv(sock, (char *)&row, sizeof(row), 0))
-		return 0;
+		return -1;
 
 	track = ntohl(track);
 	row = ntohl(row);
 
 	assert(track < data->num_tracks);
-	return !sync_del_key(data->tracks[track], row);
+	return sync_del_key(data->tracks[track], row);
 }
 
 static int purge_and_rerequest(struct sync_device *d)
@@ -223,7 +226,7 @@ static int purge_and_rerequest(struct sync_device *d)
 		d->data.tracks[i]->num_keys = 0;
 
 		if (get_track_data(d, d->data.tracks[i]))
-			return 1;
+			return -1;
 	}
 	return 0;
 }
@@ -235,7 +238,7 @@ int sync_connect(struct sync_device *d, const char *host, unsigned short port)
 
 	d->sock = server_connect(host, port);
 	if (d->sock == INVALID_SOCKET)
-		return 1;
+		return -1;
 
 	return purge_and_rerequest(d);
 }
@@ -244,7 +247,7 @@ int sync_update(struct sync_device *d, int row, struct sync_cb *cb,
     void *cb_param)
 {
 	if (d->sock == INVALID_SOCKET)
-		return 1;
+		return -1;
 
 	/* look for new commands */
 	while (socket_poll(d->sock)) {
@@ -255,11 +258,11 @@ int sync_update(struct sync_device *d, int row, struct sync_cb *cb,
 
 		switch (cmd) {
 		case SET_KEY:
-			if (!handle_set_key_cmd(d->sock, &d->data))
+			if (handle_set_key_cmd(d->sock, &d->data))
 				goto sockerr;
 			break;
 		case DELETE_KEY:
-			if (!handle_del_key_cmd(d->sock, &d->data))
+			if (handle_del_key_cmd(d->sock, &d->data))
 				goto sockerr;
 			break;
 		case SET_ROW:
@@ -298,7 +301,7 @@ int sync_update(struct sync_device *d, int row, struct sync_cb *cb,
 sockerr:
 	closesocket(d->sock);
 	d->sock = INVALID_SOCKET;
-	return 1;
+	return -1;
 }
 
 #endif
