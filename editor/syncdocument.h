@@ -167,7 +167,8 @@ public:
 		{
 			sync_track *t = data->tracks[track];
 			assert(!is_key_frame(t, key.row));
-			sync_set_key(t, &key);
+			if (sync_set_key(t, &key))
+				throw std::bad_alloc("sync_set_key");
 			data->sendSetKeyCommand(track, key); // update clients
 		}
 		
@@ -175,7 +176,8 @@ public:
 		{
 			sync_track *t = data->tracks[track];
 			assert(is_key_frame(t, key.row));
-			sync_del_key(t, key.row);
+			if (sync_del_key(t, key.row))
+				throw std::bad_alloc("sync_del_key");
 			data->sendDeleteKeyCommand(track, key.row); // update clients
 		}
 
@@ -196,7 +198,8 @@ public:
 			int idx = sync_find_key(t, row);
 			assert(idx >= 0);
 			oldKey = t->keys[idx];
-			sync_del_key(t, row);
+			if (sync_del_key(t, row))
+				throw std::bad_alloc("sync_del_key");
 			data->sendDeleteKeyCommand(track, row); // update clients
 		}
 		
@@ -204,7 +207,8 @@ public:
 		{
 			sync_track *t = data->tracks[track];
 			assert(!is_key_frame(t, row));
-			sync_set_key(t, &oldKey);
+			if (sync_set_key(t, &oldKey))
+				throw std::bad_alloc("sync_set_key");
 			data->sendSetKeyCommand(track, oldKey); // update clients
 		}
 
@@ -226,7 +230,8 @@ public:
 			int idx = sync_find_key(t, key.row);
 			assert(idx >= 0);
 			oldKey = t->keys[idx];
-			sync_set_key(t, &key);
+			if (sync_set_key(t, &key))
+				throw std::bad_alloc("sync_set_key");
 			data->sendSetKeyCommand(track, key); // update clients
 		}
 
@@ -234,7 +239,8 @@ public:
 		{
 			sync_track *t = data->tracks[track];
 			assert(is_key_frame(t, key.row));
-			sync_set_key(t, &oldKey);
+			if (sync_set_key(t, &oldKey))
+				throw std::bad_alloc("sync_set_key");
 			data->sendSetKeyCommand(track, oldKey); // update clients
 		}
 		
