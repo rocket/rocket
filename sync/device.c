@@ -114,6 +114,8 @@ static int get_track_data(const struct sync_device *d, struct sync_track *t)
 
 	fread(&t->num_keys, sizeof(size_t), 1, fp);
 	t->keys = malloc(sizeof(struct track_key) * t->num_keys);
+	if (!t->keys)
+		return 1;
 
 	for (i = 0; i < (int)t->num_keys; ++i) {
 		struct track_key *key = t->keys + i;
@@ -194,8 +196,7 @@ static int handle_set_key_cmd(SOCKET sock, struct sync_data *data)
 	assert(type < KEY_TYPE_COUNT);
 	assert(track < data->num_tracks);
 	key.type = (enum key_type)type;
-	sync_set_key(data->tracks[track], &key);
-	return 1;
+	return !sync_set_key(data->tracks[track], &key);
 }
 
 static int handle_del_key_cmd(SOCKET sock, struct sync_data *data)
@@ -210,8 +211,7 @@ static int handle_del_key_cmd(SOCKET sock, struct sync_data *data)
 	row = ntohl(row);
 
 	assert(track < data->num_tracks);
-	sync_del_key(data->tracks[track], row);
-	return 1;
+	return !sync_del_key(data->tracks[track], row);
 }
 
 static int purge_and_rerequest(struct sync_device *d)

@@ -79,29 +79,39 @@ int sync_find_key(const struct sync_track *t, int row)
 }
 
 #ifndef SYNC_PLAYER
-void sync_set_key(struct sync_track *t, const struct track_key *k)
+int sync_set_key(struct sync_track *t, const struct track_key *k)
 {
 	int idx = sync_find_key(t, k->row);
 	if (idx < 0) {
+		void *tmp;
 		idx = -idx - 1;
+		tmp = realloc(t->keys, sizeof(struct track_key) *
+		    (t->num_keys + 1));
+		if (!tmp)
+			return -1;
 		t->num_keys++;
-		t->keys = realloc(t->keys, sizeof(struct track_key) *
-		    t->num_keys);
-		assert(t->keys);
+		t->keys = tmp;
 		memmove(t->keys + idx + 1, t->keys + idx,
 		    sizeof(struct track_key) * (t->num_keys - idx - 1));
 	}
 	t->keys[idx] = *k;
+	return 0;
 }
 
-void sync_del_key(struct sync_track *t, int pos)
+int sync_del_key(struct sync_track *t, int pos)
 {
+	void *tmp;
 	int idx = sync_find_key(t, pos);
 	assert(idx >= 0);
 	memmove(t->keys + idx, t->keys + idx + 1,
 	    sizeof(struct track_key) * (t->num_keys - idx - 1));
 	assert(t->keys);
+	tmp = realloc(t->keys, sizeof(struct track_key) *
+	    (t->num_keys - 1));
+	if (t->num_keys != 1 && !tmp)
+		return -1;
 	t->num_keys--;
-	t->keys = realloc(t->keys, t->num_keys * sizeof(struct track_key));
+	t->keys = tmp;
+	return 0;
 }
 #endif
