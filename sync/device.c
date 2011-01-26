@@ -217,9 +217,16 @@ static int handle_del_key_cmd(SOCKET sock, struct sync_data *data)
 	return sync_del_key(data->tracks[track], row);
 }
 
-static int purge_and_rerequest(struct sync_device *d)
+int sync_connect(struct sync_device *d, const char *host, unsigned short port)
 {
 	int i;
+	if (d->sock != INVALID_SOCKET)
+		closesocket(d->sock);
+
+	d->sock = server_connect(host, port);
+	if (d->sock == INVALID_SOCKET)
+		return -1;
+
 	for (i = 0; i < (int)d->data.num_tracks; ++i) {
 		free(d->data.tracks[i]->keys);
 		d->data.tracks[i]->keys = NULL;
@@ -229,18 +236,6 @@ static int purge_and_rerequest(struct sync_device *d)
 			return -1;
 	}
 	return 0;
-}
-
-int sync_connect(struct sync_device *d, const char *host, unsigned short port)
-{
-	if (d->sock != INVALID_SOCKET)
-		closesocket(d->sock);
-
-	d->sock = server_connect(host, port);
-	if (d->sock == INVALID_SOCKET)
-		return -1;
-
-	return purge_and_rerequest(d);
 }
 
 int sync_update(struct sync_device *d, int row, struct sync_cb *cb,
