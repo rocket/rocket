@@ -179,6 +179,10 @@
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
 			>
 			<File
+				RelativePath=".\clientsocket.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\sync\data.c"
 				>
 			</File>
@@ -208,6 +212,10 @@
 			Filter="h;hpp;hxx;hm;inl;inc;xsd"
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}"
 			>
+			<File
+				RelativePath=".\clientsocket.h"
+				>
+			</File>
 			<File
 				RelativePath="..\sync\data.h"
 				>
@@ -247,11 +255,11 @@
 			UniqueIdentifier="{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}"
 			>
 			<File
-				RelativePath=".\editor.rc"
+				RelativePath=".\appicon.ico"
 				>
 			</File>
 			<File
-				RelativePath=".\appicon.ico"
+				RelativePath=".\editor.rc"
 				>
 			</File>
 		</Filter>

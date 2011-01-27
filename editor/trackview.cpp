@@ -191,8 +191,10 @@ void TrackView::paintTopMargin(HDC hdc, RECT rcTracks)
 		DrawEdge(hdc, &fillRect, BDR_RAISEDINNER | BDR_RAISEDOUTER, BF_ADJUST | BF_LEFT | BF_RIGHT | BF_BOTTOM);
 		FillRect(hdc, &fillRect, bgBrush);
 
-		if (doc->clientRemap.count(doc->getTrackIndexFromPos(track)) == 0) SetTextColor(hdc, GetSysColor(COLOR_GRAYTEXT));
-		else SetTextColor(hdc, GetSysColor(COLOR_WINDOWTEXT));
+		if (!doc->clientSocket.clientRemap.count(doc->getTrackIndexFromPos(track)))
+			SetTextColor(hdc, GetSysColor(COLOR_GRAYTEXT));
+		else
+			SetTextColor(hdc, GetSysColor(COLOR_WINDOWTEXT));
 		TextOut(hdc, fillRect.left, 0, t->name, int(strlen(t->name)));
 	}
 	
@@ -609,10 +611,8 @@ void TrackView::setEditRow(int newEditRow)
 			invalidateRange(selectStartTrack, selectStopTrack, selectStartRow, selectStopRow);
 			selectStartRow   = selectStopRow   = editRow;
 			selectStartTrack = selectStopTrack = editTrack;
-		}
-		if (doc->clientPaused)
-		{
-			doc->sendSetRowCommand(editRow);
+		} if (doc->clientSocket.clientPaused) {
+			doc->clientSocket.sendSetRowCommand(editRow);
 		}
 		SendMessage(GetParent(getWin()), WM_ROWCHANGED, 0, editRow);
 		SendMessage(GetParent(getWin()), WM_CURRVALDIRTY, 0, 0);
@@ -954,10 +954,8 @@ LRESULT TrackView::onKeyDown(UINT keyCode, UINT /*flags*/)
 		}
 	}
 
-	if (editString.empty() && doc->clientPaused)
-	{
-		switch (keyCode)
-		{
+	if (editString.empty() && doc->clientSocket.clientPaused) {
+		switch (keyCode) {
 		case VK_UP:
 			if (GetKeyState(VK_CONTROL) < 0)
 			{
@@ -1044,7 +1042,7 @@ LRESULT TrackView::onKeyDown(UINT keyCode, UINT /*flags*/)
 			invalidatePos(editTrack, editRow);
 			MessageBeep(~0U);
 		}
-		doc->sendPauseCommand( !doc->clientPaused );
+		doc->clientSocket.sendPauseCommand( !doc->clientSocket.clientPaused );
 		break;
 	}
 	return FALSE;

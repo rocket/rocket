@@ -11,66 +11,15 @@ extern "C" {
 #include <stack>
 #include <list>
 #include <vector>
-#include <map>
 #include <string>
 #include <cassert>
 
-class NetworkSocket
-{
-public:
-	NetworkSocket() : socket(INVALID_SOCKET) {}
-	explicit NetworkSocket(SOCKET socket) : socket(socket) {}
-
-	bool connected() const
-	{
-		return INVALID_SOCKET != socket;
-	}
-
-	void disconnect()
-	{
-		closesocket(socket);
-		socket = INVALID_SOCKET;
-	}
-
-	bool recv(char *buffer, size_t length, int flags)
-	{
-		if (!connected())
-			return false;
-		int ret = ::recv(socket, buffer, int(length), flags);
-		if (ret != int(length)) {
-			disconnect();
-			return false;
-		}
-		return true;
-	}
-
-	bool send(const char *buffer, size_t length, int flags)
-	{
-		if (!connected())
-			return false;
-		int ret = ::send(socket, buffer, int(length), flags);
-		if (ret != int(length)) {
-			disconnect();
-			return false;
-		}
-		return true;
-	}
-
-	bool pollRead()
-	{
-		if (!connected())
-			return false;
-		return !!socket_poll(socket);
-	}
-
-private:
-	SOCKET socket;
-};
+#include "clientsocket.h"
 
 class SyncDocument : public sync_data
 {
 public:
-	SyncDocument() : clientPaused(true), rows(128), savePointDelta(0), savePointUnreachable(true)
+	SyncDocument() : rows(128), savePointDelta(0), savePointUnreachable(true)
 	{
 		this->tracks = NULL;
 		this->num_tracks = 0;
@@ -84,71 +33,7 @@ public:
 		trackOrder.push_back(index);
 		return index;
 	}
-	
-	void sendSetKeyCommand(uint32_t track, const struct track_key &key)
-	{
-		if (!clientSocket.connected()) return;
-		if (clientRemap.count(track) == 0) return;
-		track = htonl(clientRemap[track]);
-		uint32_t row = htonl(key.row);
 
-		union {
-			float f;
-			uint32_t i;
-		} v;
-		v.f = key.value;
-		v.i = htonl(v.i);
-
-		assert(key.type < KEY_TYPE_COUNT);
-
-		unsigned char cmd = SET_KEY;
-		clientSocket.send((char*)&cmd, 1, 0);
-		clientSocket.send((char*)&track, sizeof(track), 0);
-		clientSocket.send((char*)&row, sizeof(row), 0);
-		clientSocket.send((char*)&v.i, sizeof(v.i), 0);
-		clientSocket.send((char*)&key.type, 1, 0);
-	}
-	
-	void sendDeleteKeyCommand(int track, int row)
-	{
-		if (!clientSocket.connected()) return;
-		if (clientRemap.count(track) == 0) return;
-
-		track = htonl(int(clientRemap[track]));
-		row = htonl(row);
-
-		unsigned char cmd = DELETE_KEY;
-		clientSocket.send((char*)&cmd, 1, 0);
-		clientSocket.send((char*)&track, sizeof(int), 0);
-		clientSocket.send((char*)&row,   sizeof(int), 0);
-	}
-	
-	void sendSetRowCommand(int row)
-	{
-		if (!clientSocket.connected()) return;
-		unsigned char cmd = SET_ROW;
-		row = htonl(row);
-		clientSocket.send((char*)&cmd, 1, 0);
-		clientSocket.send((char*)&row, sizeof(int), 0);
-	}
-	
-	void sendPauseCommand(bool pause)
-	{
-		if (!clientSocket.connected()) return;
-		unsigned char cmd = PAUSE;
-		clientSocket.send((char*)&cmd, 1, 0);
-		unsigned char flag = pause;
-		clientSocket.send((char*)&flag, 1, 0);
-		clientPaused = pause;
-	}
-	
-	void sendSaveCommand()
-	{
-		if (!clientSocket.connected()) return;
-		unsigned char cmd = SAVE_TRACKS;
-		clientSocket.send((char*)&cmd, 1, 0);
-	}
-	
 	class Command
 	{
 	public:
@@ -169,7 +54,7 @@ public:
 			assert(!is_key_frame(t, key.row));
 			if (sync_set_key(t, &key))
 				throw std::bad_alloc("sync_set_key");
-			data->sendSetKeyCommand(track, key); // update clients
+			data->clientSocket.sendSetKeyCommand(track, key); // update clients
 		}
 		
 		void undo(SyncDocument *data)
@@ -178,7 +63,7 @@ public:
 			assert(is_key_frame(t, key.row));
 			if (sync_del_key(t, key.row))
 				throw std::bad_alloc("sync_del_key");
-			data->sendDeleteKeyCommand(track, key.row); // update clients
+			data->clientSocket.sendDeleteKeyCommand(track, key.row); // update clients
 		}
 
 	private:
@@ -200,7 +85,7 @@ public:
 			oldKey = t->keys[idx];
 			if (sync_del_key(t, row))
 				throw std::bad_alloc("sync_del_key");
-			data->sendDeleteKeyCommand(track, row); // update clients
+			data->clientSocket.sendDeleteKeyCommand(track, row); // update clients
 		}
 		
 		void undo(SyncDocument *data)
@@ -209,7 +94,7 @@ public:
 			assert(!is_key_frame(t, row));
 			if (sync_set_key(t, &oldKey))
 				throw std::bad_alloc("sync_set_key");
-			data->sendSetKeyCommand(track, oldKey); // update clients
+			data->clientSocket.sendSetKeyCommand(track, oldKey); // update clients
 		}
 
 	private:
@@ -232,7 +117,7 @@ public:
 			oldKey = t->keys[idx];
 			if (sync_set_key(t, &key))
 				throw std::bad_alloc("sync_set_key");
-			data->sendSetKeyCommand(track, key); // update clients
+			data->clientSocket.sendSetKeyCommand(track, key); // update clients
 		}
 
 		void undo(SyncDocument *data)
@@ -241,7 +126,7 @@ public:
 			assert(is_key_frame(t, key.row));
 			if (sync_set_key(t, &oldKey))
 				throw std::bad_alloc("sync_set_key");
-			data->sendSetKeyCommand(track, oldKey); // update clients
+			data->clientSocket.sendSetKeyCommand(track, oldKey); // update clients
 		}
 		
 	private:
@@ -380,10 +265,8 @@ public:
 		if (savePointUnreachable) return true;
 		return 0 != savePointDelta;
 	}
-	
-	NetworkSocket clientSocket;
-	std::map<size_t, size_t> clientRemap;
-	bool clientPaused;
+
+	ClientSocket clientSocket;
 
 	size_t getRows() const { return rows; }
 	void setRows(size_t rows) { this->rows = rows; }

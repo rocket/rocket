@@ -269,7 +269,7 @@ bool fileSaveAs()
 	
 	if (GetSaveFileNameW(&ofn)) {
 		if (document.save(temp)) {
-			document.sendSaveCommand();
+			document.clientSocket.sendSaveCommand();
 			setWindowFileName(temp);
 			fileName = temp;
 			
@@ -289,7 +289,7 @@ bool fileSave()
 		return fileSaveAs();
 
 	if (!document.save(fileName.c_str())) {
-		document.sendSaveCommand();
+		document.clientSocket.sendSaveCommand();
 		error("Failed to save file");
 		return false;
 	}
@@ -422,7 +422,7 @@ static LRESULT CALLBACK mainWindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARA
 			break;
 		
 		case ID_FILE_REMOTEEXPORT:
-			document.sendSaveCommand();
+			document.clientSocket.sendSaveCommand();
 			break;
 		
 		case ID_RECENTFILES_FILE1:
@@ -562,7 +562,7 @@ SOCKET clientConnect(SOCKET serverSocket, sockaddr_in *host)
 }
 
 size_t clientIndex;
-void processCommand(NetworkSocket &sock)
+void processCommand(ClientSocket &sock)
 {
 	int strLen, serverIndex, newRow;
 	std::string trackName;
@@ -589,12 +589,12 @@ void processCommand(NetworkSocket &sock)
 				    int(document.createTrack(trackName));
 
 			// setup remap
-			document.clientRemap[serverIndex] = clientIndex++;
+			document.clientSocket.clientRemap[serverIndex] = clientIndex++;
 
 			// send key-frames
 			t = document.tracks[serverIndex];
 			for (int i = 0; i < (int)t->num_keys; ++i)
-				document.sendSetKeyCommand(int(serverIndex),
+				document.clientSocket.sendSetKeyCommand(int(serverIndex),
 				    t->keys[i]);
 
 			InvalidateRect(trackViewWin, NULL, FALSE);
@@ -697,29 +697,26 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/,
 					char temp[256];
 					snprintf(temp, 256, "Connected to %s", inet_ntoa(client.sin_addr));
 					SendMessage(statusBarWin, SB_SETTEXT, 0, (LPARAM)temp);
-					document.clientSocket = NetworkSocket(clientSocket);
-					document.clientRemap.clear();
+					document.clientSocket = ClientSocket(clientSocket);
 					clientIndex = 0;
-					document.sendPauseCommand(true);
-					document.sendSetRowCommand(trackView->getEditRow());
+					document.clientSocket.sendPauseCommand(true);
+					document.clientSocket.sendSetRowCommand(trackView->getEditRow());
 					guiConnected = true;
 				}
 				else SendMessage(statusBarWin, SB_SETTEXT, 0, (LPARAM)"Not Connected.");
 			}
 		}
-		
-		if (document.clientSocket.connected())
-		{
-			NetworkSocket &clientSocket = document.clientSocket;
-			
+
+		if (document.clientSocket.connected()) {
+			ClientSocket &clientSocket = document.clientSocket;
+
 			// look for new commands
 			while (clientSocket.pollRead())
 				processCommand(clientSocket);
 		}
-		
-		if (!document.clientSocket.connected() && guiConnected)
-		{
-			document.clientPaused = true;
+
+		if (!document.clientSocket.connected() && guiConnected) {
+			document.clientSocket.clientPaused = true;
 			InvalidateRect(trackViewWin, NULL, FALSE);
 			SendMessage(statusBarWin, SB_SETTEXT, 0, (LPARAM)"Not Connected.");
 			guiConnected = false;
