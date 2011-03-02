@@ -59,7 +59,6 @@ HWND hwnd = NULL;
 TrackView *trackView = NULL;
 HWND trackViewWin = NULL;
 HWND statusBarWin = NULL;
-SyncDocument document;
 HKEY regConfigKey = NULL;
 RecentFiles mruFileList(NULL);
 
@@ -190,38 +189,64 @@ HMENU findSubMenuContaining(HMENU menu, UINT id)
 	return (HMENU)0;
 }
 
-void fileNew()
+void setDocument(SyncDocument *newDoc)
 {
-	// document.purgeUnusedTracks();
-	SyncDocument::MultiCommand *multiCmd = new SyncDocument::MultiCommand();
-	for (size_t i = 0; i < document.num_tracks; ++i) {
-		sync_track *t = document.tracks[i];
-		for (size_t j = 0; j < t->num_keys; ++j)
-			multiCmd->addCommand(new SyncDocument::DeleteCommand(i, t->keys[j].row));
+	SyncDocument *oldDoc = trackView->getDocument();
+
+	if (oldDoc && oldDoc->clientSocket.connected()) {
+		// delete old key-frames
+		for (size_t i = 0; i < oldDoc->num_tracks; ++i) {
+			sync_track *t = oldDoc->tracks[i];
+			for (size_t j = 0; j < t->num_keys; ++j)
+				oldDoc->clientSocket.sendDeleteKeyCommand(t->name, t->keys[j].row);
+		}
+
+		if (newDoc) {
+			// add back missing client-tracks
+			std::map<const std::string, size_t>::const_iterator it;
+			for (it = oldDoc->clientSocket.clientTracks.begin(); it != oldDoc->clientSocket.clientTracks.end(); ++it) {
+				int trackIndex = sync_find_track(newDoc, it->first.c_str());
+				if (0 > trackIndex)
+					trackIndex = int(newDoc->createTrack(it->first.c_str()));
+			}
+
+			// copy socket and update client
+			newDoc->clientSocket = oldDoc->clientSocket;
+
+			for (size_t i = 0; i < newDoc->num_tracks; ++i) {
+				sync_track *t = newDoc->tracks[i];
+				for (size_t j = 0; j < t->num_keys; ++j)
+					newDoc->clientSocket.sendSetKeyCommand(t->name, t->keys[j]);
+			}
+		}
 	}
-	document.exec(multiCmd);
 
-	setWindowFileName(L"Untitled");
-	document.fileName.clear();
+	trackView->setDocument(newDoc);
+	SendMessage(hwnd, WM_CURRVALDIRTY, 0, 0);
+	InvalidateRect(trackViewWin, NULL, FALSE);
 
-	document.clearUndoStack();
-	document.clearRedoStack();
+	if (oldDoc)
+		delete oldDoc;
 }
 
+void fileNew()
+{
+	setDocument(new SyncDocument);
+	setWindowFileName(L"Untitled");
+}
 
 void loadDocument(const std::wstring &_fileName)
 {
-	if (document.load(_fileName)) {
-		setWindowFileName(_fileName.c_str());
-
+	SyncDocument *newDoc = SyncDocument::load(_fileName);
+	if (newDoc) {
+		// update MRU list
 		mruFileList.insert(_fileName);
 		mruFileList.update();
 		DrawMenuBar(hwnd);
 
-		trackView->setDocument(&document);
-
-		SendMessage(hwnd, WM_CURRVALDIRTY, 0, 0);
-		InvalidateRect(trackViewWin, NULL, FALSE);
+		// set new document
+		setDocument(newDoc);
+		setWindowFileName(_fileName.c_str());
 	}
 	else
 		error("failed to open file");
@@ -261,10 +286,11 @@ bool fileSaveAs()
 	ofn.Flags = OFN_SHOWHELP | OFN_OVERWRITEPROMPT;
 	
 	if (GetSaveFileNameW(&ofn)) {
-		if (document.save(temp)) {
-			document.clientSocket.sendSaveCommand();
+		SyncDocument *doc = trackView->getDocument();
+		if (doc->save(temp)) {
+			doc->clientSocket.sendSaveCommand();
 			setWindowFileName(temp);
-			document.fileName = temp;
+			doc->fileName = temp;
 
 			mruFileList.insert(temp);
 			mruFileList.update();
@@ -278,11 +304,12 @@ bool fileSaveAs()
 
 bool fileSave()
 {
-	if (document.fileName.empty())
+	SyncDocument *doc = trackView->getDocument();
+	if (doc->fileName.empty())
 		return fileSaveAs();
 
-	if (!document.save(document.fileName)) {
-		document.clientSocket.sendSaveCommand();
+	if (!doc->save(doc->fileName)) {
+		doc->clientSocket.sendSaveCommand();
 		error("Failed to save file");
 		return false;
 	}
@@ -291,8 +318,8 @@ bool fileSave()
 
 void attemptQuit()
 {
-	if (document.modified())
-	{
+	SyncDocument *doc = trackView->getDocument();
+	if (doc->modified()) {
 		UINT res = MessageBox(hwnd, "Save before exit?", mainWindowTitle, MB_YESNOCANCEL | MB_ICONQUESTION);
 		if ((IDYES == res && fileSave()) || (IDNO == res))
 			DestroyWindow(hwnd);
@@ -325,6 +352,7 @@ static HWND createStatusBar(HINSTANCE hInstance, HWND hpwnd)
 
 static LRESULT CALLBACK mainWindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
+	SyncDocument *doc = trackView ? trackView->getDocument() : NULL;
 	switch(msg)
 	{
 	case WM_CREATE:
@@ -415,7 +443,7 @@ static LRESULT CALLBACK mainWindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARA
 			break;
 		
 		case ID_FILE_REMOTEEXPORT:
-			document.clientSocket.sendSaveCommand();
+			doc->clientSocket.sendSaveCommand();
 			break;
 		
 		case ID_RECENTFILES_FILE1:
@@ -482,8 +510,8 @@ static LRESULT CALLBACK mainWindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARA
 	case WM_CURRVALDIRTY:
 		{
 			char temp[256];
-			if (document.num_tracks > 0) {
-				const sync_track *t = document.tracks[document.getTrackIndexFromPos(trackView->getEditTrack())];
+			if (doc->num_tracks > 0) {
+				const sync_track *t = doc->tracks[doc->getTrackIndexFromPos(trackView->getEditTrack())];
 				int row = trackView->getEditRow();
 				int idx = key_idx_floor(t, row);
 				snprintf(temp, 256, "%f", sync_get_val(t, row));
@@ -557,6 +585,7 @@ SOCKET clientConnect(SOCKET serverSocket, sockaddr_in *host)
 size_t clientIndex;
 void processCommand(ClientSocket &sock)
 {
+	SyncDocument *doc = trackView->getDocument();
 	int strLen, serverIndex, newRow;
 	std::string trackName;
 	const sync_track *t;
@@ -575,19 +604,19 @@ void processCommand(ClientSocket &sock)
 				return;
 
 			// find track
-			serverIndex = sync_find_track(&document,
+			serverIndex = sync_find_track(doc,
 			    trackName.c_str());
 			if (0 > serverIndex)
 				serverIndex =
-				    int(document.createTrack(trackName));
+				    int(doc->createTrack(trackName));
 
 			// setup remap
-			document.clientSocket.clientTracks[trackName] = clientIndex++;
+			doc->clientSocket.clientTracks[trackName] = clientIndex++;
 
 			// send key-frames
-			t = document.tracks[serverIndex];
+			t = doc->tracks[serverIndex];
 			for (int i = 0; i < (int)t->num_keys; ++i)
-				document.clientSocket.sendSetKeyCommand(trackName,
+				doc->clientSocket.sendSetKeyCommand(trackName,
 				    t->keys[i]);
 
 			InvalidateRect(trackViewWin, NULL, FALSE);
@@ -641,8 +670,7 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/,
 		die("Window Registration Failed!");
 
 	trackView = new TrackView();
-	trackView->setDocument(&document);
-	
+
 	hwnd = CreateWindowExW(
 		0,
 		mainWindowClassName,
@@ -666,10 +694,9 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/,
 	bool done = false;
 	MSG msg;
 	bool guiConnected = false;
-	while (!done)
-	{
-		if (!document.clientSocket.connected())
-		{
+	while (!done) {
+		SyncDocument *doc = trackView->getDocument();
+		if (!doc->clientSocket.connected()) {
 			SOCKET clientSocket = INVALID_SOCKET;
 			fd_set fds;
 			FD_ZERO(&fds);
@@ -690,26 +717,26 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/,
 					char temp[256];
 					snprintf(temp, 256, "Connected to %s", inet_ntoa(client.sin_addr));
 					SendMessage(statusBarWin, SB_SETTEXT, 0, (LPARAM)temp);
-					document.clientSocket = ClientSocket(clientSocket);
+					doc->clientSocket = ClientSocket(clientSocket);
 					clientIndex = 0;
-					document.clientSocket.sendPauseCommand(true);
-					document.clientSocket.sendSetRowCommand(trackView->getEditRow());
+					doc->clientSocket.sendPauseCommand(true);
+					doc->clientSocket.sendSetRowCommand(trackView->getEditRow());
 					guiConnected = true;
 				}
 				else SendMessage(statusBarWin, SB_SETTEXT, 0, (LPARAM)"Not Connected.");
 			}
 		}
 
-		if (document.clientSocket.connected()) {
-			ClientSocket &clientSocket = document.clientSocket;
+		if (doc->clientSocket.connected()) {
+			ClientSocket &clientSocket = doc->clientSocket;
 
 			// look for new commands
 			while (clientSocket.pollRead())
 				processCommand(clientSocket);
 		}
 
-		if (!document.clientSocket.connected() && guiConnected) {
-			document.clientSocket.clientPaused = true;
+		if (!doc->clientSocket.connected() && guiConnected) {
+			doc->clientSocket.clientPaused = true;
 			InvalidateRect(trackViewWin, NULL, FALSE);
 			SendMessage(statusBarWin, SB_SETTEXT, 0, (LPARAM)"Not Connected.");
 			guiConnected = false;

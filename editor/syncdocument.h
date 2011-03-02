@@ -256,8 +256,8 @@ public:
 		assert(t2 < trackOrder.size());
 		std::swap(trackOrder[t1], trackOrder[t2]);
 	}
-	
-	bool load(const std::wstring &fileName);
+
+	static SyncDocument *load(const std::wstring &fileName);
 	bool save(const std::wstring &fileName);
 
 	bool modified()

@@ -34,7 +34,8 @@ static int getMaxCharacterWidthFromString(HDC hdc, const char *chars)
 	return getMaxCharacterWidth(hdc, chars, strlen(chars));
 }
 
-TrackView::TrackView()
+TrackView::TrackView() :
+	document(NULL)
 {
 	scrollPosX = 0;
 	scrollPosY = 0;
@@ -82,6 +83,8 @@ TrackView::~TrackView()
 	DeleteObject(editBrush);
 	DeleteObject(rowPen);
 	DeleteObject(rowSelectPen);
+	if (document)
+		delete document;
 }
 
 void TrackView::setFont(HFONT font)

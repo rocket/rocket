@@ -10,20 +10,21 @@ SyncDocument::~SyncDocument()
 
 #import <msxml3.dll> named_guids
 
-bool SyncDocument::load(const std::wstring &fileName)
+SyncDocument *SyncDocument::load(const std::wstring &fileName)
 {
+	SyncDocument *ret = new SyncDocument;
+	ret->fileName = fileName;
+
 	MSXML2::IXMLDOMDocumentPtr doc(MSXML2::CLSID_DOMDocument);
 	try {
-		SyncDocument::MultiCommand *multiCmd = new SyncDocument::MultiCommand();
-
-		for (size_t i = 0; i < num_tracks; ++i) {
-			sync_track *t = tracks[i];
-			for (size_t j = 0; j < t->num_keys; ++j)
-				multiCmd->addCommand(new SyncDocument::DeleteCommand(i, t->keys[j].row));
-		}
-
 		doc->load(fileName.c_str());
 		MSXML2::IXMLDOMNamedNodeMapPtr attribs = doc->documentElement->Getattributes();
+
+		MSXML2::IXMLDOMNodePtr rowsParam = attribs->getNamedItem("rows");
+		if (rowsParam) {
+			std::string rowsString = rowsParam->Gettext();
+			ret->setRows(atoi(rowsString.c_str()));
+		}
 
 		MSXML2::IXMLDOMNodeListPtr trackNodes = doc->documentElement->selectNodes("track");
 		for (int i = 0; i < trackNodes->Getlength(); ++i)
@@ -34,8 +35,8 @@ bool SyncDocument::load(const std::wstring &fileName)
 			std::string name = attribs->getNamedItem("name")->Gettext();
 
 			// look up track-name, create it if it doesn't exist
-			int trackIndex = sync_find_track(this, name.c_str());
-			if (0 > trackIndex) trackIndex = int(createTrack(name));
+			int trackIndex = sync_find_track(ret, name.c_str());
+			if (0 > trackIndex) trackIndex = int(ret->createTrack(name));
 
 			MSXML2::IXMLDOMNodeListPtr rowNodes = trackNode->GetchildNodes();
 			for (int i = 0; i < rowNodes->Getlength(); ++i)
@@ -53,34 +54,23 @@ bool SyncDocument::load(const std::wstring &fileName)
 					k.row = atoi(rowString.c_str());
 					k.value = float(atof(valueString.c_str()));
 					k.type = key_type(atoi(interpolationString.c_str()));
-					multiCmd->addCommand(new InsertCommand(int(trackIndex), k));
+
+					assert(!is_key_frame(ret->tracks[trackIndex], key.row));
+					if (sync_set_key(ret->tracks[trackIndex], &k))
+						throw std::bad_alloc("sync_set_key");
 				}
 			}
 		}
-
-		MSXML2::IXMLDOMNodePtr rowsParam = attribs->getNamedItem("rows");
-		if (rowsParam) {
-			std::string rowsString = rowsParam->Gettext();
-			this->setRows(atoi(rowsString.c_str()));
-		}
-
-		this->fileName = fileName;
-		clearUndoStack();
-		clearRedoStack();
-
-		this->exec(multiCmd);
-		savePointDelta = 0;
-		savePointUnreachable = false;
 	}
 	catch(_com_error &e)
 	{
 		char temp[256];
 		_snprintf(temp, 256, "Error loading: %s\n", (const char*)_bstr_t(e.Description()));
 		MessageBox(NULL, temp, NULL, MB_OK | MB_ICONERROR | MB_SETFOREGROUND);
-		return false;
+		return NULL;
 	}
 	
-	return true;
+	return ret;
 }
 
 bool SyncDocument::save(const std::wstring &fileName)
