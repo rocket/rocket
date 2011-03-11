@@ -1,0 +1,26 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 10.00
+# Visual Studio 2008
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "DotRocket", "DotRocket\DotRocket.vcproj", "{C982166A-686F-4BAD-9370-62DADC1DCCD0}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "DotRocketClient", "DotRocketClient\DotRocketClient.vcproj", "{711C0884-4DCF-47AA-87D6-B643F15A6727}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Win32 = Debug|Win32
+		Release|Win32 = Release|Win32
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{C982166A-686F-4BAD-9370-62DADC1DCCD0}.Debug|Win32.ActiveCfg = Debug|Win32
+		{C982166A-686F-4BAD-9370-62DADC1DCCD0}.Debug|Win32.Build.0 = Debug|Win32
+		{C982166A-686F-4BAD-9370-62DADC1DCCD0}.Release|Win32.ActiveCfg = Release|Win32
+		{C982166A-686F-4BAD-9370-62DADC1DCCD0}.Release|Win32.Build.0 = Release|Win32
+		{711C0884-4DCF-47AA-87D6-B643F15A6727}.Debug|Win32.ActiveCfg = Debug|Win32
+		{711C0884-4DCF-47AA-87D6-B643F15A6727}.Debug|Win32.Build.0 = Debug|Win32
+		{711C0884-4DCF-47AA-87D6-B643F15A6727}.Release|Win32.ActiveCfg = Release|Win32
+		{711C0884-4DCF-47AA-87D6-B643F15A6727}.Release|Win32.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
