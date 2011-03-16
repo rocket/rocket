@@ -21,6 +21,10 @@ static const char *sync_track_path(const char *base, const char *name)
 
 #ifndef SYNC_PLAYER
 
+#ifdef USE_AMITCP
+static struct Library *socket_base = NULL;
+#endif
+
 static SOCKET server_connect(const char *host, unsigned short nport)
 {
 	struct hostent *he;
@@ -35,6 +39,12 @@ static SOCKET server_connect(const char *host, unsigned short nport)
 		if (WSAStartup(MAKEWORD(2, 0), &wsa))
 			return INVALID_SOCKET;
 		need_init = 0;
+	}
+#elif defined(USE_AMITCP)
+	if (!socket_base) {
+		socket_base = OpenLibrary("bsdsocket.library", 4);
+		if (!socket_base)
+			return INVALID_SOCKET;
 	}
 #endif
 
@@ -101,6 +111,13 @@ void sync_destroy_device(struct sync_device *d)
 	free(d->base);
 	sync_data_deinit(&d->data);
 	free(d);
+
+#if defined(USE_AMITCP) && !defined(SYNC_PLAYER)
+	if (socket_base) {
+		CloseLibrary(socket_base);
+		socket_base = NULL;
+	}
+#endif
 }
 
 #ifdef SYNC_PLAYER

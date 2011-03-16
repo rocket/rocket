@@ -7,7 +7,7 @@
 
 /* configure inline keyword */
 #if !defined(__STDC_VERSION__) || (__STDC_VERSION__ < 199901L)
- #if defined(_MSC_VER) || defined(__GNUC__)
+ #if defined(_MSC_VER) || defined(__GNUC__) || defined(__SASC)
   #define inline __inline
  #else
   /* compiler does not support inline, make function static instead */
@@ -23,6 +23,8 @@
  typedef unsigned int uint32_t;
 #elif defined(__GNUC__)
  #include <stdint.h>
+#elif defined(M68000)
+ typedef unsigned int uint32_t;
 #endif
 
 /* configure socket-stack */
@@ -31,6 +33,15 @@
  #define NOMINMAX
  #include <winsock2.h>
  #include <windows.h>
+#elif defined(USE_AMITCP)
+ #include <sys/socket.h>
+ #include <proto/exec.h>
+ #include <proto/socket.h>
+ #include <netdb.h>
+ #define SOCKET int
+ #define INVALID_SOCKET -1
+ #define select(n,r,w,e,t) WaitSelect(n,r,w,e,t,0)
+ #define closesocket(x) CloseSocket(x)
 #else
  #include <sys/socket.h>
  #include <sys/time.h>
