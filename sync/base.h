@@ -5,16 +5,27 @@
 #ifndef SYNC_BASE_H
 #define SYNC_BASE_H
 
+/* configure inline keyword */
+#if !defined(__STDC_VERSION__) || (__STDC_VERSION__ < 199901L)
+ #if defined(_MSC_VER) || defined(__GNUC__)
+  #define inline __inline
+ #else
+  /* compiler does not support inline, make function static instead */
+  #define inline static
+ #endif
+#endif
+
+/* configure lacking CRT features */
 #ifdef _MSC_VER
- #define inline __inline
  #define strdup _strdup
  #define snprintf _snprintf
+ /* int is 32-bit for both x86 and x64 */
  typedef unsigned int uint32_t;
 #elif defined(__GNUC__)
- #define inline __inline
  #include <stdint.h>
 #endif
 
+/* configure socket-stack */
 #ifdef _WIN32
  #define WIN32_LEAN_AND_MEAN
  #define NOMINMAX
