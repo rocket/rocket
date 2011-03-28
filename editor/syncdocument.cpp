@@ -13,19 +13,18 @@ SyncDocument::~SyncDocument()
 bool SyncDocument::load(const std::wstring &fileName)
 {
 	MSXML2::IXMLDOMDocumentPtr doc(MSXML2::CLSID_DOMDocument);
-	try
-	{
+	try {
 		SyncDocument::MultiCommand *multiCmd = new SyncDocument::MultiCommand();
-		
+
+		for (size_t i = 0; i < num_tracks; ++i) {
+			sync_track *t = tracks[i];
+			for (size_t j = 0; j < t->num_keys; ++j)
+				multiCmd->addCommand(new SyncDocument::DeleteCommand(i, t->keys[j].row));
+		}
+
 		doc->load(fileName.c_str());
 		MSXML2::IXMLDOMNamedNodeMapPtr attribs = doc->documentElement->Getattributes();
-		MSXML2::IXMLDOMNodePtr rowsParam = attribs->getNamedItem("rows");
-		if (NULL != rowsParam)
-		{
-			std::string rowsString = rowsParam->Gettext();
-			this->setRows(atoi(rowsString.c_str()));
-		}
-		
+
 		MSXML2::IXMLDOMNodeListPtr trackNodes = doc->documentElement->selectNodes("track");
 		for (int i = 0; i < trackNodes->Getlength(); ++i)
 		{
@@ -58,6 +57,16 @@ bool SyncDocument::load(const std::wstring &fileName)
 				}
 			}
 		}
+
+		MSXML2::IXMLDOMNodePtr rowsParam = attribs->getNamedItem("rows");
+		if (rowsParam) {
+			std::string rowsString = rowsParam->Gettext();
+			this->setRows(atoi(rowsString.c_str()));
+		}
+
+		clearUndoStack();
+		clearRedoStack();
+
 		this->exec(multiCmd);
 		savePointDelta = 0;
 		savePointUnreachable = false;

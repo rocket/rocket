@@ -213,18 +213,14 @@ void fileNew()
 
 void loadDocument(const std::wstring &_fileName)
 {
-	fileNew();
-	if (document.load(_fileName))
-	{
+	if (document.load(_fileName)) {
 		setWindowFileName(_fileName.c_str());
 		fileName = _fileName;
 		
 		mruFileList.insert(_fileName);
 		mruFileList.update();
 		DrawMenuBar(hwnd);
-		
-		document.clearUndoStack();
-		document.clearRedoStack();
+
 		trackView->setDocument(&document);
 
 		SendMessage(hwnd, WM_CURRVALDIRTY, 0, 0);
