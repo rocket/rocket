@@ -64,6 +64,7 @@ bool SyncDocument::load(const std::wstring &fileName)
 			this->setRows(atoi(rowsString.c_str()));
 		}
 
+		this->fileName = fileName;
 		clearUndoStack();
 		clearRedoStack();
 

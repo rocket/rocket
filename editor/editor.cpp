@@ -190,8 +190,6 @@ HMENU findSubMenuContaining(HMENU menu, UINT id)
 	return (HMENU)0;
 }
 
-std::wstring fileName;
-
 void fileNew()
 {
 	// document.purgeUnusedTracks();
@@ -204,7 +202,7 @@ void fileNew()
 	document.exec(multiCmd);
 
 	setWindowFileName(L"Untitled");
-	fileName.clear();
+	document.fileName.clear();
 
 	document.clearUndoStack();
 	document.clearRedoStack();
@@ -215,8 +213,7 @@ void loadDocument(const std::wstring &_fileName)
 {
 	if (document.load(_fileName)) {
 		setWindowFileName(_fileName.c_str());
-		fileName = _fileName;
-		
+
 		mruFileList.insert(_fileName);
 		mruFileList.update();
 		DrawMenuBar(hwnd);
@@ -267,8 +264,8 @@ bool fileSaveAs()
 		if (document.save(temp)) {
 			document.clientSocket.sendSaveCommand();
 			setWindowFileName(temp);
-			fileName = temp;
-			
+			document.fileName = temp;
+
 			mruFileList.insert(temp);
 			mruFileList.update();
 			DrawMenuBar(hwnd);
@@ -281,10 +278,10 @@ bool fileSaveAs()
 
 bool fileSave()
 {
-	if (fileName.empty())
+	if (document.fileName.empty())
 		return fileSaveAs();
 
-	if (!document.save(fileName.c_str())) {
+	if (!document.save(document.fileName)) {
 		document.clientSocket.sendSaveCommand();
 		error("Failed to save file");
 		return false;

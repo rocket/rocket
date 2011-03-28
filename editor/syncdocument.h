@@ -270,7 +270,9 @@ public:
 
 	size_t getRows() const { return rows; }
 	void setRows(size_t rows) { this->rows = rows; }
-	
+
+	std::wstring fileName;
+
 private:
 	std::vector<size_t> trackOrder;
 	size_t rows;
