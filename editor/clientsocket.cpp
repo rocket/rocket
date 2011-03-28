@@ -2,13 +2,14 @@
 #include "../sync/track.h"
 
 #include <cassert>
+#include <string>
 
-void ClientSocket::sendSetKeyCommand(uint32_t track, const struct track_key &key)
+void ClientSocket::sendSetKeyCommand(const std::string &trackName, const struct track_key &key)
 {
 	if (!connected() ||
-	    clientRemap.count(track) == 0)
+	    clientTracks.count(trackName) == 0)
 		return;
-	track = htonl(clientRemap[track]);
+	uint32_t track = htonl(clientTracks[trackName]);
 	uint32_t row = htonl(key.row);
 
 	union {
@@ -28,13 +29,13 @@ void ClientSocket::sendSetKeyCommand(uint32_t track, const struct track_key &key
 	send((char *)&key.type, 1, 0);
 }
 
-void ClientSocket::sendDeleteKeyCommand(int track, int row)
+void ClientSocket::sendDeleteKeyCommand(const std::string &trackName, int row)
 {
 	if (!connected() ||
-	    clientRemap.count(track) == 0)
+	    clientTracks.count(trackName) == 0)
 		return;
 
-	track = htonl(int(clientRemap[track]));
+	uint32_t track = htonl(int(clientTracks[trackName]));
 	row = htonl(row);
 
 	unsigned char cmd = DELETE_KEY;

@@ -582,12 +582,12 @@ void processCommand(ClientSocket &sock)
 				    int(document.createTrack(trackName));
 
 			// setup remap
-			document.clientSocket.clientRemap[serverIndex] = clientIndex++;
+			document.clientSocket.clientTracks[trackName] = clientIndex++;
 
 			// send key-frames
 			t = document.tracks[serverIndex];
 			for (int i = 0; i < (int)t->num_keys; ++i)
-				document.clientSocket.sendSetKeyCommand(int(serverIndex),
+				document.clientSocket.sendSetKeyCommand(trackName,
 				    t->keys[i]);
 
 			InvalidateRect(trackViewWin, NULL, FALSE);

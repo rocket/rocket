@@ -54,7 +54,7 @@ public:
 			assert(!is_key_frame(t, key.row));
 			if (sync_set_key(t, &key))
 				throw std::bad_alloc("sync_set_key");
-			data->clientSocket.sendSetKeyCommand(track, key); // update clients
+			data->clientSocket.sendSetKeyCommand(t->name, key); // update clients
 		}
 		
 		void undo(SyncDocument *data)
@@ -63,7 +63,7 @@ public:
 			assert(is_key_frame(t, key.row));
 			if (sync_del_key(t, key.row))
 				throw std::bad_alloc("sync_del_key");
-			data->clientSocket.sendDeleteKeyCommand(track, key.row); // update clients
+			data->clientSocket.sendDeleteKeyCommand(t->name, key.row); // update clients
 		}
 
 	private:
@@ -85,7 +85,7 @@ public:
 			oldKey = t->keys[idx];
 			if (sync_del_key(t, row))
 				throw std::bad_alloc("sync_del_key");
-			data->clientSocket.sendDeleteKeyCommand(track, row); // update clients
+			data->clientSocket.sendDeleteKeyCommand(t->name, row); // update clients
 		}
 		
 		void undo(SyncDocument *data)
@@ -94,7 +94,7 @@ public:
 			assert(!is_key_frame(t, row));
 			if (sync_set_key(t, &oldKey))
 				throw std::bad_alloc("sync_set_key");
-			data->clientSocket.sendSetKeyCommand(track, oldKey); // update clients
+			data->clientSocket.sendSetKeyCommand(t->name, oldKey); // update clients
 		}
 
 	private:
@@ -117,7 +117,7 @@ public:
 			oldKey = t->keys[idx];
 			if (sync_set_key(t, &key))
 				throw std::bad_alloc("sync_set_key");
-			data->clientSocket.sendSetKeyCommand(track, key); // update clients
+			data->clientSocket.sendSetKeyCommand(t->name, key); // update clients
 		}
 
 		void undo(SyncDocument *data)
@@ -126,7 +126,7 @@ public:
 			assert(is_key_frame(t, key.row));
 			if (sync_set_key(t, &oldKey))
 				throw std::bad_alloc("sync_set_key");
-			data->clientSocket.sendSetKeyCommand(track, oldKey); // update clients
+			data->clientSocket.sendSetKeyCommand(t->name, oldKey); // update clients
 		}
 		
 	private:

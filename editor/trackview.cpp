@@ -191,7 +191,7 @@ void TrackView::paintTopMargin(HDC hdc, RECT rcTracks)
 		DrawEdge(hdc, &fillRect, BDR_RAISEDINNER | BDR_RAISEDOUTER, BF_ADJUST | BF_LEFT | BF_RIGHT | BF_BOTTOM);
 		FillRect(hdc, &fillRect, bgBrush);
 
-		if (!doc->clientSocket.clientRemap.count(doc->getTrackIndexFromPos(track)))
+		if (!doc->clientSocket.clientTracks.count(t->name))
 			SetTextColor(hdc, GetSysColor(COLOR_GRAYTEXT));
 		else
 			SetTextColor(hdc, GetSysColor(COLOR_WINDOWTEXT));

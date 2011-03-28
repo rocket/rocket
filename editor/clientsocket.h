@@ -48,14 +48,14 @@ public:
 		return !!socket_poll(socket);
 	}
 
-	void sendSetKeyCommand(uint32_t track, const struct track_key &key);
-	void sendDeleteKeyCommand(int track, int row);
+	void sendSetKeyCommand(const std::string &trackName, const struct track_key &key);
+	void sendDeleteKeyCommand(const std::string &trackName, int row);
 	void sendSetRowCommand(int row);
 	void sendPauseCommand(bool pause);
 	void sendSaveCommand();
 
 	bool clientPaused;
-	std::map<size_t, size_t> clientRemap;
+	std::map<const std::string, size_t> clientTracks;
 
 private:
 	SOCKET socket;
