@@ -15,6 +15,7 @@ public:
 	{
 		closesocket(socket);
 		socket = INVALID_SOCKET;
+		clientTracks.clear();
 	}
 
 	bool recv(char *buffer, size_t length, int flags)
