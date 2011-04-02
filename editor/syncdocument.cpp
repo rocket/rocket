@@ -55,7 +55,7 @@ SyncDocument *SyncDocument::load(const std::wstring &fileName)
 					k.value = float(atof(valueString.c_str()));
 					k.type = key_type(atoi(interpolationString.c_str()));
 
-					assert(!is_key_frame(ret->tracks[trackIndex], key.row));
+					assert(!is_key_frame(ret->tracks[trackIndex], k.row));
 					if (sync_set_key(ret->tracks[trackIndex], &k))
 						throw std::bad_alloc("sync_set_key");
 				}
