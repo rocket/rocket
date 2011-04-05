@@ -130,7 +130,7 @@ static LRESULT CALLBACK biasSelectionDialogProc(HWND hDlg, UINT message, WPARAM 
 			_snprintf(temp, 256, "%d", *intialBias);
 			
 			/* set initial bias */
-			SetDlgItemText(hDlg, IDC_SETROWS_EDIT, temp);
+			SetDlgItemText(hDlg, IDC_BIASSELECTION_EDIT, temp);
 		}
 		break;
 	
