@@ -73,27 +73,17 @@ static LRESULT CALLBACK setRowsDialogProc(HWND hDlg, UINT message, WPARAM wParam
 	{
 	case WM_INITDIALOG:
 		{
-			int *rows = (int*)lParam;
-			assert(NULL != rows);
-			
-			/* create row-string */
-			char temp[256];
-			snprintf(temp, 256, "%d", *rows);
-			
-			/* set initial row count */
-			SetDlgItemText(hDlg, IDC_SETROWS_EDIT, temp);
+			size_t *rows = (size_t *)lParam;
+			SetDlgItemInt(hDlg, IDC_SETROWS_EDIT, *rows, FALSE);
 			return TRUE;
 		}
 		break;
-	
+
 	case WM_COMMAND:
-		if (LOWORD(wParam) == IDOK)
-		{
+		if (LOWORD(wParam) == IDOK) {
 			/* get value */
-			char temp[256];
-			GetDlgItemText(hDlg, IDC_SETROWS_EDIT, temp, 256);
-			int result = atoi(temp);
-			
+			size_t result = GetDlgItemInt(hDlg, IDC_SETROWS_EDIT, NULL, FALSE);
+
 			/* update editor */
 			SendMessage(GetParent(hDlg), WM_SETROWS, 0, result);
 			
@@ -123,25 +113,16 @@ static LRESULT CALLBACK biasSelectionDialogProc(HWND hDlg, UINT message, WPARAM 
 	case WM_INITDIALOG:
 		{
 			int *intialBias = (int*)lParam;
-			assert(NULL != intialBias);
-			
-			/* create bias-string */
-			char temp[256];
-			_snprintf(temp, 256, "%d", *intialBias);
-			
-			/* set initial bias */
-			SetDlgItemText(hDlg, IDC_BIASSELECTION_EDIT, temp);
+			SetDlgItemInt(hDlg, IDC_BIASSELECTION_EDIT, *intialBias, TRUE);
+			return TRUE;
 		}
 		break;
 	
 	case WM_COMMAND:
-		if (LOWORD(wParam) == IDOK)
-		{
+		if (LOWORD(wParam) == IDOK) {
 			/* get value */
-			char temp[256];
-			GetDlgItemText(hDlg, IDC_BIASSELECTION_EDIT, temp, 256);
-			int bias = atoi(temp);
-			
+			int bias = GetDlgItemInt(hDlg, IDC_BIASSELECTION_EDIT, NULL, FALSE);
+
 			/* update editor */
 			SendMessage(GetParent(hDlg), WM_BIASSELECTION, 0, LPARAM(bias));
 			
@@ -473,7 +454,7 @@ static LRESULT CALLBACK mainWindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARA
 		
 		case ID_EDIT_SETROWS:
 			{
-				int rows = int(trackView->getRows());
+				size_t rows = trackView->getRows();
 				INT_PTR result = DialogBoxParam(hInst, MAKEINTRESOURCE(IDD_SETROWS), hwnd, (DLGPROC)setRowsDialogProc, (LPARAM)&rows);
 				if (FAILED(result))
 					error("unable to create dialog box");
