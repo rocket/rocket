@@ -88,14 +88,9 @@ static LRESULT CALLBACK setRowsDialogProc(HWND hDlg, UINT message, WPARAM wParam
 			SendMessage(GetParent(hDlg), WM_SETROWS, 0, result);
 			
 			/* end dialog */
-			EndDialog(hDlg, LOWORD(wParam));
-			return TRUE;
-		}
-		else if(LOWORD(wParam)== IDCANCEL)
-		{
-			EndDialog( hDlg, LOWORD(wParam));
-			return TRUE;
-		}
+			return EndDialog(hDlg, LOWORD(wParam));
+		} else if(LOWORD(wParam) == IDCANCEL)
+			return EndDialog( hDlg, LOWORD(wParam));
 		break;
 	
 	case WM_CLOSE:
@@ -127,13 +122,9 @@ static LRESULT CALLBACK biasSelectionDialogProc(HWND hDlg, UINT message, WPARAM 
 			SendMessage(GetParent(hDlg), WM_BIASSELECTION, 0, LPARAM(bias));
 			
 			/* end dialog */
-			EndDialog(hDlg, LOWORD(wParam));
-			return TRUE;
-		}
-		else if(LOWORD(wParam)== IDCANCEL)
-		{
-			EndDialog( hDlg, LOWORD(wParam));
-		}
+			return EndDialog(hDlg, LOWORD(wParam));
+		} else if(LOWORD(wParam) == IDCANCEL)
+			return EndDialog( hDlg, LOWORD(wParam));
 		break;
 	
 	case WM_CLOSE:
