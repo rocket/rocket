@@ -6,6 +6,7 @@
 #define SYNC_DEVICE_H
 
 #include "data.h"
+#include "sync.h"
 
 struct sync_device {
 	char *base;
@@ -14,6 +15,8 @@ struct sync_device {
 #ifndef SYNC_PLAYER
 	int row;
 	SOCKET sock;
+#else
+	struct sync_io_cb io_cb;
 #endif
 };
 
