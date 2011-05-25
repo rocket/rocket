@@ -40,6 +40,9 @@ QVariant TrackModel::data(const QModelIndex &index, int role) const
 	QString str;
 	switch (role) {
 	case Qt::DisplayRole:
+		if (datacontent.contains(index)) {
+			return datacontent[index];
+		}
 		if (index.row() % 4 != 0)
 			return QVariant();
 		return str.setNum(float(index.row()) / 16);
@@ -67,6 +70,8 @@ bool TrackModel::setData(const QModelIndex &index, const QVariant &value, int ro
 
 	if (!ok)
 		return false;
+
+	datacontent[index] = value.toFloat();
 
 	dataChanged(index, index);
 	return true;
