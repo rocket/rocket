@@ -6,6 +6,7 @@
 #include <QtGui/QStatusBar>
 #include <QtGui/QKeyEvent>
 #include <QtGui/QScrollBar>
+#include <QtGui/QHeaderView>
 
 
 TrackModel::TrackModel(QObject *parent)
@@ -39,6 +40,9 @@ QVariant TrackModel::data(const QModelIndex &index, int role) const
 	QString str;
 	switch (role) {
 	case Qt::DisplayRole:
+		if (datacontent.contains(index)) {
+			return datacontent[index];
+		}
 		if (index.row() % 4 != 0)
 			return QVariant();
 		return str.setNum(float(index.row()) / 16);
@@ -67,6 +71,8 @@ bool TrackModel::setData(const QModelIndex &index, const QVariant &value, int ro
 	if (!ok)
 		return false;
 
+	datacontent[index] = value.toFloat();
+
 	dataChanged(index, index);
 	return true;
 }
@@ -91,4 +97,9 @@ TrackView::TrackView(QWidget *parent) :
 	QTableView(parent)
 {
 	this->setModel(new TrackModel());
+
+	this->verticalHeader()->setDefaultSectionSize(18);
+	this->horizontalHeader()->setDefaultSectionSize(this->horizontalHeader()->defaultSectionSize() - 30);
+
+	this->verticalHeader()->setResizeMode(QHeaderView::Fixed);
 }

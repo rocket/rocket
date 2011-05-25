@@ -2,6 +2,7 @@
 #define TRACKVIEW_H
 
 #include <QtGui/QTableView>
+#include <QMap>
 
 class TrackModel : public QAbstractTableModel
 {
@@ -18,6 +19,8 @@ public:
 	Qt::ItemFlags flags(const QModelIndex &index) const;
 
 	bool setData(const QModelIndex &index, const QVariant &value, int role = Qt::EditRole);
+private:
+    QMap<QModelIndex, float> datacontent;
 };
 
 class TrackView : public QTableView {
