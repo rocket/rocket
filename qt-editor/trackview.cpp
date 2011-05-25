@@ -6,6 +6,7 @@
 #include <QtGui/QStatusBar>
 #include <QtGui/QKeyEvent>
 #include <QtGui/QScrollBar>
+#include <QtGui/QHeaderView>
 
 
 TrackModel::TrackModel(QObject *parent)
@@ -91,4 +92,9 @@ TrackView::TrackView(QWidget *parent) :
 	QTableView(parent)
 {
 	this->setModel(new TrackModel());
+
+	this->verticalHeader()->setDefaultSectionSize(18);
+	this->horizontalHeader()->setDefaultSectionSize(this->horizontalHeader()->defaultSectionSize() - 30);
+
+	this->verticalHeader()->setResizeMode(QHeaderView::Fixed);
 }
