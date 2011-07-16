@@ -34,8 +34,10 @@ public:
 	void setRows(size_t rows);
 	size_t getRows() const
 	{
-		if (NULL == document) return 0;
-		return document->getRows();
+		const SyncDocument *doc = getDocument();
+		if (!doc)
+			return 0;
+		return doc->getRows();
 	}
 	
 	void setFont(HFONT font);

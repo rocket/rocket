@@ -681,7 +681,10 @@ static int getScrollPos(HWND hwnd, int bar)
 
 void TrackView::setRows(size_t rows)
 {
-	document->setRows(rows);
+	SyncDocument *doc = getDocument();
+	assert(doc);
+
+	doc->setRows(rows);
 	InvalidateRect(getWin(), NULL, FALSE);
 	setEditRow(min(editRow, int(rows) - 1));
 }
