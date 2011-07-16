@@ -260,7 +260,7 @@ public:
 	static SyncDocument *load(const std::wstring &fileName);
 	bool save(const std::wstring &fileName);
 
-	bool modified()
+	bool modified() const
 	{
 		if (savePointUnreachable) return true;
 		return 0 != savePointDelta;
