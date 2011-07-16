@@ -16,10 +16,10 @@ extern "C" {
 
 #include "clientsocket.h"
 
-class SyncDocument : public sync_data
-{
+class SyncDocument : public sync_data {
 public:
-	SyncDocument() : rows(128), savePointDelta(0), savePointUnreachable(true)
+	SyncDocument() :
+	    rows(128), savePointDelta(0), savePointUnreachable(false)
 	{
 		this->tracks = NULL;
 		this->num_tracks = 0;
