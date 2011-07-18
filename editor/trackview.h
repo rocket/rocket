@@ -189,7 +189,7 @@ private:
 	HBRUSH bgBaseBrush, bgDarkBrush;
 	HBRUSH selectBaseBrush, selectDarkBrush;
 	HPEN rowPen, rowSelectPen;
-	HBRUSH editBrush;
+	HBRUSH editBrush, bookmarkBrush;
 	HPEN lerpPen, cosinePen, rampPen;
 	HCURSOR handCursor;
 	

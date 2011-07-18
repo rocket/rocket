@@ -68,6 +68,7 @@ Ctrl+Left/Right           Move track
 Enter                     Enter key-frame value
 Del                       Delete key-frame
 i                         Enumerate interpolation mode
+k                         Toggle bookmark
 Space                     Pause/Resume demo
 Shift+Up/Down/Left/Right  Select
 Ctrl+C                    Copy

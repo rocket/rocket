@@ -62,8 +62,9 @@ TrackView::TrackView() :
 	lerpPen   = CreatePen(PS_SOLID, 2, RGB(255, 0, 0));
 	cosinePen = CreatePen(PS_SOLID, 2, RGB(0, 255, 0));
 	rampPen   = CreatePen(PS_SOLID, 2, RGB(0, 0, 255));
-	
+
 	editBrush = CreateSolidBrush(RGB(255, 255, 0)); // yellow
+	bookmarkBrush = CreateSolidBrush(RGB(128, 128, 255)); // red
 
 	handCursor = LoadCursor(NULL, IDC_HAND);
 
@@ -81,6 +82,7 @@ TrackView::~TrackView()
 	DeleteObject(cosinePen);
 	DeleteObject(rampPen);
 	DeleteObject(editBrush);
+	DeleteObject(bookmarkBrush);
 	DeleteObject(rowPen);
 	DeleteObject(rowSelectPen);
 	if (document)
@@ -240,12 +242,16 @@ void TrackView::paintTracks(HDC hdc, RECT rcTracks)
 		leftMargin.bottom = leftMargin.top + rowHeight;
 		
 		if (!RectVisible(hdc, &leftMargin)) continue;
-		
+
 		HBRUSH fillBrush;
-		if (row == editRow) fillBrush = editBrush;
-		else fillBrush = GetSysColorBrush(COLOR_3DFACE);
+		if (row == editRow)
+			fillBrush = editBrush;
+		else if (doc->isRowBookmark(row))
+			fillBrush = bookmarkBrush;
+		else
+			fillBrush = GetSysColorBrush(COLOR_3DFACE);
 		FillRect(hdc, &leftMargin, fillBrush);
-		
+
 		DrawEdge(hdc, &leftMargin, BDR_RAISEDINNER | BDR_RAISEDOUTER, BF_RIGHT | BF_BOTTOM | BF_TOP);
 		if ((row % 8) == 0)      SetTextColor(hdc, RGB(0, 0, 0));
 		else if ((row % 4) == 0) SetTextColor(hdc, RGB(64, 64, 64));
@@ -1092,6 +1098,11 @@ LRESULT TrackView::onChar(UINT keyCode, UINT /*flags*/)
 	
 	case 'i':
 		editToggleInterpolationType();
+		break;
+
+	case 'k':
+		getDocument()->toggleRowBookmark(getEditRow());
+		invalidateRow(getEditRow());
 		break;
 	}
 	return FALSE;

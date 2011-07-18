@@ -11,6 +11,7 @@ extern "C" {
 #include <stack>
 #include <list>
 #include <vector>
+#include <set>
 #include <string>
 #include <cassert>
 
@@ -266,6 +267,19 @@ public:
 		return 0 != savePointDelta;
 	}
 
+	bool isRowBookmark(int row) const
+	{
+		return !!rowBookmarks.count(row);
+	}
+
+	void toggleRowBookmark(int row)
+	{
+		if (isRowBookmark(row))
+			rowBookmarks.erase(row);
+		else
+			rowBookmarks.insert(row);
+	}
+
 	ClientSocket clientSocket;
 
 	size_t getRows() const { return rows; }
@@ -274,9 +288,10 @@ public:
 	std::wstring fileName;
 
 private:
+	std::set<int> rowBookmarks;
 	std::vector<size_t> trackOrder;
 	size_t rows;
-	
+
 	// undo / redo functionality
 	std::stack<Command*> undoStack;
 	std::stack<Command*> redoStack;
