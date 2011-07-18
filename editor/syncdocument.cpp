@@ -26,9 +26,9 @@ SyncDocument *SyncDocument::load(const std::wstring &fileName)
 			ret->setRows(atoi(rowsString.c_str()));
 		}
 
-		MSXML2::IXMLDOMNodeListPtr trackNodes = doc->documentElement->selectNodes("track");
-		for (int i = 0; i < trackNodes->Getlength(); ++i)
-		{
+		MSXML2::IXMLDOMNodeListPtr trackNodes =
+		    doc->documentElement->selectNodes("//track");
+		for (int i = 0; i < trackNodes->Getlength(); ++i) {
 			MSXML2::IXMLDOMNodePtr trackNode = trackNodes->Getitem(i);
 			MSXML2::IXMLDOMNamedNodeMapPtr attribs = trackNode->Getattributes();
 			
@@ -39,12 +39,10 @@ SyncDocument *SyncDocument::load(const std::wstring &fileName)
 			if (0 > trackIndex) trackIndex = int(ret->createTrack(name));
 
 			MSXML2::IXMLDOMNodeListPtr rowNodes = trackNode->GetchildNodes();
-			for (int i = 0; i < rowNodes->Getlength(); ++i)
-			{
+			for (int i = 0; i < rowNodes->Getlength(); ++i) {
 				MSXML2::IXMLDOMNodePtr keyNode = rowNodes->Getitem(i);
 				std::string baseName = keyNode->GetbaseName();
-				if (baseName == "key")
-				{
+				if (baseName == "key") {
 					MSXML2::IXMLDOMNamedNodeMapPtr rowAttribs = keyNode->Getattributes();
 					std::string rowString = rowAttribs->getNamedItem("row")->Gettext();
 					std::string valueString = rowAttribs->getNamedItem("value")->Gettext();
@@ -61,6 +59,20 @@ SyncDocument *SyncDocument::load(const std::wstring &fileName)
 				}
 			}
 		}
+
+		MSXML2::IXMLDOMNodeListPtr bookmarkNodes =
+		    doc->documentElement->selectNodes(
+		    "/sync/bookmarks/bookmark");
+		for (int i = 0; i < bookmarkNodes->Getlength(); ++i) {
+			MSXML2::IXMLDOMNodePtr bookmarkNode =
+			    bookmarkNodes->Getitem(i);
+			MSXML2::IXMLDOMNamedNodeMapPtr bookmarkAttribs =
+			    bookmarkNode->Getattributes();
+			std::string str =
+			    bookmarkAttribs->getNamedItem("row")->Gettext();
+			int row = atoi(str.c_str());
+			ret->toggleRowBookmark(row);
+		}
 	}
 	catch(_com_error &e)
 	{
@@ -76,50 +88,68 @@ SyncDocument *SyncDocument::load(const std::wstring &fileName)
 bool SyncDocument::save(const std::wstring &fileName)
 {
 	MSXML2::IXMLDOMDocumentPtr doc(MSXML2::CLSID_DOMDocument);
-	try
-	{
-		char temp[256];
-		_variant_t varNodeType((short)MSXML2::NODE_ELEMENT);
-		MSXML2::IXMLDOMElementPtr rootNode = doc->createElement("tracks");
+	try {
+		MSXML2::IXMLDOMElementPtr rootNode = doc->createElement("sync");
+		rootNode->setAttribute("rows", getRows());
 		doc->appendChild(rootNode);
+		rootNode->appendChild(doc->createTextNode("\n\t"));
 
-		_snprintf(temp, 256, "%d", getRows());
-		rootNode->setAttribute("rows", temp);
-
+		MSXML2::IXMLDOMElementPtr tracksNode =
+		    doc->createElement("tracks");
 		for (size_t i = 0; i < num_tracks; ++i) {
 			const sync_track *t = tracks[i];
 
-			MSXML2::IXMLDOMElementPtr trackElem = doc->createElement("track");
+			MSXML2::IXMLDOMElementPtr trackElem =
+			    doc->createElement("track");
 			trackElem->setAttribute("name", t->name);
-
-			rootNode->appendChild(doc->createTextNode("\n\t"));
-			rootNode->appendChild(trackElem);
 
 			for (int i = 0; i < (int)t->num_keys; ++i) {
 				size_t row = t->keys[i].row;
 				float value = t->keys[i].value;
 				char interpolationType = char(t->keys[i].type);
 
-				MSXML2::IXMLDOMElementPtr keyElem = doc->createElement("key");
+				MSXML2::IXMLDOMElementPtr keyElem =
+				    doc->createElement("key");
 				
-				_snprintf(temp, 256, "%d", row);
-				keyElem->setAttribute("row", temp);
+				keyElem->setAttribute("row", row);
+				keyElem->setAttribute("value", value);
+				keyElem->setAttribute("interpolation",
+				    (int)interpolationType);
 
-				_snprintf(temp, 256, "%f", value);
-				keyElem->setAttribute("value", temp);
-
-				_snprintf(temp, 256, "%d", interpolationType);
-				keyElem->setAttribute("interpolation", temp);
-
-				trackElem->appendChild(doc->createTextNode("\n\t\t"));
+				trackElem->appendChild(
+				    doc->createTextNode("\n\t\t\t"));
 				trackElem->appendChild(keyElem);
 			}
 			if (t->num_keys)
-				trackElem->appendChild(doc->createTextNode("\n\t"));
+				trackElem->appendChild(
+				    doc->createTextNode("\n\t\t"));
+
+			tracksNode->appendChild(doc->createTextNode("\n\t\t"));
+			tracksNode->appendChild(trackElem);
 		}
 		if (0 != num_tracks)
-			rootNode->appendChild(doc->createTextNode("\n"));
-		
+			tracksNode->appendChild(doc->createTextNode("\n\t"));
+		rootNode->appendChild(tracksNode);
+		rootNode->appendChild(doc->createTextNode("\n\t"));
+
+		MSXML2::IXMLDOMElementPtr bookmarksNode =
+		    doc->createElement("bookmarks");
+		std::set<int>::const_iterator it;
+		for (it = rowBookmarks.begin(); it != rowBookmarks.end(); ++it) {
+			MSXML2::IXMLDOMElementPtr bookmarkElem =
+			    doc->createElement("bookmark");
+			bookmarkElem->setAttribute("row", *it);
+
+			bookmarksNode->appendChild(
+			    doc->createTextNode("\n\t\t"));
+			bookmarksNode->appendChild(bookmarkElem);
+		}
+		if (0 != rowBookmarks.size())
+			bookmarksNode->appendChild(
+			    doc->createTextNode("\n\t"));
+		rootNode->appendChild(bookmarksNode);
+		rootNode->appendChild(doc->createTextNode("\n"));
+
 		doc->save(fileName.c_str());
 		
 		savePointDelta = 0;
