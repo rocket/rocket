@@ -520,15 +520,15 @@
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
 			>
 			<File
-				RelativePath=".\lib\data.c"
+				RelativePath=".\data.c"
 				>
 			</File>
 			<File
-				RelativePath=".\lib\device.c"
+				RelativePath=".\device.c"
 				>
 			</File>
 			<File
-				RelativePath=".\lib\track.c"
+				RelativePath=".\track.c"
 				>
 			</File>
 		</Filter>
@@ -538,23 +538,23 @@
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}"
 			>
 			<File
-				RelativePath=".\lib\base.h"
+				RelativePath=".\base.h"
 				>
 			</File>
 			<File
-				RelativePath=".\lib\data.h"
+				RelativePath=".\data.h"
 				>
 			</File>
 			<File
-				RelativePath=".\lib\device.h"
+				RelativePath=".\device.h"
 				>
 			</File>
 			<File
-				RelativePath=".\lib\sync.h"
+				RelativePath=".\sync.h"
 				>
 			</File>
 			<File
-				RelativePath=".\lib\track.h"
+				RelativePath=".\track.h"
 				>
 			</File>
 		</Filter>
