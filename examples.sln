@@ -6,7 +6,7 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "example_bass", "example_bas
 		{5866042C-7FCB-4DB1-BAAD-44DF6567511F} = {5866042C-7FCB-4DB1-BAAD-44DF6567511F}
 	EndProjectSection
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "sync_player", "lib/librocket.vcproj", "{5866042C-7FCB-4DB1-BAAD-44DF6567511F}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "librocket", "lib/librocket.vcproj", "{5866042C-7FCB-4DB1-BAAD-44DF6567511F}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

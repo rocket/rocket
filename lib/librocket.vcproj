@@ -2,9 +2,9 @@
 <VisualStudioProject
 	ProjectType="Visual C++"
 	Version="9,00"
-	Name="sync_player"
+	Name="librocket"
 	ProjectGUID="{5866042C-7FCB-4DB1-BAAD-44DF6567511F}"
-	RootNamespace="sync_player"
+	RootNamespace="librocket"
 	Keyword="Win32Proj"
 	TargetFrameworkVersion="131072"
 	>
@@ -21,7 +21,7 @@
 	<Configurations>
 		<Configuration
 			Name="Debug|Win32"
-			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
+			OutputDirectory="$(SolutionDir)\lib"
 			IntermediateDirectory="$(ConfigurationName)"
 			ConfigurationType="4"
 			CharacterSet="2"
@@ -63,6 +63,7 @@
 			/>
 			<Tool
 				Name="VCLibrarianTool"
+				OutputFile="$(OutDir)\$(ProjectName)-playerd.lib"
 			/>
 			<Tool
 				Name="VCALinkTool"
@@ -82,7 +83,7 @@
 		</Configuration>
 		<Configuration
 			Name="Release|Win32"
-			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
+			OutputDirectory="$(SolutionDir)\lib"
 			IntermediateDirectory="$(ConfigurationName)"
 			ConfigurationType="4"
 			CharacterSet="2"
@@ -122,6 +123,7 @@
 			/>
 			<Tool
 				Name="VCLibrarianTool"
+				OutputFile="$(OutDir)\$(ProjectName)-player.lib"
 			/>
 			<Tool
 				Name="VCALinkTool"
@@ -141,7 +143,7 @@
 		</Configuration>
 		<Configuration
 			Name="Debug Client|Win32"
-			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
+			OutputDirectory="$(SolutionDir)\lib"
 			IntermediateDirectory="$(ConfigurationName)"
 			ConfigurationType="4"
 			CharacterSet="2"
@@ -184,6 +186,7 @@
 			<Tool
 				Name="VCLibrarianTool"
 				AdditionalDependencies="ws2_32.lib"
+				OutputFile="$(OutDir)\$(ProjectName)d.lib"
 			/>
 			<Tool
 				Name="VCALinkTool"
@@ -203,7 +206,7 @@
 		</Configuration>
 		<Configuration
 			Name="Release Client|Win32"
-			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
+			OutputDirectory="$(SolutionDir)\lib"
 			IntermediateDirectory="$(ConfigurationName)"
 			ConfigurationType="4"
 			CharacterSet="2"
