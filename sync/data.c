@@ -3,7 +3,6 @@
  */
 
 #include "data.h"
-#include <assert.h>
 
 void sync_data_deinit(struct sync_data *d)
 {

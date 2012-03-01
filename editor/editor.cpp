@@ -169,7 +169,7 @@ void setDocument(SyncDocument *newDoc)
 		// delete old key-frames
 		for (size_t i = 0; i < oldDoc->num_tracks; ++i) {
 			sync_track *t = oldDoc->tracks[i];
-			for (size_t j = 0; j < t->num_keys; ++j)
+			for (int j = 0; j < t->num_keys; ++j)
 				oldDoc->clientSocket.sendDeleteKeyCommand(t->name, t->keys[j].row);
 		}
 
@@ -187,7 +187,7 @@ void setDocument(SyncDocument *newDoc)
 
 			for (size_t i = 0; i < newDoc->num_tracks; ++i) {
 				sync_track *t = newDoc->tracks[i];
-				for (size_t j = 0; j < t->num_keys; ++j)
+				for (int j = 0; j < t->num_keys; ++j)
 					newDoc->clientSocket.sendSetKeyCommand(t->name, t->keys[j]);
 			}
 		}

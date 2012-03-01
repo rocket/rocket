@@ -5,7 +5,6 @@
 #include "device.h"
 #include "sync.h"
 #include <stdio.h>
-#include <assert.h>
 #include <math.h>
 
 static const char *sync_track_path(const char *base, const char *name)
@@ -180,7 +179,10 @@ void sync_save_tracks(const struct sync_device *d)
 static int get_track_data(struct sync_device *d, struct sync_track *t)
 {
 	unsigned char cmd = GET_TRACK;
-	uint32_t name_len = htonl(strlen(t->name));
+	uint32_t name_len;
+
+	assert(strlen(t->name) <= UINT32_MAX);
+	name_len = htonl((uint32_t)strlen(t->name));
 
 	/* send request data */
 	if (xsend(d->sock, (char *)&cmd, 1, 0) ||

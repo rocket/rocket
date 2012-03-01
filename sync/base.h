@@ -21,6 +21,7 @@
  #define snprintf _snprintf
  /* int is 32-bit for both x86 and x64 */
  typedef unsigned int uint32_t;
+ #define UINT32_MAX UINT_MAX
 #elif defined(__GNUC__)
  #include <stdint.h>
 #elif defined(M68000)
@@ -33,6 +34,7 @@
  #define NOMINMAX
  #include <winsock2.h>
  #include <windows.h>
+ #include <limits.h>
 #elif defined(USE_AMITCP)
  #include <sys/socket.h>
  #include <proto/exec.h>
@@ -81,17 +83,29 @@ static inline int socket_poll(SOCKET socket)
 #pragma warning(pop)
 #endif
 
-	return select(socket + 1, &fds, NULL, NULL, &to) > 0;
+	return select((int)socket + 1, &fds, NULL, NULL, &to) > 0;
 }
+
+#include <assert.h>
 
 static inline int xsend(SOCKET s, const void *buf, size_t len, int flags)
 {
-	return send(s, (const char *)buf, len, flags) != (int)len;
+#ifdef WIN32
+	assert(len <= INT_MAX);
+	return send(s, (const char *)buf, (int)len, flags) != (int)len;
+#else
+	return send(s, (const char *)buf, len, flags) != len;
+#endif
 }
 
 static inline int xrecv(SOCKET s, void *buf, size_t len, int flags)
 {
-	return recv(s, (char *)buf, len, flags) != (int)len;
+#ifdef WIN32
+	assert(len <= INT_MAX);
+	return recv(s, (char *)buf, (int)len, flags) != (int)len;
+#else
+	return recv(s, (char *)buf, len, flags) != len;
+#endif
 }
 
 #ifdef NEED_STRDUP
