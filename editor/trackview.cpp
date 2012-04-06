@@ -993,23 +993,31 @@ LRESULT TrackView::onKeyDown(UINT keyCode, UINT /*flags*/)
 			break;
 		
 		case VK_PRIOR:
-			if (GetKeyState(VK_CONTROL) < 0)
-			{
+			if (GetKeyState(VK_CONTROL) < 0) {
 				float bias = 10.0f;
-				if (GetKeyState(VK_SHIFT) < 0) bias = 100.0f;
+				if (GetKeyState(VK_SHIFT) < 0)
+					bias = 100.0f;
 				editBiasValue(bias);
-			}
-			else setEditRow(editRow - 0x10);
+			} else if (GetKeyState(VK_SHIFT) < 0) {
+				int row = doc->prevRowBookmark(editRow);
+				if (row >= 0)
+					setEditRow(row);
+			} else
+				setEditRow(editRow - 0x10);
 			break;
 		
 		case VK_NEXT:
-			if (GetKeyState(VK_CONTROL) < 0)
-			{
+			if (GetKeyState(VK_CONTROL) < 0) {
 				float bias = 10.0f;
-				if (GetKeyState(VK_SHIFT) < 0) bias = 100.0f;
+				if (GetKeyState(VK_SHIFT) < 0)
+					bias = 100.0f;
 				editBiasValue(-bias);
-			}
-			else setEditRow(editRow + 0x10);
+			} else if (GetKeyState(VK_SHIFT) < 0) {
+				int row = doc->nextRowBookmark(editRow);
+				if (row >= 0)
+					setEditRow(row);
+			} else
+				setEditRow(editRow + 0x10);
 			break;
 		
 		case VK_HOME:

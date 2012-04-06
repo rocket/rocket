@@ -287,6 +287,29 @@ public:
 
 	std::wstring fileName;
 
+	int nextRowBookmark(int row) const
+	{
+		std::set<int>::const_iterator it = rowBookmarks.upper_bound(row);
+		if (it == rowBookmarks.end())
+			return -1;
+		return *it;
+	}
+
+	int prevRowBookmark(int row) const
+	{
+		std::set<int>::const_iterator it = rowBookmarks.lower_bound(row);
+		if (it == rowBookmarks.end()) {
+			std::set<int>::const_reverse_iterator it = rowBookmarks.rend();
+			if (it == rowBookmarks.rend())
+				return -1;
+			return *it;
+		} else
+			it--;
+		if (it == rowBookmarks.end())
+			return -1;
+		return *it;
+	}
+
 private:
 	std::set<int> rowBookmarks;
 	std::vector<size_t> trackOrder;
