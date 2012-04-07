@@ -25,19 +25,19 @@
 #include "recentfiles.h"
 
 #include <vector>
-const wchar_t *mainWindowClassName = L"MainWindow";
-const char    *mainWindowTitle  =  "GNU Rocket System";
-const wchar_t *mainWindowTitleW = L"GNU Rocket System";
-const char *keyName = "SOFTWARE\\GNU Rocket";
+static const wchar_t *mainWindowClassName = L"MainWindow";
+static const char    *mainWindowTitle  =  "GNU Rocket System";
+static const wchar_t *mainWindowTitleW = L"GNU Rocket System";
+static const char *keyName = "SOFTWARE\\GNU Rocket";
 
-void verror(const char *fmt, va_list va)
+static void verror(const char *fmt, va_list va)
 {
 	char temp[4096];
 	vsnprintf(temp, sizeof(temp), fmt, va);
 	MessageBox(NULL, temp, mainWindowTitle, MB_OK | MB_ICONERROR);
 }
 
-void error(const char *fmt, ...)
+static void error(const char *fmt, ...)
 {
 	va_list va;
 	va_start(va, fmt);
@@ -45,7 +45,7 @@ void error(const char *fmt, ...)
 	va_end(va);
 }
 
-void die(const char *fmt, ...)
+static void die(const char *fmt, ...)
 {
 	va_list va;
 	va_start(va, fmt);
@@ -54,13 +54,13 @@ void die(const char *fmt, ...)
 	exit(EXIT_FAILURE);
 }
 
-HINSTANCE hInst;
-HWND hwnd = NULL;
-TrackView *trackView = NULL;
-HWND trackViewWin = NULL;
-HWND statusBarWin = NULL;
-HKEY regConfigKey = NULL;
-RecentFiles mruFileList(NULL);
+static HINSTANCE hInst;
+static HWND hwnd = NULL;
+static TrackView *trackView = NULL;
+static HWND trackViewWin = NULL;
+static HWND statusBarWin = NULL;
+static HKEY regConfigKey = NULL;
+static RecentFiles mruFileList(NULL);
 
 #define WM_SETROWS (WM_USER+1)
 #define WM_BIASSELECTION (WM_USER+2)
@@ -135,7 +135,7 @@ static LRESULT CALLBACK biasSelectionDialogProc(HWND hDlg, UINT message, WPARAM 
 	return FALSE;
 }
 
-void setWindowFileName(std::wstring fileName)
+static void setWindowFileName(std::wstring fileName)
 {
 	wchar_t drive[_MAX_DRIVE],dir[_MAX_DIR],fname[_MAX_FNAME],ext[_MAX_EXT];
 	_wsplitpath(fileName.c_str(), drive, dir, fname, ext);
@@ -143,7 +143,7 @@ void setWindowFileName(std::wstring fileName)
 	SetWindowTextW(hwnd, windowTitle.c_str());
 }
 
-HMENU findSubMenuContaining(HMENU menu, UINT id)
+static HMENU findSubMenuContaining(HMENU menu, UINT id)
 {
 	for (int i = 0; i < GetMenuItemCount(menu); ++i)
 	{
@@ -161,7 +161,7 @@ HMENU findSubMenuContaining(HMENU menu, UINT id)
 	return (HMENU)0;
 }
 
-void setDocument(SyncDocument *newDoc)
+static void setDocument(SyncDocument *newDoc)
 {
 	SyncDocument *oldDoc = trackView->getDocument();
 
@@ -201,13 +201,13 @@ void setDocument(SyncDocument *newDoc)
 		delete oldDoc;
 }
 
-void fileNew()
+static void fileNew()
 {
 	setDocument(new SyncDocument);
 	setWindowFileName(L"Untitled");
 }
 
-void loadDocument(const std::wstring &_fileName)
+static void loadDocument(const std::wstring &_fileName)
 {
 	SyncDocument *newDoc = SyncDocument::load(_fileName);
 	if (newDoc) {
@@ -224,7 +224,7 @@ void loadDocument(const std::wstring &_fileName)
 		error("failed to open file");
 }
 
-void fileOpen()
+static void fileOpen()
 {
 	wchar_t temp[_MAX_FNAME + 1];
 	temp[0] = L'\0'; // clear string
@@ -243,7 +243,7 @@ void fileOpen()
 	}
 }
 
-bool fileSaveAs()
+static bool fileSaveAs()
 {
 	wchar_t temp[_MAX_FNAME + 1];
 	temp[0] = '\0';
@@ -274,7 +274,7 @@ bool fileSaveAs()
 	return false;
 }
 
-bool fileSave()
+static bool fileSave()
 {
 	SyncDocument *doc = trackView->getDocument();
 	if (doc->fileName.empty())
@@ -288,7 +288,7 @@ bool fileSave()
 	return true;
 }
 
-void attemptQuit()
+static void attemptQuit()
 {
 	SyncDocument *doc = trackView->getDocument();
 	if (doc->modified()) {
@@ -529,7 +529,7 @@ static ATOM registerMainWindowClass(HINSTANCE hInstance)
 	return RegisterClassExW(&wc);
 }
 
-SOCKET clientConnect(SOCKET serverSocket, sockaddr_in *host)
+static SOCKET clientConnect(SOCKET serverSocket, sockaddr_in *host)
 {
 	sockaddr_in hostTemp;
 	int hostSize = sizeof(sockaddr_in);
@@ -554,8 +554,8 @@ SOCKET clientConnect(SOCKET serverSocket, sockaddr_in *host)
 	return clientSocket;
 }
 
-size_t clientIndex;
-void processCommand(ClientSocket &sock)
+static size_t clientIndex;
+static void processCommand(ClientSocket &sock)
 {
 	SyncDocument *doc = trackView->getDocument();
 	int strLen, serverIndex, newRow;
