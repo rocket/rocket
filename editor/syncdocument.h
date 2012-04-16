@@ -299,7 +299,7 @@ public:
 	{
 		std::set<int>::const_iterator it = rowBookmarks.lower_bound(row);
 		if (it == rowBookmarks.end()) {
-			std::set<int>::const_reverse_iterator it = rowBookmarks.rend();
+			std::set<int>::const_reverse_iterator it = rowBookmarks.rbegin();
 			if (it == rowBookmarks.rend())
 				return -1;
 			return *it;
