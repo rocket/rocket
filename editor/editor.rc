@@ -66,6 +66,8 @@ BEGIN
     "A",            ID_EDIT_SELECT_ALL,     VIRTKEY, CONTROL, NOINVERT
     "T",            ID_EDIT_SELECTTRACK,    VIRTKEY, CONTROL, NOINVERT
     "R",            ID_EDIT_SETROWS,        VIRTKEY, CONTROL, NOINVERT
+    VK_PRIOR,       ID_EDIT_BOOKMARK_PREV,  VIRTKEY, ALT, NOINVERT
+    VK_NEXT,        ID_EDIT_BOOKMARK_NEXT,  VIRTKEY, ALT, NOINVERT
 END
 
 
@@ -108,6 +110,9 @@ BEGIN
         MENUITEM "&Bias Selection\tCtrl+B",     ID_EDIT_BIAS
         MENUITEM SEPARATOR
         MENUITEM "Set Rows\tCtrl+R",            ID_EDIT_SETROWS
+        MENUITEM SEPARATOR
+        MENUITEM "Previous Bookmark\tAlt+PgDn", ID_EDIT_BOOKMARK_PREV
+        MENUITEM "Next Bookmark\tAlt+PgUp",     ID_EDIT_BOOKMARK_NEXT
     END
 END
 

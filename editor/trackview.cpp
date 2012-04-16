@@ -998,10 +998,6 @@ LRESULT TrackView::onKeyDown(UINT keyCode, UINT /*flags*/)
 				if (GetKeyState(VK_SHIFT) < 0)
 					bias = 100.0f;
 				editBiasValue(bias);
-			} else if (GetKeyState(VK_SHIFT) < 0) {
-				int row = doc->prevRowBookmark(editRow);
-				if (row >= 0)
-					setEditRow(row);
 			} else
 				setEditRow(editRow - 0x10);
 			break;
@@ -1012,10 +1008,6 @@ LRESULT TrackView::onKeyDown(UINT keyCode, UINT /*flags*/)
 				if (GetKeyState(VK_SHIFT) < 0)
 					bias = 100.0f;
 				editBiasValue(-bias);
-			} else if (GetKeyState(VK_SHIFT) < 0) {
-				int row = doc->nextRowBookmark(editRow);
-				if (row >= 0)
-					setEditRow(row);
 			} else
 				setEditRow(editRow + 0x10);
 			break;
