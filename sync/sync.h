@@ -35,7 +35,7 @@ void sync_set_io_cb(struct sync_device *d, struct sync_io_cb *cb);
 #endif /* defined(SYNC_PLAYER) */
 
 const struct sync_track *sync_get_track(struct sync_device *, const char *);
-float sync_get_val(const struct sync_track *, double);
+double sync_get_val(const struct sync_track *, double);
 
 #ifdef __cplusplus
 }

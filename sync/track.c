@@ -13,27 +13,27 @@
 #include "track.h"
 #include "base.h"
 
-static float key_linear(const struct track_key k[2], double row)
+static double key_linear(const struct track_key k[2], double row)
 {
 	double t = (row - k[0].row) / (k[1].row - k[0].row);
-	return (float)(k[0].value + (k[1].value - k[0].value) * t);
+	return k[0].value + (k[1].value - k[0].value) * t;
 }
 
-static float key_smooth(const struct track_key k[2], double row)
+static double key_smooth(const struct track_key k[2], double row)
 {
 	double t = (row - k[0].row) / (k[1].row - k[0].row);
 	t = t * t * (3 - 2 * t);
-	return (float)(k[0].value + (k[1].value - k[0].value) * t);
+	return k[0].value + (k[1].value - k[0].value) * t;
 }
 
-static float key_ramp(const struct track_key k[2], double row)
+static double key_ramp(const struct track_key k[2], double row)
 {
 	double t = (row - k[0].row) / (k[1].row - k[0].row);
 	t = pow(t, 2.0);
-	return (float)(k[0].value + (k[1].value - k[0].value) * t);
+	return k[0].value + (k[1].value - k[0].value) * t;
 }
 
-float sync_get_val(const struct sync_track *t, double row)
+double sync_get_val(const struct sync_track *t, double row)
 {
 	int idx, irow;
 
