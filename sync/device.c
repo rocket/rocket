@@ -80,6 +80,16 @@ static SOCKET server_connect(const char *host, unsigned short nport)
 	closesocket(sock);
 	return INVALID_SOCKET;
 }
+
+#else
+
+void sync_set_io_cb(struct sync_device *d, struct sync_io_cb *cb)
+{
+	d->io_cb.open = cb->open;
+	d->io_cb.read = cb->read;
+	d->io_cb.close = cb->close;
+}
+
 #endif
 
 struct sync_device *sync_create_device(const char *base)
@@ -100,6 +110,10 @@ struct sync_device *sync_create_device(const char *base)
 #ifndef SYNC_PLAYER
 	d->row = -1;
 	d->sock = INVALID_SOCKET;
+#else
+	d->io_cb.open = fopen;
+	d->io_cb.read = fread;
+	d->io_cb.close = fclose;
 #endif
 
 	return d;
@@ -124,11 +138,11 @@ void sync_destroy_device(struct sync_device *d)
 static int get_track_data(struct sync_device *d, struct sync_track *t)
 {
 	int i;
-	FILE *fp = fopen(sync_track_path(d->base, t->name), "rb");
+	void *fp = d->io_cb.open(sync_track_path(d->base, t->name), "rb");
 	if (!fp)
 		return -1;
 
-	fread(&t->num_keys, sizeof(size_t), 1, fp);
+	d->io_cb.read(&t->num_keys, sizeof(size_t), 1, fp);
 	t->keys = malloc(sizeof(struct track_key) * t->num_keys);
 	if (!t->keys)
 		return -1;
@@ -136,13 +150,13 @@ static int get_track_data(struct sync_device *d, struct sync_track *t)
 	for (i = 0; i < (int)t->num_keys; ++i) {
 		struct track_key *key = t->keys + i;
 		char type;
-		fread(&key->row, sizeof(size_t), 1, fp);
-		fread(&key->value, sizeof(float), 1, fp);
-		fread(&type, sizeof(char), 1, fp);
+		d->io_cb.read(&key->row, sizeof(size_t), 1, fp);
+		d->io_cb.read(&key->value, sizeof(float), 1, fp);
+		d->io_cb.read(&type, sizeof(char), 1, fp);
 		key->type = (enum key_type)type;
 	}
 
-	fclose(fp);
+	d->io_cb.close(fp);
 	return 0;
 }
 
