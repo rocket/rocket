@@ -9,6 +9,7 @@
 #include <commctrl.h>
 #include <objbase.h>
 #include <commdlg.h>
+#include <shellapi.h>
 #include <stdio.h>
 #include <stdarg.h>
 
@@ -673,7 +674,17 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/,
 	if (NULL == hwnd)
 		die("Window Creation Failed!");
 
-	fileNew();
+	LPWSTR *argv;
+	int argc;
+	if ((argv = CommandLineToArgvW(GetCommandLineW(), &argc)) && argc > 1) {
+		if (argc > 2) {
+			char prog[MAX_PATH];
+			GetModuleFileNameA(NULL, prog, sizeof(prog));
+			die("usage: %s [filename.rocket]", prog);
+		}
+		loadDocument(argv[1]);
+	} else
+		fileNew();
 	
 	HACCEL accel = LoadAccelerators(hInstance, MAKEINTRESOURCE(IDR_ACCELERATOR));
 	
