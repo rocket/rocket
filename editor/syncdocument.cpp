@@ -97,7 +97,7 @@ bool SyncDocument::save(const std::wstring &fileName)
 		MSXML2::IXMLDOMElementPtr tracksNode =
 		    doc->createElement("tracks");
 		for (size_t i = 0; i < num_tracks; ++i) {
-			const sync_track *t = tracks[i];
+			const sync_track *t = tracks[trackOrder[i]];
 
 			MSXML2::IXMLDOMElementPtr trackElem =
 			    doc->createElement("track");
