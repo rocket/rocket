@@ -60,6 +60,7 @@ BEGIN
     "V",            ID_EDIT_PASTE,          VIRTKEY, CONTROL, NOINVERT
     "Z",            ID_EDIT_REDO,           VIRTKEY, SHIFT, CONTROL, NOINVERT
     "Z",            ID_EDIT_UNDO,           VIRTKEY, CONTROL, NOINVERT
+    "N",            ID_FILE_NEW,            VIRTKEY, CONTROL, NOINVERT
     "O",            ID_FILE_OPEN,           VIRTKEY, CONTROL, NOINVERT
     "S",            ID_FILE_SAVE,           VIRTKEY, CONTROL, NOINVERT
     "E",            ID_FILE_REMOTEEXPORT,   VIRTKEY, CONTROL, NOINVERT
