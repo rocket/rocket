@@ -1,0 +1,27 @@
+{
+  "name": "jsRocket",
+  "description": "js connector for GNU Rocket",
+  "version": "0.0.1",
+  "homepage": "https://github.com/mog/jsRocket",
+  "author": {
+    "name": "mog",
+    "email": "mog@trbl.at",
+    "url": "http://twitter.com/mehmog"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/mog/jsRocket.git"
+  },
+  "bugs": {
+    "url": "https://github.com/mog/jsRocket/issues"
+  },
+  "licenses": [
+    {
+      "type": "MIT",
+      "url": "https://github.com/mog/jsRocket/blob/master/LICENSE-MIT"
+    }
+  ],
+  "devDependencies": {
+    "grunt-contrib-concat": "~0.1.0"
+  }
+}
