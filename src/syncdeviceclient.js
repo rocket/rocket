@@ -157,7 +157,12 @@ JSRocket.SyncDeviceClient = function (cfg) {
 
     function setRow(row) {
 
-        _ws.send([CMD_SET_ROW, 0, 0, 0, row]);
+        var streamInt = [(row >> 24) & 0xFF,
+                        (row >> 16) & 0xFF,
+                        (row >> 8) & 0xFF,
+                        (row      ) & 0xFF];
+
+        _ws.send([CMD_SET_ROW, streamInt[0], streamInt[1], streamInt[2], streamInt[3]]);
         _ws.flush();
     }
 
