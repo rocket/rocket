@@ -7,6 +7,9 @@ Rocket?
 -------
 To sync stuff to music, or just change values over time, you might currently hardcode them somewhere in your demo. Rocket gives you a tracker alike interface, which might make your musician feel right at home.
 
+**Windows**
+<a href="http://patp.at/jsrocket_win_externals.zip">Download a compiled Websockify and Rocket ZIP package</a> 6.66MB
+
 js?
 ---
 You work in two modes:
