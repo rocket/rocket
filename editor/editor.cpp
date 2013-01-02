@@ -674,9 +674,9 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/,
 	if (NULL == hwnd)
 		die("Window Creation Failed!");
 
-	LPWSTR *argv;
 	int argc;
-	if ((argv = CommandLineToArgvW(GetCommandLineW(), &argc)) && argc > 1) {
+	LPWSTR *argv = argv = CommandLineToArgvW(GetCommandLineW(), &argc);
+	if (argv && argc > 1) {
 		if (argc > 2) {
 			char prog[MAX_PATH];
 			GetModuleFileNameA(NULL, prog, sizeof(prog));
