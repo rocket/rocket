@@ -150,7 +150,7 @@ static int get_track_data(struct sync_device *d, struct sync_track *t)
 	for (i = 0; i < (int)t->num_keys; ++i) {
 		struct track_key *key = t->keys + i;
 		char type;
-		d->io_cb.read(&key->row, sizeof(size_t), 1, fp);
+		d->io_cb.read(&key->row, sizeof(int), 1, fp);
 		d->io_cb.read(&key->value, sizeof(float), 1, fp);
 		d->io_cb.read(&type, sizeof(char), 1, fp);
 		key->type = (enum key_type)type;
