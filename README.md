@@ -60,7 +60,7 @@ function onSyncReady(){
   //jsRocket is done getting all the info you already have in Rocket, or is done parsing the .rocket file
 
   //this either adds a track to Rocket, or gets it for you
-  awesomeness = _syncDevice.getTrack('AmountOfAwesome');
+  awesomeness = syncDevice.getTrack('AmountOfAwesome');
 }
 
 function onSyncUpdate(newRow){
