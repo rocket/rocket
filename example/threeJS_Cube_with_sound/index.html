@@ -1,0 +1,183 @@
+<html>
+<head>
+    <style>
+        html, body{
+            margin:0;
+        }
+    </style>
+</head>
+<body>
+
+<script src="../_common/three.min.js"></script>
+<script src="../../build/jsRocket.js"></script>
+
+<script>
+    var Demo = (function () {
+
+        var BPM = 120,
+            ROWS_PER_BEAT = 8,
+            ROW_RATE = BPM / 60 * ROWS_PER_BEAT;
+            
+        var _demoMode = false, //Set to true for preview
+            _syncDevice = new JSRocket.SyncDevice(),
+            _row = 0,
+            _previousIntRow;
+
+        //THREE variables
+        var WIDTH = document.width,
+            HEIGHT = document.height,
+            FOV = 50,
+            _audio = new Audio(),
+            _renderer = new THREE.WebGLRenderer(),
+            _camera = new THREE.PerspectiveCamera(FOV, WIDTH / HEIGHT),
+            _scene = new THREE.Scene(),
+            _cube;
+
+        //scene variables | things you set through jsRocket
+        var _cameraRotation = 45,
+            _cameraDistance = 400,
+            _clearR = 51,
+            _clearG = 41,
+            _clearB = 44,
+            _fov = FOV;
+        
+        function init() {
+            prepareScene();
+            prepareSync();
+        }
+        
+        function prepareScene() {
+
+            addCube();
+
+            _renderer.setSize(WIDTH, HEIGHT);
+            _scene.add(_camera);
+            document.body.appendChild(_renderer.domElement);
+        }
+
+        function addCube() {
+
+            var _diameter = 100,
+                _materials = [],
+                _colors = [0x540024, 0x7A0538, 0xBA0032, 0xE9001C, 0xFF3700, 0x2e0014];
+
+            for (var i = 0; i < 6; i++) {
+                _materials.push(new THREE.MeshBasicMaterial({ color:_colors[i] }));
+            }
+
+            _cube = new THREE.Mesh(
+                    new THREE.CubeGeometry(_diameter, _diameter, _diameter, 1, 1, 1, _materials),
+                    new THREE.MeshFaceMaterial());
+
+            _scene.add(_cube);
+        }
+
+        function prepareSync() {
+
+            if (_demoMode) {
+                _syncDevice.setConfig({'rocketXML':'cube.rocket'});
+                _syncDevice.init("demo");
+            } else {
+                _syncDevice.init();
+            }
+
+            _syncDevice.on('ready', onSyncReady);
+            _syncDevice.on('update', onSyncUpdate);
+            _syncDevice.on('play', onPlay);
+            _syncDevice.on('pause', onPause);
+        }
+
+        function onSyncReady() {
+            
+            _clearR = _syncDevice.getTrack('clearR');
+            _clearG = _syncDevice.getTrack('clearG');
+            _clearB = _syncDevice.getTrack('clearB');
+            _cameraRotation = _syncDevice.getTrack('rotation');
+            _cameraDistance = _syncDevice.getTrack('distance');
+            _fov = _syncDevice.getTrack('FOV');
+
+            prepareAudio();
+        }
+        
+        function prepareAudio() {
+            //Alpha_C just whipped this up for jsRocket demo purposes
+            _audio.src = "alpha_c_-_euh.ogg";
+            _audio.load();
+            _audio.preload = true;
+            _audio.addEventListener('canplay', onAudioReady);
+        }
+        
+        function onAudioReady() {
+
+            if(_demoMode) { 
+                render();
+                _audio.play();
+            } else {
+                _audio.pause();
+                _audio.currentTime = _row / ROW_RATE;
+            }
+        }
+
+        function onSyncUpdate(row) {
+
+            if (!isNaN(row)) {
+                _row = row;
+                _audio.currentTime = _row / ROW_RATE;
+            }
+            render();
+        }
+
+        function onPlay() {
+
+            _audio.currentTime = _row / ROW_RATE;
+            _audio.play();
+        }
+
+        function onPause() {
+
+            _row = _audio.currentTime * ROW_RATE;
+            window.cancelAnimationFrame(render, document);
+            _audio.pause();
+        }
+
+        function render() {
+
+            if(_audio.paused === false) {
+                //otherwise we may jump into a point in the audio where there's
+                //no timeframe, resulting in Rocket setting row 2 and we report
+                //row 1 back - thus Rocket spasming out
+                _row = _audio.currentTime * ROW_RATE;
+            }
+            
+            // this informs Rocket where we are
+            _syncDevice.update(_row);
+              
+            var rot = (_cameraRotation.getValue(row) || 0) / 180 * Math.PI,
+                color = new THREE.Color();
+
+            //update Field Of View
+            _camera.fov = (fov.getValue(row) || FOV);
+            //_camera.aspect = WIDTH / HEIGHT;
+            _camera.updateProjectionMatrix();
+
+            //rotate that cam
+            _camera.position.x = Math.cos(rot) * (_cameraDistance.getValue(row) || 0);
+            _camera.position.z = Math.sin(rot) * (_cameraDistance.getValue(row) || 0);
+            _camera.lookAt(_scene.position);
+
+            //the background color
+            color.setRGB((_clearR.getValue(row) || 0) / 255,
+                        (_clearG.getValue(row) || 0) / 255,
+                        (_clearB.getValue(row) || 0) / 255);
+            _renderer.setClearColor(color);
+
+            _renderer.render(_scene, _camera);
+            
+            if((_demoMode === true)  || (_audio.paused === false))
+                window.requestAnimationFrame(render, document);
+            else
+                window.cancelAnimationFrame(render, document);
+        }
+    }());
+</script>
+</body>
