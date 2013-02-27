@@ -41,10 +41,10 @@
             _clearB = 44,
             _fov = FOV;
         
-        function init() {
+        (function init() {
             prepareScene();
             prepareSync();
-        }
+        }());
         
         function prepareScene() {
 
@@ -131,6 +131,7 @@
 
             _audio.currentTime = _row / ROW_RATE;
             _audio.play();
+            render();
         }
 
         function onPause() {
@@ -152,23 +153,23 @@
             // this informs Rocket where we are
             _syncDevice.update(_row);
               
-            var rot = (_cameraRotation.getValue(row) || 0) / 180 * Math.PI,
+            var rot = (_cameraRotation.getValue(_row) || 0) / 180 * Math.PI,
                 color = new THREE.Color();
 
             //update Field Of View
-            _camera.fov = (fov.getValue(row) || FOV);
+            _camera.fov = (_fov.getValue(_row) || FOV);
             //_camera.aspect = WIDTH / HEIGHT;
             _camera.updateProjectionMatrix();
 
             //rotate that cam
-            _camera.position.x = Math.cos(rot) * (_cameraDistance.getValue(row) || 0);
-            _camera.position.z = Math.sin(rot) * (_cameraDistance.getValue(row) || 0);
+            _camera.position.x = Math.cos(rot) * (_cameraDistance.getValue(_row) || 0);
+            _camera.position.z = Math.sin(rot) * (_cameraDistance.getValue(_row) || 0);
             _camera.lookAt(_scene.position);
 
             //the background color
-            color.setRGB((_clearR.getValue(row) || 0) / 255,
-                        (_clearG.getValue(row) || 0) / 255,
-                        (_clearB.getValue(row) || 0) / 255);
+            color.setRGB((_clearR.getValue(_row) || 0) / 255,
+                        (_clearG.getValue(_row) || 0) / 255,
+                        (_clearB.getValue(_row) || 0) / 255);
             _renderer.setClearColor(color);
 
             _renderer.render(_scene, _camera);
