@@ -3,6 +3,10 @@ jsRocket
 Let's you use <a href="https://github.com/kusma/rocket">GNU Rocket</a> with your JavaScript / Browser demo.
 Currently depends on <a href="https://github.com/kanaka/websockify">Websockify</a>, which acts as a connector between the browser and GNU Rocket.
 
+tl;dr
+-----
+<a href="https://github.com/mog/jsRocket/wiki/Screenshots">Show me screenshots</a>.
+
 Rocket?
 -------
 To sync stuff to music, or just change values over time, you might currently hardcode them somewhere in your demo. Rocket gives you a tracker alike interface, which might make your musician feel right at home.
