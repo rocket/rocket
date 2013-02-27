@@ -27,8 +27,8 @@
             _demoMode = false;
 
         //THREE variables
-        var WIDTH = document.width,
-            HEIGHT = document.height,
+        var WIDTH = document.body.clientWidth,
+            HEIGHT = document.body.clientHeight,
             FOV = 50,
             _renderer = new THREE.WebGLRenderer(),
             _camera = new THREE.PerspectiveCamera(FOV, WIDTH / HEIGHT),
