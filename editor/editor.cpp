@@ -589,9 +589,21 @@ static void processCommand(ClientSocket &sock)
 			if (!sock.connected())
 				return;
 
+			if (!strLen) {
+				sock.disconnect();
+				InvalidateRect(trackViewWin, NULL, FALSE);
+				return;
+			}
+
 			trackName.resize(strLen);
 			if (!sock.recv(&trackName[0], strLen, 0))
 				return;
+
+			if (int(strlen(trackName.c_str())) != strLen) {
+				sock.disconnect();
+				InvalidateRect(trackViewWin, NULL, FALSE);
+				return;
+			}
 
 			// find track
 			serverIndex = sync_find_track(doc,
