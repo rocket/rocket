@@ -11,7 +11,7 @@ public:
 		return INVALID_SOCKET != socket;
 	}
 
-	void disconnect()
+	virtual void disconnect()
 	{
 		closesocket(socket);
 		socket = INVALID_SOCKET;
@@ -23,7 +23,7 @@ public:
 			return false;
 		int ret = ::recv(socket, buffer, int(length), 0);
 		if (ret != int(length)) {
-			disconnect();
+			TcpSocket::disconnect();
 			return false;
 		}
 		return true;
@@ -36,7 +36,7 @@ public:
 			return false;
 		int ret = ::send(socket, buffer, int(length), 0);
 		if (ret != int(length)) {
-			disconnect();
+			TcpSocket::disconnect();
 			return false;
 		}
 		return true;
@@ -61,6 +61,13 @@ public:
 	bool send(const char *buffer, size_t length, bool endOfMessage)
 	{
 		return sendFrame(firstFrame ? 2 : 0, buffer, length, endOfMessage);
+	}
+
+
+	virtual void disconnect()
+	{
+		sendFrame(8, NULL, 0, true);
+		TcpSocket::disconnect();
 	}
 
 	bool pollRead()

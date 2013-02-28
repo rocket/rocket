@@ -47,6 +47,12 @@ bool WebSocket::readFrame(std::string &buf)
 		sendFrame(10, &buf[0], buf.length(), true);
 		buf.clear();
 		return true;
+
+	case 8:
+		// close
+		disconnect();
+		buf.clear();
+		return false;
 	}
 
 	return true;
