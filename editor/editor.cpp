@@ -580,11 +580,11 @@ static void processCommand(ClientSocket &sock)
 	std::string trackName;
 	const sync_track *t;
 	unsigned char cmd = 0;
-	if (sock.recv((char*)&cmd, 1, 0)) {
+	if (sock.recv((char*)&cmd, 1)) {
 		switch (cmd) {
 		case GET_TRACK:
 			// read data
-			sock.recv((char *)&strLen, sizeof(int), 0);
+			sock.recv((char *)&strLen, sizeof(int));
 			strLen = ntohl(strLen);
 			if (!sock.connected())
 				return;
@@ -596,7 +596,7 @@ static void processCommand(ClientSocket &sock)
 			}
 
 			trackName.resize(strLen);
-			if (!sock.recv(&trackName[0], strLen, 0))
+			if (!sock.recv(&trackName[0], strLen))
 				return;
 
 			if (int(strlen(trackName.c_str())) != strLen) {
@@ -625,7 +625,7 @@ static void processCommand(ClientSocket &sock)
 			break;
 
 		case SET_ROW:
-			sock.recv((char*)&newRow, sizeof(int), 0);
+			sock.recv((char*)&newRow, sizeof(int));
 			trackView->setEditRow(ntohl(newRow));
 			break;
 		}

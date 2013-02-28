@@ -17,11 +17,11 @@ public:
 		socket = INVALID_SOCKET;
 	}
 
-	bool recv(char *buffer, size_t length, int flags)
+	bool recv(char *buffer, size_t length)
 	{
 		if (!connected())
 			return false;
-		int ret = ::recv(socket, buffer, int(length), flags);
+		int ret = ::recv(socket, buffer, int(length), 0);
 		if (ret != int(length)) {
 			disconnect();
 			return false;
@@ -29,11 +29,11 @@ public:
 		return true;
 	}
 
-	bool send(const char *buffer, size_t length, int flags)
+	bool send(const char *buffer, size_t length)
 	{
 		if (!connected())
 			return false;
-		int ret = ::send(socket, buffer, int(length), flags);
+		int ret = ::send(socket, buffer, int(length), 0);
 		if (ret != int(length)) {
 			disconnect();
 			return false;
@@ -68,14 +68,14 @@ public:
 		clientTracks.clear();
 	}
 
-	bool recv(char *buffer, size_t length, int flags)
+	bool recv(char *buffer, size_t length)
 	{
-		return socket.recv(buffer, length, flags);
+		return socket.recv(buffer, length);
 	}
 
-	bool send(const char *buffer, size_t length, int flags)
+	bool send(const char *buffer, size_t length)
 	{
-		return socket.send(buffer, length, flags);
+		return socket.send(buffer, length);
 	}
 
 	bool pollRead()
