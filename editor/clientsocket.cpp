@@ -12,7 +12,7 @@ bool WebSocket::readFrame(std::string &buf)
 		return false;
 
 	// int flags = header[0] >> 4;
-	// int opcode = header[0] & 0xF;
+	int opcode = header[0] & 0xF;
 	int masked = header[1] >> 7;
 	int payload_len = header[1] & 0x7f;
 
@@ -33,11 +33,21 @@ bool WebSocket::readFrame(std::string &buf)
 	}
 
 	buf.resize(payload_len);
-	if (!TcpSocket::recv(&buf[0], payload_len))
-		return false;
+	if (payload_len > 0) {
+		if (!TcpSocket::recv(&buf[0], payload_len))
+			return false;
+	}
 
 	for (int i = 0; i < payload_len; ++i)
 		buf[i] = buf[i] ^ mask[i & 3];
+
+	switch (opcode) {
+	case 9:
+		// got ping, send pong!
+		sendFrame(10, &buf[0], buf.length(), true);
+		buf.clear();
+		return true;
+	}
 
 	return true;
 }
@@ -47,7 +57,7 @@ bool WebSocket::recv(char *buffer, size_t length)
 	if (!connected())
 		return false;
 	while (length) {
-		if (!buf.length() && !readFrame(buf))
+		while (!buf.length() && !readFrame(buf))
 			return false;
 
 		int bytes = std::min(buf.length(), length);
