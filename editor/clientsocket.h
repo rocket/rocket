@@ -1,10 +1,10 @@
 #include "../sync/base.h"
 #include <map>
 
-class ClientSocket {
+class TcpSocket {
 public:
-	ClientSocket() : socket(INVALID_SOCKET) {}
-	explicit ClientSocket(SOCKET socket) : socket(socket), clientPaused(true) {}
+	TcpSocket() : socket(INVALID_SOCKET) {}
+	explicit TcpSocket(SOCKET socket) : socket(socket) {}
 
 	bool connected() const
 	{
@@ -15,7 +15,6 @@ public:
 	{
 		closesocket(socket);
 		socket = INVALID_SOCKET;
-		clientTracks.clear();
 	}
 
 	bool recv(char *buffer, size_t length, int flags)
@@ -49,6 +48,43 @@ public:
 		return !!socket_poll(socket);
 	}
 
+private:
+	SOCKET socket;
+};
+
+class ClientSocket {
+public:
+	ClientSocket() : socket(INVALID_SOCKET) {}
+	explicit ClientSocket(SOCKET socket) : socket(socket), clientPaused(true) {}
+
+	bool connected() const
+	{
+		return socket.connected();
+	}
+
+	void disconnect()
+	{
+		socket.disconnect();
+		clientTracks.clear();
+	}
+
+	bool recv(char *buffer, size_t length, int flags)
+	{
+		return socket.recv(buffer, length, flags);
+	}
+
+	bool send(const char *buffer, size_t length, int flags)
+	{
+		return socket.send(buffer, length, flags);
+	}
+
+	bool pollRead()
+	{
+		if (!connected())
+			return false;
+		return socket.pollRead();
+	}
+
 	void sendSetKeyCommand(const std::string &trackName, const struct track_key &key);
 	void sendDeleteKeyCommand(const std::string &trackName, int row);
 	void sendSetRowCommand(int row);
@@ -59,5 +95,5 @@ public:
 	std::map<const std::string, size_t> clientTracks;
 
 private:
-	SOCKET socket;
+	TcpSocket socket;
 };
