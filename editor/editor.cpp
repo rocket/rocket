@@ -555,12 +555,25 @@ static SOCKET clientConnect(SOCKET serverSocket, sockaddr_in *host)
 	if (INVALID_SOCKET == clientSocket) return INVALID_SOCKET;
 
 	const char *expectedGreeting = CLIENT_GREET;
-	char recievedGreeting[128];
+	std::string line;
 
-	recv(clientSocket, recievedGreeting, int(strlen(expectedGreeting)), 0);
+	line.resize(0);
+	for (;;) {
+		char ch;
+		if (recv(clientSocket, &ch, 1, 0) != 1) {
+			closesocket(clientSocket);
+			return INVALID_SOCKET;
+		}
 
-	if (strncmp(expectedGreeting, recievedGreeting, strlen(expectedGreeting)) != 0)
-	{
+		if (ch == '\n')
+			break;
+		if (ch != '\r')
+			line.push_back(ch);
+		if (ch == '!')
+			break;
+	}
+
+	if (line.compare(0, strlen(expectedGreeting), expectedGreeting)) {
 		closesocket(clientSocket);
 		return INVALID_SOCKET;
 	}
