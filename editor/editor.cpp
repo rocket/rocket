@@ -547,12 +547,13 @@ static ATOM registerMainWindowClass(HINSTANCE hInstance)
 	return RegisterClassExW(&wc);
 }
 
-static SOCKET clientConnect(SOCKET serverSocket, sockaddr_in *host)
+static TcpSocket *clientConnect(SOCKET serverSocket, sockaddr_in *host)
 {
 	sockaddr_in hostTemp;
 	int hostSize = sizeof(sockaddr_in);
 	SOCKET clientSocket = accept(serverSocket, (sockaddr*)&hostTemp, &hostSize);
-	if (INVALID_SOCKET == clientSocket) return INVALID_SOCKET;
+	if (INVALID_SOCKET == clientSocket)
+		return NULL;
 
 	const char *expectedGreeting = CLIENT_GREET;
 	std::string line;
@@ -562,7 +563,7 @@ static SOCKET clientConnect(SOCKET serverSocket, sockaddr_in *host)
 		char ch;
 		if (recv(clientSocket, &ch, 1, 0) != 1) {
 			closesocket(clientSocket);
-			return INVALID_SOCKET;
+			return NULL;
 		}
 
 		if (ch == '\n')
@@ -573,16 +574,26 @@ static SOCKET clientConnect(SOCKET serverSocket, sockaddr_in *host)
 			break;
 	}
 
-	if (line.compare(0, strlen(expectedGreeting), expectedGreeting)) {
-		closesocket(clientSocket);
-		return INVALID_SOCKET;
+	TcpSocket *ret = NULL;
+	if (!line.compare(0, 4, "GET ")) {
+		ret = WebSocket::upgradeFromHttp(clientSocket);
+		line.resize(strlen(expectedGreeting));
+		if (!ret || !ret->recv(&line[0], line.length())) {
+			closesocket(clientSocket);
+			return NULL;
+		}
+	} else
+		ret = new TcpSocket(clientSocket);
+
+	if (line.compare(0, strlen(expectedGreeting), expectedGreeting) ||
+	    !ret->send(SERVER_GREET, strlen(SERVER_GREET), true)) {
+		ret->disconnect();
+		return NULL;
 	}
 
-	const char *greeting = SERVER_GREET;
-	send(clientSocket, greeting, int(strlen(greeting)), 0);
-
-	if (NULL != host) *host = hostTemp;
-	return clientSocket;
+	if (NULL != host)
+		*host = hostTemp;
+	return ret;
 }
 
 static size_t clientIndex;
@@ -722,7 +733,7 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/,
 	while (!done) {
 		SyncDocument *doc = trackView->getDocument();
 		if (!doc->clientSocket.connected()) {
-			SOCKET clientSocket = INVALID_SOCKET;
+			TcpSocket *clientSocket;
 			fd_set fds;
 			FD_ZERO(&fds);
 #pragma warning(suppress: 4127)
@@ -737,18 +748,18 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/,
 				SendMessage(statusBarWin, SB_SETTEXT, 0, (LPARAM)"Accepting...");
 				sockaddr_in client;
 				clientSocket = clientConnect(serverSocket, &client);
-				if (INVALID_SOCKET != clientSocket)
-				{
+				if (clientSocket) {
 					char temp[256];
 					snprintf(temp, 256, "Connected to %s", inet_ntoa(client.sin_addr));
 					SendMessage(statusBarWin, SB_SETTEXT, 0, (LPARAM)temp);
-					doc->clientSocket = ClientSocket(clientSocket);
+					doc->clientSocket.socket = clientSocket;
 					clientIndex = 0;
 					doc->clientSocket.sendPauseCommand(true);
 					doc->clientSocket.sendSetRowCommand(trackView->getEditRow());
 					guiConnected = true;
 				}
-				else SendMessage(statusBarWin, SB_SETTEXT, 0, (LPARAM)"Not Connected.");
+				else
+					SendMessage(statusBarWin, SB_SETTEXT, 0, (LPARAM)"Not Connected.");
 			}
 		}
 

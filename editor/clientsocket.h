@@ -17,7 +17,7 @@ public:
 		socket = INVALID_SOCKET;
 	}
 
-	bool recv(char *buffer, size_t length)
+	virtual bool recv(char *buffer, size_t length)
 	{
 		if (!connected())
 			return false;
@@ -29,8 +29,9 @@ public:
 		return true;
 	}
 
-	bool send(const char *buffer, size_t length)
+	virtual bool send(const char *buffer, size_t length, bool endOfMessage)
 	{
+		(void)endOfMessage;
 		if (!connected())
 			return false;
 		int ret = ::send(socket, buffer, int(length), 0);
@@ -41,7 +42,7 @@ public:
 		return true;
 	}
 
-	bool pollRead()
+	virtual bool pollRead()
 	{
 		if (!connected())
 			return false;
@@ -52,37 +53,70 @@ private:
 	SOCKET socket;
 };
 
+class WebSocket : public TcpSocket {
+public:
+	explicit WebSocket(SOCKET socket) : TcpSocket(socket), firstFrame(true) {}
+
+	bool recv(char *buffer, size_t length);
+	bool send(const char *buffer, size_t length, bool endOfMessage)
+	{
+		return sendFrame(firstFrame ? 2 : 0, buffer, length, endOfMessage);
+	}
+
+	bool pollRead()
+	{
+		if (buf.length() > 0)
+			return true;
+		return TcpSocket::pollRead();
+	}
+
+	// helpers
+	bool readFrame(std::string &buf);
+	bool sendFrame(int opcode, const char *payloadData, size_t payloadLength, bool endOfMessage);
+	static WebSocket *upgradeFromHttp(SOCKET socket);
+
+private:
+	bool firstFrame;
+	std::string buf;
+};
+
 class ClientSocket {
 public:
-	ClientSocket() : socket(INVALID_SOCKET) {}
-	explicit ClientSocket(SOCKET socket) : socket(socket), clientPaused(true) {}
+	ClientSocket() : socket(NULL), clientPaused(true) {}
 
 	bool connected() const
 	{
-		return socket.connected();
+		if (!socket)
+			return false;
+		return socket->connected();
 	}
 
 	void disconnect()
 	{
-		socket.disconnect();
+		if (socket)
+			socket->disconnect();
 		clientTracks.clear();
 	}
 
 	bool recv(char *buffer, size_t length)
 	{
-		return socket.recv(buffer, length);
+		if (!socket)
+			return false;
+		return socket->recv(buffer, length);
 	}
 
-	bool send(const char *buffer, size_t length)
+	bool send(const char *buffer, size_t length, bool endOfMessage)
 	{
-		return socket.send(buffer, length);
+		if (!socket)
+			return false;
+		return socket->send(buffer, length, endOfMessage);
 	}
 
 	bool pollRead()
 	{
 		if (!connected())
 			return false;
-		return socket.pollRead();
+		return socket->pollRead();
 	}
 
 	void sendSetKeyCommand(const std::string &trackName, const struct track_key &key);
@@ -93,7 +127,5 @@ public:
 
 	bool clientPaused;
 	std::map<const std::string, size_t> clientTracks;
-
-private:
-	TcpSocket socket;
+	TcpSocket *socket;
 };
