@@ -99,7 +99,7 @@
 
             prepareAudio();
         }
-        var _isAudioLoaded = false;
+
         function prepareAudio() {
             //Alpha_C just whipped this up for jsRocket demo purposes
             _audio.src = "alpha_c_-_euh.ogg";
@@ -109,7 +109,6 @@
         }
         
         function onAudioReady() {
-            _isAudioLoaded = true;
             if(_demoMode) { 
                 render();
                 _audio.play();
@@ -121,9 +120,8 @@
 
         function onSyncUpdate(row) {
 
-            if (!isNaN(row) && _isAudioLoaded) {
+            if (!isNaN(row)) {
                 _row = row;
-                _audio.currentTime = _row / ROW_RATE;
             }
             render();
         }
