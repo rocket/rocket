@@ -9,9 +9,7 @@ JSRocket.SyncDeviceClient = function (cfg) {
         CMD_PAUSE = 4,
         CMD_SAVE_TRACKS = 5;
 
-    var _currentCommand = -1,
-        _queue = [],
-        _ws,
+    var _ws = new WebSocket(cfg.socketURL),
         _syncData = new JSRocket.SyncData(),
         _eventHandler = {
             'ready' :function () {
@@ -21,118 +19,83 @@ JSRocket.SyncDeviceClient = function (cfg) {
             'play'  :function () {
             },
             'pause' :function () {
+            },
+            'save' :function () {
             }
         };
 
-    function onOpen(e) {
-        console.log("[onOpen]", e);
+    function onOpen() {
+
+        _ws.binaryType = "arraybuffer";
         _ws.send('hello, synctracker!');
     }
 
     function onMessage(e) {
 
-        _queue = (new Uint8Array(e.data));
-
-        console.log("[onMessage]", _queue);
-
-        readStream();
-    }
-
-    function readStream() {
-
-        var len = _queue.length,
+        var queue = (new Uint8Array(e.data)),
+            cmd = queue[0],
             track, row, value, interpolation;
 
-        if (_currentCommand === -1) {
-            _currentCommand = _queue[0];
-        }
-
         //Handshake
-        if ((_currentCommand === 104) && (len >= 12)) {
-            console.log("[handshake]");
-
-            _queue = [];
-            _currentCommand = -1;
+        if (cmd === 104) {
 
             _eventHandler.ready();
 
             //PAUSE
-        } else if ((CMD_PAUSE === _currentCommand) && (len >= 2)) {
+        } else if (CMD_PAUSE === cmd) {
 
-            value = parseInt(_queue[1], 10);
-            console.log("[stream] pause", value);
-            //_queue = _queue.slice(2);
-            _currentCommand = -1;
-
-            if (value === 1) {
+            if( queue[1] === 1) {
                 _eventHandler.pause();
             } else {
                 _eventHandler.play();
             }
 
             //SET_ROW
-        } else if ((CMD_SET_ROW === _currentCommand) && (len >= 5)) {
-            console.log("[stream] row");
+        } else if (CMD_SET_ROW === cmd) {
 
-            row = toInt(_queue.subarray(1, 5));
-            console.log("[stream] row>>",_queue.subarray(1, 5), row);
-            //_queue = _queue.slice(5);
-            _currentCommand = -1;
+            row = toInt(queue.subarray(1, 5));
 
             _eventHandler.update(row);
 
             //SET_KEY
-        } else if ((CMD_SET_KEY === _currentCommand) && (len >= 14)) {
-            console.log("[stream] key");
+        } else if (CMD_SET_KEY === cmd) {
 
-            track = toInt(_queue.subarray(1, 5));
-            row = toInt(_queue.subarray(5, 9));
-            value = parseInt(Math.round(toFloat(_queue.subarray(9, 13)) * 1000) / 1000, 10);
-            interpolation = parseInt(_queue.subarray(13, 14)[0], 10);
+            track = toInt(queue.subarray(1, 5));
+            row = toInt(queue.subarray(5, 9));
 
+            //value = Math.round(toFloat(queue.subarray(9, 13)) * 100) / 100; //round to what's seen in Rocket tracks
+            value = toFloat(queue.subarray(9, 13)); //use the values you see in Rocket statusbar
+
+            interpolation = toInt(queue.subarray(13, 14));
             _syncData.getTrack(track).add(row, value, interpolation);
-
-            console.log("setKey", track, row, value, interpolation, _queue.subarray(13, 14));
-
-            _currentCommand = -1;
 
             //don't set row, as this could also be a interpolation change
             _eventHandler.update();
 
             //DELETE
-        } else if ((CMD_DELETE_KEY === _currentCommand) && (len >= 9)) {
-            console.log("[stream] delete");
+        } else if (CMD_DELETE_KEY === cmd) {
 
-            track = toInt(_queue.subarray(1, 5));
-            row = toInt(_queue.subarray(5, 9));
+            track = toInt(queue.subarray(1, 5));
+            row = toInt(queue.subarray(5, 9));
 
             _syncData.getTrack(track).remove(row);
 
-            //_queue = _queue.slice(9);
-            _currentCommand = -1;
-
-            _eventHandler.update(row);
+            _eventHandler.update();
 
             //SAVE
-        } else if (CMD_SAVE_TRACKS === _currentCommand) {
-            console.log("[stream] save");
-            //console.log(">> TRACKS WERE SAVED");
-
-            //_queue = _queue.slice(1);
-            _currentCommand = -1;
+        } else if (CMD_SAVE_TRACKS === cmd) {
+            _eventHandler.save();
         }
     }
 
     function onClose(e) {
-        console.log(">> connection closed", e);
+        console.warn(">> connection closed", e);
     }
 
     function onError(e) {
         console.error(">> connection error'd", e);
     }
-    console.log("pew", cfg.socketURL);
-    _ws = new WebSocket(cfg.socketURL);
-    _ws.binaryType = "arraybuffer";
+
     _ws.onopen = onOpen;
     _ws.onmessage = onMessage;
     _ws.onclose = onClose;
@@ -164,42 +127,29 @@ JSRocket.SyncDeviceClient = function (cfg) {
     }
 
     function toInt(arr){
-        var res = 0,
-            i = arr.length - 1;
 
-        for(; i > 0; i--) {
-            res += parseInt(arr[i], 10) * Math.pow(256, (arr.length - 1) - i);
+        var i = 0,
+            view = new DataView(new ArrayBuffer(arr.length));
+
+        for(;i < arr.length; i++) {
+            view.setUint8(i, arr[i]);
         }
 
-        return res;
+        if(view.byteLength === 1) {
+            return view.getInt8(0);
+        } else {
+            return view.getInt32(0);
+        }
     }
 
     function toFloat(arr) {
-        //identical to ws.rQshift32(), but no need to read the queue again
-        var i = 0,
-            n = (arr[i++] << 24) +
-                (arr[i++] << 16) +
-                (arr[i++] << 8) +
-                (arr[i++]      ),
-        //https://groups.google.com/forum/?fromgroups=#!topic/comp.lang.javascript/YzqYOCyWlNA
-            sign = (n >> 31) * 2 + 1, // +1 or -1.
-            exp = (n >>> 23) & 0xff,
-            mantissa = n & 0x007fffff;
+        var view = new DataView(new ArrayBuffer(4));
+        view.setUint8(0, arr[0]);
+        view.setUint8(1, arr[1]);
+        view.setUint8(2, arr[2]);
+        view.setUint8(3, arr[3]);
 
-        if (exp === 0xff) {
-            // NaN or Infinity
-            return mantissa ? NaN : sign * Infinity;
-        } else if (exp) {
-            // Normalized value
-            exp -= 127;
-
-            // Add implicit bit in normal mode.
-            mantissa |= 0x00800000;
-        } else {
-            // Subnormal number
-            exp = -126;
-        }
-        return sign * mantissa * Math.pow(2, exp - 23);
+        return view.getFloat32(0);
     }
 
     function setEvent(evt, handler) {

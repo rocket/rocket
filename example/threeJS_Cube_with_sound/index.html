@@ -78,6 +78,7 @@
                 _syncDevice.setConfig({'rocketXML':'cube.rocket'});
                 _syncDevice.init("demo");
             } else {
+                //_syncDevice.setConfig({'socketURL':'ws://192.168.0.100:1338'});
                 _syncDevice.init();
             }
 
@@ -120,8 +121,6 @@
 
         function onSyncUpdate(row) {
 
-            console.log("onSyncUpdate", _isAudioLoaded);
-
             if (!isNaN(row) && _isAudioLoaded) {
                 _row = row;
                 _audio.currentTime = _row / ROW_RATE;
@@ -150,11 +149,11 @@
                 //no timeframe, resulting in Rocket setting row 2 and we report
                 //row 1 back - thus Rocket spasming out
                 _row = _audio.currentTime * ROW_RATE;
+
+				// this informs Rocket where we are
+            	_syncDevice.update(_row);
             }
-            
-            // this informs Rocket where we are
-            _syncDevice.update(_row);
-              
+
             var rot = (_cameraRotation.getValue(_row) || 0) / 180 * Math.PI,
                 color = new THREE.Color();
 

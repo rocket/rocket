@@ -7,9 +7,7 @@ module.exports = function (grunt) {
                 '<%= grunt.template.today("yyyy-mm-dd") %>\n' +
                 '<%= pkg.homepage ? "* " + pkg.homepage + "\n" : "" %>' +
                 '* Copyright (c) <%= grunt.template.today("yyyy") %> <%= pkg.author.name %>;' +
-                ' Licensed <%= _.pluck(pkg.licenses, "type").join(", ") %>*/\n',
-            bannerWithWebsockify:'/* Contains util.js and websock.js from https://github.com/kanaka/websockify'+
-                '* Licensed MPL 2.0 */\n'
+                ' Licensed <%= _.pluck(pkg.licenses, "type").join(", ") %>*/\n'
         },
         concat:{
             lite:{
@@ -24,8 +22,6 @@ module.exports = function (grunt) {
             dist:{
                 src:[
                     'src/jsRocket.js',
-                    'src/websockifyDependency/util.js',
-                    'src/websockifyDependency/websock.js',
                     'src/syncdata.js',
 					'src/synctrack.js',
 					'src/syncdeviceplayer.js',
@@ -40,7 +36,7 @@ module.exports = function (grunt) {
                 dest:'build/<%= pkg.name %>.sans-socket.min.js'
             },
             dist:{
-                src :['<banner:meta.bannerLite>','<banner:meta.bannerWithWebsockify>', '<config:concat.dist.dest>'],
+                src :['<banner:meta.bannerLite>', '<config:concat.dist.dest>'],
                 dest:'build/<%= pkg.name %>.min.js'
             }
         },
@@ -66,10 +62,6 @@ module.exports = function (grunt) {
             },
             globals:{
                 'JSRocket':true,
-                'Websock':true,
-                'ActiveXObject':true,
-                'Base64':true,
-                'Websock_native':true,
                 module :false
             }
         }
