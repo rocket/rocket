@@ -9,10 +9,9 @@ JSRocket.SyncDeviceClient = function (cfg) {
         CMD_PAUSE = 4,
         CMD_SAVE_TRACKS = 5;
 
-    var _queueClearTimer,
-        _currentCommand = -1,
+    var _currentCommand = -1,
         _queue = [],
-        _ws = new Websock(),
+        _ws,
         _syncData = new JSRocket.SyncData(),
         _eventHandler = {
             'ready' :function () {
@@ -25,17 +24,16 @@ JSRocket.SyncDeviceClient = function (cfg) {
             }
         };
 
-    _ws.open(cfg.socketURL);
-
-    function onOpen() {
-        _ws.send_string('hello, synctracker!');
+    function onOpen(e) {
+        console.log("[onOpen]", e);
+        _ws.send('hello, synctracker!');
     }
 
-    function onMessage() {
+    function onMessage(e) {
 
-        var msg = _ws.rQshiftBytes();
+        _queue = (new Uint8Array(e.data));
 
-        _queue = (_queue).concat(msg);
+        console.log("[onMessage]", _queue);
 
         readStream();
     }
@@ -51,6 +49,7 @@ JSRocket.SyncDeviceClient = function (cfg) {
 
         //Handshake
         if ((_currentCommand === 104) && (len >= 12)) {
+            console.log("[handshake]");
 
             _queue = [];
             _currentCommand = -1;
@@ -61,8 +60,8 @@ JSRocket.SyncDeviceClient = function (cfg) {
         } else if ((CMD_PAUSE === _currentCommand) && (len >= 2)) {
 
             value = parseInt(_queue[1], 10);
-
-            _queue = _queue.slice(2);
+            console.log("[stream] pause", value);
+            //_queue = _queue.slice(2);
             _currentCommand = -1;
 
             if (value === 1) {
@@ -73,25 +72,28 @@ JSRocket.SyncDeviceClient = function (cfg) {
 
             //SET_ROW
         } else if ((CMD_SET_ROW === _currentCommand) && (len >= 5)) {
+            console.log("[stream] row");
 
-            row = toInt(_queue.slice(1, 5));
-
-            _queue = _queue.slice(5);
+            row = toInt(_queue.subarray(1, 5));
+            console.log("[stream] row>>",_queue.subarray(1, 5), row);
+            //_queue = _queue.slice(5);
             _currentCommand = -1;
 
             _eventHandler.update(row);
 
             //SET_KEY
         } else if ((CMD_SET_KEY === _currentCommand) && (len >= 14)) {
+            console.log("[stream] key");
 
-            track = toInt(_queue.slice(1, 5));
-            row = toInt(_queue.slice(5, 9));
-            value = parseInt(Math.round(toFloat(_queue.slice(9, 13)) * 1000) / 1000, 10);
-            interpolation = parseInt(_queue.slice(13, 14).join(''), 10);
+            track = toInt(_queue.subarray(1, 5));
+            row = toInt(_queue.subarray(5, 9));
+            value = parseInt(Math.round(toFloat(_queue.subarray(9, 13)) * 1000) / 1000, 10);
+            interpolation = parseInt(_queue.subarray(13, 14)[0], 10);
 
             _syncData.getTrack(track).add(row, value, interpolation);
 
-            _queue = _queue.slice(14);
+            console.log("setKey", track, row, value, interpolation, _queue.subarray(13, 14));
+
             _currentCommand = -1;
 
             //don't set row, as this could also be a interpolation change
@@ -99,46 +101,42 @@ JSRocket.SyncDeviceClient = function (cfg) {
 
             //DELETE
         } else if ((CMD_DELETE_KEY === _currentCommand) && (len >= 9)) {
+            console.log("[stream] delete");
 
-            track = toInt(_queue.slice(1, 5));
-            row = toInt(_queue.slice(5, 9));
+            track = toInt(_queue.subarray(1, 5));
+            row = toInt(_queue.subarray(5, 9));
 
             _syncData.getTrack(track).remove(row);
 
-            _queue = _queue.slice(9);
+            //_queue = _queue.slice(9);
             _currentCommand = -1;
 
             _eventHandler.update(row);
 
             //SAVE
         } else if (CMD_SAVE_TRACKS === _currentCommand) {
-
+            console.log("[stream] save");
             //console.log(">> TRACKS WERE SAVED");
 
-            _queue = _queue.slice(1);
+            //_queue = _queue.slice(1);
             _currentCommand = -1;
         }
-
-        //clearing what's left in the queue
-        clearInterval(_queueClearTimer);
-
-        if (_queue.length >= 2) {
-            _queueClearTimer = setInterval(readStream, 1);
-        }
     }
 
-    function onClose() {
-        //console.log(">> connection closed");
+    function onClose(e) {
+        console.log(">> connection closed", e);
     }
 
-    function onError() {
-        //console.error(">> connection error'd");
+    function onError(e) {
+        console.error(">> connection error'd", e);
     }
-
-    _ws.on('open', onOpen);
-    _ws.on('message', onMessage);
-    _ws.on('close', onClose);
-    _ws.on('error', onError);
+    console.log("pew", cfg.socketURL);
+    _ws = new WebSocket(cfg.socketURL);
+    _ws.binaryType = "arraybuffer";
+    _ws.onopen = onOpen;
+    _ws.onmessage = onMessage;
+    _ws.onclose = onClose;
+    _ws.onerror = onError;
 
     function getTrack(name) {
 
@@ -148,9 +146,9 @@ JSRocket.SyncDeviceClient = function (cfg) {
             return _syncData.getTrack(index);
         }
 
-        _ws.send([CMD_GET_TRACK, 0, 0, 0, _syncData.getTrackLength(), 0, 0, 0, (name.length)]);
-        _ws.send_string(name);
-        _ws.flush();
+        _ws.send(new Uint8Array([CMD_GET_TRACK, 0, 0,  0, name.length]).buffer);
+        _ws.send(name);
+
         _syncData.createIndex(name);
         return _syncData.getTrack(_syncData.getTrackLength() - 1);
     }
@@ -162,8 +160,7 @@ JSRocket.SyncDeviceClient = function (cfg) {
                         (row >> 8) & 0xFF,
                         (row      ) & 0xFF];
 
-        _ws.send([CMD_SET_ROW, streamInt[0], streamInt[1], streamInt[2], streamInt[3]]);
-        _ws.flush();
+        _ws.send(new Uint8Array([CMD_SET_ROW, streamInt[0], streamInt[1], streamInt[2], streamInt[3]]).buffer);
     }
 
     function toInt(arr){
