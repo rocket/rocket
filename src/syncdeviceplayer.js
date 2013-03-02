@@ -51,8 +51,6 @@ JSRocket.SyncDevicePlayer = function (cfg) {
             var track = getTrack(trackList[t].getAttribute('name')),
                 keyList = trackList[t].getElementsByTagName('key');
 
-            var pew = Date.now();
-
             for (k = 0, kLen = keyList.length; k < kLen; k++) {
                 key = keyList[k];
                 track.add(parseInt(key.getAttribute('row'), 10),
