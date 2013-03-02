@@ -17,8 +17,6 @@ JSRocket.Track = function () {
             upper = bound.high,
             v;
 
-        //console.log("lower:", lower, " upper:", upper, _track, _track[lower]);
-
         if (isNaN(lower)) {
 
             return NaN;
@@ -69,7 +67,7 @@ JSRocket.Track = function () {
         return {"low":lower, "high":upper};
     }
 
-    function add(row, value, interpolation) {
+    function add(row, value, interpolation, delaySort) {
         remove(row);
 
         //index lookup table
@@ -77,7 +75,14 @@ JSRocket.Track = function () {
         _track[row] = { "value"         :value,
                         "interpolation" :interpolation};
 
-        //lowest first
+        //parser calls this quite often, so we sort later
+        if(delaySort !== true) {
+            sortIndex();
+        }
+    }
+
+    function sortIndex() {
+
         _index = _index.sort(function (a, b) {
             return a - b;
         });
@@ -92,6 +97,7 @@ JSRocket.Track = function () {
 
     return {
         getValue:getValue,
+        sortIndex:sortIndex,
         add     :add,
         remove  :remove
     };

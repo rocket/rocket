@@ -38,26 +38,30 @@ JSRocket.SyncDevicePlayer = function (cfg) {
     }
 
     function readXML(xmlString) {
-        var xml = (new DOMParser()).parseFromString(xmlString, 'text/xml'),
-            tracks = xml.getElementsByTagName("tracks");
+        var key,
+            t = 0, tLen, k = 0, kLen,
+            xml = (new DOMParser()).parseFromString(xmlString, 'text/xml'),
+            tracks = xml.getElementsByTagName('tracks');
 
         //<tracks>
-        for (var i = 0; i < tracks.length; i++) {
-            //<tracks><track>
-            var trackList = tracks[i].getElementsByTagName("track");
+        var trackList = tracks[0].getElementsByTagName('track');
 
-            for (var c = 0; c < trackList.length; c++) {
+        for (t, tLen = trackList.length; t < tLen; t++) {
 
-                var track = getTrack(trackList[c].getAttribute("name")),
-                    keyList = trackList[c].getElementsByTagName("key");
+            var track = getTrack(trackList[t].getAttribute('name')),
+                keyList = trackList[t].getElementsByTagName('key');
 
-                for (var u = 0; u < keyList.length; u++) {
+            var pew = Date.now();
 
-                    track.add(parseInt(keyList[u].getAttribute("row"), 10),
-                        parseFloat(keyList[u].getAttribute("value")),
-                        parseInt(keyList[u].getAttribute("interpolation"), 10));
-                }
+            for (k = 0, kLen = keyList.length; k < kLen; k++) {
+                key = keyList[k];
+                track.add(parseInt(key.getAttribute('row'), 10),
+                    parseFloat(key.getAttribute('value')),
+                    parseInt(key.getAttribute('interpolation'), 10),
+                    true);
+
             }
+            track.sortIndex();
         }
 
         _eventHandler.ready();
