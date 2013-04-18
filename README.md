@@ -1,20 +1,16 @@
 jsRocket
 ========
 Let's you use <a href="https://github.com/kusma/rocket">GNU Rocket</a> with your JavaScript / Browser demo.
-Currently depends on <a href="https://github.com/kanaka/websockify">Websockify</a>, which acts as a connector between the browser and GNU Rocket.
 
 tl;dr
 -----
-<a href="https://github.com/mog/jsRocket/wiki/Screenshots">Show me screenshots</a>.
+<a href="https://github.com/mog/jsRocket/wiki/Screenshots"><img src="https://a248.e.akamai.net/camo.github.com/ad694c41ec7eb0e454b310866e207fbd4c705d49/687474703a2f2f692e696d6775722e636f6d2f6f7a55454530592e706e67"></a>.
 
 Rocket?
 -------
 To sync stuff to music, or just change values over time, you might currently hardcode them somewhere in your demo. Rocket gives you a tracker alike interface, which might make your musician feel right at home.
 
 **Windows**
-
-<a href="https://github.com/kanaka/websockify/downloads">Download Websockify as EXE</a>
-
 <a href="http://sourceforge.net/projects/rocket/">Download GNU Rocket</a>
 
 js?
@@ -33,7 +29,7 @@ var syncDevice = new JSRocket.SyncDevice(),
     //Beats per minute of your demo tune
     BPM = 170,
 
-    //The resolution between two beats, four is usually fine eight adds a bit more finer control
+    //The resolution between two beats, four is usually fine,- eight adds a bit more finer control
     ROWS_PER_BEAT = 8,
 
     //we calculate this now, so we can translate between rows and seconds later on
@@ -102,6 +98,7 @@ So, you're done with syncing, saved the rocket file and ready to win the compo.
 
 ```js
 //instead of connecting to the socket, you specify the rocket file (getConfig() works btw)
+//if you get "XMLHttpRequest cannot load.." then you're either not working on localhost, or are missing --allow-file-access-from-files as parameter for Chrome
 syncDevice.setConfig({rocketXML:"cube.rocket"});
 
 //you're about to demo! Make sure that pants are dropped.
@@ -113,7 +110,7 @@ There you either start the demo by playing your tune, or you load the ogg there.
 
 Good luck with the compo :)
 
-If you need a bit more space you can delete, or uncomment, the following:
+If you need a bit more space you can delete, or disable, the following functions:
 ```js
 onSyncUpdate
 onPlay
@@ -128,24 +125,13 @@ Additional Notes
 syncDevice.on('_HANDLER_', function(){});
 ```
 
-** Rocket **
-Listens on port 1338 on your localhost, which is hardcoded - so be sure to bend your websocket port to that port in the end.
+**GNU Rocket**
+Has WebSocket support now, thanks kusma <3, no need for Websockify anymore.
 
-** Websockify **
-I found it a bit of a pain to get it to run, however I'm not a Python person either - so it might just be me.
+Demos
+----------------
+<a href="http://pouet.net/prod.php?which=60815">Feliz Navis ASD by 3LN</a>
 
-For me Python 2.7 went smoother, as I was able to build an exe with it - an exe with a lot of extra files and combined is 24MB.
-I've not tried any other websocket bender, as this worked out of the box, they do have <a href="https://github.com/kanaka/websockify/wiki/Compiling-Websockify-as-Windows-Executable">documentation</a>
-Compiled I got a ~20mb folder with a exe.
+<a href="http://pouet.net/prod.php?which=61269">Cubedance by Indigo</a>
 
-If you need help, let them know.
-
-
-For the standard config use these:
-```cli
-websockify.exe 8080 localhost:1338
-```
-
-HALP
-----
-The websocket bender seems to be the biggest hurdle, if you find something easier let me know or pull :)
+<a href="http://plnkr.co/edit/uQO1MTeCLIoVLYbo0zim?p=preview">CubeDance Demo from the example folder</a>
