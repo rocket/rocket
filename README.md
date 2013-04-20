@@ -1,6 +1,6 @@
 jsRocket
 ========
-Let's you use <a href="https://github.com/kusma/rocket">GNU Rocket</a> with your JavaScript / Browser demo.
+Let's you use <a href="https://github.com/kusma/rocket/tree/work/websocket">GNU Rocket</a> with your JavaScript / Browser demo.
 
 tl;dr
 -----
@@ -11,7 +11,8 @@ Rocket?
 To sync stuff to music, or just change values over time, you might currently hardcode them somewhere in your demo. Rocket gives you a tracker alike interface, which might make your musician feel right at home.
 
 **Windows**
-<a href="http://sourceforge.net/projects/rocket/">Download GNU Rocket</a>
+Compiled from kusmas <a href="https://github.com/kusma/rocket/commit/0a7d3822bbe054fc718ffca9b1b374d43b9eddce>work/websocket</a> branch.
+<a href="https://github.com/mog/jsRocket/raw/RocketWebsocket/bin-windows/sync_editor.exe">Download GNU Rocket</a>
 
 js?
 ---
