@@ -129,6 +129,19 @@ Additional Notes
 syncDevice.on('_HANDLER_', function(){});
 ```
 
+```js
+//if Rocket spasms out when you move swiftly through the rows, and limbos between some rows
+function render() {
+    if(tune.paused === false){
+        //only update the row in Rocket when the demo is playing
+        _row = tune.currentTime * ROW_RATE;
+        _syncDevice.update(_row);
+    }
+    
+    //actual render code
+}
+```
+
 **GNU Rocket**
 Has WebSocket support now, thanks kusma <3, no need for Websockify anymore.
 
