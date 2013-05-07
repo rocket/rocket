@@ -11,7 +11,8 @@ using System::Runtime::InteropServices::Marshal;
 using DotRocket::Track;
 using DotRocket::PlayerDevice;
 
-private ref class PlayerTrack: public Track {
+private ref class PlayerTrack: public Track
+{
 	const sync_track *track;
 public:
 	PlayerTrack(const sync_track *track): track(track) {}

@@ -14,7 +14,8 @@ using DotRocket::Track;
 using DotRocket::Device;
 using DotRocket::ClientDevice;
 
-private ref class ClientTrack: public Track {
+private ref class ClientTrack: public Track
+{
 	const sync_track *track;
 public:
 	ClientTrack(const sync_track *track) : track(track) {}
@@ -24,14 +25,16 @@ public:
 	};
 };
 
-namespace {
-class DeviceReference {
-public:
-	DeviceReference(Device ^dev) : dev(dev) {}
-	Device ^GetDevice() { return dev; }
-private:
-	gcroot<Device^> dev;
-};
+namespace
+{
+	class DeviceReference
+	{
+	public:
+		DeviceReference(Device ^dev) : dev(dev) {}
+		Device ^GetDevice() { return dev; }
+	private:
+		gcroot<Device^> dev;
+	};
 }
 
 static void cb_pause(void *arg, int flag)
