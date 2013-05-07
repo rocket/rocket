@@ -28,9 +28,9 @@ public:
 	static Device ^DeviceCurrenltyBeingProcessed = nullptr;
 };
 
-void cb_pause(void *arg, int row)
+void cb_pause(void *arg, int flag)
 {
-	Callbacks::DeviceCurrenltyBeingProcessed->Pause(row);
+	Callbacks::DeviceCurrenltyBeingProcessed->Pause(!!flag);
 }
 
 void cb_set_row(void *arg, int row)
