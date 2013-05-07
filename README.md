@@ -1,6 +1,6 @@
 jsRocket
 ========
-Let's you use <a href="https://github.com/kusma/rocket/tree/work/websocket">GNU Rocket</a> with your JavaScript / Browser demo.
+Let's you use <a href="https://github.com/kusma/rocket/">GNU Rocket</a> with your JavaScript / Browser demo.
 
 tl;dr
 -----
