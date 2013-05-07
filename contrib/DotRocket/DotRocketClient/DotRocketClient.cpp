@@ -32,22 +32,22 @@ private:
 	gcroot<Device^> dev;
 };
 
-void cb_pause(void *arg, int flag)
+static void cb_pause(void *arg, int flag)
 {
 	((DeviceReference *)arg)->GetDevice()->Pause(!!flag);
 }
 
-void cb_set_row(void *arg, int row)
+static void cb_set_row(void *arg, int row)
 {
 	((DeviceReference *)arg)->GetDevice()->SetRow(row);
 }
 
-int cb_is_playing(void *arg)
+static int cb_is_playing(void *arg)
 {
 	return ((DeviceReference *)arg)->GetDevice()->IsPlaying();
 }
 
-sync_cb callbacks[] = {
+static sync_cb callbacks[] = {
 	cb_pause,
 	cb_set_row,
 	cb_is_playing
