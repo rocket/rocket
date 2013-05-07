@@ -17,7 +17,7 @@ private ref class ClientTrack: public Track {
 	const sync_track *track;
 public:
 	ClientTrack(const sync_track *track) : track(track) {}
-	virtual float GetValue(double time) override
+	virtual double GetValue(double time) override
 	{
 		return sync_get_val(track, time);
 	};

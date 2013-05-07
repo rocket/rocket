@@ -13,7 +13,7 @@ namespace DotRocket
 	public ref class Track abstract
 	{
 	public:
-		virtual float GetValue(double time) = 0;
+		virtual double GetValue(double time) = 0;
 	};
 
 	public delegate void PauseEventHandler(bool flag);
