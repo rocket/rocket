@@ -3,7 +3,6 @@
 #pragma once
 
 struct sync_device;
-struct sync_track;
 
 using namespace System;
 using namespace System::Collections::Generic;
