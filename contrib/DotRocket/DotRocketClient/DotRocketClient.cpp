@@ -82,7 +82,7 @@ ClientDevice::!ClientDevice()
 bool ClientDevice::Connect(System::String^ host, unsigned short port)
 {
 	char *chost = (char *)(void *)Marshal::StringToHGlobalAnsi(host);
-	int result = sync_connect((sync_device *)device, chost, port);
+	int result = sync_connect(device, chost, port);
 	Marshal::FreeHGlobal((System::IntPtr)chost);
 	return !result;
 }
