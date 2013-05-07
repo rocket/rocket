@@ -22,7 +22,7 @@ public:
 	virtual double GetValue(double time) override
 	{
 		return sync_get_val(track, time);
-	};
+	}
 };
 
 namespace
