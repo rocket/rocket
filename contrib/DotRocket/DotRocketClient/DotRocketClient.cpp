@@ -8,6 +8,7 @@
 using System::Runtime::InteropServices::Marshal;
 
 #include "DotRocketClient.h"
+#include <vcclr.h>
 
 using DotRocket::Track;
 using DotRocket::Device;
@@ -23,24 +24,27 @@ public:
 	};
 };
 
-ref class Callbacks {
+class DeviceReference {
 public:
-	static Device ^DeviceCurrenltyBeingProcessed = nullptr;
+	DeviceReference(Device ^dev) : dev(dev) {}
+	Device ^GetDevice() { return dev; }
+private:
+	gcroot<Device^> dev;
 };
 
 void cb_pause(void *arg, int flag)
 {
-	Callbacks::DeviceCurrenltyBeingProcessed->Pause(!!flag);
+	((DeviceReference *)arg)->GetDevice()->Pause(!!flag);
 }
 
 void cb_set_row(void *arg, int row)
 {
-	Callbacks::DeviceCurrenltyBeingProcessed->SetRow(row);
+	((DeviceReference *)arg)->GetDevice()->SetRow(row);
 }
 
 int cb_is_playing(void *arg)
 {
-	return !!Callbacks::DeviceCurrenltyBeingProcessed->IsPlaying();
+	return ((DeviceReference *)arg)->GetDevice()->IsPlaying();
 }
 
 sync_cb callbacks[] = {
@@ -83,6 +87,6 @@ bool ClientDevice::Connect(System::String^ host, unsigned short port)
 
 bool ClientDevice::Update(int row)
 {
-	Callbacks::DeviceCurrenltyBeingProcessed = this;
-	return !sync_update(device, row, callbacks, device);
+	DeviceReference devref(this);
+	return !sync_update(device, row, callbacks, &devref);
 }
