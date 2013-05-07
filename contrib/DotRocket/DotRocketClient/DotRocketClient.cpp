@@ -24,6 +24,7 @@ public:
 	};
 };
 
+namespace {
 class DeviceReference {
 public:
 	DeviceReference(Device ^dev) : dev(dev) {}
@@ -31,6 +32,7 @@ public:
 private:
 	gcroot<Device^> dev;
 };
+}
 
 static void cb_pause(void *arg, int flag)
 {
