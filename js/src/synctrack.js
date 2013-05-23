@@ -7,97 +7,69 @@ JSRocket.Track = function () {
         SMOOTH = 2,
         RAMP = 3;
 
-    var _track = [],
-        _index = [];
+    var data = [];
 
-    function getValue(row) {
-        var intRow = Math.floor(row),
-            bound = getBound(intRow),
-            lower = bound.low,
-            upper = bound.high,
-            v;
+    function findKeyIndex(keys, row) {
+        var lo = 0, hi = keys.length;
+        while (lo < hi) {
+            var mi = ((hi + lo) / 2) | 0;
 
-        if (isNaN(lower)) {
-
-            return NaN;
-
-        } else if ((isNaN(upper)) || (_track[lower].interpolation === STEP)) {
-
-            return _track[lower].value;
-
-        } else {
-
-            switch (_track[lower].interpolation) {
-
-                case LINEAR:
-                    v = (row - lower) / (upper - lower);
-                    return _track[lower].value + (_track[upper].value - _track[lower].value) * v;
-
-                case SMOOTH:
-                    v = (row - lower) / (upper - lower);
-                    v = v * v * (3 - 2 * v);
-                    return (_track[upper].value * v) + (_track[lower].value * (1 - v));
-
-                case RAMP:
-                    v = Math.pow((row - lower) / (upper - lower), 2);
-                    return _track[lower].value + (_track[upper].value - _track[lower].value) * v;
+            if (keys[mi] < row) {
+                lo = mi + 1;
+            } else if (keys[mi] > row) {
+                hi = mi;
+            } else {
+                return mi;
             }
         }
-
-        return NaN;
+        return lo - 1;
     }
 
-    function getBound(rowIndex) {
-        var lower = NaN,
-            upper = NaN;
+    function getValue(row) {
+        var keys = Object.keys(data);
 
-        for (var i = 0; i < _index.length; i++) {
+        if (!keys.length) {
+            return 0.0;
+	}
 
-            if (_index[i] <= rowIndex) {
-
-                lower = _index[i];
-
-            } else if (_index[i] >= rowIndex) {
-
-                upper = _index[i];
-                break;
-            }
+        var idx = findKeyIndex(keys, Math.floor(row));
+        if (idx < 0) {
+            return data[keys[0]].value;
+        }
+        if (idx > keys.length - 2) {
+            return data[keys[keys.length - 1]].value;
         }
 
-        return {"low":lower, "high":upper};
+        // lookup keys and values
+        var k0 = keys[idx], k1 = keys[idx + 1];
+        var a = data[k0].value;
+        var b = data[k1].value;
+
+        // interpolate
+        var t = (row - k0) / (k1 - k0);
+        switch (data[k0].interpolation) {
+        case 0:
+          return a;
+        case 1:
+          return a + (b - a) * t;
+        case 2:
+          return a + (b - a) * t * t * (3 - 2 * t);
+        case 3:
+          return a + (b - a) * Math.pow(t, 2.0);
+        }
     }
 
     function add(row, value, interpolation, delaySort) {
-        remove(row);
-
-        //index lookup table
-        _index.push(row);
-        _track[row] = { "value"         :value,
-                        "interpolation" :interpolation};
-
-        //parser calls this quite often, so we sort later
-        if(delaySort !== true) {
-            sortIndex();
-        }
-    }
-
-    function sortIndex() {
-
-        _index = _index.sort(function (a, b) {
-            return a - b;
-        });
+        data[row] = { "value"         :value,
+                      "interpolation" :interpolation};
     }
 
     function remove(row) {
-        if (_index.indexOf(row) > -1) {
-            _index.splice(_index.indexOf(row), 1);
-            delete _track[row];
-        }
+        delete data[row];
     }
 
     return {
         getValue:getValue,
-        sortIndex:sortIndex,
         add     :add,
         remove  :remove
     };
