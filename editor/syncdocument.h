@@ -240,7 +240,7 @@ public:
 		return cmd;
 	}
 
-	size_t getTrackOrderCount() const
+	size_t getTrackCount() const
 	{
 		return trackOrder.size();
 	}

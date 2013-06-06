@@ -4,14 +4,19 @@
 
 #pragma once
 
-#include "syncdocument.h"
 #include <string>
+#define NOMINMAX
+#define WIN32_LEAN_AND_MEAN
+#define VC_EXTRALEAN
+#include <windows.h>
 
 // custom messages
 #define WM_REDO         (WM_USER + 0x40 + 3)
 #define WM_ROWCHANGED   (WM_USER + 0x40 + 4)
 #define WM_TRACKCHANGED (WM_USER + 0x40 + 5)
 #define WM_CURRVALDIRTY (WM_USER + 0x40 + 6)
+
+class SyncDocument;
 
 class TrackView
 {
@@ -30,16 +35,10 @@ public:
 
 	const SyncDocument *getDocument() const { return document; }
 	SyncDocument *getDocument() { return document; }
-	
+
 	void setRows(size_t rows);
-	size_t getRows() const
-	{
-		const SyncDocument *doc = getDocument();
-		if (!doc)
-			return 0;
-		return doc->getRows();
-	}
-	
+	size_t getRows() const;
+
 	void setFont(HFONT font);
 	
 	void editEnterValue();
@@ -168,13 +167,8 @@ private:
 	int getScreenX(size_t track) const;
 	int getTrackFromX(int x) const;
 
-	size_t getTrackCount() const
-	{
-		const SyncDocument *doc = getDocument();
-		if (NULL == doc) return 0;
-		return int(doc->getTrackOrderCount());
-	};
-	
+	size_t getTrackCount() const;
+
 	int selectStartTrack, selectStopTrack;
 	int selectStartRow, selectStopRow;
 	

@@ -3,9 +3,11 @@
  */
 
 #include "trackview.h"
+#include "syncdocument.h"
 #include <vector>
 #include <algorithm>
 #include <stdio.h>
+#include <assert.h>
 
 using std::min;
 using std::max;
@@ -693,6 +695,21 @@ void TrackView::setRows(size_t rows)
 	setEditRow(min(editRow, int(rows) - 1));
 }
 
+size_t TrackView::getRows() const
+{
+	const SyncDocument *doc = getDocument();
+	if (!doc)
+		return 0;
+	return doc->getRows();
+}
+
+size_t TrackView::getTrackCount() const
+{
+	const SyncDocument *doc = getDocument();
+	if (!doc)
+		return 0;
+	return doc->getTrackCount();
+};
 
 LRESULT TrackView::onVScroll(UINT sbCode, int /*newPos*/)
 {

@@ -24,6 +24,7 @@
 
 #include "trackview.h"
 #include "recentfiles.h"
+#include "syncdocument.h"
 
 #include <vector>
 static const wchar_t *mainWindowClassName = L"MainWindow";
