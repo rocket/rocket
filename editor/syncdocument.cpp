@@ -55,7 +55,7 @@ SyncDocument *SyncDocument::load(const std::wstring &fileName)
 
 					assert(!is_key_frame(ret->tracks[trackIndex], k.row));
 					if (sync_set_key(ret->tracks[trackIndex], &k))
-						throw std::bad_alloc("sync_set_key");
+						throw std::bad_alloc();
 				}
 			}
 		}
