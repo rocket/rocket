@@ -6,7 +6,7 @@
 #define SYNC_BASE_H
 
 /* configure inline keyword */
-#if !defined(__STDC_VERSION__) || (__STDC_VERSION__ < 199901L)
+#if (!defined(__STDC_VERSION__) || (__STDC_VERSION__ < 199901L)) && !defined(__cplusplus)
  #if defined(_MSC_VER) || defined(__GNUC__) || defined(__SASC)
   #define inline __inline
  #else
