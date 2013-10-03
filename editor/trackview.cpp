@@ -633,7 +633,7 @@ void TrackView::setEditRow(int newEditRow)
 	setScrollPos(scrollPosX, (editRow * rowHeight) - ((windowHeight - topMarginHeight) / 2) + rowHeight / 2);
 }
 
-void TrackView::setEditTrack(int newEditTrack, bool autoscroll)
+void TrackView::setEditTrack(int newEditTrack, bool autoscroll, bool selecting)
 {
 	if (0 == getTrackCount()) return;
 	
@@ -646,7 +646,7 @@ void TrackView::setEditTrack(int newEditTrack, bool autoscroll)
 	
 	if (oldEditTrack != editTrack)
 	{
-		if (GetKeyState(VK_SHIFT) < 0)
+		if (selecting)
 		{
 			selectStopTrack = editTrack;
 			invalidateRange(oldEditTrack, editTrack, selectStartRow, selectStopRow);
@@ -936,6 +936,12 @@ LRESULT TrackView::onKeyDown(UINT keyCode, UINT /*flags*/)
 	
 	if (editString.empty())
 	{
+		bool selecting = GetKeyState(VK_SHIFT) < 0;
+		if (keyCode == VK_TAB) {
+			keyCode = selecting ? VK_LEFT : VK_RIGHT;
+			selecting = false;
+		}
+
 		switch (keyCode)
 		{
 		case VK_LEFT:
@@ -946,7 +952,7 @@ LRESULT TrackView::onKeyDown(UINT keyCode, UINT /*flags*/)
 					MessageBeep(~0U);
 			}
 			if (0 != getTrackCount())
-				setEditTrack(editTrack - 1);
+				setEditTrack(editTrack - 1, true, selecting);
 			else
 				MessageBeep(~0U);
 			break;
@@ -959,7 +965,7 @@ LRESULT TrackView::onKeyDown(UINT keyCode, UINT /*flags*/)
 					MessageBeep(~0U);
 			}
 			if (0 != getTrackCount())
-				setEditTrack(editTrack + 1);
+				setEditTrack(editTrack + 1, true, selecting);
 			else
 				MessageBeep(~0U);
 			break;

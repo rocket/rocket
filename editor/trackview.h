@@ -53,7 +53,7 @@ public:
 	void setEditRow(int newEditRow);
 	int  getEditRow() const { return editRow; }
 	
-	void setEditTrack(int newEditTrack, bool autoscroll = true);
+	void setEditTrack(int newEditTrack, bool autoscroll = true, bool selecting = false);
 	int  getEditTrack() const { return editTrack; }
 	
 	void selectAll()
