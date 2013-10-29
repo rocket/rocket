@@ -12,7 +12,7 @@ To sync stuff to music, or just change values over time, you might currently har
 
 **Windows**
 
-Compiled from kusmas <a href="https://github.com/kusma/rocket/commit/0a7d3822bbe054fc718ffca9b1b374d43b9eddce>work/websocket</a> branch.
+Compiled from kusmas <a href="https://github.com/kusma/rocket/commit/0a7d3822bbe054fc718ffca9b1b374d43b9eddce">work/websocket</a> branch.
 
 <a href="https://github.com/mog/jsRocket/raw/RocketWebsocket/bin-windows/sync_editor.exe">Download GNU Rocket</a>
 
@@ -152,3 +152,7 @@ Demos
 <a href="http://pouet.net/prod.php?which=61269">Cubedance by Indigo</a>
 
 <a href="http://plnkr.co/edit/uQO1MTeCLIoVLYbo0zim?p=preview">CubeDance Demo from the example folder</a>
+
+Other JS demoframeworks
+---------------------
+<a href="https://github.com/kaneel/LeSequencer">LeSequencer</a> Very tiny, targeted for musicians. 
