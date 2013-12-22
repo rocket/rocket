@@ -168,7 +168,7 @@ static void setDocument(SyncDocument *newDoc)
 	SyncDocument *oldDoc = trackView->getDocument();
 
 	if (oldDoc && oldDoc->clientSocket.connected()) {
-		// delete old key-frames
+		// delete old key frames
 		for (size_t i = 0; i < oldDoc->num_tracks; ++i) {
 			sync_track *t = oldDoc->tracks[i];
 			for (int j = 0; j < t->num_keys; ++j)
@@ -640,7 +640,7 @@ static void processCommand(ClientSocket &sock)
 			// setup remap
 			doc->clientSocket.clientTracks[trackName] = clientIndex++;
 
-			// send key-frames
+			// send key frames
 			t = doc->tracks[serverIndex];
 			for (int i = 0; i < (int)t->num_keys; ++i)
 				doc->clientSocket.sendSetKeyCommand(trackName,

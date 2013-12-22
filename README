@@ -37,13 +37,13 @@ Using the editor
 The GNU Rocket editor is laid out like a music-tracker; tracks (or columns)
 and rows. Each track represents a separate "variable" in the demo, over the
 entire time-domain of the demo. Each row represents a specific point in time,
-and consists of a set of key-frames. The key-frames are interpolated over time
+and consists of a set of key frames. The key frames are interpolated over time
 according to their interpolation modes.
 
 Interpolation modes
 -------------------
-Each key-frame has an interpolation mode associated with it, and that
-interpolation mode is valid until the next key-frame is reached. The different
+Each key frame has an interpolation mode associated with it, and that
+interpolation mode is valid until the next key frame is reached. The different
 interpolation modes are the following:
 
 * Step   : This is the simplest mode, and always returns the key's value.
@@ -65,8 +65,8 @@ Up/Down/Left/Right        Move cursor
 PgUp/PgDn                 Move cursor 16 rows up/down
 Home/End                  Move cursor to begining/end
 Ctrl+Left/Right           Move track
-Enter                     Enter key-frame value
-Del                       Delete key-frame
+Enter                     Enter key frame value
+Del                       Delete key frame
 i                         Enumerate interpolation mode
 k                         Toggle bookmark
 Alt+PgUp/PgDn             Go to prev/next bookmark
@@ -76,7 +76,7 @@ Ctrl+C                    Copy
 Ctrl+V                    Paste
 Ctrl+Z                    Undo
 Shift+Ctrl+Z              Redo
-Ctrl+B                    Bias keyframes
+Ctrl+B                    Bias key frames
 Shift+Ctrl+Up/Down        Quick-bias by +/- 0.1
 Ctrl+Up/Down              Quick-bias by +/- 1
 Ctrl+PgUp/PgDn            Quick-bias by +/- 10
