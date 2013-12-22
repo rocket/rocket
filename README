@@ -69,7 +69,7 @@ Enter                     Enter key-frame value
 Del                       Delete key-frame
 i                         Enumerate interpolation mode
 k                         Toggle bookmark
-Alt+PgUp/PgDn           Go to prev/next bookmark
+Alt+PgUp/PgDn             Go to prev/next bookmark
 Space                     Pause/Resume demo
 Shift+Up/Down/Left/Right  Select
 Ctrl+C                    Copy
