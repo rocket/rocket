@@ -82,9 +82,9 @@ Ctrl+Up/Down              Quick-bias by +/- 1
 Ctrl+PgUp/PgDn            Quick-bias by +/- 10
 Shift+Ctrl+PgUp/PgDn      Quick-bias by +/- 100
 
-Bugs and feed-back
+Bugs and feedback
 ------------------
-Please report bugs or other feed-back to the GNU Rocket mailing list:
+Please report bugs or other feedback to the GNU Rocket mailing list:
 rocket-users@lists.sourceforge.net
 
 Patches or technical questions can be sent to the developer-list:
