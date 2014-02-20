@@ -183,7 +183,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\sync\data.c"
+				RelativePath="..\lib\data.c"
 				>
 			</File>
 			<File
@@ -199,7 +199,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\sync\track.c"
+				RelativePath="..\lib\track.c"
 				>
 			</File>
 			<File
@@ -217,11 +217,11 @@
 				>
 			</File>
 			<File
-				RelativePath="..\sync\data.h"
+				RelativePath="..\lib\data.h"
 				>
 			</File>
 			<File
-				RelativePath="..\sync\device.h"
+				RelativePath="..\lib\device.h"
 				>
 			</File>
 			<File
@@ -233,7 +233,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\sync\sync.h"
+				RelativePath="..\lib\sync.h"
 				>
 			</File>
 			<File
@@ -241,7 +241,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\sync\track.h"
+				RelativePath="..\lib\track.h"
 				>
 			</File>
 			<File

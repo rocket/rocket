@@ -2,7 +2,7 @@
  * For conditions of distribution and use, see copyright notice in COPYING
  */
 
-#include "../sync/base.h"
+#include "../lib/base.h"
 #include "afxres.h"
 #include "resource.h"
 
@@ -67,7 +67,7 @@ static RecentFiles mruFileList(NULL);
 #define WM_SETROWS (WM_USER+1)
 #define WM_BIASSELECTION (WM_USER+2)
 
-#include "../sync/sync.h"
+#include "../lib/sync.h"
 
 static LRESULT CALLBACK setRowsDialogProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 {

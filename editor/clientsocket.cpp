@@ -1,5 +1,5 @@
 #include "clientsocket.h"
-#include "../sync/track.h"
+#include "../lib/track.h"
 #include <wincrypt.h>
 
 #include <cassert>
