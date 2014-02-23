@@ -193,13 +193,13 @@ int main(int argc, char *argv[])
 
 		/* draw */
 
-		glClearColor(sync_get_val(clear_r, row),
-		             sync_get_val(clear_g, row),
-		             sync_get_val(clear_b, row), 1.0f);
+		glClearColor(float(sync_get_val(clear_r, row)),
+		             float(sync_get_val(clear_g, row)),
+		             float(sync_get_val(clear_b, row)), 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-		float rot = sync_get_val(cam_rot, row);
-		float dist = sync_get_val(cam_dist, row);
+		float rot = float(sync_get_val(cam_rot, row));
+		float dist = float(sync_get_val(cam_dist, row));
 
 		glMatrixMode(GL_PROJECTION);
 		glLoadIdentity();
