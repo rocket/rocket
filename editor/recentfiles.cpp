@@ -1,4 +1,4 @@
-#include "../sync/base.h"
+#include "../lib/base.h"
 #include "recentfiles.h"
 #include "resource.h"
 #include <assert.h>

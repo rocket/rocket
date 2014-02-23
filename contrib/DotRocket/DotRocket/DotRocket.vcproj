@@ -59,7 +59,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="..\..\..\Release\sync_player.lib"
+				AdditionalDependencies="..\..\..\lib\librocket-playerd.lib"
 				GenerateDebugInformation="true"
 				AssemblyDebug="1"
 				TargetMachine="1"
@@ -129,7 +129,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="..\..\..\Release\sync_player.lib"
+				AdditionalDependencies="..\..\..\lib\librocket-player.lib"
 				TargetMachine="1"
 			/>
 			<Tool

@@ -5,7 +5,7 @@
 #pragma once
 
 extern "C" {
-#include "../sync/data.h"
+#include "../lib/data.h"
 }
 
 #include <stack>

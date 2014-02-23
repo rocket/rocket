@@ -4,8 +4,8 @@
 
 #include "DotRocket.h"
 
-#include "../../../sync/sync.h"
-#include "../../../sync/track.h"
+#include "../../../lib/sync.h"
+#include "../../../lib/track.h"
 
 using System::Runtime::InteropServices::Marshal;
 using DotRocket::Track;

@@ -19,25 +19,23 @@ else
 	LDLIBS += -lm
 endif
 
-SYNC_OBJS = \
-	sync/data.o \
-	sync/device.o \
-	sync/track.o
+LIB_OBJS = \
+	lib/data.o \
+	lib/device.o \
+	lib/track.o
 
 all: lib/librocket.a
 
-bin/example_bass$X: CPPFLAGS += -Iexample_bass/include
-bin/example_bass$X: CXXFLAGS += $(SDL_CFLAGS)
-bin/example_bass$X: LDLIBS += -Lexample_bass/lib -lbass
-bin/example_bass$X: LDLIBS += $(OPENGL_LIBS) $(SDL_LIBS)
+example_bass/example_bass$X: CPPFLAGS += -Iexample_bass/include
+example_bass/example_bass$X: CXXFLAGS += $(SDL_CFLAGS)
+example_bass/example_bass$X: LDLIBS += -Lexample_bass/lib -lbass
+example_bass/example_bass$X: LDLIBS += $(OPENGL_LIBS) $(SDL_LIBS)
 
 clean:
-	$(RM) -rf $(SYNC_OBJS) lib bin
+	$(RM) -rf $(LIB_OBJS) lib/librocket.a
 
-lib/librocket.a: $(SYNC_OBJS)
-	@mkdir -p lib
+lib/librocket.a: $(LIB_OBJS)
 	$(AR) $(ARFLAGS) $@ $^
 
-bin/example_bass$X: example_bass/example_bass.cpp lib/librocket.a
-	@mkdir -p bin
+example_bass/example_bass$X: example_bass/example_bass.cpp lib/librocket.a
 	$(LINK.cpp) $^ $(LOADLIBES) $(LDLIBS) -o $@

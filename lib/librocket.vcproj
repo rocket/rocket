@@ -2,9 +2,9 @@
 <VisualStudioProject
 	ProjectType="Visual C++"
 	Version="9,00"
-	Name="sync_player"
+	Name="librocket"
 	ProjectGUID="{5866042C-7FCB-4DB1-BAAD-44DF6567511F}"
-	RootNamespace="sync_player"
+	RootNamespace="librocket"
 	Keyword="Win32Proj"
 	TargetFrameworkVersion="131072"
 	>
@@ -21,7 +21,7 @@
 	<Configurations>
 		<Configuration
 			Name="Debug|Win32"
-			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
+			OutputDirectory="$(SolutionDir)\lib"
 			IntermediateDirectory="$(ConfigurationName)"
 			ConfigurationType="4"
 			CharacterSet="2"
@@ -63,6 +63,7 @@
 			/>
 			<Tool
 				Name="VCLibrarianTool"
+				OutputFile="$(OutDir)\$(ProjectName)-playerd.lib"
 			/>
 			<Tool
 				Name="VCALinkTool"
@@ -82,7 +83,7 @@
 		</Configuration>
 		<Configuration
 			Name="Release|Win32"
-			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
+			OutputDirectory="$(SolutionDir)\lib"
 			IntermediateDirectory="$(ConfigurationName)"
 			ConfigurationType="4"
 			CharacterSet="2"
@@ -122,6 +123,7 @@
 			/>
 			<Tool
 				Name="VCLibrarianTool"
+				OutputFile="$(OutDir)\$(ProjectName)-player.lib"
 			/>
 			<Tool
 				Name="VCALinkTool"
@@ -141,7 +143,7 @@
 		</Configuration>
 		<Configuration
 			Name="Debug Client|Win32"
-			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
+			OutputDirectory="$(SolutionDir)\lib"
 			IntermediateDirectory="$(ConfigurationName)"
 			ConfigurationType="4"
 			CharacterSet="2"
@@ -184,6 +186,7 @@
 			<Tool
 				Name="VCLibrarianTool"
 				AdditionalDependencies="ws2_32.lib"
+				OutputFile="$(OutDir)\$(ProjectName)d.lib"
 			/>
 			<Tool
 				Name="VCALinkTool"
@@ -203,7 +206,7 @@
 		</Configuration>
 		<Configuration
 			Name="Release Client|Win32"
-			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
+			OutputDirectory="$(SolutionDir)\lib"
 			IntermediateDirectory="$(ConfigurationName)"
 			ConfigurationType="4"
 			CharacterSet="2"
@@ -520,15 +523,15 @@
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
 			>
 			<File
-				RelativePath=".\sync\data.c"
+				RelativePath=".\data.c"
 				>
 			</File>
 			<File
-				RelativePath=".\sync\device.c"
+				RelativePath=".\device.c"
 				>
 			</File>
 			<File
-				RelativePath=".\sync\track.c"
+				RelativePath=".\track.c"
 				>
 			</File>
 		</Filter>
@@ -538,23 +541,23 @@
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}"
 			>
 			<File
-				RelativePath=".\sync\base.h"
+				RelativePath=".\base.h"
 				>
 			</File>
 			<File
-				RelativePath=".\sync\data.h"
+				RelativePath=".\data.h"
 				>
 			</File>
 			<File
-				RelativePath=".\sync\device.h"
+				RelativePath=".\device.h"
 				>
 			</File>
 			<File
-				RelativePath=".\sync\sync.h"
+				RelativePath=".\sync.h"
 				>
 			</File>
 			<File
-				RelativePath=".\sync\track.h"
+				RelativePath=".\track.h"
 				>
 			</File>
 		</Filter>
