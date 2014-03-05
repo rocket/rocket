@@ -132,7 +132,6 @@ int TrackView::getTrackFromX(int x) const
 	return divfloor(x + scrollPosX - leftMarginWidth, trackWidth);
 }
 
-
 LRESULT TrackView::onCreate()
 {
 	setFont((HFONT)GetStockObject(SYSTEM_FIXED_FONT));
@@ -691,7 +690,7 @@ void TrackView::setRows(size_t rows)
 	assert(doc);
 
 	doc->setRows(rows);
-	InvalidateRect(getWin(), NULL, FALSE);
+	update();
 	setEditRow(min(editRow, int(rows) - 1));
 }
 
@@ -804,7 +803,7 @@ void TrackView::editEnterValue()
 		doc->exec(cmd);
 
 		SendMessage(GetParent(getWin()), WM_CURRVALDIRTY, 0, 0);
-		InvalidateRect(getWin(), NULL, FALSE);
+		update();
 	}
 	else
 		MessageBeep(~0U);
@@ -836,7 +835,7 @@ void TrackView::editToggleInterpolationType()
 
 		// update user interface
 		SendMessage(GetParent(getWin()), WM_CURRVALDIRTY, 0, 0);
-		InvalidateRect(getWin(), NULL, FALSE);
+		update();
 	}
 	else
 		MessageBeep(~0U);
@@ -877,7 +876,7 @@ void TrackView::editDelete()
 		doc->exec(multiCmd);
 		
 		SendMessage(GetParent(getWin()), WM_CURRVALDIRTY, 0, 0);
-		InvalidateRect(getWin(), NULL, FALSE);
+		update();
 	}
 }
 
@@ -1191,13 +1190,13 @@ LRESULT TrackView::onMouseMove(UINT /*flags*/, POINTS pos)
 				doc->swapTrackOrder(i, i + 1);
 			anchorTrack = posTrack;
 			setEditTrack(posTrack);
-			InvalidateRect(hwnd, NULL, FALSE);
+			update();
 		} else if (posTrack < anchorTrack) {
 			for (int i = anchorTrack; i > posTrack; --i)
 				doc->swapTrackOrder(i, i - 1);
 			anchorTrack = posTrack;
 			setEditTrack(posTrack);
-			InvalidateRect(hwnd, NULL, FALSE);
+			update();
 		}
 	}
 	return FALSE;
@@ -1231,7 +1230,7 @@ LRESULT TrackView::windowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	case WM_PASTE:
 		editPaste();
 		SendMessage(GetParent(getWin()), WM_CURRVALDIRTY, 0, 0);
-		InvalidateRect(hwnd, NULL, FALSE);
+		update();
 		break;
 	
 	case WM_UNDO:
@@ -1239,7 +1238,7 @@ LRESULT TrackView::windowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 		if (!getDocument()->undo())
 			MessageBeep(~0U);
 		// unfortunately, we don't know how much to invalidate... so we'll just invalidate it all.
-		InvalidateRect(hwnd, NULL, FALSE);
+		update();
 		break;
 	
 	case WM_REDO:
@@ -1247,7 +1246,7 @@ LRESULT TrackView::windowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 		if (!getDocument()->redo())
 			MessageBeep(~0U);
 		// unfortunately, we don't know how much to invalidate... so we'll just invalidate it all.
-		InvalidateRect(hwnd, NULL, FALSE);
+		update();
 		break;
 	
 	default:

@@ -54,15 +54,14 @@ public:
 	
 	void setEditTrack(int newEditTrack, bool autoscroll = true, bool selecting = false);
 	int  getEditTrack() const { return editTrack; }
-	
+
 	void selectAll()
 	{
 		selectStartTrack = int(this->getTrackCount()) - 1;
 		selectStopTrack = editTrack = 0;
 		selectStartRow = int(this->getRows()) - 1;
 		selectStopRow = editRow = 0;
-		
-		InvalidateRect(hwnd, NULL, FALSE);
+		update();
 	}
 	
 	void selectTrack(int track)
@@ -70,8 +69,7 @@ public:
 		selectStartTrack = selectStopTrack = editTrack = track;
 		selectStartRow = int(this->getRows()) - 1;
 		selectStopRow = editRow = 0;
-		
-		InvalidateRect(hwnd, NULL, FALSE);
+		update();
 	}
 	
 	void selectRow(int row)
@@ -79,17 +77,45 @@ public:
 		selectStartTrack = int(this->getTrackCount()) - 1;
 		selectStopTrack = editTrack = 0;
 		selectStartRow = selectStopRow = editRow = row;
-		
-		InvalidateRect(hwnd, NULL, FALSE);
+		update();
 	}
 	
 	void selectNone()
 	{
 		selectStartTrack = selectStopTrack = editTrack;
 		selectStartRow = selectStopRow = editRow;
+		update();
+	}
+
+	void update()
+	{
 		InvalidateRect(hwnd, NULL, FALSE);
 	}
-	
+
+	void update(int left, int top, int right, int bottom)
+	{
+		RECT rect;
+		rect.left = left;
+		rect.top = top;
+		rect.right = right;
+		rect.bottom = bottom;
+		InvalidateRect(hwnd, &rect, FALSE);
+	}
+
+	int width() const
+	{
+		RECT rect;
+		GetClientRect(hwnd, &rect);
+		return rect.right - rect.left;
+	}
+
+	int height() const
+	{
+		RECT rect;
+		GetClientRect(hwnd, &rect);
+		return rect.bottom - rect.top;
+	}
+
 private:
 	// some nasty hackery to forward the window messages
 	friend LRESULT CALLBACK trackViewWindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
@@ -114,55 +140,30 @@ private:
 	void setupScrollBars();
 	void setScrollPos(int newScrollPosX, int newScrollPosY);
 	void scrollWindow(int newScrollPosX, int newScrollPosY);
-	
+
 	void invalidateRange(int startTrack, int stopTrack, int startRow, int stopRow)
 	{
-		RECT rect;
-		rect.left  = getScreenX(std::min(startTrack, stopTrack));
-		rect.right = getScreenX(std::max(startTrack, stopTrack) + 1);
-		rect.top    = getScreenY(std::min(startRow, stopRow));
-		rect.bottom = getScreenY(std::max(startRow, stopRow) + 1);
-		InvalidateRect(hwnd, &rect, FALSE);
+		update(getScreenX(std::min(startTrack, stopTrack)),
+		       getScreenY(std::min(startRow, stopRow)),
+		       getScreenX(std::max(startTrack, stopTrack) + 1),
+		       getScreenY(std::max(startRow, stopRow) + 1));
 	}
-	
+
 	void invalidatePos(int track, int row)
 	{
-		RECT rect;
-		rect.left  = getScreenX(track);
-		rect.right = getScreenX(track + 1);
-		rect.top    = getScreenY(row);
-		rect.bottom = getScreenY(row + 1);
-		InvalidateRect(hwnd, &rect, FALSE);
+		invalidateRange(track, track, row, row);
 	}
-	
+
 	void invalidateRow(int row)
 	{
-		RECT clientRect;
-		GetClientRect(hwnd, &clientRect);
-		
-		RECT rect;
-		rect.left  = clientRect.left;
-		rect.right =  clientRect.right;
-		rect.top    = getScreenY(row);
-		rect.bottom = getScreenY(row + 1);
-		
-		InvalidateRect(hwnd, &rect, FALSE);
+		invalidateRange(0, getTrackCount(), row, row);
 	}
-	
+
 	void invalidateTrack(int track)
 	{
-		RECT clientRect;
-		GetClientRect(hwnd, &clientRect);
-		
-		RECT rect;
-		rect.left  = getScreenX(track);
-		rect.right = getScreenX(track + 1);
-		rect.top    = clientRect.top;
-		rect.bottom = clientRect.bottom;
-		
-		InvalidateRect(hwnd, &rect, FALSE);
+		invalidateRange(track, track, 0, getRows());
 	}
-	
+
 	int getScreenY(int row) const;
 	int getScreenX(size_t track) const;
 	int getTrackFromX(int x) const;

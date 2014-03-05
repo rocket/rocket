@@ -197,7 +197,7 @@ static void setDocument(SyncDocument *newDoc)
 
 	trackView->setDocument(newDoc);
 	SendMessage(hwnd, WM_CURRVALDIRTY, 0, 0);
-	InvalidateRect(trackViewWin, NULL, FALSE);
+	trackView->update();
 
 	if (oldDoc)
 		delete oldDoc;
@@ -389,7 +389,7 @@ static LRESULT CALLBACK mainWindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARA
 		{
 		case ID_FILE_NEW:
 			fileNew();
-			InvalidateRect(trackViewWin, NULL, FALSE);
+			trackView->update();
 			break;
 			
 		case ID_FILE_OPEN:
@@ -616,7 +616,7 @@ static void processCommand(ClientSocket &sock)
 
 			if (!strLen) {
 				sock.disconnect();
-				InvalidateRect(trackViewWin, NULL, FALSE);
+				trackView->update();
 				return;
 			}
 
@@ -626,7 +626,7 @@ static void processCommand(ClientSocket &sock)
 
 			if (int(strlen(trackName.c_str())) != strLen) {
 				sock.disconnect();
-				InvalidateRect(trackViewWin, NULL, FALSE);
+				trackView->update();
 				return;
 			}
 
@@ -646,7 +646,7 @@ static void processCommand(ClientSocket &sock)
 				doc->clientSocket.sendSetKeyCommand(trackName,
 				    t->keys[i]);
 
-			InvalidateRect(trackViewWin, NULL, FALSE);
+			trackView->update();
 			break;
 
 		case SET_ROW:
@@ -774,7 +774,7 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/,
 
 		if (!doc->clientSocket.connected() && guiConnected) {
 			doc->clientSocket.clientPaused = true;
-			InvalidateRect(trackViewWin, NULL, FALSE);
+			trackView->update();
 			SendMessage(statusBarWin, SB_SETTEXT, 0, (LPARAM)"Not Connected.");
 			guiConnected = false;
 		}
