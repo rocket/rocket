@@ -734,21 +734,10 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/,
 	while (!done) {
 		SyncDocument *doc = trackView->getDocument();
 		if (!doc->clientSocket.connected()) {
-			TcpSocket *clientSocket;
-			fd_set fds;
-			FD_ZERO(&fds);
-#pragma warning(suppress: 4127)
-			FD_SET(serverSocket, &fds);
-			struct timeval timeout;
-			timeout.tv_sec = 0;
-			timeout.tv_usec = 0;
-			
-			// look for new clients
-			if (select(0, &fds, NULL, NULL, &timeout) > 0)
-			{
+			if (socket_poll(serverSocket)) {
 				SendMessage(statusBarWin, SB_SETTEXT, 0, (LPARAM)"Accepting...");
 				sockaddr_in client;
-				clientSocket = clientConnect(serverSocket, &client);
+				TcpSocket *clientSocket = clientConnect(serverSocket, &client);
 				if (clientSocket) {
 					char temp[256];
 					snprintf(temp, 256, "Connected to %s", inet_ntoa(client.sin_addr));
@@ -758,8 +747,7 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/,
 					doc->clientSocket.sendPauseCommand(true);
 					doc->clientSocket.sendSetRowCommand(trackView->getEditRow());
 					guiConnected = true;
-				}
-				else
+				} else
 					SendMessage(statusBarWin, SB_SETTEXT, 0, (LPARAM)"Not Connected.");
 			}
 		}
