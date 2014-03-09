@@ -622,7 +622,7 @@ void TrackView::setEditRow(int newEditRow)
 		} if (doc->clientSocket.clientPaused) {
 			doc->clientSocket.sendSetRowCommand(editRow);
 		}
-		SendMessage(GetParent(getWin()), WM_ROWCHANGED, 0, editRow);
+		dirtyPosition();
 		dirtyCurrentValue();
 	}
 	
@@ -656,7 +656,7 @@ void TrackView::setEditTrack(int newEditTrack, bool autoscroll, bool selecting)
 			selectStartRow   = selectStopRow   = editRow;
 			selectStartTrack = selectStopTrack = editTrack;
 		}
-		SendMessage(GetParent(getWin()), WM_TRACKCHANGED, 0, editTrack);
+		dirtyPosition();
 		dirtyCurrentValue();
 	}
 	

@@ -12,9 +12,8 @@
 
 // custom messages
 #define WM_REDO         (WM_USER + 0x40 + 3)
-#define WM_ROWCHANGED   (WM_USER + 0x40 + 4)
-#define WM_TRACKCHANGED (WM_USER + 0x40 + 5)
-#define WM_CURRVALDIRTY (WM_USER + 0x40 + 6)
+#define WM_POSCHANGED   (WM_USER + 0x40 + 4)
+#define WM_CURRVALDIRTY (WM_USER + 0x40 + 5)
 
 class SyncDocument;
 
@@ -119,6 +118,11 @@ public:
 	void dirtyCurrentValue()
 	{
 		SendMessage(GetParent(getWin()), WM_CURRVALDIRTY, 0, 0);
+	}
+
+	void dirtyPosition()
+	{
+		SendMessage(GetParent(getWin()), WM_POSCHANGED, 0, 0);
 	}
 
 private:

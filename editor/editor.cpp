@@ -481,18 +481,10 @@ static LRESULT CALLBACK mainWindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARA
 		}
 		break;
 	
-	case WM_ROWCHANGED:
-		{
-			setStatusText(1, "%d", lParam);
-		}
-		break;
-	
-	case WM_TRACKCHANGED:
-		{
-			setStatusText(2, "%d", lParam);
-		}
-		break;
-	
+	case WM_POSCHANGED:
+		setStatusText(1, "%d", trackView->getEditRow());
+		setStatusText(2, "%d", trackView->getEditTrack());
+
 	case WM_CURRVALDIRTY:
 		{
 			if (doc->num_tracks > 0) {
