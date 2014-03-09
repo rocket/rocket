@@ -623,7 +623,7 @@ void TrackView::setEditRow(int newEditRow)
 			doc->clientSocket.sendSetRowCommand(editRow);
 		}
 		SendMessage(GetParent(getWin()), WM_ROWCHANGED, 0, editRow);
-		SendMessage(GetParent(getWin()), WM_CURRVALDIRTY, 0, 0);
+		dirtyCurrentValue();
 	}
 	
 	invalidateRow(oldEditRow);
@@ -657,7 +657,7 @@ void TrackView::setEditTrack(int newEditTrack, bool autoscroll, bool selecting)
 			selectStartTrack = selectStopTrack = editTrack;
 		}
 		SendMessage(GetParent(getWin()), WM_TRACKCHANGED, 0, editTrack);
-		SendMessage(GetParent(getWin()), WM_CURRVALDIRTY, 0, 0);
+		dirtyCurrentValue();
 	}
 	
 	invalidateTrack(oldEditTrack);
@@ -802,7 +802,7 @@ void TrackView::editEnterValue()
 		SyncDocument::Command *cmd = doc->getSetKeyFrameCommand(int(trackIndex), newKey);
 		doc->exec(cmd);
 
-		SendMessage(GetParent(getWin()), WM_CURRVALDIRTY, 0, 0);
+		dirtyCurrentValue();
 		update();
 	}
 	else
@@ -834,7 +834,7 @@ void TrackView::editToggleInterpolationType()
 		doc->exec(cmd);
 
 		// update user interface
-		SendMessage(GetParent(getWin()), WM_CURRVALDIRTY, 0, 0);
+		dirtyCurrentValue();
 		update();
 	}
 	else
@@ -874,8 +874,8 @@ void TrackView::editDelete()
 	else
 	{
 		doc->exec(multiCmd);
-		
-		SendMessage(GetParent(getWin()), WM_CURRVALDIRTY, 0, 0);
+
+		dirtyCurrentValue();
 		update();
 	}
 }
@@ -921,8 +921,8 @@ void TrackView::editBiasValue(float amount)
 	else
 	{
 		doc->exec(multiCmd);
-		
-		SendMessage(GetParent(getWin()), WM_CURRVALDIRTY, 0, 0);
+
+		dirtyCurrentValue();
 		invalidateRange(selectLeft, selectRight, selectTop, selectBottom);
 	}
 }
@@ -1229,7 +1229,7 @@ LRESULT TrackView::windowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	case WM_CUT:   editCut();   break;
 	case WM_PASTE:
 		editPaste();
-		SendMessage(GetParent(getWin()), WM_CURRVALDIRTY, 0, 0);
+		dirtyCurrentValue();
 		update();
 		break;
 	

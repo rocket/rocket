@@ -203,7 +203,7 @@ static void setDocument(SyncDocument *newDoc)
 	}
 
 	trackView->setDocument(newDoc);
-	SendMessage(hwnd, WM_CURRVALDIRTY, 0, 0);
+	trackView->dirtyCurrentValue();
 	trackView->update();
 
 	if (oldDoc)

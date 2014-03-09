@@ -116,6 +116,11 @@ public:
 		return rect.bottom - rect.top;
 	}
 
+	void dirtyCurrentValue()
+	{
+		SendMessage(GetParent(getWin()), WM_CURRVALDIRTY, 0, 0);
+	}
+
 private:
 	// some nasty hackery to forward the window messages
 	friend LRESULT CALLBACK trackViewWindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
