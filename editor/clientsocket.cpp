@@ -1,6 +1,8 @@
 #include "clientsocket.h"
+extern "C" {
 #include "../lib/track.h"
-#include <wincrypt.h>
+}
+#include <QCryptographicHash>
 
 #include <cassert>
 #include <string>
@@ -85,24 +87,13 @@ bool WebSocket::sendFrame(int opcode, const char *payloadData, size_t payloadLen
 
 	if (payloadLength >= 126) {
 		assert(payloadLength < 0xffff);
-		unsigned short tmp = htons(unsigned short(payloadLength));
+		unsigned short tmp = htons((unsigned short)(payloadLength));
 		if (!TcpSocket::send((const char *)&tmp, 2, false))
 			return false;
 	}
 
 	firstFrame = endOfMessage;
 	return TcpSocket::send(payloadData, payloadLength, endOfMessage);
-}
-
-static BOOL MyCryptBinaryToStringA(const BYTE* pbBinary, DWORD cbBinary, DWORD dwFlags,
-    LPTSTR pszString, DWORD* pcchString)
-{
-	typedef BOOL (WINAPI *T)(const BYTE* pbBinary, DWORD cbBinary, DWORD dwFlags, LPTSTR pszString, DWORD* pcchString);
-	static T CryptBinaryToStringA;
-	if (!CryptBinaryToStringA)
-		CryptBinaryToStringA = (T)GetProcAddress(LoadLibrary("crypt32"),
-		    "CryptBinaryToStringA");
-	return CryptBinaryToStringA(pbBinary, cbBinary, dwFlags, pszString, pcchString);
 }
 
 WebSocket *WebSocket::upgradeFromHttp(SOCKET socket)
@@ -133,23 +124,12 @@ WebSocket *WebSocket::upgradeFromHttp(SOCKET socket)
 	std::string accept = key;
 	accept.append("258EAFA5-E914-47DA-95CA-C5AB0DC85B11");
 
-	HCRYPTPROV prov;
-	HCRYPTHASH hash;
-	unsigned char sha1_buf[21];
-	DWORD sha1_len = 20;
-	char base64_buf[31];
-	DWORD base64_len = 31;
-	if ((!CryptAcquireContext(&prov, NULL, NULL, PROV_RSA_FULL, 0) &&
-	    !CryptAcquireContext(&prov, NULL, NULL, PROV_RSA_FULL, CRYPT_NEWKEYSET)) ||
-	    !CryptCreateHash(prov, CALG_SHA1, 0, 0, &hash) ||
-	    !CryptHashData(hash, (const BYTE *)&accept[0], accept.length(), 0) ||
-	    !CryptGetHashParam(hash, HP_HASHVAL, sha1_buf, &sha1_len, 0) ||
-	    !MyCryptBinaryToStringA(sha1_buf, sha1_len, CRYPT_STRING_BASE64, base64_buf, &base64_len))
-		return NULL;
+	QCryptographicHash hash(QCryptographicHash::Sha1);
+	hash.addData(&accept[0], accept.length());
 
 	std::string response = "HTTP/1.1 101 Switching Protocols\r\nUpgrade: websocket\r\nConnection: Upgrade\r\nSec-WebSocket-Accept: ";
-	response.append(base64_buf);
-	response.append("\r\n");
+	response.append(hash.result().toBase64().constData());
+	response.append("\r\n\r\n");
 
 	::send(socket, &response[0], response.length(), 0);
 

@@ -1,5 +1,8 @@
+extern "C" {
 #include "../lib/base.h"
+}
 #include <map>
+#include <string>
 
 class TcpSocket {
 public:

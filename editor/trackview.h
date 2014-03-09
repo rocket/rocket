@@ -5,26 +5,20 @@
 #pragma once
 
 #include <string>
-#define NOMINMAX
-#define WIN32_LEAN_AND_MEAN
-#define VC_EXTRALEAN
-#include <windows.h>
 
-// custom messages
-#define WM_REDO         (WM_USER + 0x40 + 3)
-#define WM_POSCHANGED   (WM_USER + 0x40 + 4)
-#define WM_CURRVALDIRTY (WM_USER + 0x40 + 5)
+#include <QAbstractScrollArea>
+#include <QPaintEvent>
+#include <QKeyEvent>
+#include <QPainter>
 
 class SyncDocument;
 
-class TrackView
+class TrackView : public QAbstractScrollArea
 {
+	Q_OBJECT
 public:
-	TrackView();
+	TrackView(QWidget *parent);
 	~TrackView();
-	
-	HWND create(HINSTANCE hInstance, HWND hwndParent);
-	HWND getWin() const { return hwnd; }
 
 	void setDocument(SyncDocument *document)
 	{
@@ -38,13 +32,7 @@ public:
 	void setRows(size_t rows);
 	size_t getRows() const;
 
-	void setFont(HFONT font);
-	
 	void editEnterValue();
-	void editDelete();
-	void editCopy();
-	void editCut();
-	void editPaste();
 	void editBiasValue(float amount);
 	void editToggleInterpolationType();
 	
@@ -54,31 +42,6 @@ public:
 	void setEditTrack(int newEditTrack, bool autoscroll = true, bool selecting = false);
 	int  getEditTrack() const { return editTrack; }
 
-	void selectAll()
-	{
-		selectStartTrack = int(this->getTrackCount()) - 1;
-		selectStopTrack = editTrack = 0;
-		selectStartRow = int(this->getRows()) - 1;
-		selectStopRow = editRow = 0;
-		update();
-	}
-	
-	void selectTrack(int track)
-	{
-		selectStartTrack = selectStopTrack = editTrack = track;
-		selectStartRow = int(this->getRows()) - 1;
-		selectStopRow = editRow = 0;
-		update();
-	}
-	
-	void selectRow(int row)
-	{
-		selectStartTrack = int(this->getTrackCount()) - 1;
-		selectStopTrack = editTrack = 0;
-		selectStartRow = selectStopRow = editRow = row;
-		update();
-	}
-	
 	void selectNone()
 	{
 		selectStartTrack = selectStopTrack = editTrack;
@@ -86,76 +49,60 @@ public:
 		update();
 	}
 
-	void update()
-	{
-		InvalidateRect(hwnd, NULL, FALSE);
-	}
-
-	void update(int left, int top, int right, int bottom)
-	{
-		RECT rect;
-		rect.left = left;
-		rect.top = top;
-		rect.right = right;
-		rect.bottom = bottom;
-		InvalidateRect(hwnd, &rect, FALSE);
-	}
-
-	int width() const
-	{
-		RECT rect;
-		GetClientRect(hwnd, &rect);
-		return rect.right - rect.left;
-	}
-
-	int height() const
-	{
-		RECT rect;
-		GetClientRect(hwnd, &rect);
-		return rect.bottom - rect.top;
-	}
-
 	void dirtyCurrentValue()
 	{
-		SendMessage(GetParent(getWin()), WM_CURRVALDIRTY, 0, 0);
+		emit currValDirty();
 	}
 
 	void dirtyPosition()
 	{
-		SendMessage(GetParent(getWin()), WM_POSCHANGED, 0, 0);
+		emit posChanged();
 	}
 
-private:
-	// some nasty hackery to forward the window messages
-	friend LRESULT CALLBACK trackViewWindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
-	LRESULT windowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
-	
-	// events
-	LRESULT onCreate();
-	LRESULT onPaint();
-	LRESULT onVScroll(UINT sbCode, int newPos);
-	LRESULT onHScroll(UINT sbCode, int newPos);
-	LRESULT onSize(int width, int height);
-	LRESULT onKeyDown(UINT keyCode, UINT flags);
-	LRESULT onChar(UINT keyCode, UINT flags);
-	LRESULT onSetCursor(HWND win, UINT hitTest, UINT message);
-	LRESULT onLButtonDown(UINT flags, POINTS pos);
-	LRESULT onLButtonUp(UINT flags, POINTS pos);
-	LRESULT onMouseMove(UINT flags, POINTS pos);
+signals:
+	void posChanged();
+	void currValDirty();
 
-	void paintTracks(HDC hdc, RECT rcTracks);
-	void paintTopMargin(HDC hdc, RECT rcTracks);
-	
+private slots:
+	void onHScroll(int value);
+	void onVScroll(int value);
+
+public slots:
+	void editUndo();
+	void editRedo();
+	void editCopy();
+	void editCut();
+	void editPaste();
+	void editClear();
+
+	void selectAll();
+	void selectTrack();
+	void selectRow();
+
+private:
+
+	/* paint helpers */
+	void paintTopMargin(QPainter &painter, const QRect &rcTracks);
+	void paintTracks(QPainter &painter, const QRect &rcTracks);
+
+	void paintEvent(QPaintEvent *);
+	void keyPressEvent(QKeyEvent *);
+	void resizeEvent(QResizeEvent *);
+	void mouseMoveEvent(QMouseEvent *);
+	void mousePressEvent(QMouseEvent *);
+	void mouseReleaseEvent(QMouseEvent *);
+
 	void setupScrollBars();
 	void setScrollPos(int newScrollPosX, int newScrollPosY);
 	void scrollWindow(int newScrollPosX, int newScrollPosY);
 
 	void invalidateRange(int startTrack, int stopTrack, int startRow, int stopRow)
 	{
-		update(getScreenX(std::min(startTrack, stopTrack)),
-		       getScreenY(std::min(startRow, stopRow)),
-		       getScreenX(std::max(startTrack, stopTrack) + 1),
-		       getScreenY(std::max(startRow, stopRow) + 1));
+		QRect rect(QPoint(getScreenX(std::min(startTrack, stopTrack)),
+		                  getScreenY(std::min(startRow, stopRow))),
+		           QPoint(getScreenX(std::max(startTrack, stopTrack) + 1) - 1,
+		                  getScreenY(std::max(startRow, stopRow) + 1) - 1));
+		viewport()->update(rect);
 	}
 
 	void invalidatePos(int track, int row)
@@ -181,22 +128,20 @@ private:
 
 	int selectStartTrack, selectStopTrack;
 	int selectStartRow, selectStopRow;
-	
-	HFONT font;
+
 	int rowHeight;
 	int fontWidth;
 	int trackWidth;
 	int topMarginHeight;
 	int leftMarginWidth;
 
-	
-	HBRUSH bgBaseBrush, bgDarkBrush;
-	HBRUSH selectBaseBrush, selectDarkBrush;
-	HPEN rowPen, rowSelectPen;
-	HBRUSH editBrush, bookmarkBrush;
-	HPEN lerpPen, cosinePen, rampPen;
-	HCURSOR handCursor;
-	
+	QBrush bgBaseBrush, bgDarkBrush;
+	QBrush selectBaseBrush, selectDarkBrush;
+	QPen rowPen, rowSelectPen;
+	QBrush editBrush, bookmarkBrush;
+	QPen lerpPen, cosinePen, rampPen;
+	QCursor handCursor;
+
 	/* cursor position */
 	int editRow, editTrack;
 	
@@ -206,12 +151,8 @@ private:
 	
 	SyncDocument *document;
 	
-	std::string editString;
-	
-	HWND hwnd;
-	
-	UINT clipboardFormat;
+	QString editString;
+
+	bool dragging;
 	int anchorTrack;
 };
-
-ATOM registerTrackViewWindowClass(HINSTANCE hInstance);

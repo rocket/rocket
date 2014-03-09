@@ -8,50 +8,63 @@ SyncDocument::~SyncDocument()
 	clearRedoStack();
 }
 
-#import <msxml3.dll> named_guids
+#include <QFile>
+#include <QMessageBox>
+#include <QDomDocument>
+#include <QTextStream>
 
-SyncDocument *SyncDocument::load(const std::wstring &fileName)
+SyncDocument *SyncDocument::load(const QString &fileName)
 {
 	SyncDocument *ret = new SyncDocument;
 	ret->fileName = fileName;
 
-	MSXML2::IXMLDOMDocumentPtr doc(MSXML2::CLSID_DOMDocument);
-	try {
-		doc->load(fileName.c_str());
-		MSXML2::IXMLDOMNamedNodeMapPtr attribs = doc->documentElement->Getattributes();
+	QFile file(fileName);
+	if (!file.open(QIODevice::ReadOnly)) {
+		QMessageBox::critical(NULL, "Error", "file not found");
+		return NULL;
+	}
 
-		MSXML2::IXMLDOMNodePtr rowsParam = attribs->getNamedItem("rows");
-		if (rowsParam) {
-			std::string rowsString = rowsParam->Gettext();
-			ret->setRows(atoi(rowsString.c_str()));
+	QDomDocument doc;
+	try {
+		if (!doc.setContent(&file)) {
+			file.close();
+			throw "could not set content";
+		}
+		file.close();
+
+		QDomNamedNodeMap attribs = doc.documentElement().attributes();
+		QDomNode rowsParam = attribs.namedItem("rows");
+		if (!rowsParam.isNull()) {
+			QString rowsString = rowsParam.nodeValue();
+			ret->setRows(rowsString.toInt());
 		}
 
-		MSXML2::IXMLDOMNodeListPtr trackNodes =
-		    doc->documentElement->selectNodes("//track");
-		for (int i = 0; i < trackNodes->Getlength(); ++i) {
-			MSXML2::IXMLDOMNodePtr trackNode = trackNodes->Getitem(i);
-			MSXML2::IXMLDOMNamedNodeMapPtr attribs = trackNode->Getattributes();
+		QDomNodeList trackNodes =
+		    doc.documentElement().elementsByTagName("track");
+		for (int i = 0; i < int(trackNodes.length()); ++i) {
+			QDomNode trackNode = trackNodes.item(i);
+			QDomNamedNodeMap attribs = trackNode.attributes();
 			
-			std::string name = attribs->getNamedItem("name")->Gettext();
+			QString name = attribs.namedItem("name").nodeValue();
 
 			// look up track-name, create it if it doesn't exist
-			int trackIndex = sync_find_track(ret, name.c_str());
-			if (0 > trackIndex) trackIndex = int(ret->createTrack(name));
+			int trackIndex = sync_find_track(ret, name.toUtf8());
+			if (0 > trackIndex) trackIndex = int(ret->createTrack(name.toUtf8().constData()));
 
-			MSXML2::IXMLDOMNodeListPtr rowNodes = trackNode->GetchildNodes();
-			for (int i = 0; i < rowNodes->Getlength(); ++i) {
-				MSXML2::IXMLDOMNodePtr keyNode = rowNodes->Getitem(i);
-				std::string baseName = keyNode->GetbaseName();
+			QDomNodeList rowNodes = trackNode.childNodes();
+			for (int i = 0; i < int(rowNodes.length()); ++i) {
+				QDomNode keyNode = rowNodes.item(i);
+				QString baseName = keyNode.nodeName();
 				if (baseName == "key") {
-					MSXML2::IXMLDOMNamedNodeMapPtr rowAttribs = keyNode->Getattributes();
-					std::string rowString = rowAttribs->getNamedItem("row")->Gettext();
-					std::string valueString = rowAttribs->getNamedItem("value")->Gettext();
-					std::string interpolationString = rowAttribs->getNamedItem("interpolation")->Gettext();
+					QDomNamedNodeMap rowAttribs = keyNode.attributes();
+					QString rowString = rowAttribs.namedItem("row").nodeValue();
+					QString valueString = rowAttribs.namedItem("value").nodeValue();
+					QString interpolationString = rowAttribs.namedItem("interpolation").nodeValue();
 
 					track_key k;
-					k.row = atoi(rowString.c_str());
-					k.value = float(atof(valueString.c_str()));
-					k.type = key_type(atoi(interpolationString.c_str()));
+					k.row = rowString.toInt();
+					k.value = valueString.toFloat();
+					k.type = key_type(interpolationString.toInt());
 
 					assert(!is_key_frame(ret->tracks[trackIndex], k.row));
 					if (sync_set_key(ret->tracks[trackIndex], &k))
@@ -60,108 +73,109 @@ SyncDocument *SyncDocument::load(const std::wstring &fileName)
 			}
 		}
 
-		MSXML2::IXMLDOMNodeListPtr bookmarkNodes =
-		    doc->documentElement->selectNodes(
-		    "/sync/bookmarks/bookmark");
-		for (int i = 0; i < bookmarkNodes->Getlength(); ++i) {
-			MSXML2::IXMLDOMNodePtr bookmarkNode =
-			    bookmarkNodes->Getitem(i);
-			MSXML2::IXMLDOMNamedNodeMapPtr bookmarkAttribs =
-			    bookmarkNode->Getattributes();
-			std::string str =
-			    bookmarkAttribs->getNamedItem("row")->Gettext();
-			int row = atoi(str.c_str());
+		// YUCK: gathers from entire document
+		QDomNodeList bookmarkNodes =
+		    doc.documentElement().elementsByTagName("bookmark");
+		for (int i = 0; i < int(bookmarkNodes.length()); ++i) {
+			QDomNode bookmarkNode =
+			    bookmarkNodes.item(i);
+			QDomNamedNodeMap bookmarkAttribs =
+			    bookmarkNode.attributes();
+			QString str =
+			    bookmarkAttribs.namedItem("row").nodeValue();
+			int row = str.toInt();
 			ret->toggleRowBookmark(row);
 		}
 	}
-	catch(_com_error &e)
+	catch (const char *str)
 	{
-		char temp[256];
-		_snprintf(temp, 256, "Error loading: %s\n", (const char*)_bstr_t(e.Description()));
-		MessageBox(NULL, temp, NULL, MB_OK | MB_ICONERROR | MB_SETFOREGROUND);
+		QMessageBox::critical(NULL, "Error", str);
 		return NULL;
 	}
-	
 	return ret;
 }
 
-bool SyncDocument::save(const std::wstring &fileName)
+bool SyncDocument::save(const QString &fileName)
 {
-	MSXML2::IXMLDOMDocumentPtr doc(MSXML2::CLSID_DOMDocument);
-	try {
-		MSXML2::IXMLDOMElementPtr rootNode = doc->createElement("sync");
-		rootNode->setAttribute("rows", getRows());
-		doc->appendChild(rootNode);
-		rootNode->appendChild(doc->createTextNode("\n\t"));
 
-		MSXML2::IXMLDOMElementPtr tracksNode =
-		    doc->createElement("tracks");
+	QDomDocument doc;
+	try {
+		QDomElement rootNode = doc.createElement("sync");
+		rootNode.setAttribute("rows", int(getRows()));
+		doc.appendChild(rootNode);
+
+		rootNode.appendChild(doc.createTextNode("\n\t"));
+		QDomElement tracksNode =
+		    doc.createElement("tracks");
 		for (size_t i = 0; i < num_tracks; ++i) {
 			const sync_track *t = tracks[trackOrder[i]];
 
-			MSXML2::IXMLDOMElementPtr trackElem =
-			    doc->createElement("track");
-			trackElem->setAttribute("name", t->name);
-
+			QDomElement trackElem =
+			    doc.createElement("track");
+			trackElem.setAttribute("name", t->name);
 			for (int i = 0; i < (int)t->num_keys; ++i) {
-				size_t row = t->keys[i].row;
+				int row = t->keys[i].row;
 				float value = t->keys[i].value;
 				char interpolationType = char(t->keys[i].type);
 
-				MSXML2::IXMLDOMElementPtr keyElem =
-				    doc->createElement("key");
+				QDomElement keyElem =
+				    doc.createElement("key");
 				
-				keyElem->setAttribute("row", row);
-				keyElem->setAttribute("value", value);
-				keyElem->setAttribute("interpolation",
+				keyElem.setAttribute("row", row);
+				keyElem.setAttribute("value", value);
+				keyElem.setAttribute("interpolation",
 				    (int)interpolationType);
 
-				trackElem->appendChild(
-				    doc->createTextNode("\n\t\t\t"));
-				trackElem->appendChild(keyElem);
+				trackElem.appendChild(
+				    doc.createTextNode("\n\t\t\t"));
+				trackElem.appendChild(keyElem);
 			}
 			if (t->num_keys)
-				trackElem->appendChild(
-				    doc->createTextNode("\n\t\t"));
+				trackElem.appendChild(
+				    doc.createTextNode("\n\t\t"));
 
-			tracksNode->appendChild(doc->createTextNode("\n\t\t"));
-			tracksNode->appendChild(trackElem);
+			tracksNode.appendChild(doc.createTextNode("\n\t\t"));
+			tracksNode.appendChild(trackElem);
 		}
 		if (0 != num_tracks)
-			tracksNode->appendChild(doc->createTextNode("\n\t"));
-		rootNode->appendChild(tracksNode);
-		rootNode->appendChild(doc->createTextNode("\n\t"));
+			tracksNode.appendChild(doc.createTextNode("\n\t"));
+		rootNode.appendChild(tracksNode);
+		rootNode.appendChild(doc.createTextNode("\n\t"));
 
-		MSXML2::IXMLDOMElementPtr bookmarksNode =
-		    doc->createElement("bookmarks");
+		QDomElement bookmarksNode =
+		    doc.createElement("bookmarks");
 		std::set<int>::const_iterator it;
 		for (it = rowBookmarks.begin(); it != rowBookmarks.end(); ++it) {
-			MSXML2::IXMLDOMElementPtr bookmarkElem =
-			    doc->createElement("bookmark");
-			bookmarkElem->setAttribute("row", *it);
+			QDomElement bookmarkElem =
+			    doc.createElement("bookmark");
+			bookmarkElem.setAttribute("row", *it);
 
-			bookmarksNode->appendChild(
-			    doc->createTextNode("\n\t\t"));
-			bookmarksNode->appendChild(bookmarkElem);
+			bookmarksNode.appendChild(
+			    doc.createTextNode("\n\t\t"));
+			bookmarksNode.appendChild(bookmarkElem);
 		}
 		if (0 != rowBookmarks.size())
-			bookmarksNode->appendChild(
-			    doc->createTextNode("\n\t"));
-		rootNode->appendChild(bookmarksNode);
-		rootNode->appendChild(doc->createTextNode("\n"));
+			bookmarksNode.appendChild(
+			    doc.createTextNode("\n\t"));
+		rootNode.appendChild(bookmarksNode);
+		rootNode.appendChild(doc.createTextNode("\n"));
 
-		doc->save(fileName.c_str());
-		
+		QFile file(fileName);
+		if (!file.open(QIODevice::WriteOnly | QIODevice::Text))
+			throw "Failed to open file for writing";
+		QTextStream streamFileOut(&file);
+		streamFileOut.setCodec("UTF-8");
+		streamFileOut << doc.toString();
+		streamFileOut.flush();
+		file.close();
+
 		savePointDelta = 0;
 		savePointUnreachable = false;
 	}
-	catch(_com_error &e)
+	catch(const char *str)
 	{
-		char temp[256];
-		_snprintf(temp, 256, "Error saving: %s\n", (const char*)_bstr_t(e.Description()));
-		MessageBox(NULL, temp, NULL, MB_OK | MB_ICONERROR | MB_SETFOREGROUND);
+		QMessageBox::critical(NULL, "Error", str);
 		return false;
 	}
 	return true;
 }
-

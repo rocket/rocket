@@ -12,7 +12,7 @@ extern "C" {
 #include <list>
 #include <vector>
 #include <set>
-#include <string>
+#include <QString>
 #include <cassert>
 
 #include "clientsocket.h"
@@ -258,8 +258,8 @@ public:
 		std::swap(trackOrder[t1], trackOrder[t2]);
 	}
 
-	static SyncDocument *load(const std::wstring &fileName);
-	bool save(const std::wstring &fileName);
+	static SyncDocument *load(const QString &fileName);
+	bool save(const QString &fileName);
 
 	bool modified() const
 	{
@@ -285,7 +285,7 @@ public:
 	size_t getRows() const { return rows; }
 	void setRows(size_t rows) { this->rows = rows; }
 
-	std::wstring fileName;
+	QString fileName;
 
 	int nextRowBookmark(int row) const
 	{
