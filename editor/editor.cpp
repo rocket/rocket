@@ -74,9 +74,6 @@ void setStatusText(int cell, const char *fmt, ...)
 	SendMessage(statusBarWin, SB_SETTEXT, cell, (LPARAM)temp);
 }
 
-#define WM_SETROWS (WM_USER+1)
-#define WM_BIASSELECTION (WM_USER+2)
-
 #include "../lib/sync.h"
 
 static LRESULT CALLBACK setRowsDialogProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
@@ -94,11 +91,11 @@ static LRESULT CALLBACK setRowsDialogProc(HWND hDlg, UINT message, WPARAM wParam
 	case WM_COMMAND:
 		if (LOWORD(wParam) == IDOK) {
 			/* get value */
-			size_t result = GetDlgItemInt(hDlg, IDC_SETROWS_EDIT, NULL, FALSE);
+			UINT result = GetDlgItemInt(hDlg, IDC_SETROWS_EDIT, NULL, FALSE);
 
 			/* update editor */
-			SendMessage(GetParent(hDlg), WM_SETROWS, 0, result);
-			
+			trackView->setRows(int(result));
+
 			/* end dialog */
 			return EndDialog(hDlg, LOWORD(wParam));
 		} else if(LOWORD(wParam) == IDCANCEL)
@@ -131,8 +128,8 @@ static LRESULT CALLBACK biasSelectionDialogProc(HWND hDlg, UINT message, WPARAM 
 			int bias = GetDlgItemInt(hDlg, IDC_BIASSELECTION_EDIT, NULL, FALSE);
 
 			/* update editor */
-			SendMessage(GetParent(hDlg), WM_BIASSELECTION, 0, LPARAM(bias));
-			
+			trackView->editBiasValue(float(bias));
+
 			/* end dialog */
 			return EndDialog(hDlg, LOWORD(wParam));
 		} else if(LOWORD(wParam) == IDCANCEL)
@@ -385,15 +382,7 @@ static LRESULT CALLBACK mainWindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARA
 	case WM_SETFOCUS:
 		SetFocus(trackViewWin); // needed to forward keyboard input
 		break;
-	
-	case WM_SETROWS:
-		trackView->setRows(int(lParam));
-		break;
-	
-	case WM_BIASSELECTION:
-		trackView->editBiasValue(float(lParam));
-		break;
-	
+
 	case WM_COMMAND:
 		switch (LOWORD(wParam))
 		{
