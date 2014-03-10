@@ -94,7 +94,7 @@ static inline int xsend(SOCKET s, const void *buf, size_t len, int flags)
 	assert(len <= INT_MAX);
 	return send(s, (const char *)buf, (int)len, flags) != (int)len;
 #else
-	return send(s, (const char *)buf, len, flags) != len;
+	return send(s, (const char *)buf, len, flags) != (int)len;
 #endif
 }
 
@@ -104,7 +104,7 @@ static inline int xrecv(SOCKET s, void *buf, size_t len, int flags)
 	assert(len <= INT_MAX);
 	return recv(s, (char *)buf, (int)len, flags) != (int)len;
 #else
-	return recv(s, (char *)buf, len, flags) != len;
+	return recv(s, (char *)buf, len, flags) != (int)len;
 #endif
 }
 
