@@ -64,14 +64,48 @@ static HWND statusBarWin = NULL;
 static HKEY regConfigKey = NULL;
 static RecentFiles mruFileList(NULL);
 
-void setStatusText(int cell, const char *fmt, ...)
+void setStatusText(const char *fmt, ...)
 {
 	char temp[4096];
 	va_list va;
 	va_start(va, fmt);
 	vsnprintf(temp, sizeof(temp), fmt, va);
 	va_end(va);
-	SendMessage(statusBarWin, SB_SETTEXT, cell, (LPARAM)temp);
+	SendMessage(statusBarWin, SB_SETTEXT, 0, (LPARAM)temp);
+}
+
+void setStatusPosition(int row, int col)
+{
+	char temp[64];
+	snprintf(temp, sizeof(temp), "%d", row);
+	SendMessage(statusBarWin, SB_SETTEXT, 1, (LPARAM)temp);
+	snprintf(temp, sizeof(temp), "%d", col);
+	SendMessage(statusBarWin, SB_SETTEXT, 2, (LPARAM)temp);
+}
+
+void setStatusValue(double val, bool valid)
+{
+	if (valid) {
+		char temp[64];
+		snprintf(temp, sizeof(temp), "%f", val);
+		SendMessage(statusBarWin, SB_SETTEXT, 3, (LPARAM)temp);
+	} else
+		SendMessage(statusBarWin, SB_SETTEXT, 3, (LPARAM)"---");
+}
+
+void setStatusKeyType(enum key_type keyType, bool valid)
+{
+	if (!valid) {
+		SendMessage(statusBarWin, SB_SETTEXT, 3, (LPARAM)"---");
+		return;
+	}
+
+	switch (keyType) {
+	case KEY_STEP:   SendMessage(statusBarWin, SB_SETTEXT, 4, (LPARAM)"step"); break;
+	case KEY_LINEAR: SendMessage(statusBarWin, SB_SETTEXT, 4, (LPARAM)"linear"); break;
+	case KEY_SMOOTH: SendMessage(statusBarWin, SB_SETTEXT, 4, (LPARAM)"smooth"); break;
+	case KEY_RAMP:   SendMessage(statusBarWin, SB_SETTEXT, 4, (LPARAM)"ramp"); break;
+	}
 }
 
 #include "../lib/sync.h"
@@ -323,11 +357,8 @@ static HWND createStatusBar(HINSTANCE hInstance, HWND hpwnd)
 	);
 
 	int statwidths[] = { 150, 150 + 32, 150 + 32 * 2, 150 + 32 * 4, 150 + 32 * 6};
+
 	SendMessage(hwnd, SB_SETPARTS, sizeof(statwidths) / sizeof(int), (LPARAM)statwidths);
-	setStatusText(0, "Not connected");
-	setStatusText(1, "0");
-	setStatusText(2, "0");
-	setStatusText(3, "---");
 	return hwnd;
 }
 
@@ -341,6 +372,9 @@ static LRESULT CALLBACK mainWindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARA
 			trackViewWin = trackView->create(hInst, hwnd);
 			InitCommonControls();
 			statusBarWin = createStatusBar(hInst, hwnd);
+			setStatusText("Not connected");
+			setStatusPosition(0, 0);
+			setStatusValue(0.0f, false);
 
 			if (ERROR_SUCCESS != RegOpenKey(HKEY_CURRENT_USER, keyName, &regConfigKey))
 			{
@@ -482,29 +516,23 @@ static LRESULT CALLBACK mainWindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARA
 		break;
 	
 	case WM_POSCHANGED:
-		setStatusText(1, "%d", trackView->getEditRow());
-		setStatusText(2, "%d", trackView->getEditTrack());
+		setStatusPosition(trackView->getEditRow(), trackView->getEditTrack());
 
 	case WM_CURRVALDIRTY:
 		{
 			if (doc->num_tracks > 0) {
 				const sync_track *t = doc->tracks[doc->getTrackIndexFromPos(trackView->getEditTrack())];
 				int row = trackView->getEditRow();
-				setStatusText(3, "%f", sync_get_val(t, row));
+				setStatusValue(sync_get_val(t, row), true);
+
 
 				int idx = key_idx_floor(t, row);
-				if (idx >= 0) {
-					switch (t->keys[idx].type) {
-					case KEY_STEP:   setStatusText(4, "step"); break;
-					case KEY_LINEAR: setStatusText(4, "linear"); break;
-					case KEY_SMOOTH: setStatusText(4, "smooth"); break;
-					case KEY_RAMP:   setStatusText(4, "ramp"); break;
-					default: assert(0);
-					}
-				} else
-					setStatusText(4, "---");
+				if (idx >= 0)
+					setStatusKeyType(t->keys[idx].type, true);
+				else
+					setStatusKeyType(KEY_STEP, false);
 			} else
-				setStatusText(3, "---");
+				setStatusValue(0.0f, false);
 		}
 		break;
 	
@@ -721,18 +749,18 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/,
 		SyncDocument *doc = trackView->getDocument();
 		if (!doc->clientSocket.connected()) {
 			if (socket_poll(serverSocket)) {
-				setStatusText(0, "Accepting...");
+				setStatusText("Accepting...");
 				sockaddr_in client;
 				TcpSocket *clientSocket = clientConnect(serverSocket, &client);
 				if (clientSocket) {
-					setStatusText(0, "Connected to %s", inet_ntoa(client.sin_addr));
+					setStatusText("Connected to %s", inet_ntoa(client.sin_addr));
 					doc->clientSocket.socket = clientSocket;
 					clientIndex = 0;
 					doc->clientSocket.sendPauseCommand(true);
 					doc->clientSocket.sendSetRowCommand(trackView->getEditRow());
 					guiConnected = true;
 				} else
-					setStatusText(0, "Not Connected.");
+					setStatusText("Not Connected.");
 			}
 		}
 
@@ -747,7 +775,7 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/,
 		if (!doc->clientSocket.connected() && guiConnected) {
 			doc->clientSocket.clientPaused = true;
 			trackView->update();
-			setStatusText(0, "Not Connected.");
+			setStatusText("Not Connected.");
 			guiConnected = false;
 		}
 		
