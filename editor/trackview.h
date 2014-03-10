@@ -48,7 +48,7 @@ public:
 	void editBiasValue(float amount);
 	void editToggleInterpolationType();
 	
-	void setEditRow(int newEditRow);
+	void setEditRow(int newEditRow, bool selecting = false);
 	int  getEditRow() const { return editRow; }
 	
 	void setEditTrack(int newEditTrack, bool autoscroll = true, bool selecting = false);

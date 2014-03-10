@@ -596,7 +596,7 @@ void TrackView::setScrollPos(int newScrollPosX, int newScrollPosY)
 	setupScrollBars();
 }
 
-void TrackView::setEditRow(int newEditRow)
+void TrackView::setEditRow(int newEditRow, bool selecting)
 {
 	SyncDocument *doc = getDocument();
 	if (NULL == doc) return;
@@ -609,7 +609,7 @@ void TrackView::setEditRow(int newEditRow)
 	
 	if (oldEditRow != editRow)
 	{
-		if (GetKeyState(VK_SHIFT) < 0)
+		if (selecting)
 		{
 			selectStopRow = editRow;
 			invalidateRange(selectStartTrack, selectStopTrack, oldEditRow, editRow);
@@ -947,10 +947,13 @@ LRESULT TrackView::onKeyDown(UINT keyCode, UINT /*flags*/)
 			editEnterValue();
 		}
 	}
-	
+
+	bool shiftDown = GetKeyState(VK_SHIFT) < 0;
+	bool ctrlDown = GetKeyState(VK_CONTROL) < 0;
+	bool selecting = shiftDown;
+
 	if (editString.empty())
 	{
-		bool selecting = GetKeyState(VK_SHIFT) < 0;
 		if (keyCode == VK_TAB) {
 			keyCode = selecting ? VK_LEFT : VK_RIGHT;
 			selecting = false;
@@ -959,7 +962,7 @@ LRESULT TrackView::onKeyDown(UINT keyCode, UINT /*flags*/)
 		switch (keyCode)
 		{
 		case VK_LEFT:
-			if (GetKeyState(VK_CONTROL) < 0) {
+			if (ctrlDown) {
 				if (0 < editTrack)
 					doc->swapTrackOrder(editTrack, editTrack - 1);
 				else
@@ -972,7 +975,7 @@ LRESULT TrackView::onKeyDown(UINT keyCode, UINT /*flags*/)
 			break;
 		
 		case VK_RIGHT:
-			if (GetKeyState(VK_CONTROL) < 0) {
+			if (ctrlDown) {
 				if (int(getTrackCount()) > editTrack + 1)
 					doc->swapTrackOrder(editTrack, editTrack + 1);
 				else
@@ -989,57 +992,57 @@ LRESULT TrackView::onKeyDown(UINT keyCode, UINT /*flags*/)
 	if (editString.empty() && doc->clientSocket.clientPaused) {
 		switch (keyCode) {
 		case VK_UP:
-			if (GetKeyState(VK_CONTROL) < 0)
+			if (ctrlDown)
 			{
 				float bias = 1.0f;
-				if (GetKeyState(VK_SHIFT) < 0) bias = 0.1f;
+				if (shiftDown) bias = 0.1f;
 				if (int(getTrackCount()) > editTrack) editBiasValue(bias);
 				else
 					MessageBeep(~0U);
 			}
-			else setEditRow(editRow - 1);
+			else setEditRow(editRow - 1, selecting);
 			break;
 		
 		case VK_DOWN:
-			if (GetKeyState(VK_CONTROL) < 0)
+			if (ctrlDown)
 			{
 				float bias = 1.0f;
-				if (GetKeyState(VK_SHIFT) < 0) bias = 0.1f;
+				if (shiftDown) bias = 0.1f;
 				if (int(getTrackCount()) > editTrack) editBiasValue(-bias);
 				else
 					MessageBeep(~0U);
 			}
-			else setEditRow(editRow + 1);
+			else setEditRow(editRow + 1, selecting);
 			break;
 		
 		case VK_PRIOR:
-			if (GetKeyState(VK_CONTROL) < 0) {
+			if (ctrlDown) {
 				float bias = 10.0f;
-				if (GetKeyState(VK_SHIFT) < 0)
+				if (shiftDown)
 					bias = 100.0f;
 				editBiasValue(bias);
 			} else
-				setEditRow(editRow - 0x10);
+				setEditRow(editRow - 0x10, selecting);
 			break;
 		
 		case VK_NEXT:
-			if (GetKeyState(VK_CONTROL) < 0) {
+			if (ctrlDown) {
 				float bias = 10.0f;
-				if (GetKeyState(VK_SHIFT) < 0)
+				if (shiftDown)
 					bias = 100.0f;
 				editBiasValue(-bias);
 			} else
-				setEditRow(editRow + 0x10);
+				setEditRow(editRow + 0x10, selecting);
 			break;
 		
 		case VK_HOME:
-			if (GetKeyState(VK_CONTROL) < 0) setEditTrack(0);
-			else setEditRow(0);
+			if (ctrlDown) setEditTrack(0, selecting);
+			else setEditRow(0, selecting);
 			break;
 		
 		case VK_END:
-			if (GetKeyState(VK_CONTROL) < 0) setEditTrack(int(getTrackCount()) - 1);
-			else setEditRow(int(getRows()) - 1);
+			if (ctrlDown) setEditTrack(int(getTrackCount()) - 1, selecting);
+			else setEditRow(int(getRows()) - 1, selecting);
 			break;
 		}
 	}
