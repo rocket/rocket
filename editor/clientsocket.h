@@ -89,7 +89,7 @@ private:
 
 class ClientSocket {
 public:
-	ClientSocket() : socket(NULL), clientPaused(true) {}
+	ClientSocket() : clientPaused(true), socket(NULL) {}
 
 	bool connected() const
 	{
