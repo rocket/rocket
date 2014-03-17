@@ -488,7 +488,7 @@ void TrackView::editPaste()
 		int buffer_width, buffer_height, buffer_size;
 		memcpy(&buffer_width,  clipbuf + 0,               sizeof(int));
 		memcpy(&buffer_height, clipbuf + sizeof(int),     sizeof(int));
-		memcpy(&buffer_size,   clipbuf + 2 * sizeof(int), sizeof(size_t));
+		memcpy(&buffer_size,   clipbuf + 2 * sizeof(int), sizeof(int));
 		
 		SyncDocument::MultiCommand *multiCmd = new SyncDocument::MultiCommand();
 		for (int i = 0; i < buffer_width; ++i) {
