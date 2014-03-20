@@ -646,10 +646,9 @@ void TrackView::setEditTrack(int newEditTrack, bool autoscroll, bool selecting)
 		}
 		dirtyPosition();
 		dirtyCurrentValue();
+		invalidateTrack(oldEditTrack);
+		invalidateTrack(editTrack);
 	}
-	
-	invalidateTrack(oldEditTrack);
-	invalidateTrack(editTrack);
 
 	if (autoscroll) {
 		int firstTrack = scrollPosX / trackWidth;
