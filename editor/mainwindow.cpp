@@ -157,7 +157,7 @@ void MainWindow::setCurrentFileName(const QString &fileName)
 	QFileInfo info(fileName);
 
 	QSettings settings;
-	QStringList files = settings.value("recentFileList").toStringList();
+	QStringList files = getRecentFiles();
 	files.removeAll(info.absoluteFilePath());
 	files.prepend(info.absoluteFilePath());
 	while (files.size() > 5)
