@@ -49,7 +49,6 @@ public:
 		return socket->bytesAvailable() > 0;
 	}
 
-private:
 	QTcpSocket *socket;
 };
 

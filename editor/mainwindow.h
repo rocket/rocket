@@ -33,7 +33,6 @@ public:
 	void setStatusValue(double val, bool valid);
 	void setStatusKeyType(enum key_type keyType, bool valid);
 
-	void timerEvent(QTimerEvent *event);
 	bool guiConnected;
 	QTcpServer *serverSocket;
 	size_t clientIndex;
@@ -61,6 +60,11 @@ public slots:
 
 	void onPosChanged();
 	void onCurrValDirty();
+
+private slots:
+	void onReadyRead();
+	void onNewConnection();
+	void onDisconnected();
 };
 
 #endif // MAINWINDOW_H

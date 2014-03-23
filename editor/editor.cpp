@@ -16,7 +16,7 @@ int main(int argc, char *argv[])
 
 	QTcpServer serverSocket;
 	if (!serverSocket.listen(QHostAddress::Any, 1338)) {
-		QMessageBox::critical(NULL, NULL, "Could not start server", QMessageBox::Ok);
+		QMessageBox::critical(NULL, NULL, QString("Could not start server:\n%1").arg(serverSocket.errorString()), QMessageBox::Ok);
 		exit(EXIT_FAILURE);
 	}
 

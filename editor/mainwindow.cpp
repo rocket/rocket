@@ -37,7 +37,8 @@ MainWindow::MainWindow(QTcpServer *serverSocket) :
 	createMenuBar();
 	createStatusBar();
 
-	startTimer(0);
+	connect(serverSocket, SIGNAL(newConnection()),
+	        this, SLOT(onNewConnection()));
 }
 
 void MainWindow::createMenuBar()
@@ -439,6 +440,9 @@ void MainWindow::processCommand(ClientSocket &sock)
 static TcpSocket *clientConnect(QTcpServer *serverSocket, QHostAddress *host)
 {
 	QTcpSocket *clientSocket = serverSocket->nextPendingConnection();
+	Q_ASSERT(clientSocket != NULL);
+
+	clientSocket->waitForReadyRead();
 
 	const char *expectedGreeting = CLIENT_GREET;
 	std::string line;
@@ -481,38 +485,40 @@ static TcpSocket *clientConnect(QTcpServer *serverSocket, QHostAddress *host)
 	return ret;
 }
 
-void MainWindow::timerEvent(QTimerEvent * /* event */)
+void MainWindow::onReadyRead()
+{
+	SyncDocument *doc = trackView->getDocument();
+	ClientSocket &clientSocket = doc->clientSocket;
+	while (clientSocket.pollRead())
+		processCommand(clientSocket);
+}
+
+void MainWindow::onNewConnection()
 {
 	SyncDocument *doc = trackView->getDocument();
 	if (!doc->clientSocket.connected()) {
-		if (serverSocket->hasPendingConnections()) {
-			setStatusText("Accepting...");
-			QHostAddress client;
-			TcpSocket *clientSocket = clientConnect(serverSocket, &client);
-			if (clientSocket) {
-				setStatusText(QString("Connected to %1").arg(client.toString()));
-				doc->clientSocket.socket = clientSocket;
-				clientIndex = 0;
-				doc->clientSocket.sendPauseCommand(true);
-				doc->clientSocket.sendSetRowCommand(trackView->getEditRow());
-				guiConnected = true;
-			} else
-				setStatusText("Not Connected.");
-		}
+		setStatusText("Accepting...");
+		QHostAddress client;
+		TcpSocket *clientSocket = clientConnect(serverSocket, &client);
+		if (clientSocket) {
+			setStatusText(QString("Connected to %1").arg(client.toString()));
+			doc->clientSocket.socket = clientSocket;
+			connect(clientSocket->socket, SIGNAL(readyRead()), this, SLOT(onReadyRead()));
+			connect(clientSocket->socket, SIGNAL(disconnected()), this, SLOT(onDisconnected()));
+			clientIndex = 0;
+			doc->clientSocket.sendPauseCommand(true);
+			doc->clientSocket.sendSetRowCommand(trackView->getEditRow());
+			guiConnected = true;
+		} else
+			setStatusText(QString("Not Connected: %1").arg(serverSocket->errorString()));
 	}
+}
 
-	if (doc->clientSocket.connected()) {
-		ClientSocket &clientSocket = doc->clientSocket;
-
-		// look for new commands
-		while (clientSocket.pollRead())
-			processCommand(clientSocket);
-	}
-
-	if (!doc->clientSocket.connected() && guiConnected) {
-		doc->clientSocket.clientPaused = true;
-		trackView->update();
-		setStatusText("Not Connected.");
-		guiConnected = false;
-	}
+void MainWindow::onDisconnected()
+{
+	SyncDocument *doc = trackView->getDocument();
+	doc->clientSocket.clientPaused = true;
+	trackView->update();
+	setStatusText("Not Connected.");
+	guiConnected = false;
 }
