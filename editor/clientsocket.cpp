@@ -96,14 +96,14 @@ bool WebSocket::sendFrame(int opcode, const char *payloadData, size_t payloadLen
 	return TcpSocket::send(payloadData, payloadLength, endOfMessage);
 }
 
-WebSocket *WebSocket::upgradeFromHttp(SOCKET socket)
+WebSocket *WebSocket::upgradeFromHttp(QTcpSocket *socket)
 {
 	std::string key;
 	for (;;) {
 		std::string line;
 		for (;;) {
 			char ch;
-			if (::recv(socket, &ch, 1, 0) != 1)
+			if (socket->read(&ch, 1) != 1)
 				return NULL;
 
 			if (ch == '\n')
@@ -131,7 +131,7 @@ WebSocket *WebSocket::upgradeFromHttp(SOCKET socket)
 	response.append(hash.result().toBase64().constData());
 	response.append("\r\n\r\n");
 
-	::send(socket, &response[0], response.length(), 0);
+	socket->write(&response[0], response.length());
 
 	return new WebSocket(socket);
 }

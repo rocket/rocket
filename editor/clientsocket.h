@@ -1,30 +1,27 @@
-extern "C" {
-#include "../lib/base.h"
-}
 #include <map>
 #include <string>
+#include <QTcpSocket>
 
 class TcpSocket {
 public:
-	TcpSocket() : socket(INVALID_SOCKET) {}
-	explicit TcpSocket(SOCKET socket) : socket(socket) {}
+	explicit TcpSocket(QTcpSocket *socket) : socket(socket) {}
 
 	bool connected() const
 	{
-		return INVALID_SOCKET != socket;
+		return socket != NULL;
 	}
 
 	virtual void disconnect()
 	{
-		closesocket(socket);
-		socket = INVALID_SOCKET;
+		socket->close();
+		socket = NULL;
 	}
 
 	virtual bool recv(char *buffer, size_t length)
 	{
 		if (!connected())
 			return false;
-		int ret = ::recv(socket, buffer, int(length), 0);
+		qint64 ret = socket->read(buffer, length);
 		if (ret != int(length)) {
 			TcpSocket::disconnect();
 			return false;
@@ -37,7 +34,7 @@ public:
 		(void)endOfMessage;
 		if (!connected())
 			return false;
-		int ret = ::send(socket, buffer, int(length), 0);
+		int ret = socket->write(buffer, length);
 		if (ret != int(length)) {
 			TcpSocket::disconnect();
 			return false;
@@ -49,16 +46,16 @@ public:
 	{
 		if (!connected())
 			return false;
-		return !!socket_poll(socket);
+		return socket->bytesAvailable() > 0;
 	}
 
 private:
-	SOCKET socket;
+	QTcpSocket *socket;
 };
 
 class WebSocket : public TcpSocket {
 public:
-	explicit WebSocket(SOCKET socket) : TcpSocket(socket), firstFrame(true) {}
+	explicit WebSocket(QTcpSocket *socket) : TcpSocket(socket), firstFrame(true) {}
 
 	bool recv(char *buffer, size_t length);
 	bool send(const char *buffer, size_t length, bool endOfMessage)
@@ -83,7 +80,7 @@ public:
 	// helpers
 	bool readFrame(std::string &buf);
 	bool sendFrame(int opcode, const char *payloadData, size_t payloadLength, bool endOfMessage);
-	static WebSocket *upgradeFromHttp(SOCKET socket);
+	static WebSocket *upgradeFromHttp(QTcpSocket *socket);
 
 private:
 	bool firstFrame;

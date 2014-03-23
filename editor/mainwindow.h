@@ -4,6 +4,7 @@
 #include <QMainWindow>
 class QLabel;
 class QAction;
+class QTcpServer;
 
 extern "C" {
 #include "../lib/track.h"
@@ -16,7 +17,7 @@ class MainWindow : public QMainWindow {
 	Q_OBJECT
 
 public:
-	MainWindow(SOCKET serverSocket);
+	MainWindow(QTcpServer *serverSocket);
 	void createMenuBar();
 	void createStatusBar();
 	void updateRecentFiles();
@@ -34,7 +35,7 @@ public:
 
 	void timerEvent(QTimerEvent *event);
 	bool guiConnected;
-	SOCKET serverSocket;
+	QTcpServer *serverSocket;
 	size_t clientIndex;
 
 	TrackView *trackView;

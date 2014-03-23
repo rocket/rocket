@@ -16,16 +16,9 @@ extern "C" {
 #include <QMessageBox>
 #include <QFileDialog>
 #include <QInputDialog>
+#include <QTcpServer>
 
-#ifndef WIN32
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#else
-typedef int socklen_t;
-#endif
-
-MainWindow::MainWindow(SOCKET serverSocket) :
+MainWindow::MainWindow(QTcpServer *serverSocket) :
 	QMainWindow(),
 	guiConnected(false),
 	serverSocket(serverSocket),
@@ -443,13 +436,9 @@ void MainWindow::processCommand(ClientSocket &sock)
 	}
 }
 
-static TcpSocket *clientConnect(SOCKET serverSocket, sockaddr_in *host)
+static TcpSocket *clientConnect(QTcpServer *serverSocket, QHostAddress *host)
 {
-	sockaddr_in hostTemp;
-	socklen_t hostSize = sizeof(sockaddr_in);
-	SOCKET clientSocket = accept(serverSocket, (sockaddr*)&hostTemp, &hostSize);
-	if (INVALID_SOCKET == clientSocket)
-		return NULL;
+	QTcpSocket *clientSocket = serverSocket->nextPendingConnection();
 
 	const char *expectedGreeting = CLIENT_GREET;
 	std::string line;
@@ -457,8 +446,8 @@ static TcpSocket *clientConnect(SOCKET serverSocket, sockaddr_in *host)
 	line.resize(0);
 	for (;;) {
 		char ch;
-		if (recv(clientSocket, &ch, 1, 0) != 1) {
-			closesocket(clientSocket);
+		if (!clientSocket->getChar(&ch)) {
+			clientSocket->close();
 			return NULL;
 		}
 
@@ -475,7 +464,7 @@ static TcpSocket *clientConnect(SOCKET serverSocket, sockaddr_in *host)
 		ret = WebSocket::upgradeFromHttp(clientSocket);
 		line.resize(strlen(expectedGreeting));
 		if (!ret || !ret->recv(&line[0], line.length())) {
-			closesocket(clientSocket);
+			clientSocket->close();
 			return NULL;
 		}
 	} else
@@ -488,7 +477,7 @@ static TcpSocket *clientConnect(SOCKET serverSocket, sockaddr_in *host)
 	}
 
 	if (NULL != host)
-		*host = hostTemp;
+		*host = clientSocket->peerAddress();
 	return ret;
 }
 
@@ -496,12 +485,12 @@ void MainWindow::timerEvent(QTimerEvent * /* event */)
 {
 	SyncDocument *doc = trackView->getDocument();
 	if (!doc->clientSocket.connected()) {
-		if (socket_poll(serverSocket)) {
+		if (serverSocket->hasPendingConnections()) {
 			setStatusText("Accepting...");
-			sockaddr_in client;
+			QHostAddress client;
 			TcpSocket *clientSocket = clientConnect(serverSocket, &client);
 			if (clientSocket) {
-				setStatusText(QString("Connected to %1").arg(inet_ntoa(client.sin_addr)));
+				setStatusText(QString("Connected to %1").arg(client.toString()));
 				doc->clientSocket.socket = clientSocket;
 				clientIndex = 0;
 				doc->clientSocket.sendPauseCommand(true);

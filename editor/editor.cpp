@@ -2,12 +2,9 @@
  * For conditions of distribution and use, see copyright notice in COPYING
  */
 
-extern "C" {
-#include "../lib/base.h"
-}
-
 #include <QApplication>
 #include <QMessageBox>
+#include <QTcpServer>
 #include "mainwindow.h"
 
 int main(int argc, char *argv[])
@@ -17,33 +14,13 @@ int main(int argc, char *argv[])
 	app.setApplicationName("GNU Rocket Editor");
 	app.setWindowIcon(QIcon(":appicon.ico"));
 
-#ifdef WIN32
-	WSADATA wsa;
-	if (0 != WSAStartup(MAKEWORD(2, 0), &wsa)) {
-		QMessageBox::critical(NULL, NULL, "failed to init network", QMessageBox::Ok);
-		exit(EXIT_FAILURE);
-	}
-#endif
-
-	SOCKET serverSocket = socket(AF_INET, SOCK_STREAM, 0);
-
-	struct sockaddr_in sin;
-	memset(&sin, 0, sizeof sin);
-
-	sin.sin_family = AF_INET;
-	sin.sin_addr.s_addr = INADDR_ANY;
-	sin.sin_port = htons(1338);
-
-	if (bind(serverSocket, (struct sockaddr *)&sin,
-	    sizeof(sin)) < 0) {
+	QTcpServer serverSocket;
+	if (!serverSocket.listen(QHostAddress::Any, 1338)) {
 		QMessageBox::critical(NULL, NULL, "Could not start server", QMessageBox::Ok);
 		exit(EXIT_FAILURE);
 	}
 
-	while (listen(serverSocket, SOMAXCONN) < 0)
-		; /* nothing */
-
-	MainWindow mainWindow(serverSocket);
+	MainWindow mainWindow(&serverSocket);
 
 	if (argc > 1) {
 		if (argc > 2) {
@@ -56,11 +33,6 @@ int main(int argc, char *argv[])
 	
 	mainWindow.show();
 	app.exec();
-	closesocket(serverSocket);
-
-#ifdef WIN32
-	WSACleanup();
-#endif
 
 	return 0;
 }
