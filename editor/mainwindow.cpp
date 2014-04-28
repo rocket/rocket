@@ -467,6 +467,7 @@ static TcpSocket *clientConnect(QTcpServer *serverSocket, QHostAddress *host)
 	if (!line.compare(0, 4, "GET ")) {
 		ret = WebSocket::upgradeFromHttp(clientSocket);
 		line.resize(strlen(expectedGreeting));
+		clientSocket->waitForReadyRead();
 		if (!ret || !ret->recv(&line[0], line.length())) {
 			clientSocket->close();
 			return NULL;
