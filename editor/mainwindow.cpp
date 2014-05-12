@@ -519,6 +519,7 @@ void MainWindow::onDisconnected()
 {
 	SyncDocument *doc = trackView->getDocument();
 	doc->clientSocket.clientPaused = true;
+	doc->clientSocket.disconnect();
 	trackView->update();
 	setStatusText("Not Connected.");
 	guiConnected = false;

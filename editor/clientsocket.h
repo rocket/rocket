@@ -13,7 +13,8 @@ public:
 
 	virtual void disconnect()
 	{
-		socket->close();
+		if (connected())
+			socket->close();
 		socket = NULL;
 	}
 
