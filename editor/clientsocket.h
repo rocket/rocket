@@ -22,6 +22,8 @@ public:
 	{
 		if (!connected())
 			return false;
+		if (socket->bytesAvailable() < int(length))
+			socket->waitForReadyRead(-1);
 		qint64 ret = socket->read(buffer, length);
 		if (ret != int(length)) {
 			TcpSocket::disconnect();
