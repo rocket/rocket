@@ -3,6 +3,7 @@ extern "C" {
 #include "../lib/track.h"
 }
 #include <QCryptographicHash>
+#include <QtEndian>
 
 #include <cassert>
 #include <string>
@@ -19,10 +20,10 @@ bool WebSocket::readFrame(std::string &buf)
 	int payload_len = header[1] & 0x7f;
 
 	if (payload_len == 126) {
-		unsigned short tmp;
+		quint16 tmp;
 		if (!TcpSocket::recv((char *)&tmp, 2))
 			return false;
-		payload_len = ntohs(tmp);
+		payload_len = qFromBigEndian(tmp);
 	} else if (payload_len == 127) {
 		// dude, that's one crazy big payload! let's bail!
 		return false;
@@ -87,7 +88,7 @@ bool WebSocket::sendFrame(int opcode, const char *payloadData, size_t payloadLen
 
 	if (payloadLength >= 126) {
 		assert(payloadLength < 0xffff);
-		unsigned short tmp = htons((unsigned short)(payloadLength));
+		quint16 tmp = qToBigEndian((quint16)(payloadLength));
 		if (!TcpSocket::send((const char *)&tmp, 2, false))
 			return false;
 	}
@@ -142,15 +143,15 @@ void ClientSocket::sendSetKeyCommand(const std::string &trackName, const struct 
 	if (!connected() ||
 	    clientTracks.count(trackName) == 0)
 		return;
-	uint32_t track = htonl(clientTracks[trackName]);
-	uint32_t row = htonl(key.row);
+	quint32 track = qToBigEndian((uint32_t)clientTracks[trackName]);
+	quint32 row = qToBigEndian((uint32_t)key.row);
 
 	union {
 		float f;
-		uint32_t i;
+		quint32 i;
 	} v;
 	v.f = key.value;
-	v.i = htonl(v.i);
+	v.i = qToBigEndian(v.i);
 
 	assert(key.type < KEY_TYPE_COUNT);
 
@@ -168,8 +169,8 @@ void ClientSocket::sendDeleteKeyCommand(const std::string &trackName, int row)
 	    clientTracks.count(trackName) == 0)
 		return;
 
-	uint32_t track = htonl(int(clientTracks[trackName]));
-	row = htonl(row);
+	quint32 track = qToBigEndian(int(clientTracks[trackName]));
+	row = qToBigEndian((quint32)row);
 
 	unsigned char cmd = DELETE_KEY;
 	send((char *)&cmd, 1, false);
@@ -183,7 +184,7 @@ void ClientSocket::sendSetRowCommand(int row)
 		return;
 
 	unsigned char cmd = SET_ROW;
-	row = htonl(row);
+	row = qToBigEndian((quint32)row);
 	send((char *)&cmd, 1, false);
 	send((char *)&row, sizeof(int), true);
 }

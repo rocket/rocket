@@ -31,6 +31,4 @@ RESOURCES += editor.qrc
 
 RC_FILE = editor.rc
 
-win32:LIBS += -lws2_32
-
 gcc:QMAKE_CXXFLAGS = -Wno-switch

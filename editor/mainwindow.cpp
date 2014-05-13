@@ -17,6 +17,7 @@ extern "C" {
 #include <QFileDialog>
 #include <QInputDialog>
 #include <QTcpServer>
+#include <QtEndian>
 
 MainWindow::MainWindow(QTcpServer *serverSocket) :
 	QMainWindow(),
@@ -390,7 +391,7 @@ void MainWindow::processCommand(ClientSocket &sock)
 		case GET_TRACK:
 			// read data
 			sock.recv((char *)&strLen, sizeof(int));
-			strLen = ntohl(strLen);
+			strLen = qFromBigEndian((quint32)strLen);
 			if (!sock.connected())
 				return;
 
@@ -431,7 +432,7 @@ void MainWindow::processCommand(ClientSocket &sock)
 
 		case SET_ROW:
 			sock.recv((char*)&newRow, sizeof(int));
-			trackView->setEditRow(ntohl(newRow));
+			trackView->setEditRow(qToBigEndian((quint32)newRow));
 			break;
 		}
 	}
