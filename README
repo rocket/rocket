@@ -8,9 +8,9 @@ data-set.
 
 Compile Editor
 --------------
-GNU Rocket uses qmake as a build-system abstraction, which can be used to
-output Makefiles, Visual Studio project files or can be built directly from
-QtCreator. See the qmake documentation for details.
+The GNU Rocket editor uses qmake as a build-system abstraction, which can
+be used to output Makefiles, Visual Studio project files or can be built
+directly from QtCreator. See the qmake documentation for details.
 
 Compile Example
 ---------------
