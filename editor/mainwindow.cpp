@@ -203,6 +203,7 @@ void MainWindow::setStatusKeyType(enum key_type keyType, bool valid)
 	case KEY_LINEAR: statusKeyType->setText("linear"); break;
 	case KEY_SMOOTH: statusKeyType->setText("smooth"); break;
 	case KEY_RAMP:   statusKeyType->setText("ramp"); break;
+	default: Q_ASSERT(false);
 	}
 }
 

@@ -256,6 +256,8 @@ void TrackView::paintTracks(QPainter &painter, const QRect &rcTracks)
 			case KEY_RAMP:
 				painter.setPen(QPen(QBrush(QColor(0, 0, 255)), 2));
 				break;
+			default:
+				Q_ASSERT(false);
 			}
 
 			if (interpolationType != KEY_STEP) {

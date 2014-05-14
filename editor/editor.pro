@@ -30,5 +30,3 @@ SOURCES += clientsocket.cpp \
 RESOURCES += editor.qrc
 
 RC_FILE = editor.rc
-
-gcc:QMAKE_CXXFLAGS = -Wno-switch
