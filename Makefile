@@ -1,6 +1,8 @@
 # default target
 all:
 
+.PHONY: all clean
+
 # default build flags
 CFLAGS = -g -O2 -Wall
 
