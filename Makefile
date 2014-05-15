@@ -1,7 +1,9 @@
 # default target
 all:
 
-.PHONY: all clean
+.PHONY: all clean editor
+
+QMAKE ?= qmake
 
 # default build flags
 CFLAGS = -g -O2 -Wall
@@ -26,7 +28,7 @@ LIB_OBJS = \
 	lib/device.o \
 	lib/track.o
 
-all: lib/librocket.a
+all: lib/librocket.a editor
 
 example_bass/example_bass$X: CPPFLAGS += -Iexample_bass/include
 example_bass/example_bass$X: CXXFLAGS += $(SDL_CFLAGS)
@@ -35,9 +37,17 @@ example_bass/example_bass$X: LDLIBS += $(OPENGL_LIBS) $(SDL_LIBS)
 
 clean:
 	$(RM) $(LIB_OBJS) lib/librocket.a
+	if test -e editor/Makefile; then $(MAKE) -C editor clean && $(RM) editor/Makefile; fi;
+	$(RM) editor/editor editor/Makefile
 
 lib/librocket.a: $(LIB_OBJS)
 	$(AR) $(ARFLAGS) $@ $^
 
 example_bass/example_bass$X: example_bass/example_bass.cpp lib/librocket.a
 	$(LINK.cpp) $^ $(LOADLIBES) $(LDLIBS) -o $@
+
+editor/Makefile: editor/editor.pro
+	$(QMAKE) $< -o $@
+
+editor: editor/Makefile
+	$(MAKE) -C editor
