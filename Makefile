@@ -34,7 +34,7 @@ example_bass/example_bass$X: LDLIBS += -Lexample_bass/lib -lbass
 example_bass/example_bass$X: LDLIBS += $(OPENGL_LIBS) $(SDL_LIBS)
 
 clean:
-	$(RM) -rf $(LIB_OBJS) lib/librocket.a
+	$(RM) $(LIB_OBJS) lib/librocket.a
 
 lib/librocket.a: $(LIB_OBJS)
 	$(AR) $(ARFLAGS) $@ $^
