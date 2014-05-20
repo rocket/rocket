@@ -47,7 +47,7 @@ example_bass/example_bass$X: example_bass/example_bass.cpp lib/librocket.a
 	$(LINK.cpp) $^ $(LOADLIBES) $(LDLIBS) -o $@
 
 editor/Makefile: editor/editor.pro
-	$(QMAKE) $< -o $@
+	cd editor && $(QMAKE) editor.pro -o Makefile
 
 editor: editor/Makefile
 	$(MAKE) -C editor
