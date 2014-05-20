@@ -36,7 +36,7 @@ example_bass/example_bass$X: LDLIBS += -Lexample_bass/lib -lbass
 example_bass/example_bass$X: LDLIBS += $(OPENGL_LIBS) $(SDL_LIBS)
 
 clean:
-	$(RM) $(LIB_OBJS) lib/librocket.a
+	$(RM) $(LIB_OBJS) lib/librocket.a example_bass/example_bass$X
 	if test -e editor/Makefile; then $(MAKE) -C editor clean; fi;
 	$(RM) editor/editor editor/Makefile
 
