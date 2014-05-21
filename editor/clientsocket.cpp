@@ -143,8 +143,8 @@ void ClientSocket::sendSetKeyCommand(const std::string &trackName, const struct 
 	if (!connected() ||
 	    clientTracks.count(trackName) == 0)
 		return;
-	quint32 track = qToBigEndian((uint32_t)clientTracks[trackName]);
-	quint32 row = qToBigEndian((uint32_t)key.row);
+	quint32 track = qToBigEndian((quint32)clientTracks[trackName]);
+	quint32 row = qToBigEndian((quint32)key.row);
 
 	union {
 		float f;
