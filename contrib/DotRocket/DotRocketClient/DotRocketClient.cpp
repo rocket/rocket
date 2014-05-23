@@ -8,42 +8,51 @@
 using System::Runtime::InteropServices::Marshal;
 
 #include "DotRocketClient.h"
+#include <vcclr.h>
 
 using DotRocket::Track;
 using DotRocket::Device;
 using DotRocket::ClientDevice;
 
-private ref class ClientTrack: public Track {
+private ref class ClientTrack: public Track
+{
 	const sync_track *track;
 public:
 	ClientTrack(const sync_track *track) : track(track) {}
-	virtual float GetValue(double time) override
+	virtual double GetValue(double time) override
 	{
 		return sync_get_val(track, time);
+	}
+};
+
+namespace
+{
+	class DeviceReference
+	{
+	public:
+		DeviceReference(Device ^dev) : dev(dev) {}
+		Device ^GetDevice() { return dev; }
+	private:
+		gcroot<Device^> dev;
 	};
-};
-
-ref class Callbacks {
-public:
-	static Device ^DeviceCurrenltyBeingProcessed = nullptr;
-};
-
-void cb_pause(void *arg, int row)
-{
-	Callbacks::DeviceCurrenltyBeingProcessed->Pause(row);
 }
 
-void cb_set_row(void *arg, int row)
+static void cb_pause(void *arg, int flag)
 {
-	Callbacks::DeviceCurrenltyBeingProcessed->SetRow(row);
+	((DeviceReference *)arg)->GetDevice()->Pause(!!flag);
 }
 
-int cb_is_playing(void *arg)
+static void cb_set_row(void *arg, int row)
 {
-	return !!Callbacks::DeviceCurrenltyBeingProcessed->IsPlaying();
+	((DeviceReference *)arg)->GetDevice()->SetRow(row);
 }
 
-sync_cb callbacks[] = {
+static int cb_is_playing(void *arg)
+{
+	return ((DeviceReference *)arg)->GetDevice()->IsPlaying();
+}
+
+static sync_cb callbacks[] = {
 	cb_pause,
 	cb_set_row,
 	cb_is_playing
@@ -76,13 +85,13 @@ ClientDevice::!ClientDevice()
 bool ClientDevice::Connect(System::String^ host, unsigned short port)
 {
 	char *chost = (char *)(void *)Marshal::StringToHGlobalAnsi(host);
-	int result = sync_connect((sync_device *)device, chost, port);
+	int result = sync_connect(device, chost, port);
 	Marshal::FreeHGlobal((System::IntPtr)chost);
 	return !result;
 }
 
 bool ClientDevice::Update(int row)
 {
-	Callbacks::DeviceCurrenltyBeingProcessed = this;
-	return !sync_update(device, row, callbacks, device);
+	DeviceReference devref(this);
+	return !sync_update(device, row, callbacks, &devref);
 }

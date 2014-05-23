@@ -3,13 +3,14 @@
 #pragma once
 
 struct sync_device;
-struct sync_track;
 
 using namespace System;
 using namespace System::Collections::Generic;
 
-namespace DotRocket {
-	public ref class ClientDevice: public Device {
+namespace DotRocket
+{
+	public ref class ClientDevice: public Device
+	{
 	protected:
 		sync_device *device;
 		Dictionary<System::String ^, Track ^> ^tracks;

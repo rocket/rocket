@@ -3,7 +3,6 @@
 #pragma once
 
 struct sync_device;
-struct sync_track;
 
 using namespace System;
 using namespace System::Collections::Generic;
@@ -13,7 +12,7 @@ namespace DotRocket
 	public ref class Track abstract
 	{
 	public:
-		virtual float GetValue(double time) = 0;
+		virtual double GetValue(double time) = 0;
 	};
 
 	public delegate void PauseEventHandler(bool flag);
