@@ -111,7 +111,7 @@ void MainWindow::createStatusBar()
 
 static QStringList getRecentFiles()
 {
-#ifdef WIN32
+#ifdef Q_OS_WIN32
 	QSettings settings("HKEY_CURRENT_USER\\Software\\GNU Rocket",
 	                   QSettings::NativeFormat);
 #else
@@ -151,7 +151,12 @@ void MainWindow::setCurrentFileName(const QString &fileName)
 {
 	QFileInfo info(fileName);
 
+#ifdef Q_OS_WIN32
+	QSettings settings("HKEY_CURRENT_USER\\Software\\GNU Rocket",
+	                   QSettings::NativeFormat);
+#else
 	QSettings settings;
+#endif
 	QStringList files = getRecentFiles();
 	files.removeAll(info.absoluteFilePath());
 	files.prepend(info.absoluteFilePath());
