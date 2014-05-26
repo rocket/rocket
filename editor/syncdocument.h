@@ -8,12 +8,11 @@ extern "C" {
 #include "../lib/data.h"
 }
 
-#include <stack>
-#include <list>
-#include <vector>
-#include <set>
+#include <QStack>
+#include <QList>
+#include <QVector>
 #include <QString>
-#include <cassert>
+#include <set>
 
 #include "clientsocket.h"
 
@@ -52,7 +51,7 @@ public:
 		void exec(SyncDocument *data)
 		{
 			sync_track *t = data->tracks[track];
-			assert(!is_key_frame(t, key.row));
+			Q_ASSERT(!is_key_frame(t, key.row));
 			if (sync_set_key(t, &key))
 				throw std::bad_alloc();
 			data->clientSocket.sendSetKeyCommand(t->name, key); // update clients
@@ -61,7 +60,7 @@ public:
 		void undo(SyncDocument *data)
 		{
 			sync_track *t = data->tracks[track];
-			assert(is_key_frame(t, key.row));
+			Q_ASSERT(is_key_frame(t, key.row));
 			if (sync_del_key(t, key.row))
 				throw std::bad_alloc();
 			data->clientSocket.sendDeleteKeyCommand(t->name, key.row); // update clients
@@ -82,7 +81,7 @@ public:
 		{
 			sync_track *t = data->tracks[track];
 			int idx = sync_find_key(t, row);
-			assert(idx >= 0);
+			Q_ASSERT(idx >= 0);
 			oldKey = t->keys[idx];
 			if (sync_del_key(t, row))
 				throw std::bad_alloc();
@@ -92,7 +91,7 @@ public:
 		void undo(SyncDocument *data)
 		{
 			sync_track *t = data->tracks[track];
-			assert(!is_key_frame(t, row));
+			Q_ASSERT(!is_key_frame(t, row));
 			if (sync_set_key(t, &oldKey))
 				throw std::bad_alloc();
 			data->clientSocket.sendSetKeyCommand(t->name, oldKey); // update clients
@@ -140,12 +139,8 @@ public:
 	public:
 		~MultiCommand()
 		{
-			std::list<Command*>::iterator it;
-			for (it = commands.begin(); it != commands.end(); ++it)
-			{
-				delete *it;
-			}
-			commands.clear();
+			while (!commands.isEmpty())
+				delete commands.takeFirst();
 		}
 		
 		void addCommand(Command *cmd)
@@ -157,18 +152,21 @@ public:
 		
 		void exec(SyncDocument *data)
 		{
-			std::list<Command*>::iterator it;
-			for (it = commands.begin(); it != commands.end(); ++it) (*it)->exec(data);
+			QListIterator<Command *> i(commands);
+			while (i.hasNext())
+				i.next()->exec(data);
 		}
 		
 		void undo(SyncDocument *data)
 		{
-			std::list<Command*>::reverse_iterator it;
-			for (it = commands.rbegin(); it != commands.rend(); ++it) (*it)->undo(data);
+			QListIterator<Command *> i(commands);
+			i.toBack();
+			while (i.hasPrevious())
+				i.previous()->undo(data);
 		}
 		
 	private:
-		std::list<Command*> commands;
+		QList<Command*> commands;
 	};
 	
 	void exec(Command *cmd)
@@ -247,14 +245,14 @@ public:
 	
 	size_t getTrackIndexFromPos(size_t track) const
 	{
-		assert(track < trackOrder.size());
+		assert(track < (size_t)trackOrder.size());
 		return trackOrder[track];
 	}
 
 	void swapTrackOrder(size_t t1, size_t t2)
 	{
-		assert(t1 < trackOrder.size());
-		assert(t2 < trackOrder.size());
+		assert(t1 < (size_t)trackOrder.size());
+		assert(t2 < (size_t)trackOrder.size());
 		std::swap(trackOrder[t1], trackOrder[t2]);
 	}
 
@@ -312,12 +310,12 @@ public:
 
 private:
 	std::set<int> rowBookmarks;
-	std::vector<size_t> trackOrder;
+	QVector<size_t> trackOrder;
 	size_t rows;
 
 	// undo / redo functionality
-	std::stack<Command*> undoStack;
-	std::stack<Command*> redoStack;
+	QStack<Command*> undoStack;
+	QStack<Command*> redoStack;
 	int savePointDelta;        // how many undos must be done to get to the last saved state
 	bool savePointUnreachable; // is the save-point reachable?
 
