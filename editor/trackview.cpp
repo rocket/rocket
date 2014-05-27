@@ -20,9 +20,11 @@ using std::min;
 using std::max;
 
 TrackView::TrackView(QWidget *parent) :
-	QAbstractScrollArea(parent),
-	document(NULL),
-	dragging(false)
+    QAbstractScrollArea(parent),
+    windowRows(0),
+    windowTracks(0),
+    document(NULL),
+    dragging(false)
 {
 	viewport()->setAutoFillBackground(false);
 
