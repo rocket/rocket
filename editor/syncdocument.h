@@ -12,7 +12,6 @@ extern "C" {
 #include <QList>
 #include <QVector>
 #include <QString>
-#include <set>
 
 #include "clientsocket.h"
 
@@ -267,15 +266,17 @@ public:
 
 	bool isRowBookmark(int row) const
 	{
-		return !!rowBookmarks.count(row);
+		QList<int>::const_iterator it = qLowerBound(rowBookmarks.begin(), rowBookmarks.end(), row);
+		return it != rowBookmarks.end() && *it == row;
 	}
 
 	void toggleRowBookmark(int row)
 	{
-		if (isRowBookmark(row))
-			rowBookmarks.erase(row);
+		QList<int>::iterator it = qLowerBound(rowBookmarks.begin(), rowBookmarks.end(), row);
+		if (it == rowBookmarks.end() || *it != row)
+			rowBookmarks.insert(it, row);
 		else
-			rowBookmarks.insert(row);
+			rowBookmarks.erase(it);
 	}
 
 	ClientSocket clientSocket;
@@ -287,7 +288,7 @@ public:
 
 	int nextRowBookmark(int row) const
 	{
-		std::set<int>::const_iterator it = rowBookmarks.upper_bound(row);
+		QList<int>::const_iterator it = qUpperBound(rowBookmarks.begin(), rowBookmarks.end(), row);
 		if (it == rowBookmarks.end())
 			return -1;
 		return *it;
@@ -295,21 +296,24 @@ public:
 
 	int prevRowBookmark(int row) const
 	{
-		std::set<int>::const_iterator it = rowBookmarks.lower_bound(row);
+		QList<int>::const_iterator it = qLowerBound(rowBookmarks.begin(), rowBookmarks.end(), row);
 		if (it == rowBookmarks.end()) {
-			std::set<int>::const_reverse_iterator it = rowBookmarks.rbegin();
-			if (it == rowBookmarks.rend())
+
+			// this can only really happen if the list is empty
+			if (it == rowBookmarks.begin())
 				return -1;
-			return *it;
-		} else
+
+			// reached the end, pick the last bookmark if it's after the current row
 			it--;
-		if (it == rowBookmarks.end())
-			return -1;
-		return *it;
+			return *it < row ? *it : -1;
+		}
+
+		// pick the previous key (if any)
+		return it != rowBookmarks.begin() ? *(--it) : -1;
 	}
 
 private:
-	std::set<int> rowBookmarks;
+	QList<int> rowBookmarks;
 	QVector<size_t> trackOrder;
 	size_t rows;
 

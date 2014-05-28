@@ -144,7 +144,7 @@ bool SyncDocument::save(const QString &fileName)
 
 		QDomElement bookmarksNode =
 		    doc.createElement("bookmarks");
-		std::set<int>::const_iterator it;
+		QList<int>::const_iterator it;
 		for (it = rowBookmarks.begin(); it != rowBookmarks.end(); ++it) {
 			QDomElement bookmarkElem =
 			    doc.createElement("bookmark");
