@@ -22,12 +22,12 @@ int main(int argc, char *argv[])
 
 	MainWindow mainWindow(&serverSocket);
 
-	if (argc > 1) {
-		if (argc > 2) {
+	if (app.arguments().size() > 1) {
+		if (app.arguments().size() > 2) {
 			QMessageBox::critical(&mainWindow, NULL, QString("usage: %1 [filename.rocket]").arg(argv[0]), QMessageBox::Ok);
 			exit(EXIT_FAILURE);
 		}
-		mainWindow.loadDocument(argv[1]);
+		mainWindow.loadDocument(app.arguments()[1]);
 	} else
 		mainWindow.fileNew();
 	
