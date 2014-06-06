@@ -266,8 +266,6 @@ void MainWindow::loadDocument(const QString &path)
 		setDocument(newDoc);
 		setCurrentFileName(path);
 	}
-	else
-		QMessageBox::critical(this, NULL, QString("failed to open %1").arg(path), QMessageBox::Ok);
 }
 
 void MainWindow::fileOpen()
@@ -287,8 +285,7 @@ void MainWindow::fileSaveAs()
 			doc->clientSocket.sendSaveCommand();
 			setCurrentFileName(fileName);
 			doc->fileName = fileName;
-		} else
-			QMessageBox::critical(this, NULL, QString("failed to save %1").arg(fileName), QMessageBox::Ok);
+		}
 	}
 }
 
@@ -298,10 +295,8 @@ void MainWindow::fileSave()
 	if (doc->fileName.isEmpty())
 		return fileSaveAs();
 
-	if (!doc->save(doc->fileName)) {
+	if (!doc->save(doc->fileName))
 		doc->clientSocket.sendSaveCommand();
-		QMessageBox::critical(this, NULL, QString("failed to save %1").arg(doc->fileName), QMessageBox::Ok);
-	}
 }
 
 void MainWindow::fileRemoteExport()
