@@ -1,3 +1,6 @@
+#ifndef CLIENTSOCKET_H
+#define CLIENTSOCKET_H
+
 #include <QTcpSocket>
 #include <QByteArray>
 
@@ -142,3 +145,5 @@ public:
 	QMap<QString, size_t> clientTracks;
 	TcpSocket *socket;
 };
+
+#endif // !defined(CLIENTSOCKET_H)
