@@ -1,5 +1,9 @@
 #include "syncdocument.h"
-#include <string>
+#include <QFile>
+#include <QMessageBox>
+#include <QDomDocument>
+#include <QTextStream>
+
 
 SyncDocument::~SyncDocument()
 {
@@ -7,11 +11,6 @@ SyncDocument::~SyncDocument()
 	clearUndoStack();
 	clearRedoStack();
 }
-
-#include <QFile>
-#include <QMessageBox>
-#include <QDomDocument>
-#include <QTextStream>
 
 SyncDocument *SyncDocument::load(const QString &fileName)
 {
