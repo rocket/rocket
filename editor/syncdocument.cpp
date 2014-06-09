@@ -29,6 +29,7 @@ SyncDocument *SyncDocument::load(const QString &fileName)
 	if (!doc.setContent(&file, &err)) {
 		file.close();
 		QMessageBox::critical(NULL, "Error", err);
+		return NULL;
 	}
 	file.close();
 
