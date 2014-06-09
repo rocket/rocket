@@ -4,6 +4,8 @@
 #include <QTcpSocket>
 #include <QByteArray>
 
+#include "synctrack.h"
+
 class TcpSocket {
 public:
 	explicit TcpSocket(QTcpSocket *socket) : socket(socket) {}
@@ -135,7 +137,7 @@ public:
 		return socket->pollRead();
 	}
 
-	void sendSetKeyCommand(const QString &trackName, const struct track_key &key);
+	void sendSetKeyCommand(const QString &trackName, const SyncTrack::TrackKey &key);
 	void sendDeleteKeyCommand(const QString &trackName, int row);
 	void sendSetRowCommand(int row);
 	void sendPauseCommand(bool pause);

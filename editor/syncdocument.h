@@ -1,33 +1,58 @@
 #ifndef SYNCDOCUMENT_H
 #define SYNCDOCUMENT_H
 
-extern "C" {
-#include "../lib/data.h"
-}
-
 #include <QStack>
 #include <QList>
 #include <QVector>
 #include <QString>
 
 #include "clientsocket.h"
+#include "synctrack.h"
 
-class SyncDocument : public sync_data {
+class SyncDocument {
 public:
 	SyncDocument() :
-	    rows(128), savePointDelta(0), savePointUnreachable(false)
+	    rows(128),
+	    savePointDelta(0),
+	    savePointUnreachable(false)
 	{
-		this->tracks = NULL;
-		this->num_tracks = 0;
 	}
 
 	~SyncDocument();
 
-	size_t createTrack(const QString &name)
+	int createTrack(const QString &name)
 	{
-		size_t index = sync_create_track(this, name.toUtf8());
+		tracks.append(new SyncTrack(name));
+		int index = tracks.size() - 1;
 		trackOrder.push_back(index);
+		Q_ASSERT(trackOrder.size() == tracks.size());
 		return index;
+	}
+
+	SyncTrack *getTrack(int index)
+	{
+		Q_ASSERT(index >= 0 && index < tracks.size());
+		return tracks[index];
+	}
+
+	const SyncTrack *getTrack(int index) const
+	{
+		Q_ASSERT(index >= 0 && index < tracks.size());
+		return tracks[index];
+	}
+
+	SyncTrack *findTrack(const QString &name)
+	{
+		for (int i = 0; i < tracks.size(); ++i)
+			if (name == tracks[i]->name)
+				return tracks[i];
+		return NULL;
+	}
+
+	size_t getTrackCount() const
+	{
+		Q_ASSERT(trackOrder.size() == tracks.size());
+		return tracks.size();
 	}
 
 	class Command
@@ -41,30 +66,32 @@ public:
 	class InsertCommand : public Command
 	{
 	public:
-		InsertCommand(int track, const track_key &key) : track(track), key(key) {}
+		InsertCommand(int track, const SyncTrack::TrackKey &key) :
+		    track(track),
+		    key(key)
+		{}
+
 		~InsertCommand() {}
 		
 		void exec(SyncDocument *data)
 		{
-			sync_track *t = data->tracks[track];
-			Q_ASSERT(!is_key_frame(t, key.row));
-			if (sync_set_key(t, &key))
-				throw std::bad_alloc();
-			data->clientSocket.sendSetKeyCommand(t->name, key); // update clients
+			SyncTrack *t = data->getTrack(track);
+			Q_ASSERT(!t->isKeyFrame(key.row));
+			t->setKey(key);
+			data->clientSocket.sendSetKeyCommand(t->name.toUtf8().constData(), key); // update clients
 		}
 		
 		void undo(SyncDocument *data)
 		{
-			sync_track *t = data->tracks[track];
-			Q_ASSERT(is_key_frame(t, key.row));
-			if (sync_del_key(t, key.row))
-				throw std::bad_alloc();
-			data->clientSocket.sendDeleteKeyCommand(t->name, key.row); // update clients
+			SyncTrack *t = data->getTrack(track);
+			Q_ASSERT(t->isKeyFrame(key.row));
+			t->removeKey(key.row);
+			data->clientSocket.sendDeleteKeyCommand(t->name.toUtf8().constData(), key.row); // update clients
 		}
 
 	private:
 		int track;
-		track_key key;
+		SyncTrack::TrackKey key;
 	};
 	
 	class DeleteCommand : public Command
@@ -75,59 +102,57 @@ public:
 		
 		void exec(SyncDocument *data)
 		{
-			sync_track *t = data->tracks[track];
-			int idx = sync_find_key(t, row);
-			Q_ASSERT(idx >= 0);
-			oldKey = t->keys[idx];
-			if (sync_del_key(t, row))
-				throw std::bad_alloc();
-			data->clientSocket.sendDeleteKeyCommand(t->name, row); // update clients
+			SyncTrack *t = data->getTrack(track);
+			Q_ASSERT(t->isKeyFrame(row));
+			oldKey = t->getKeyFrame(row);
+			Q_ASSERT(oldKey.row == row);
+			t->removeKey(row);
+			data->clientSocket.sendDeleteKeyCommand(t->name.toUtf8().constData(), row); // update clients
 		}
 		
 		void undo(SyncDocument *data)
 		{
-			sync_track *t = data->tracks[track];
-			Q_ASSERT(!is_key_frame(t, row));
-			if (sync_set_key(t, &oldKey))
-				throw std::bad_alloc();
-			data->clientSocket.sendSetKeyCommand(t->name, oldKey); // update clients
+			SyncTrack *t = data->getTrack(track);
+			Q_ASSERT(!t->isKeyFrame(row));
+			Q_ASSERT(oldKey.row == row);
+			t->setKey(oldKey);
+			data->clientSocket.sendSetKeyCommand(t->name.toUtf8().constData(), oldKey); // update clients
 		}
 
 	private:
 		int track, row;
-		struct track_key oldKey;
+		SyncTrack::TrackKey oldKey;
 	};
 
 	
 	class EditCommand : public Command
 	{
 	public:
-		EditCommand(int track, const track_key &key) : track(track), key(key) {}
+		EditCommand(int track, const SyncTrack::TrackKey &key) : track(track), key(key) {}
 		~EditCommand() {}
 
 		void exec(SyncDocument *data)
 		{
-			sync_track *t = data->tracks[track];
-			int idx = sync_find_key(t, key.row);
-			Q_ASSERT(idx >= 0);
-			oldKey = t->keys[idx];
-			if (sync_set_key(t, &key))
-				throw std::bad_alloc();
+			SyncTrack *t = data->getTrack(track);
+			Q_ASSERT(t->isKeyFrame(key.row));
+			oldKey = t->getKeyFrame(key.row);
+			Q_ASSERT(key.row == oldKey.row);
+			t->setKey(key);
 			data->clientSocket.sendSetKeyCommand(t->name, key); // update clients
 		}
 
 		void undo(SyncDocument *data)
 		{
-			sync_track *t = data->tracks[track];
-			Q_ASSERT(is_key_frame(t, key.row));
-			if (sync_set_key(t, &oldKey))
-				throw std::bad_alloc();
+			SyncTrack *t = data->getTrack(track);
+			Q_ASSERT(t->isKeyFrame(oldKey.row));
+			Q_ASSERT(key.row == oldKey.row);
+			t->setKey(oldKey);
 			data->clientSocket.sendSetKeyCommand(t->name, oldKey); // update clients
 		}
-		
+
 	private:
 		int track;
-		track_key oldKey, key;
+		SyncTrack::TrackKey oldKey, key;
 	};
 	
 	class MultiCommand : public Command
@@ -225,20 +250,15 @@ public:
 		}
 	}
 	
-	Command *getSetKeyFrameCommand(int track, const track_key &key)
+	Command *getSetKeyFrameCommand(int track, const SyncTrack::TrackKey &key)
 	{
-		sync_track *t = tracks[track];
-		SyncDocument::Command *cmd;
-		if (is_key_frame(t, key.row)) cmd = new EditCommand(track, key);
-		else                          cmd = new InsertCommand(track, key);
-		return cmd;
+		SyncTrack *t = getTrack(track);
+		if (t->isKeyFrame(key.row))
+			return new EditCommand(track, key);
+		else
+			return new InsertCommand(track, key);
 	}
 
-	size_t getTrackCount() const
-	{
-		return trackOrder.size();
-	}
-	
 	size_t getTrackIndexFromPos(size_t track) const
 	{
 		Q_ASSERT(track < (size_t)trackOrder.size());
@@ -285,7 +305,7 @@ public:
 
 	int nextRowBookmark(int row) const
 	{
-		QList<int>::const_iterator it = qUpperBound(rowBookmarks.begin(), rowBookmarks.end(), row);
+		QList<int>::const_iterator it = qLowerBound(rowBookmarks.begin(), rowBookmarks.end(), row);
 		if (it == rowBookmarks.end())
 			return -1;
 		return *it;
@@ -310,6 +330,7 @@ public:
 	}
 
 private:
+	QList<SyncTrack*> tracks;
 	QList<int> rowBookmarks;
 	QVector<size_t> trackOrder;
 	size_t rows;

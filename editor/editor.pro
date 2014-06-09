@@ -13,19 +13,15 @@ greaterThan(QT_MAJOR_VERSION, 4) {
 HEADERS += clientsocket.h \
     mainwindow.h \
     syncdocument.h \
+    synctrack.h \
     trackview.h \
-    ../lib/base.h \
-    ../lib/track.h \
-    ../lib/data.h \
-    ../lib/sync.h
+    ../lib/base.h
 
 SOURCES += clientsocket.cpp \
     editor.cpp \
     mainwindow.cpp \
     syncdocument.cpp \
-    trackview.cpp \
-    ../lib/track.c \
-    ../lib/data.c
+    trackview.cpp
 
 RESOURCES += editor.qrc
 

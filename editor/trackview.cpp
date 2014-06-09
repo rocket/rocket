@@ -134,7 +134,7 @@ void TrackView::paintTopMargin(QPainter &painter, const QRect &rcTracks)
 	
 	for (int track = startTrack; track < endTrack; ++track) {
 		size_t index = doc->getTrackIndexFromPos(track);
-		const sync_track *t = doc->tracks[index];
+		const SyncTrack *t = doc->getTrack(index);
 
 		QRect topMargin(getScreenX(track), 0, trackWidth, topMarginHeight);
 		if (!rcTracks.intersects(topMargin))
@@ -149,12 +149,12 @@ void TrackView::paintTopMargin(QPainter &painter, const QRect &rcTracks)
 		painter.fillRect(fillRect, bgBrush);
 		qDrawWinButton(&painter, fillRect, palette());
 
-		if (!doc->clientSocket.clientTracks.count(t->name))
+		if (!doc->clientSocket.clientTracks.count(t->name.toUtf8().constData()))
 			painter.setPen(QColor(128, 128, 128));
 		else
 			painter.setPen(QColor(0, 0, 0));
 
-		painter.drawText(fillRect, QString::fromUtf8(t->name));
+		painter.drawText(fillRect, t->name);
 	}
 
 	// make sure that the top margin isn't overdrawn by the track-data
@@ -204,15 +204,21 @@ void TrackView::paintTracks(QPainter &painter, const QRect &rcTracks)
 	int endTrack  = qMin(startTrack + windowTracks + 1, int(getTrackCount()));
 	
 	for (int track = startTrack; track < endTrack; ++track) {
-		const sync_track *t = doc->tracks[doc->getTrackIndexFromPos(track)];
+		const SyncTrack *t = doc->getTrack(doc->getTrackIndexFromPos(track));
+		QMap<int, SyncTrack::TrackKey> keyMap = t->getKeyMap();
+
 		for (int row = firstRow; row <= lastRow; ++row) {
 			QRect patternDataRect(getScreenX(track), getScreenY(row), trackWidth, rowHeight);
 			if (!rcTracks.intersects(patternDataRect))
 				continue;
 
-			int idx = sync_find_key(t, row);
-			int fidx = idx >= 0 ? idx : -idx - 2;
-			key_type interpolationType = (fidx >= 0) ? t->keys[fidx].type : KEY_STEP;
+			QMap<int, SyncTrack::TrackKey>::const_iterator it = keyMap.lowerBound(row);
+			if (it != keyMap.constBegin() && it.key() != row)
+				--it;
+
+			SyncTrack::TrackKey::KeyType interpolationType =
+					(it != keyMap.constEnd() && it.key() <= row) ?
+					it->type : SyncTrack::TrackKey::STEP;
 			bool selected = (track >= selectLeft && track <= selectRight) && (row >= selectTop && row <= selectBottom);
 
 			QBrush baseBrush = bgBaseBrush;
@@ -237,23 +243,23 @@ void TrackView::paintTracks(QPainter &painter, const QRect &rcTracks)
 			}
 			
 			switch (interpolationType) {
-			case KEY_STEP:
+			case SyncTrack::TrackKey::STEP:
 				break;
-			case KEY_LINEAR:
+			case SyncTrack::TrackKey::LINEAR:
 				painter.setPen(QPen(QBrush(QColor(255, 0, 0)), 2));
 				break;
-			case KEY_SMOOTH:
+			case SyncTrack::TrackKey::SMOOTH:
 				painter.setPen(QPen(QBrush(QColor(0, 255, 0)), 2));
 				break;
-			case KEY_RAMP:
+			case SyncTrack::TrackKey::RAMP:
 				painter.setPen(QPen(QBrush(QColor(0, 0, 255)), 2));
 				break;
 			default:
 				Q_ASSERT(false);
 			}
 
-			if (interpolationType != KEY_STEP) {
-				painter.drawLine(patternDataRect.topRight() + QPoint(0, 1),
+			if (interpolationType != SyncTrack::TrackKey::STEP) {
+				painter.drawLine(patternDataRect.topRight(),
 				                 patternDataRect.bottomRight());
 			}
 
@@ -268,10 +274,10 @@ void TrackView::paintTracks(QPainter &painter, const QRect &rcTracks)
 			QString text;
 			if (drawEditString)
 				text = editString;
-			else if (idx < 0)
+			else if (!t->isKeyFrame(row))
 				text = "  ---";
 			else {
-				float val = t->keys[idx].value;
+				float val = t->getKeyFrame(row).value;
 				text = QString::number(val, 'f', 2);
 			}
 
@@ -357,7 +363,7 @@ void TrackView::mouseReleaseEvent(QMouseEvent *event)
 struct CopyEntry
 {
 	int track;
-	track_key keyFrame;
+	SyncTrack::TrackKey keyFrame;
 };
 
 void TrackView::editCopy()
@@ -378,14 +384,13 @@ void TrackView::editCopy()
 	QVector<struct CopyEntry> copyEntries;
 	for (int track = selectLeft; track <= selectRight; ++track) {
 		const size_t trackIndex  = doc->getTrackIndexFromPos(track);
-		const sync_track *t = doc->tracks[trackIndex];
+		const SyncTrack *t = doc->getTrack(trackIndex);
 
 		for (int row = selectTop; row <= selectBottom; ++row) {
-			int idx = sync_find_key(t, row);
-			if (idx >= 0) {
+			if (t->isKeyFrame(row)) {
 				CopyEntry ce;
 				ce.track = track - selectLeft;
-				ce.keyFrame = t->keys[idx];
+				ce.keyFrame = t->getKeyFrame(row);
 				ce.keyFrame.row -= selectTop;
 				copyEntries.push_back(ce);
 			}
@@ -445,10 +450,10 @@ void TrackView::editPaste()
 			if (trackPos >= getTrackCount()) continue;
 
 			size_t trackIndex = doc->getTrackIndexFromPos(trackPos);
-			const sync_track *t = doc->tracks[trackIndex];
+			const SyncTrack *t = doc->getTrack(trackIndex);
 			for (int j = 0; j < buffer_height; ++j) {
 				int row = editRow + j;
-				if (is_key_frame(t, row))
+				if (t->isKeyFrame(row))
 					multiCmd->addCommand(new SyncDocument::DeleteCommand(int(trackIndex), row));
 			}
 		}
@@ -459,21 +464,20 @@ void TrackView::editPaste()
 			struct CopyEntry ce;
 			memcpy(&ce, src, sizeof(CopyEntry));
 			src += sizeof(CopyEntry);
-			
+
 			Q_ASSERT(ce.track >= 0);
 			Q_ASSERT(ce.track < buffer_width);
 			Q_ASSERT(ce.keyFrame.row >= 0);
 			Q_ASSERT(ce.keyFrame.row < buffer_height);
 
 			size_t trackPos = editTrack + ce.track;
-			if (trackPos < getTrackCount())
-			{
-				size_t trackIndex = doc->getTrackIndexFromPos(trackPos);
-				track_key key = ce.keyFrame;
+			if (trackPos < getTrackCount()) {
+				int track = doc->getTrackIndexFromPos(trackPos);
+				SyncTrack::TrackKey key = ce.keyFrame;
 				key.row += editRow;
 
 				// since we deleted all keyframes in the edit-box already, we can just insert this one. 
-				SyncDocument::Command *cmd = new SyncDocument::InsertCommand(int(trackIndex), key);
+				SyncDocument::Command *cmd = new SyncDocument::InsertCommand(track, key);
 				multiCmd->addCommand(cmd);
 			}
 		}
@@ -701,19 +705,18 @@ void TrackView::editEnterValue()
 	
 	if (int(editString.size()) > 0 && editTrack < int(getTrackCount()))
 	{
-		size_t trackIndex = doc->getTrackIndexFromPos(editTrack);
-		const sync_track *t = doc->tracks[trackIndex];
+		int track = doc->getTrackIndexFromPos(editTrack);
+		const SyncTrack *t = doc->getTrack(track);
 
-		track_key newKey;
-		newKey.type = KEY_STEP;
+		SyncTrack::TrackKey newKey;
+		newKey.type = SyncTrack::TrackKey::STEP;
 		newKey.row = editRow;
-		int idx = sync_find_key(t, editRow);
-		if (idx >= 0)
-			newKey = t->keys[idx]; // copy old key
+		if (t->isKeyFrame(editRow))
+			newKey = t->getKeyFrame(editRow); // copy old key
 		newKey.value = editString.toFloat(); // modify value
 		editString.clear();
 
-		SyncDocument::Command *cmd = doc->getSetKeyFrameCommand(int(trackIndex), newKey);
+		SyncDocument::Command *cmd = doc->getSetKeyFrameCommand(track, newKey);
 		doc->exec(cmd);
 
 		dirtyCurrentValue();
@@ -729,22 +732,26 @@ void TrackView::editToggleInterpolationType()
 	if (NULL == doc) return;
 	
 	if (editTrack < int(getTrackCount())) {
-		size_t trackIndex = doc->getTrackIndexFromPos(editTrack);
-		const sync_track *t = doc->tracks[trackIndex];
+		int track = doc->getTrackIndexFromPos(editTrack);
+		const SyncTrack *t = doc->getTrack(track);
+		QMap<int, SyncTrack::TrackKey> keyMap = t->getKeyMap();
 
-		int idx = key_idx_floor(t, editRow);
-		if (idx < 0) {
+		QMap<int, SyncTrack::TrackKey>::const_iterator it = keyMap.lowerBound(editRow);
+		if (it != keyMap.constBegin() && it.key() != editRow)
+			--it;
+
+		if (it.key() > editRow || it == keyMap.constEnd()) {
 			QApplication::beep();
 			return;
 		}
 
 		// copy and modify
-		track_key newKey = t->keys[idx];
-		newKey.type = (enum key_type)
-		    ((newKey.type + 1) % KEY_TYPE_COUNT);
+		SyncTrack::TrackKey newKey = *it;
+		newKey.type = (SyncTrack::TrackKey::KeyType)
+		    ((newKey.type + 1) % SyncTrack::TrackKey::KEY_TYPE_COUNT);
 
 		// apply change to data-set
-		SyncDocument::Command *cmd = doc->getSetKeyFrameCommand(int(trackIndex), newKey);
+		SyncDocument::Command *cmd = doc->getSetKeyFrameCommand(track, newKey);
 		doc->exec(cmd);
 
 		// update user interface
@@ -770,12 +777,12 @@ void TrackView::editClear()
 	
 	SyncDocument::MultiCommand *multiCmd = new SyncDocument::MultiCommand();
 	for (int track = selectLeft; track <= selectRight; ++track) {
-		size_t trackIndex = doc->getTrackIndexFromPos(track);
-		const sync_track *t = doc->tracks[trackIndex];
+		int trackIndex = doc->getTrackIndexFromPos(track);
+		const SyncTrack *t = doc->getTrack(trackIndex);
 
 		for (int row = selectTop; row <= selectBottom; ++row) {
-			if (is_key_frame(t, row)) {
-				SyncDocument::Command *cmd = new SyncDocument::DeleteCommand(int(trackIndex), row);
+			if (t->isKeyFrame(row)) {
+				SyncDocument::Command *cmd = new SyncDocument::DeleteCommand(trackIndex, row);
 				multiCmd->addCommand(cmd);
 			}
 		}
@@ -812,17 +819,16 @@ void TrackView::editBiasValue(float amount)
 	SyncDocument::MultiCommand *multiCmd = new SyncDocument::MultiCommand();
 	for (int track = selectLeft; track <= selectRight; ++track) {
 		Q_ASSERT(track < int(getTrackCount()));
-		size_t trackIndex = doc->getTrackIndexFromPos(track);
-		const sync_track *t = doc->tracks[trackIndex];
+		int trackIndex = doc->getTrackIndexFromPos(track);
+		const SyncTrack *t = doc->getTrack(trackIndex);
 
 		for (int row = selectTop; row <= selectBottom; ++row) {
-			int idx = sync_find_key(t, row);
-			if (idx >= 0) {
-				struct track_key k = t->keys[idx]; // copy old key
+			if (t->isKeyFrame(row)) {
+				SyncTrack::TrackKey k = t->getKeyFrame(row); // copy old key
 				k.value += amount; // modify value
 
 				// add sub-command
-				SyncDocument::Command *cmd = doc->getSetKeyFrameCommand(int(trackIndex), k);
+				SyncDocument::Command *cmd = doc->getSetKeyFrameCommand(trackIndex, k);
 				multiCmd->addCommand(cmd);
 			}
 		}

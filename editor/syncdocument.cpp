@@ -7,9 +7,11 @@
 
 SyncDocument::~SyncDocument()
 {
-	sync_data_deinit(this);
 	clearUndoStack();
 	clearRedoStack();
+
+	for (int i = 0; i < tracks.size(); ++i)
+		delete tracks[i];
 }
 
 SyncDocument *SyncDocument::load(const QString &fileName)
@@ -48,9 +50,11 @@ SyncDocument *SyncDocument::load(const QString &fileName)
 		QString name = attribs.namedItem("name").nodeValue();
 
 		// look up track-name, create it if it doesn't exist
-		int trackIndex = sync_find_track(ret, name.toUtf8());
-		if (0 > trackIndex)
-			trackIndex = int(ret->createTrack(name.toUtf8().constData()));
+		SyncTrack *t = ret->findTrack(name.toUtf8());
+		if (!t) {
+			int idx = ret->createTrack(name.toUtf8().constData());
+			t = ret->getTrack(idx);
+		}
 
 		QDomNodeList rowNodes = trackNode.childNodes();
 		for (int i = 0; i < int(rowNodes.length()); ++i) {
@@ -62,14 +66,13 @@ SyncDocument *SyncDocument::load(const QString &fileName)
 				QString valueString = rowAttribs.namedItem("value").nodeValue();
 				QString interpolationString = rowAttribs.namedItem("interpolation").nodeValue();
 
-				track_key k;
+				SyncTrack::TrackKey k;
 				k.row = rowString.toInt();
 				k.value = valueString.toFloat();
-				k.type = key_type(interpolationString.toInt());
+				k.type = SyncTrack::TrackKey::KeyType(interpolationString.toInt());
 
-				Q_ASSERT(!is_key_frame(ret->tracks[trackIndex], k.row));
-				if (sync_set_key(ret->tracks[trackIndex], &k))
-					qFatal("failed to insert key");
+				Q_ASSERT(!t->isKeyFrame(k.row));
+				t->setKey(k);
 			}
 		}
 	}
@@ -101,16 +104,19 @@ bool SyncDocument::save(const QString &fileName)
 	rootNode.appendChild(doc.createTextNode("\n\t"));
 	QDomElement tracksNode =
 	    doc.createElement("tracks");
-	for (size_t i = 0; i < num_tracks; ++i) {
-		const sync_track *t = tracks[trackOrder[i]];
+	for (size_t i = 0; i < getTrackCount(); ++i) {
+		const SyncTrack *t = getTrack(trackOrder[i]);
 
 		QDomElement trackElem =
 		    doc.createElement("track");
 		trackElem.setAttribute("name", t->name);
-		for (int i = 0; i < (int)t->num_keys; ++i) {
-			int row = t->keys[i].row;
-			float value = t->keys[i].value;
-			char interpolationType = char(t->keys[i].type);
+
+		QMap<int, SyncTrack::TrackKey> keyMap = t->getKeyMap();
+		QMap<int, SyncTrack::TrackKey>::const_iterator it;
+		for (it = keyMap.constBegin(); it != keyMap.constEnd(); ++it) {
+			int row = it.key();
+			float value = it->value;
+			char interpolationType = char(it->type);
 
 			QDomElement keyElem =
 			    doc.createElement("key");
@@ -124,14 +130,14 @@ bool SyncDocument::save(const QString &fileName)
 			    doc.createTextNode("\n\t\t\t"));
 			trackElem.appendChild(keyElem);
 		}
-		if (t->num_keys)
+		if (keyMap.size())
 			trackElem.appendChild(
 			    doc.createTextNode("\n\t\t"));
 
 		tracksNode.appendChild(doc.createTextNode("\n\t\t"));
 		tracksNode.appendChild(trackElem);
 	}
-	if (0 != num_tracks)
+	if (getTrackCount())
 		tracksNode.appendChild(doc.createTextNode("\n\t"));
 	rootNode.appendChild(tracksNode);
 	rootNode.appendChild(doc.createTextNode("\n\t"));

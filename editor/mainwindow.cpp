@@ -3,8 +3,7 @@
 #include "syncdocument.h"
 
 extern "C" {
-#include "../lib/sync.h"
-#include "../lib/track.h"
+#include "../lib/base.h"
 }
 
 #include <QApplication>
@@ -115,7 +114,7 @@ void MainWindow::createStatusBar()
 	setStatusText("Not connected");
 	setStatusPosition(0, 0);
 	setStatusValue(0.0f, false);
-	setStatusKeyType(KEY_STEP, false);
+	setStatusKeyType(SyncTrack::TrackKey::STEP, false);
 }
 
 static QStringList getRecentFiles()
@@ -214,7 +213,7 @@ void MainWindow::setStatusValue(double val, bool valid)
 		statusValue->setText("---");
 }
 
-void MainWindow::setStatusKeyType(enum key_type keyType, bool valid)
+void MainWindow::setStatusKeyType(SyncTrack::TrackKey::KeyType keyType, bool valid)
 {
 	if (!valid) {
 		statusKeyType->setText("---");
@@ -222,10 +221,10 @@ void MainWindow::setStatusKeyType(enum key_type keyType, bool valid)
 	}
 
 	switch (keyType) {
-	case KEY_STEP:   statusKeyType->setText("step"); break;
-	case KEY_LINEAR: statusKeyType->setText("linear"); break;
-	case KEY_SMOOTH: statusKeyType->setText("smooth"); break;
-	case KEY_RAMP:   statusKeyType->setText("ramp"); break;
+	case SyncTrack::TrackKey::STEP:   statusKeyType->setText("step"); break;
+	case SyncTrack::TrackKey::LINEAR: statusKeyType->setText("linear"); break;
+	case SyncTrack::TrackKey::SMOOTH: statusKeyType->setText("smooth"); break;
+	case SyncTrack::TrackKey::RAMP:   statusKeyType->setText("ramp"); break;
 	default: Q_ASSERT(false);
 	}
 }
@@ -236,28 +235,32 @@ void MainWindow::setDocument(SyncDocument *newDoc)
 
 	if (oldDoc && oldDoc->clientSocket.connected()) {
 		// delete old key frames
-		for (size_t i = 0; i < oldDoc->num_tracks; ++i) {
-			sync_track *t = oldDoc->tracks[i];
-			for (int j = 0; j < t->num_keys; ++j)
-				oldDoc->clientSocket.sendDeleteKeyCommand(t->name, t->keys[j].row);
+		for (size_t i = 0; i < oldDoc->getTrackCount(); ++i) {
+			SyncTrack *t = oldDoc->getTrack(i);
+			QMap<int, SyncTrack::TrackKey> keyMap = t->getKeyMap();
+			QMap<int, SyncTrack::TrackKey>::const_iterator it;
+			for (it = keyMap.constBegin(); it != keyMap.constEnd(); ++it)
+				oldDoc->clientSocket.sendDeleteKeyCommand(t->name.toUtf8().constData(), it.key());
 		}
 
 		if (newDoc) {
 			// add back missing client-tracks
 			QMap<QString, size_t>::const_iterator it;
 			for (it = oldDoc->clientSocket.clientTracks.begin(); it != oldDoc->clientSocket.clientTracks.end(); ++it) {
-				int trackIndex = sync_find_track(newDoc, it.key().toUtf8());
-				if (0 > trackIndex)
-					trackIndex = int(newDoc->createTrack(it.key()));
+				SyncTrack *t = newDoc->findTrack(it.key());
+				if (!t)
+					newDoc->createTrack(it.key());
 			}
 
 			// copy socket and update client
 			newDoc->clientSocket = oldDoc->clientSocket;
 
-			for (size_t i = 0; i < newDoc->num_tracks; ++i) {
-				sync_track *t = newDoc->tracks[i];
-				for (int j = 0; j < t->num_keys; ++j)
-					newDoc->clientSocket.sendSetKeyCommand(t->name, t->keys[j]);
+			for (size_t i = 0; i < newDoc->getTrackCount(); ++i) {
+				SyncTrack *t = newDoc->getTrack(i);
+				QMap<int, SyncTrack::TrackKey> keyMap = t->getKeyMap();
+				QMap<int, SyncTrack::TrackKey>::const_iterator it;
+				for (it = keyMap.constBegin(); it != keyMap.constEnd(); ++it)
+					newDoc->clientSocket.sendSetKeyCommand(t->name.toUtf8().constData(), *it);
 			}
 		}
 	}
@@ -393,27 +396,29 @@ void MainWindow::onCurrValDirty()
 {
 	SyncDocument *doc = trackView->getDocument();
 	if (doc && doc->getTrackCount() > 0) {
-		const sync_track *t = doc->tracks[doc->getTrackIndexFromPos(trackView->getEditTrack())];
+		const SyncTrack *t = doc->getTrack(doc->getTrackIndexFromPos(trackView->getEditTrack()));
 		int row = trackView->getEditRow();
-		setStatusValue(sync_get_val(t, row), true);
-		int idx = key_idx_floor(t, row);
-		if (idx >= 0)
-			setStatusKeyType(t->keys[idx].type, true);
+
+		setStatusValue(t->getValue(row), true);
+
+		const SyncTrack::TrackKey *k = t->getPrevKeyFrame(row);
+		if (k)
+			setStatusKeyType(k->type, true);
 		else
-			setStatusKeyType(KEY_STEP, false);
+			setStatusKeyType(SyncTrack::TrackKey::STEP, false);
 	} else {
 		setStatusValue(0.0f, false);
-		setStatusKeyType(KEY_STEP, false);
+		setStatusKeyType(SyncTrack::TrackKey::STEP, false);
 	}
 }
 
 void MainWindow::processCommand(ClientSocket &sock)
 {
 	SyncDocument *doc = trackView->getDocument();
-	int strLen, serverIndex, newRow;
+	int strLen, newRow;
 	QString trackName;
 	QByteArray trackNameBuffer;
-	const sync_track *t;
+	const SyncTrack *t;
 	unsigned char cmd = 0;
 	if (sock.recv((char*)&cmd, 1)) {
 		switch (cmd) {
@@ -443,20 +448,22 @@ void MainWindow::processCommand(ClientSocket &sock)
 			trackName = QString::fromUtf8(trackNameBuffer);
 
 			// find track
-			serverIndex = sync_find_track(doc,
-			    trackName.toUtf8());
-			if (0 > serverIndex)
-				serverIndex =
-				    int(doc->createTrack(trackName));
+			t = doc->findTrack(trackName.toUtf8());
+			if (!t) {
+				int index = doc->createTrack(trackName);
+				t = doc->getTrack(index);
+			}
 
 			// setup remap
 			doc->clientSocket.clientTracks[trackName] = clientIndex++;
 
 			// send key frames
-			t = doc->tracks[serverIndex];
-			for (int i = 0; i < (int)t->num_keys; ++i)
-				doc->clientSocket.sendSetKeyCommand(trackName,
-				    t->keys[i]);
+			{
+			QMap<int, SyncTrack::TrackKey> keyMap = t->getKeyMap();
+			QMap<int, SyncTrack::TrackKey>::const_iterator it;
+			for (it = keyMap.constBegin(); it != keyMap.constEnd(); ++it)
+				doc->clientSocket.sendSetKeyCommand(t->name.toUtf8().constData(), *it);
+			}
 
 			trackView->update();
 			break;
