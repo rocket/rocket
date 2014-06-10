@@ -18,17 +18,20 @@ public:
 		socket = NULL;
 	}
 
+	/*
+	 * Reads exactly the asked amount of bytes
+	 * into the given buffer.
+	 *
+	 * If data is not immediately available, blocks
+	 * until the whole response can be read.
+	 */
 	virtual bool recv(char *buffer, size_t length)
 	{
 		if (!connected())
 			return false;
-		if (socket->bytesAvailable() < int(length))
+		while (socket->bytesAvailable() < int(length))
 			socket->waitForReadyRead(-1);
-		qint64 ret = socket->read(buffer, length);
-		if (ret != int(length)) {
-			TcpSocket::disconnect();
-			return false;
-		}
+		socket->read(buffer, length);
 		return true;
 	}
 
