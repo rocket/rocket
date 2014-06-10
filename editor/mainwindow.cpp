@@ -444,9 +444,7 @@ static TcpSocket *clientConnect(QTcpServer *serverSocket, QHostAddress *host)
 	QTcpSocket *clientSocket = serverSocket->nextPendingConnection();
 	Q_ASSERT(clientSocket != NULL);
 
-	const char *expectedGreeting = CLIENT_GREET;
-	std::string line;
-	line.resize(0);
+	QByteArray line;
 
 	// Read greetings or WebSocket upgrade
 	// command from the socket
@@ -470,17 +468,17 @@ static TcpSocket *clientConnect(QTcpServer *serverSocket, QHostAddress *host)
 	}
 
 	TcpSocket *ret = NULL;
-	if (!line.compare(0, 4, "GET ")) {
+	if (line.startsWith("GET ")) {
 		ret = WebSocket::upgradeFromHttp(clientSocket);
-		line.resize(strlen(expectedGreeting));
-		if (!ret || !ret->recv(&line[0], line.length())) {
+		line.resize(strlen(CLIENT_GREET));
+		if (!ret || !ret->recv(line.data(), line.size())) {
 			clientSocket->close();
 			return NULL;
 		}
 	} else
 		ret = new TcpSocket(clientSocket);
 
-	if (line.compare(0, strlen(expectedGreeting), expectedGreeting) ||
+	if (!line.startsWith(CLIENT_GREET) ||
 	    !ret->send(SERVER_GREET, strlen(SERVER_GREET), true)) {
 		ret->disconnect();
 		return NULL;
