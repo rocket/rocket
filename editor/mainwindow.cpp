@@ -444,8 +444,6 @@ static TcpSocket *clientConnect(QTcpServer *serverSocket, QHostAddress *host)
 	QTcpSocket *clientSocket = serverSocket->nextPendingConnection();
 	Q_ASSERT(clientSocket != NULL);
 
-	clientSocket->waitForReadyRead();
-
 	const char *expectedGreeting = CLIENT_GREET;
 	std::string line;
 	line.resize(0);
