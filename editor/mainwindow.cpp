@@ -448,13 +448,19 @@ static TcpSocket *clientConnect(QTcpServer *serverSocket, QHostAddress *host)
 
 	const char *expectedGreeting = CLIENT_GREET;
 	std::string line;
-
 	line.resize(0);
+
+	// Read greetings or WebSocket upgrade
+	// command from the socket
 	for (;;) {
 		char ch;
 		if (!clientSocket->getChar(&ch)) {
-			clientSocket->close();
-			return NULL;
+			// Read failed; wait for data and try again
+			clientSocket->waitForReadyRead();
+			if(!clientSocket->getChar(&ch)) {
+				clientSocket->close();
+				return NULL;
+			}
 		}
 
 		if (ch == '\n')
