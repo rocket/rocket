@@ -440,7 +440,8 @@ void TrackView::editPaste()
 
 	const QMimeData *mimeData = QApplication::clipboard()->mimeData();
 	if (mimeData->hasFormat("application/x-gnu-rocket")) {
-		char *clipbuf = mimeData->data("application/x-gnu-rocket").data();
+		const QByteArray mimeDataBuffer = mimeData->data("application/x-gnu-rocket");
+		const char *clipbuf = mimeDataBuffer.data();
 		
 		// copy data
 		int buffer_width, buffer_height, buffer_size;
@@ -462,7 +463,7 @@ void TrackView::editPaste()
 			}
 		}
 		
-		char *src = clipbuf + 2 * sizeof(int) + sizeof(size_t);
+		const char *src = clipbuf + 2 * sizeof(int) + sizeof(size_t);
 		for (int i = 0; i < buffer_size; ++i)
 		{
 			struct CopyEntry ce;
