@@ -8,7 +8,7 @@ extern "C" {
 #include <cassert>
 #include <string>
 
-bool WebSocket::readFrame(std::string &buf)
+bool WebSocket::readFrame(QByteArray &buf)
 {
 	unsigned char header[2];
 	if (!TcpSocket::recv((char *)header, 2))
@@ -37,7 +37,7 @@ bool WebSocket::readFrame(std::string &buf)
 
 	buf.resize(payload_len);
 	if (payload_len > 0) {
-		if (!TcpSocket::recv(&buf[0], payload_len))
+		if (!TcpSocket::recv(buf.data(), payload_len))
 			return false;
 	}
 
@@ -47,7 +47,7 @@ bool WebSocket::readFrame(std::string &buf)
 	switch (opcode) {
 	case 9:
 		// got ping, send pong!
-		sendFrame(10, &buf[0], buf.length(), true);
+		sendFrame(10, buf.data(), buf.length(), true);
 		buf.clear();
 		return true;
 
@@ -61,7 +61,7 @@ bool WebSocket::readFrame(std::string &buf)
 	return true;
 }
 
-bool WebSocket::recv(char *buffer, size_t length)
+bool WebSocket::recv(char *buffer, int length)
 {
 	if (!connected())
 		return false;
@@ -69,9 +69,9 @@ bool WebSocket::recv(char *buffer, size_t length)
 		while (!buf.length() && !readFrame(buf))
 			return false;
 
-		int bytes = std::min(buf.length(), length);
-		memcpy(buffer, &buf[0], bytes);
-		buf = buf.substr(bytes);
+		int bytes = qMin(buf.length(), length);
+		memcpy(buffer, buf.data(), bytes);
+		buf.remove(0, bytes);
 		buffer += bytes;
 		length -= bytes;
 	}

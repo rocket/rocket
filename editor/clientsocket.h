@@ -1,6 +1,7 @@
 #include <map>
 #include <string>
 #include <QTcpSocket>
+#include <QByteArray>
 
 class TcpSocket {
 public:
@@ -18,7 +19,7 @@ public:
 		socket = NULL;
 	}
 
-	virtual bool recv(char *buffer, size_t length)
+	virtual bool recv(char *buffer, int length)
 	{
 		if (!connected())
 			return false;
@@ -64,7 +65,7 @@ class WebSocket : public TcpSocket {
 public:
 	explicit WebSocket(QTcpSocket *socket) : TcpSocket(socket), firstFrame(true) {}
 
-	bool recv(char *buffer, size_t length);
+	bool recv(char *buffer, int length);
 	bool send(const char *buffer, size_t length, bool endOfMessage)
 	{
 		return sendFrame(firstFrame ? 2 : 0, buffer, length, endOfMessage);
@@ -85,13 +86,13 @@ public:
 	}
 
 	// helpers
-	bool readFrame(std::string &buf);
+	bool readFrame(QByteArray &buf);
 	bool sendFrame(int opcode, const char *payloadData, size_t payloadLength, bool endOfMessage);
 	static WebSocket *upgradeFromHttp(QTcpSocket *socket);
 
 private:
 	bool firstFrame;
-	std::string buf;
+	QByteArray buf;
 };
 
 class ClientSocket {
@@ -112,7 +113,7 @@ public:
 		clientTracks.clear();
 	}
 
-	bool recv(char *buffer, size_t length)
+	bool recv(char *buffer, int length)
 	{
 		if (!socket)
 			return false;
