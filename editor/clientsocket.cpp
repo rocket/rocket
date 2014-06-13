@@ -138,7 +138,7 @@ WebSocket *WebSocket::upgradeFromHttp(QTcpSocket *socket)
 }
 
 
-void ClientSocket::sendSetKeyCommand(const std::string &trackName, const struct track_key &key)
+void ClientSocket::sendSetKeyCommand(const QString &trackName, const struct track_key &key)
 {
 	if (!connected() ||
 	    clientTracks.count(trackName) == 0)
@@ -163,7 +163,7 @@ void ClientSocket::sendSetKeyCommand(const std::string &trackName, const struct 
 	send((char *)&key.type, 1, true);
 }
 
-void ClientSocket::sendDeleteKeyCommand(const std::string &trackName, int row)
+void ClientSocket::sendDeleteKeyCommand(const QString &trackName, int row)
 {
 	if (!connected() ||
 	    clientTracks.count(trackName) == 0)

@@ -226,11 +226,11 @@ void MainWindow::setDocument(SyncDocument *newDoc)
 
 		if (newDoc) {
 			// add back missing client-tracks
-			std::map<const std::string, size_t>::const_iterator it;
+			std::map<const QString, size_t>::const_iterator it;
 			for (it = oldDoc->clientSocket.clientTracks.begin(); it != oldDoc->clientSocket.clientTracks.end(); ++it) {
-				int trackIndex = sync_find_track(newDoc, it->first.c_str());
+				int trackIndex = sync_find_track(newDoc, it->first.toUtf8());
 				if (0 > trackIndex)
-					trackIndex = int(newDoc->createTrack(it->first.c_str()));
+					trackIndex = int(newDoc->createTrack(it->first));
 			}
 
 			// copy socket and update client
@@ -384,7 +384,8 @@ void MainWindow::processCommand(ClientSocket &sock)
 {
 	SyncDocument *doc = trackView->getDocument();
 	int strLen, serverIndex, newRow;
-	std::string trackName;
+	QString trackName;
+	QByteArray trackNameBuffer;
 	const sync_track *t;
 	unsigned char cmd = 0;
 	if (sock.recv((char*)&cmd, 1)) {
@@ -402,19 +403,21 @@ void MainWindow::processCommand(ClientSocket &sock)
 				return;
 			}
 
-			trackName.resize(strLen);
-			if (!sock.recv(&trackName[0], strLen))
+			trackNameBuffer.resize(strLen);
+			if (!sock.recv(trackNameBuffer.data(), strLen))
 				return;
 
-			if (int(strlen(trackName.c_str())) != strLen) {
+			if (trackNameBuffer.contains('\0')) {
 				sock.disconnect();
 				trackView->update();
 				return;
 			}
 
+			trackName = QString::fromUtf8(trackNameBuffer);
+
 			// find track
 			serverIndex = sync_find_track(doc,
-			    trackName.c_str());
+			    trackName.toUtf8());
 			if (0 > serverIndex)
 				serverIndex =
 				    int(doc->createTrack(trackName));

@@ -1,5 +1,4 @@
 #include <map>
-#include <string>
 #include <QTcpSocket>
 #include <QByteArray>
 
@@ -134,13 +133,13 @@ public:
 		return socket->pollRead();
 	}
 
-	void sendSetKeyCommand(const std::string &trackName, const struct track_key &key);
-	void sendDeleteKeyCommand(const std::string &trackName, int row);
+	void sendSetKeyCommand(const QString &trackName, const struct track_key &key);
+	void sendDeleteKeyCommand(const QString &trackName, int row);
 	void sendSetRowCommand(int row);
 	void sendPauseCommand(bool pause);
 	void sendSaveCommand();
 
 	bool clientPaused;
-	std::map<const std::string, size_t> clientTracks;
+	std::map<const QString, size_t> clientTracks;
 	TcpSocket *socket;
 };
