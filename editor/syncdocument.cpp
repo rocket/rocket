@@ -67,7 +67,7 @@ SyncDocument *SyncDocument::load(const QString &fileName)
 				k.value = valueString.toFloat();
 				k.type = key_type(interpolationString.toInt());
 
-				assert(!is_key_frame(ret->tracks[trackIndex], k.row));
+				Q_ASSERT(!is_key_frame(ret->tracks[trackIndex], k.row));
 				if (sync_set_key(ret->tracks[trackIndex], &k))
 					qFatal("failed to insert key");
 			}

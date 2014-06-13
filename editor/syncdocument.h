@@ -112,7 +112,7 @@ public:
 		{
 			sync_track *t = data->tracks[track];
 			int idx = sync_find_key(t, key.row);
-			assert(idx >= 0);
+			Q_ASSERT(idx >= 0);
 			oldKey = t->keys[idx];
 			if (sync_set_key(t, &key))
 				throw std::bad_alloc();
@@ -122,7 +122,7 @@ public:
 		void undo(SyncDocument *data)
 		{
 			sync_track *t = data->tracks[track];
-			assert(is_key_frame(t, key.row));
+			Q_ASSERT(is_key_frame(t, key.row));
 			if (sync_set_key(t, &oldKey))
 				throw std::bad_alloc();
 			data->clientSocket.sendSetKeyCommand(t->name, oldKey); // update clients
@@ -244,14 +244,14 @@ public:
 	
 	size_t getTrackIndexFromPos(size_t track) const
 	{
-		assert(track < (size_t)trackOrder.size());
+		Q_ASSERT(track < (size_t)trackOrder.size());
 		return trackOrder[track];
 	}
 
 	void swapTrackOrder(size_t t1, size_t t2)
 	{
-		assert(t1 < (size_t)trackOrder.size());
-		assert(t2 < (size_t)trackOrder.size());
+		Q_ASSERT(t1 < (size_t)trackOrder.size());
+		Q_ASSERT(t2 < (size_t)trackOrder.size());
 		std::swap(trackOrder[t1], trackOrder[t2]);
 	}
 

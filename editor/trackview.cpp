@@ -5,7 +5,6 @@
 #include "trackview.h"
 #include "syncdocument.h"
 #include <stdio.h>
-#include <assert.h>
 #include <qdrawutil.h>
 #include <QApplication>
 #include <QByteArray>
@@ -465,10 +464,10 @@ void TrackView::editPaste()
 			memcpy(&ce, src, sizeof(CopyEntry));
 			src += sizeof(CopyEntry);
 			
-			assert(ce.track >= 0);
-			assert(ce.track < buffer_width);
-			assert(ce.keyFrame.row >= 0);
-			assert(ce.keyFrame.row < buffer_height);
+			Q_ASSERT(ce.track >= 0);
+			Q_ASSERT(ce.track < buffer_width);
+			Q_ASSERT(ce.keyFrame.row >= 0);
+			Q_ASSERT(ce.keyFrame.row < buffer_height);
 
 			size_t trackPos = editTrack + ce.track;
 			if (trackPos < getTrackCount())
@@ -666,7 +665,7 @@ void TrackView::setEditTrack(int newEditTrack, bool autoscroll, bool selecting)
 void TrackView::setRows(size_t rows)
 {
 	SyncDocument *doc = getDocument();
-	assert(doc);
+	Q_ASSERT(doc);
 
 	doc->setRows(rows);
 	viewport()->update();
@@ -771,7 +770,7 @@ void TrackView::editClear()
 	int selectBottom = qMax(selectStartRow, selectStopRow);
 	
 	if (0 == getTrackCount()) return;
-	assert(selectRight < int(getTrackCount()));
+	Q_ASSERT(selectRight < int(getTrackCount()));
 	
 	SyncDocument::MultiCommand *multiCmd = new SyncDocument::MultiCommand();
 	for (int track = selectLeft; track <= selectRight; ++track) {
@@ -816,7 +815,7 @@ void TrackView::editBiasValue(float amount)
 	
 	SyncDocument::MultiCommand *multiCmd = new SyncDocument::MultiCommand();
 	for (int track = selectLeft; track <= selectRight; ++track) {
-		assert(track < int(getTrackCount()));
+		Q_ASSERT(track < int(getTrackCount()));
 		size_t trackIndex = doc->getTrackIndexFromPos(track);
 		const sync_track *t = doc->tracks[trackIndex];
 

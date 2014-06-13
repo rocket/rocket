@@ -5,7 +5,6 @@ extern "C" {
 #include <QCryptographicHash>
 #include <QtEndian>
 
-#include <cassert>
 #include <string>
 
 bool WebSocket::readFrame(QByteArray &buf)
@@ -87,7 +86,7 @@ bool WebSocket::sendFrame(int opcode, const char *payloadData, size_t payloadLen
 		return false;
 
 	if (payloadLength >= 126) {
-		assert(payloadLength < 0xffff);
+		Q_ASSERT(payloadLength < 0xffff);
 		quint16 tmp = qToBigEndian((quint16)(payloadLength));
 		if (!TcpSocket::send((const char *)&tmp, 2, false))
 			return false;
@@ -153,7 +152,7 @@ void ClientSocket::sendSetKeyCommand(const QString &trackName, const struct trac
 	v.f = key.value;
 	v.i = qToBigEndian(v.i);
 
-	assert(key.type < KEY_TYPE_COUNT);
+	Q_ASSERT(key.type < KEY_TYPE_COUNT);
 
 	unsigned char cmd = SET_KEY;
 	send((char *)&cmd, 1, false);
