@@ -4,8 +4,6 @@
 
 #include "trackview.h"
 #include "syncdocument.h"
-#include <vector>
-#include <algorithm>
 #include <stdio.h>
 #include <assert.h>
 #include <qdrawutil.h>
@@ -385,7 +383,7 @@ void TrackView::editCopy()
 	int selectTop    = min(selectStartRow, selectStopRow);
 	int selectBottom = max(selectStartRow, selectStopRow);
 
-	std::vector<struct CopyEntry> copyEntries;
+	QVector<struct CopyEntry> copyEntries;
 	for (int track = selectLeft; track <= selectRight; ++track) {
 		const size_t trackIndex  = doc->getTrackIndexFromPos(track);
 		const sync_track *t = doc->tracks[trackIndex];
