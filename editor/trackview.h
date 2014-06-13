@@ -98,10 +98,10 @@ private:
 
 	void invalidateRange(int startTrack, int stopTrack, int startRow, int stopRow)
 	{
-		QRect rect(QPoint(getScreenX(std::min(startTrack, stopTrack)),
-		                  getScreenY(std::min(startRow, stopRow))),
-		           QPoint(getScreenX(std::max(startTrack, stopTrack) + 1) - 1,
-		                  getScreenY(std::max(startRow, stopRow) + 1) - 1));
+		QRect rect(QPoint(getScreenX(qMin(startTrack, stopTrack)),
+		                  getScreenY(qMin(startRow, stopRow))),
+		           QPoint(getScreenX(qMax(startTrack, stopTrack) + 1) - 1,
+		                  getScreenY(qMax(startRow, stopRow) + 1) - 1));
 		viewport()->update(rect);
 	}
 

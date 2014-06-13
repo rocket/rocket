@@ -14,9 +14,6 @@
 #include <QMouseEvent>
 #include <QMimeData>
 
-using std::min;
-using std::max;
-
 TrackView::TrackView(QWidget *parent) :
     QAbstractScrollArea(parent),
     windowRows(0),
@@ -138,7 +135,7 @@ void TrackView::paintTopMargin(QPainter &painter, const QRect &rcTracks)
 
 
 	int startTrack = scrollPosX / trackWidth;
-	int endTrack  = min(startTrack + windowTracks + 1, int(getTrackCount()));
+	int endTrack  = qMin(startTrack + windowTracks + 1, int(getTrackCount()));
 	
 	for (int track = startTrack; track < endTrack; ++track) {
 		size_t index = doc->getTrackIndexFromPos(track);
@@ -178,8 +175,8 @@ void TrackView::paintTracks(QPainter &painter, const QRect &rcTracks)
 	int lastRow  = editRow + windowRows / 2 + 1;
 	
 	/* clamp first & last row */
-	firstRow = min(max(firstRow, 0), int(getRows()) - 1);
-	lastRow  = min(max(lastRow,  0), int(getRows()) - 1);
+	firstRow = qBound(0, firstRow, int(getRows()) - 1);
+	lastRow  = qBound(0, lastRow,  int(getRows()) - 1);
 	
 	for (int row = firstRow; row <= lastRow; ++row) {
 		QRect leftMargin(0, getScreenY(row), leftMarginWidth, rowHeight);
@@ -203,13 +200,13 @@ void TrackView::paintTracks(QPainter &painter, const QRect &rcTracks)
 		painter.drawText(leftMargin, QString("%1").arg(row, 5, 16, QChar('0')).toUpper() + "h");
 	}
 	
-	int selectLeft  = min(selectStartTrack, selectStopTrack);
-	int selectRight = max(selectStartTrack, selectStopTrack);
-	int selectTop    = min(selectStartRow, selectStopRow);
-	int selectBottom = max(selectStartRow, selectStopRow);
+	int selectLeft  = qMin(selectStartTrack, selectStopTrack);
+	int selectRight = qMax(selectStartTrack, selectStopTrack);
+	int selectTop    = qMin(selectStartRow, selectStopRow);
+	int selectBottom = qMax(selectStartRow, selectStopRow);
 	
 	int startTrack = scrollPosX / trackWidth;
-	int endTrack  = min(startTrack + windowTracks + 1, int(getTrackCount()));
+	int endTrack  = qMin(startTrack + windowTracks + 1, int(getTrackCount()));
 	
 	for (int track = startTrack; track < endTrack; ++track) {
 		const sync_track *t = doc->tracks[doc->getTrackIndexFromPos(track)];
@@ -304,7 +301,7 @@ void TrackView::paintTracks(QPainter &painter, const QRect &rcTracks)
 	}
 	
 	{
-		QRect topPadding(QPoint(rcTracks.left(), std::max(int(rcTracks.top()), topMarginHeight)),
+		QRect topPadding(QPoint(rcTracks.left(), qMax(int(rcTracks.top()), topMarginHeight)),
 		                 QPoint(rcTracks.right(), getScreenY(0) - 1));
 		painter.fillRect(topPadding, palette().dark());
 	}
@@ -378,10 +375,10 @@ void TrackView::editCopy()
 		return;
 	}
 	
-	int selectLeft  = min(selectStartTrack, selectStopTrack);
-	int selectRight = max(selectStartTrack, selectStopTrack);
-	int selectTop    = min(selectStartRow, selectStopRow);
-	int selectBottom = max(selectStartRow, selectStopRow);
+	int selectLeft  = qMin(selectStartTrack, selectStopTrack);
+	int selectRight = qMax(selectStartTrack, selectStopTrack);
+	int selectTop    = qMin(selectStartRow, selectStopRow);
+	int selectBottom = qMax(selectStartRow, selectStopRow);
 
 	QVector<struct CopyEntry> copyEntries;
 	for (int track = selectLeft; track <= selectRight; ++track) {
@@ -571,7 +568,7 @@ void TrackView::scrollWindow(int scrollX, int scrollY)
 void TrackView::setScrollPos(int newScrollPosX, int newScrollPosY)
 {
 	// clamp newscrollPosX
-	newScrollPosX = max(newScrollPosX, 0);
+	newScrollPosX = qMax(newScrollPosX, 0);
 	
 	if (newScrollPosX != scrollPosX || newScrollPosY != scrollPosY)
 	{
@@ -596,7 +593,7 @@ void TrackView::setEditRow(int newEditRow, bool selecting)
 	editRow = newEditRow;
 	
 	// clamp to document
-	editRow = min(max(editRow, 0), int(getRows()) - 1);
+	editRow = qBound(0, editRow, int(getRows()) - 1);
 	
 	if (oldEditRow != editRow)
 	{
@@ -631,8 +628,7 @@ void TrackView::setEditTrack(int newEditTrack, bool autoscroll, bool selecting)
 	editTrack = newEditTrack;
 	
 	// clamp to document
-	editTrack = max(editTrack, 0);
-	editTrack = min(editTrack, int(getTrackCount()) - 1);
+	editTrack = qBound(0, editTrack, int(getTrackCount()) - 1);
 	
 	if (oldEditTrack != editTrack)
 	{
@@ -674,7 +670,7 @@ void TrackView::setRows(size_t rows)
 
 	doc->setRows(rows);
 	viewport()->update();
-	setEditRow(min(editRow, int(rows) - 1));
+	setEditRow(qMin(editRow, int(rows) - 1));
 }
 
 size_t TrackView::getRows() const
@@ -769,10 +765,10 @@ void TrackView::editClear()
 	SyncDocument *doc = getDocument();
 	if (NULL == doc) return;
 	
-	int selectLeft  = min(selectStartTrack, selectStopTrack);
-	int selectRight = max(selectStartTrack, selectStopTrack);
-	int selectTop    = min(selectStartRow, selectStopRow);
-	int selectBottom = max(selectStartRow, selectStopRow);
+	int selectLeft  = qMin(selectStartTrack, selectStopTrack);
+	int selectRight = qMax(selectStartTrack, selectStopTrack);
+	int selectTop    = qMin(selectStartRow, selectStopRow);
+	int selectBottom = qMax(selectStartRow, selectStopRow);
 	
 	if (0 == getTrackCount()) return;
 	assert(selectRight < int(getTrackCount()));
@@ -808,10 +804,10 @@ void TrackView::editBiasValue(float amount)
 	SyncDocument *doc = getDocument();
 	if (NULL == doc) return;
 	
-	int selectLeft  = min(selectStartTrack, selectStopTrack);
-	int selectRight = max(selectStartTrack, selectStopTrack);
-	int selectTop    = min(selectStartRow, selectStopRow);
-	int selectBottom = max(selectStartRow, selectStopRow);
+	int selectLeft  = qMin(selectStartTrack, selectStopTrack);
+	int selectRight = qMax(selectStartTrack, selectStopTrack);
+	int selectTop    = qMin(selectStartRow, selectStopRow);
+	int selectBottom = qMax(selectStartRow, selectStopRow);
 	
 	if (0 == getTrackCount()) {
 		QApplication::beep();
