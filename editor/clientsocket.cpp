@@ -99,9 +99,9 @@ bool WebSocket::sendFrame(int opcode, const char *payloadData, size_t payloadLen
 
 WebSocket *WebSocket::upgradeFromHttp(QTcpSocket *socket)
 {
-	std::string key;
+	QByteArray key;
 	for (;;) {
-		std::string line;
+		QByteArray line;
 		for (;;) {
 			char ch;
 			if (socket->read(&ch, 1) != 1)
@@ -113,8 +113,9 @@ WebSocket *WebSocket::upgradeFromHttp(QTcpSocket *socket)
 				line.push_back(ch);
 		}
 
-		if (!line.compare(0, 19, "Sec-WebSocket-Key: "))
-			key = line.substr(19);
+		const char *prefix = "Sec-WebSocket-Key: ";
+		if (line.startsWith(prefix))
+			key = line.right(line.length() - strlen(prefix));
 		else if (!line.length())
 			break;
 	}
@@ -122,17 +123,16 @@ WebSocket *WebSocket::upgradeFromHttp(QTcpSocket *socket)
 	if (!key.length())
 		return NULL;
 
-	std::string accept = key;
-	accept.append("258EAFA5-E914-47DA-95CA-C5AB0DC85B11");
+	key.append("258EAFA5-E914-47DA-95CA-C5AB0DC85B11");
 
 	QCryptographicHash hash(QCryptographicHash::Sha1);
-	hash.addData(&accept[0], accept.length());
+	hash.addData(key.data(), key.size());
 
-	std::string response = "HTTP/1.1 101 Switching Protocols\r\nUpgrade: websocket\r\nConnection: Upgrade\r\nSec-WebSocket-Accept: ";
-	response.append(hash.result().toBase64().constData());
+	QString response = "HTTP/1.1 101 Switching Protocols\r\nUpgrade: websocket\r\nConnection: Upgrade\r\nSec-WebSocket-Accept: ";
+	response.append(hash.result().toBase64());
 	response.append("\r\n\r\n");
 
-	socket->write(&response[0], response.length());
+	socket->write(response.toUtf8().constData(), response.length());
 
 	return new WebSocket(socket);
 }
