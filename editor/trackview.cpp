@@ -4,7 +4,6 @@
 
 #include "trackview.h"
 #include "syncdocument.h"
-#include <stdio.h>
 #include <qdrawutil.h>
 #include <QApplication>
 #include <QByteArray>

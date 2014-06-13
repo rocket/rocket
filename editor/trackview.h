@@ -4,8 +4,6 @@
 
 #pragma once
 
-#include <string>
-
 #include <QAbstractScrollArea>
 #include <QPaintEvent>
 #include <QKeyEvent>

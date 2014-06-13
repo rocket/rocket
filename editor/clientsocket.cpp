@@ -5,8 +5,6 @@ extern "C" {
 #include <QCryptographicHash>
 #include <QtEndian>
 
-#include <string>
-
 bool WebSocket::readFrame(QByteArray &buf)
 {
 	unsigned char header[2];
