@@ -169,7 +169,7 @@ void ClientSocket::sendDeleteKeyCommand(const QString &trackName, int row)
 	    clientTracks.count(trackName) == 0)
 		return;
 
-	quint32 track = qToBigEndian(int(clientTracks[trackName]));
+	quint32 track = qToBigEndian((quint32)clientTracks[trackName]);
 	row = qToBigEndian((quint32)row);
 
 	unsigned char cmd = DELETE_KEY;
