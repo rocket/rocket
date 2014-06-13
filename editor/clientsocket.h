@@ -1,4 +1,3 @@
-#include <map>
 #include <QTcpSocket>
 #include <QByteArray>
 
@@ -140,6 +139,6 @@ public:
 	void sendSaveCommand();
 
 	bool clientPaused;
-	std::map<const QString, size_t> clientTracks;
+	QMap<QString, size_t> clientTracks;
 	TcpSocket *socket;
 };

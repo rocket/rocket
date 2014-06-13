@@ -226,11 +226,11 @@ void MainWindow::setDocument(SyncDocument *newDoc)
 
 		if (newDoc) {
 			// add back missing client-tracks
-			std::map<const QString, size_t>::const_iterator it;
+			QMap<QString, size_t>::const_iterator it;
 			for (it = oldDoc->clientSocket.clientTracks.begin(); it != oldDoc->clientSocket.clientTracks.end(); ++it) {
-				int trackIndex = sync_find_track(newDoc, it->first.toUtf8());
+				int trackIndex = sync_find_track(newDoc, it.key().toUtf8());
 				if (0 > trackIndex)
-					trackIndex = int(newDoc->createTrack(it->first));
+					trackIndex = int(newDoc->createTrack(it.key()));
 			}
 
 			// copy socket and update client
