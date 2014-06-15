@@ -2,7 +2,8 @@
  * For conditions of distribution and use, see copyright notice in COPYING
  */
 
-#pragma once
+#ifndef SYNCDOCUMENT_H
+#define SYNCDOCUMENT_H
 
 extern "C" {
 #include "../lib/data.h"
@@ -324,3 +325,5 @@ private:
 	bool savePointUnreachable; // is the save-point reachable?
 
 };
+
+#endif // !defined(SYNCDOCUMENT_H)

@@ -2,7 +2,8 @@
  * For conditions of distribution and use, see copyright notice in COPYING
  */
 
-#pragma once
+#ifndef TRACKVIEW_H
+#define TRACKVIEW_H
 
 #include <QAbstractScrollArea>
 #include <QPaintEvent>
@@ -154,3 +155,5 @@ private:
 	bool dragging;
 	int anchorTrack;
 };
+
+#endif // !defined(TRACKVIEW_H)
