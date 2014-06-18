@@ -157,7 +157,7 @@ void TrackView::paintTopMargin(QPainter &painter, const QRect &rcTracks)
 		else
 			painter.setPen(QColor(0, 0, 0));
 
-		painter.drawText(fillRect, t->name);
+		painter.drawText(fillRect, QString::fromUtf8(t->name));
 	}
 
 	// make sure that the top margin isn't overdrawn by the track-data
