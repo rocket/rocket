@@ -27,9 +27,7 @@ static struct Library *socket_base = NULL;
 static SOCKET server_connect(const char *host, unsigned short nport)
 {
 	struct hostent *he;
-	struct sockaddr_in sa;
-	char greet[128], **ap;
-	SOCKET sock = INVALID_SOCKET;
+	char **ap;
 
 #ifdef WIN32
 	static int need_init = 1;
@@ -52,6 +50,9 @@ static SOCKET server_connect(const char *host, unsigned short nport)
 		return INVALID_SOCKET;
 
 	for (ap = he->h_addr_list; *ap; ++ap) {
+		SOCKET sock;
+		struct sockaddr_in sa;
+
 		sa.sin_family = he->h_addrtype;
 		sa.sin_port = htons(nport);
 		memcpy(&sa.sin_addr, *ap, he->h_length);
@@ -60,24 +61,22 @@ static SOCKET server_connect(const char *host, unsigned short nport)
 		if (sock == INVALID_SOCKET)
 			continue;
 
-		if (connect(sock, (struct sockaddr *)&sa, sizeof(sa)) >= 0)
-			break;
+		if (connect(sock, (struct sockaddr *)&sa, sizeof(sa)) >= 0) {
+			char greet[128];
+
+			if (xsend(sock, CLIENT_GREET, strlen(CLIENT_GREET), 0) ||
+				xrecv(sock, greet, strlen(SERVER_GREET), 0)) {
+				closesocket(sock);
+				continue;
+			}
+
+			if (!strncmp(SERVER_GREET, greet, strlen(SERVER_GREET)))
+				return sock;
+		}
 
 		closesocket(sock);
-		sock = INVALID_SOCKET;
 	}
 
-	if (sock == INVALID_SOCKET)
-		return INVALID_SOCKET;
-
-	if (xsend(sock, CLIENT_GREET, strlen(CLIENT_GREET), 0) ||
-	    xrecv(sock, greet, strlen(SERVER_GREET), 0))
-		return INVALID_SOCKET;
-
-	if (!strncmp(SERVER_GREET, greet, strlen(SERVER_GREET)))
-		return sock;
-
-	closesocket(sock);
 	return INVALID_SOCKET;
 }
 
