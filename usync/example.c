@@ -7,11 +7,20 @@ int main(void)
 	if (usync_init() < 0)
 		abort();
 
-	while (1) {
-		float row = 0.0f;
+#ifndef SYNC_PLAYER
+	/* HACK: prefetch tracks - not needed when actually editing */
+	usync_get_val(foo);
+	sleep(1);
+	usync_update(0.0f);
+#endif
+
+	float row = 0.0f;
+	while (row <= 8.0f) {
 		usync_update(row);
-		printf("%f\n", usync_get_val(foo));
+		printf("%f: %f\n", row, usync_get_val(foo));
+		row += 1.0f / 4; /* step one 4th of a row */
 	}
+	usync_export();
 }
 
 #ifndef SYNC_PLAYER
