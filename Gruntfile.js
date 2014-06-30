@@ -1,7 +1,11 @@
 module.exports = function (grunt) {
 
+    grunt.loadNpmTasks('grunt-contrib-concat');
+    grunt.loadNpmTasks('grunt-contrib-jshint');
+    grunt.loadNpmTasks('grunt-contrib-uglify');
+
     grunt.initConfig({
-        pkg   :'<json:package.json>',
+        pkg   :grunt.file.readJSON('package.json'),
         meta  :{
             bannerLite:'/*! <%= pkg.name %> - v<%= pkg.version %> - ' +
                 '<%= grunt.template.today("yyyy-mm-dd") %>\n' +
@@ -30,18 +34,18 @@ module.exports = function (grunt) {
                 dest:'build/<%= pkg.name %>.js'
             }
         },
-        min   :{
+        uglify:{
+            options:{
+                banner:'<%= meta.bannerLite %>',
+            },
             lite:{
-                src :['<banner:meta.bannerLite>', '<config:concat.lite.dest>'],
+                src :['<%= concat.lite.dest %>'],
                 dest:'build/<%= pkg.name %>.sans-socket.min.js'
             },
             dist:{
-                src :['<banner:meta.bannerLite>', '<config:concat.dist.dest>'],
+                src :['<%= concat.dist.dest %>'],
                 dest:'build/<%= pkg.name %>.min.js'
             }
-        },
-        lint  :{
-            files:['grunt.js', '<config:concat.dist.src>']
         },
         jshint:{
             options:{
@@ -58,14 +62,16 @@ module.exports = function (grunt) {
                 boss   :true,
                 eqnull :true,
                 browser:true,
-                devel:true
+                devel:true,
+
+                globals:{
+                  'JSRocket':true,
+                  module :false
+                },
             },
-            globals:{
-                'JSRocket':true,
-                module :false
-            }
+            files:['Gruntfile.js', '<%= concat.dist.src %>']
         }
     });
 
-    grunt.registerTask('default', 'concat lint min');
+    grunt.registerTask('default', ['concat', 'jshint', 'uglify']);
 };
