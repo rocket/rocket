@@ -870,6 +870,7 @@ void TrackView::keyPressEvent(QKeyEvent *event)
 	if (!editString.length()) {
 		switch (event->key()) {
 		case Qt::Key_Backtab:
+			ctrlDown = false;
 			selecting = false;
 			// FALLTHROUGH
 		case Qt::Key_Left:
@@ -886,6 +887,7 @@ void TrackView::keyPressEvent(QKeyEvent *event)
 			return;
 
 		case Qt::Key_Tab:
+			ctrlDown = false;
 			selecting = false;
 			// FALLTHROUGH
 		case Qt::Key_Right:
