@@ -9,6 +9,8 @@
 extern "C" {
 #endif
 
+#include <stddef.h>
+
 struct sync_device;
 struct sync_track;
 
