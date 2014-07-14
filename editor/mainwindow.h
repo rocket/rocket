@@ -23,7 +23,7 @@ public:
 	void updateRecentFiles();
 	void setCurrentFileName(const QString &fileName);
 	void setWindowFileName(const QString &fileName);
-	void loadDocument(const QString &path);
+	bool loadDocument(const QString &path);
 	void setDocument(SyncDocument *newDoc);
 
 	void processCommand(ClientSocket &sock);

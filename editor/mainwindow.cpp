@@ -274,14 +274,16 @@ void MainWindow::fileNew()
 	setWindowFileName("Untitled");
 }
 
-void MainWindow::loadDocument(const QString &path)
+bool MainWindow::loadDocument(const QString &path)
 {
 	SyncDocument *newDoc = SyncDocument::load(path);
 	if (newDoc) {
 		// set new document
 		setDocument(newDoc);
 		setCurrentFileName(path);
+		return true;
 	}
+	return false;
 }
 
 void MainWindow::fileOpen()
@@ -323,8 +325,15 @@ void MainWindow::fileRemoteExport()
 void MainWindow::openRecentFile()
 {
 	QAction *action = qobject_cast<QAction *>(sender());
-	if (action)
-		loadDocument(action->data().toString());
+	if (action) {
+		QString fileName = action->data().toString();
+		if (!loadDocument(fileName)) {
+			QStringList files = getRecentFiles();
+			files.removeAll(fileName);
+			setRecentFiles(files);
+			updateRecentFiles();
+		}
+	}
 }
 
 void MainWindow::fileQuit()
