@@ -110,9 +110,9 @@ struct sync_device *sync_create_device(const char *base)
 	d->row = -1;
 	d->sock = INVALID_SOCKET;
 #else
-	d->io_cb.open = fopen;
-	d->io_cb.read = fread;
-	d->io_cb.close = fclose;
+	d->io_cb.open = (void *(*)(const char *, const char *))fopen;
+	d->io_cb.read = (size_t (*)(void *, size_t, size_t, void *))fread;
+	d->io_cb.close = (int (*)(void *))fclose;
 #endif
 
 	return d;
