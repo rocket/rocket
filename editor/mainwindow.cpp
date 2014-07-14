@@ -126,6 +126,19 @@ static QStringList getRecentFiles()
 	return list;
 }
 
+static void setRecentFiles(const QStringList &files)
+{
+#ifdef Q_OS_WIN32
+	QSettings settings("HKEY_CURRENT_USER\\Software\\GNU Rocket",
+	                   QSettings::NativeFormat);
+#else
+	QSettings settings;
+#endif
+
+	for (int i = 0; i < files.size(); ++i)
+		settings.setValue(QString("RecentFile%1").arg(i), files[i]);
+}
+
 void MainWindow::updateRecentFiles()
 {
 	QStringList files = getRecentFiles();
@@ -151,23 +164,14 @@ void MainWindow::setCurrentFileName(const QString &fileName)
 {
 	QFileInfo info(fileName);
 
-#ifdef Q_OS_WIN32
-	QSettings settings("HKEY_CURRENT_USER\\Software\\GNU Rocket",
-	                   QSettings::NativeFormat);
-#else
-	QSettings settings;
-#endif
 	QStringList files = getRecentFiles();
 	files.removeAll(info.absoluteFilePath());
 	files.prepend(info.absoluteFilePath());
 	while (files.size() > 5)
 		files.removeLast();
-
-	for (int i = 0; i < files.size(); ++i)
-		settings.setValue(QString("RecentFile%1").arg(i), files[i]);
+	setRecentFiles(files);
 
 	updateRecentFiles();
-
 	setWindowFileName(fileName);
 }
 
