@@ -137,6 +137,16 @@ static void setRecentFiles(const QStringList &files)
 
 	for (int i = 0; i < files.size(); ++i)
 		settings.setValue(QString("RecentFile%1").arg(i), files[i]);
+
+	// remove keys not in the list
+	for (int i = files.size(); ;++i) {
+		QString key = QString("RecentFile%1").arg(i);
+
+		if (!settings.contains(key))
+			break;
+
+		settings.remove(key);
+	}
 }
 
 void MainWindow::updateRecentFiles()
@@ -157,6 +167,8 @@ void MainWindow::updateRecentFiles()
 		recentFileActions[i]->setData(info.absoluteFilePath());
 		recentFileActions[i]->setVisible(true);
 	}
+	for (int i = files.size(); i < 5; ++i)
+		recentFileActions[i]->setVisible(false);
 	recentFilesMenu->setEnabled(true);
 }
 
