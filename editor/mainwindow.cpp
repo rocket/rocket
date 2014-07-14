@@ -316,7 +316,7 @@ void MainWindow::fileQuit()
 	SyncDocument *doc = trackView->getDocument();
 	if (doc->modified()) {
 		QMessageBox::StandardButton res = QMessageBox::question(
-		    NULL, "GNU Rocket", "Save before exit?",
+		    this, "GNU Rocket", "Save before exit?",
 		    QMessageBox::Yes | QMessageBox::No | QMessageBox::Cancel);
 		if (res == QMessageBox::Yes) {
 			fileSave();
