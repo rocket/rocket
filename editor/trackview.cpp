@@ -867,20 +867,11 @@ void TrackView::keyPressEvent(QKeyEvent *event)
 	bool ctrlDown = (event->modifiers() & Qt::ControlModifier) != 0;
 	bool selecting = shiftDown;
 
-	/* HACK: simulate left/right event if tab pressed */
-	QKeyEvent fakeEvent(QEvent::KeyPress,
-	                    shiftDown ? Qt::Key_Left : Qt::Key_Right,
-	                    event->modifiers());
-
 	if (!editString.length()) {
-		if (event->key() == Qt::Key_Tab) {
-			/* HACK: simulate left/right event if tab pressed */
-			event = &fakeEvent;
+		switch (event->key()) {
+		case Qt::Key_Backtab:
 			selecting = false;
-		}
-
-		switch (event->key())
-		{
+			// FALLTHROUGH
 		case Qt::Key_Left:
 			if (ctrlDown) {
 				if (0 < editTrack)
@@ -894,6 +885,9 @@ void TrackView::keyPressEvent(QKeyEvent *event)
 				QApplication::beep();
 			return;
 
+		case Qt::Key_Tab:
+			selecting = false;
+			// FALLTHROUGH
 		case Qt::Key_Right:
 			if (ctrlDown) {
 				if (int(getTrackCount()) > editTrack + 1)
