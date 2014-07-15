@@ -856,6 +856,7 @@ void TrackView::keyPressEvent(QKeyEvent *event)
 		case Qt::Key_PageDown:
 		case Qt::Key_Home:
 		case Qt::Key_End:
+		case Qt::Key_Space:
 			editEnterValue();
 		}
 	}
@@ -981,12 +982,8 @@ void TrackView::keyPressEvent(QKeyEvent *event)
 			QApplication::beep();
 		}
 		break;
+
 	case Qt::Key_Space:
-		if (editString.length()) {
-			editString.clear();
-			invalidatePos(editTrack, editRow);
-			QApplication::beep();
-		}
 		doc->clientSocket.sendPauseCommand( !doc->clientSocket.clientPaused );
 		break;
 
