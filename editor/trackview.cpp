@@ -848,7 +848,7 @@ void TrackView::keyPressEvent(QKeyEvent *event)
 	SyncDocument *doc = getDocument();
 	if (NULL == doc) return;
 	
-	if (editString.length()) {
+	if (paused && editString.length()) {
 		switch(event->key()) {
 		case Qt::Key_Up:
 		case Qt::Key_Down:
@@ -962,7 +962,7 @@ void TrackView::keyPressEvent(QKeyEvent *event)
 	case Qt::Key_Delete: editClear(); break;
 
 	case Qt::Key_Backspace:
-		if (editString.length()) {
+		if (paused && editString.length()) {
 			editString.resize(editString.length() - 1);
 			invalidatePos(editTrack, editRow);
 		} else
@@ -971,7 +971,7 @@ void TrackView::keyPressEvent(QKeyEvent *event)
 
 	case Qt::Key_Cancel:
 	case Qt::Key_Escape:
-		if (editString.length()) {
+		if (paused && editString.length()) {
 			// return to old value (i.e don't clear)
 			editString.clear();
 			invalidatePos(editTrack, editRow);
@@ -987,8 +987,7 @@ void TrackView::keyPressEvent(QKeyEvent *event)
 		break;
 
 	case Qt::Key_Minus:
-		if (!editString.length())
-		{
+		if (paused && !editString.length()) {
 			editString.append(event->key());
 			invalidatePos(editTrack, editRow);
 		}
@@ -996,7 +995,7 @@ void TrackView::keyPressEvent(QKeyEvent *event)
 
 	case Qt::Key_Period:
 		// only one '.' allowed
-		if (editString.indexOf('.') >= 0) {
+		if (!paused || editString.indexOf('.') >= 0) {
 			QApplication::beep();
 			break;
 		}
@@ -1010,12 +1009,10 @@ void TrackView::keyPressEvent(QKeyEvent *event)
 	case Qt::Key_7:
 	case Qt::Key_8:
 	case Qt::Key_9:
-		if (editTrack < int(getTrackCount()))
-		{
+		if (paused && editTrack < int(getTrackCount())) {
 			editString.push_back(event->key());
 			invalidatePos(editTrack, editRow);
-		}
-		else
+		} else
 			QApplication::beep();
 		break;
 
