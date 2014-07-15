@@ -45,10 +45,10 @@ MainWindow::MainWindow(QTcpServer *serverSocket) :
 void MainWindow::createMenuBar()
 {
 	fileMenu = menuBar()->addMenu("&File");
-	fileMenu->addAction("New", this, SLOT(fileNew()), Qt::CTRL + Qt::Key_N);
-	fileMenu->addAction("&Open", this, SLOT(fileOpen()), Qt::CTRL + Qt::Key_O);
-	fileMenu->addAction("&Save", this, SLOT(fileSave()), Qt::CTRL + Qt::Key_S);
-	fileMenu->addAction("Save &As", this, SLOT(fileSaveAs()));
+	fileMenu->addAction("New", this, SLOT(fileNew()), QKeySequence::New);
+	fileMenu->addAction("&Open", this, SLOT(fileOpen()), QKeySequence::Open);
+	fileMenu->addAction("&Save", this, SLOT(fileSave()), QKeySequence::Save);
+	fileMenu->addAction("Save &As", this, SLOT(fileSaveAs()), QKeySequence::SaveAs);
 	fileMenu->addSeparator();
 	fileMenu->addAction("Remote &Export", this, SLOT(fileRemoteExport()), Qt::CTRL + Qt::Key_E);
 	recentFilesMenu = fileMenu->addMenu("Recent &Files");
@@ -60,18 +60,18 @@ void MainWindow::createMenuBar()
 	}
 	updateRecentFiles();
 	fileMenu->addSeparator();
-	fileMenu->addAction("E&xit", this, SLOT(fileQuit()));
+	fileMenu->addAction("E&xit", this, SLOT(fileQuit()), QKeySequence::Quit);
 
 	editMenu = menuBar()->addMenu("&Edit");
-	editMenu->addAction("Undo", trackView, SLOT(editUndo()), Qt::CTRL + Qt::Key_Z);
-	editMenu->addAction("Redo", trackView, SLOT(editRedo()), Qt::CTRL + Qt::SHIFT + Qt::Key_Z);
+	editMenu->addAction("Undo", trackView, SLOT(editUndo()), QKeySequence::Undo);
+	editMenu->addAction("Redo", trackView, SLOT(editRedo()), QKeySequence::Redo);
 	editMenu->addSeparator();
-	editMenu->addAction("&Copy", trackView, SLOT(editCopy()), Qt::CTRL + Qt::Key_C);
-	editMenu->addAction("Cu&t", trackView, SLOT(editCut()), Qt::CTRL + Qt::Key_X);
-	editMenu->addAction("&Paste", trackView, SLOT(editPaste()), Qt::CTRL + Qt::Key_V);
-	editMenu->addAction("Clear", trackView, SLOT(editClear()), Qt::Key_Delete);
+	editMenu->addAction("&Copy", trackView, SLOT(editCopy()), QKeySequence::Copy);
+	editMenu->addAction("Cu&t", trackView, SLOT(editCut()), QKeySequence::Cut);
+	editMenu->addAction("&Paste", trackView, SLOT(editPaste()), QKeySequence::Paste);
+	editMenu->addAction("Clear", trackView, SLOT(editClear()), QKeySequence::Delete);
 	editMenu->addSeparator();
-	editMenu->addAction("Select All", trackView, SLOT(selectAll()), Qt::CTRL + Qt::Key_A);
+	editMenu->addAction("Select All", trackView, SLOT(selectAll()), QKeySequence::SelectAll);
 	editMenu->addAction("Select Track", trackView, SLOT(selectTrack()), Qt::CTRL + Qt::Key_T);
 	editMenu->addAction("Select Row", trackView, SLOT(selectRow()));
 	editMenu->addSeparator();
