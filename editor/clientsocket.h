@@ -7,6 +7,18 @@
 
 #include "synctrack.h"
 
+#define CLIENT_GREET "hello, synctracker!"
+#define SERVER_GREET "hello, demo!"
+
+enum {
+	SET_KEY = 0,
+	DELETE_KEY = 1,
+	GET_TRACK = 2,
+	SET_ROW = 3,
+	PAUSE = 4,
+	SAVE_TRACKS = 5
+};
+
 class TcpSocket {
 public:
 	explicit TcpSocket(QTcpSocket *socket) : socket(socket) {}

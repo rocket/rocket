@@ -1,10 +1,6 @@
 #include "clientsocket.h"
 #include "syncdocument.h"
 
-extern "C" {
-#include "../lib/base.h"
-}
-
 #include <QCryptographicHash>
 #include <QtEndian>
 

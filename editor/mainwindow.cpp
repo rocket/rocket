@@ -2,10 +2,6 @@
 #include "trackview.h"
 #include "syncdocument.h"
 
-extern "C" {
-#include "../lib/base.h"
-}
-
 #include <QApplication>
 #include <QMenuBar>
 #include <QStatusBar>

@@ -14,8 +14,7 @@ HEADERS += clientsocket.h \
     mainwindow.h \
     syncdocument.h \
     synctrack.h \
-    trackview.h \
-    ../lib/base.h
+    trackview.h
 
 SOURCES += clientsocket.cpp \
     editor.cpp \

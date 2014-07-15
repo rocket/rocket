@@ -27,6 +27,18 @@ static const char *sync_track_path(const char *base, const char *name)
 
 #ifndef SYNC_PLAYER
 
+#define CLIENT_GREET "hello, synctracker!"
+#define SERVER_GREET "hello, demo!"
+
+enum {
+	SET_KEY = 0,
+	DELETE_KEY = 1,
+	GET_TRACK = 2,
+	SET_ROW = 3,
+	PAUSE = 4,
+	SAVE_TRACKS = 5
+};
+
 static inline int socket_poll(SOCKET socket)
 {
 	struct timeval to = { 0, 0 };
