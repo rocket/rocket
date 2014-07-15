@@ -1,6 +1,8 @@
 #ifndef SYNC_BASE_H
 #define SYNC_BASE_H
 
+#include <stddef.h>
+
 /* configure inline keyword */
 #if (!defined(__STDC_VERSION__) || (__STDC_VERSION__ < 199901L)) && !defined(__cplusplus)
  #if defined(_MSC_VER) || defined(__GNUC__) || defined(__SASC)
@@ -22,35 +24,6 @@
  #include <stdint.h>
 #elif defined(M68000)
  typedef unsigned int uint32_t;
-#endif
-
-/* configure socket-stack */
-#ifdef _WIN32
- #define WIN32_LEAN_AND_MEAN
- #ifndef NOMINMAX
-  #define NOMINMAX
- #endif
- #include <winsock2.h>
- #include <windows.h>
- #include <limits.h>
-#elif defined(USE_AMITCP)
- #include <sys/socket.h>
- #include <proto/exec.h>
- #include <proto/socket.h>
- #include <netdb.h>
- #define SOCKET int
- #define INVALID_SOCKET -1
- #define select(n,r,w,e,t) WaitSelect(n,r,w,e,t,0)
- #define closesocket(x) CloseSocket(x)
-#else
- #include <sys/socket.h>
- #include <sys/time.h>
- #include <netinet/in.h>
- #include <netdb.h>
- #include <unistd.h>
- #define SOCKET int
- #define INVALID_SOCKET -1
- #define closesocket(x) close(x)
 #endif
 
 #define CLIENT_GREET "hello, synctracker!"
