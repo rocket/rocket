@@ -2,6 +2,7 @@
 #include "sync.h"
 #include <stdio.h>
 #include <math.h>
+#include <assert.h>
 
 static const char *sync_track_path(const char *base, const char *name)
 {
@@ -15,6 +16,45 @@ static const char *sync_track_path(const char *base, const char *name)
 }
 
 #ifndef SYNC_PLAYER
+
+static inline int socket_poll(SOCKET socket)
+{
+	struct timeval to = { 0, 0 };
+	fd_set fds;
+
+	FD_ZERO(&fds);
+
+#ifdef _MSC_VER
+#pragma warning(push)
+#pragma warning(disable: 4127)
+#endif
+	FD_SET(socket, &fds);
+#ifdef _MSC_VER
+#pragma warning(pop)
+#endif
+
+	return select((int)socket + 1, &fds, NULL, NULL, &to) > 0;
+}
+
+static inline int xsend(SOCKET s, const void *buf, size_t len, int flags)
+{
+#ifdef WIN32
+	assert(len <= INT_MAX);
+	return send(s, (const char *)buf, (int)len, flags) != (int)len;
+#else
+	return send(s, (const char *)buf, len, flags) != (int)len;
+#endif
+}
+
+static inline int xrecv(SOCKET s, void *buf, size_t len, int flags)
+{
+#ifdef WIN32
+	assert(len <= INT_MAX);
+	return recv(s, (char *)buf, (int)len, flags) != (int)len;
+#else
+	return recv(s, (char *)buf, len, flags) != (int)len;
+#endif
+}
 
 #ifdef USE_AMITCP
 static struct Library *socket_base = NULL;
