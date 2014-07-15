@@ -197,7 +197,6 @@ void ClientSocket::sendPauseCommand(bool pause)
 	unsigned char cmd = PAUSE, flag = pause;
 	send((char *)&cmd, 1, false);
 	send((char *)&flag, 1, true);
-	clientPaused = pause;
 }
 
 void ClientSocket::sendSaveCommand()

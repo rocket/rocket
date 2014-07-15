@@ -10,6 +10,8 @@
 
 TrackView::TrackView(QWidget *parent) :
     QAbstractScrollArea(parent),
+    paused(true),
+    connected(false),
     windowRows(0),
     windowTracks(0),
     document(NULL),
@@ -131,7 +133,7 @@ void TrackView::paintTopMargin(QPainter &painter, const QRect &rcTracks)
 
 	int startTrack = scrollPosX / trackWidth;
 	int endTrack  = qMin(startTrack + windowTracks + 1, int(getTrackCount()));
-	
+
 	for (int track = startTrack; track < endTrack; ++track) {
 		size_t index = doc->getTrackIndexFromPos(track);
 		const SyncTrack *t = doc->getTrack(index);
@@ -149,7 +151,7 @@ void TrackView::paintTopMargin(QPainter &painter, const QRect &rcTracks)
 		painter.fillRect(fillRect, bgBrush);
 		qDrawWinButton(&painter, fillRect, palette());
 
-		if (!doc->clientSocket.clientTracks.count(t->name.toUtf8().constData()))
+		if (!t->isActive())
 			painter.setPen(QColor(128, 128, 128));
 		else
 			painter.setPen(QColor(0, 0, 0));
@@ -594,20 +596,14 @@ void TrackView::setEditRow(int newEditRow, bool selecting)
 	// clamp to document
 	editRow = qBound(0, editRow, int(getRows()) - 1);
 	
-	if (oldEditRow != editRow)
-	{
-		if (selecting)
-		{
+	if (oldEditRow != editRow) {
+		if (selecting) {
 			selectStopRow = editRow;
 			invalidateRange(selectStartTrack, selectStopTrack, oldEditRow, editRow);
-		}
-		else
-		{
+		} else {
 			invalidateRange(selectStartTrack, selectStopTrack, selectStartRow, selectStopRow);
 			selectStartRow   = selectStopRow   = editRow;
 			selectStartTrack = selectStopTrack = editTrack;
-		} if (doc->clientSocket.clientPaused) {
-			doc->clientSocket.sendSetRowCommand(editRow);
 		}
 		dirtyPosition();
 		dirtyCurrentValue();
@@ -909,7 +905,7 @@ void TrackView::keyPressEvent(QKeyEvent *event)
 		}
 	}
 
-	if (!editString.length() && doc->clientSocket.clientPaused) {
+	if (!editString.length() && paused) {
 		switch (event->key()) {
 		case Qt::Key_Up:
 			if (ctrlDown) {
@@ -984,7 +980,10 @@ void TrackView::keyPressEvent(QKeyEvent *event)
 		break;
 
 	case Qt::Key_Space:
-		doc->clientSocket.sendPauseCommand( !doc->clientSocket.clientPaused );
+		if (connected) {
+			paused = !paused;
+			emit pauseChanged(paused);
+		}
 		break;
 
 	case Qt::Key_Minus:

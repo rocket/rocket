@@ -51,11 +51,14 @@ public:
 
 	void dirtyPosition()
 	{
-		emit posChanged();
+		emit posChanged(editTrack, editRow);
 	}
 
+	bool paused, connected;
+
 signals:
-	void posChanged();
+	void posChanged(int col, int row);
+	void pauseChanged(bool paused);
 	void currValDirty();
 
 private slots:

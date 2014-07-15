@@ -1,9 +1,11 @@
 #ifndef SYNCTRACK_H
 #define SYNCTRACK_H
 
+#include <QObject>
 #include <QMap>
 
-class SyncTrack {
+class SyncTrack : public QObject {
+	Q_OBJECT
 public:
 	SyncTrack(const QString &name) :
 	    name(name)
@@ -25,12 +27,14 @@ public:
 	void setKey(const TrackKey &key)
 	{
 		keys[key.row] = key;
+		emit keyFrameChanged(*this, key.row);
 	}
 
 	void removeKey(int row)
 	{
 		Q_ASSERT(keys.find(row) != keys.end());
 		keys.remove(row);
+		emit keyFrameChanged(*this, row);
 	}
 
 	bool isKeyFrame(int row) const
@@ -126,9 +130,17 @@ public:
 		return keys;
 	}
 
+	bool isActive() const
+	{
+		return receivers(SIGNAL(keyFrameChanged(const SyncTrack &, int))) > 0;
+	}
+
 	QString name;
 private:
 	QMap<int, TrackKey> keys;
+
+signals:
+	void keyFrameChanged(const SyncTrack &track, int row);
 };
 
 #endif // !defined(SYNCTRACK_H)

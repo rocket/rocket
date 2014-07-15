@@ -78,7 +78,6 @@ public:
 			SyncTrack *t = data->getTrack(track);
 			Q_ASSERT(!t->isKeyFrame(key.row));
 			t->setKey(key);
-			data->clientSocket.sendSetKeyCommand(t->name.toUtf8().constData(), key); // update clients
 		}
 		
 		void undo(SyncDocument *data)
@@ -86,7 +85,6 @@ public:
 			SyncTrack *t = data->getTrack(track);
 			Q_ASSERT(t->isKeyFrame(key.row));
 			t->removeKey(key.row);
-			data->clientSocket.sendDeleteKeyCommand(t->name.toUtf8().constData(), key.row); // update clients
 		}
 
 	private:
@@ -107,7 +105,6 @@ public:
 			oldKey = t->getKeyFrame(row);
 			Q_ASSERT(oldKey.row == row);
 			t->removeKey(row);
-			data->clientSocket.sendDeleteKeyCommand(t->name.toUtf8().constData(), row); // update clients
 		}
 		
 		void undo(SyncDocument *data)
@@ -116,7 +113,6 @@ public:
 			Q_ASSERT(!t->isKeyFrame(row));
 			Q_ASSERT(oldKey.row == row);
 			t->setKey(oldKey);
-			data->clientSocket.sendSetKeyCommand(t->name.toUtf8().constData(), oldKey); // update clients
 		}
 
 	private:
@@ -138,7 +134,6 @@ public:
 			oldKey = t->getKeyFrame(key.row);
 			Q_ASSERT(key.row == oldKey.row);
 			t->setKey(key);
-			data->clientSocket.sendSetKeyCommand(t->name, key); // update clients
 		}
 
 		void undo(SyncDocument *data)
@@ -147,7 +142,6 @@ public:
 			Q_ASSERT(t->isKeyFrame(oldKey.row));
 			Q_ASSERT(key.row == oldKey.row);
 			t->setKey(oldKey);
-			data->clientSocket.sendSetKeyCommand(t->name, oldKey); // update clients
 		}
 
 	private:
@@ -295,8 +289,6 @@ public:
 		else
 			rowBookmarks.erase(it);
 	}
-
-	ClientSocket clientSocket;
 
 	size_t getRows() const { return rows; }
 	void setRows(size_t rows) { this->rows = rows; }

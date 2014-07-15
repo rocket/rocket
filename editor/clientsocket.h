@@ -3,6 +3,7 @@
 
 #include <QTcpSocket>
 #include <QByteArray>
+#include <QObject>
 
 #include "synctrack.h"
 
@@ -98,9 +99,10 @@ private:
 	QByteArray buf;
 };
 
-class ClientSocket {
+class ClientSocket : public QObject {
+	Q_OBJECT
 public:
-	ClientSocket() : clientPaused(true), socket(NULL) {}
+	ClientSocket() : socket(NULL) {}
 
 	bool connected() const
 	{
@@ -143,9 +145,22 @@ public:
 	void sendPauseCommand(bool pause);
 	void sendSaveCommand();
 
-	bool clientPaused;
 	QMap<QString, size_t> clientTracks;
 	TcpSocket *socket;
+
+public slots:
+	void onPauseChanged(bool paused)
+	{
+		sendPauseCommand(paused);
+	}
+
+	void onKeyFrameChanged(const SyncTrack &track, int row)
+	{
+		if (track.isKeyFrame(row))
+			sendSetKeyCommand(track.name, track.getKeyFrame(row));
+		else
+			sendDeleteKeyCommand(track.name, row);
+	}
 };
 
 #endif // !defined(CLIENTSOCKET_H)
