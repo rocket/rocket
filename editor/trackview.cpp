@@ -906,65 +906,59 @@ void TrackView::keyPressEvent(QKeyEvent *event)
 	if (!editString.length() && doc->clientSocket.clientPaused) {
 		switch (event->key()) {
 		case Qt::Key_Up:
-			if (ctrlDown)
-			{
-				float bias = 1.0f;
-				if (shiftDown) bias = 0.1f;
-				if (int(getTrackCount()) > editTrack) editBiasValue(bias);
-				else
-					QApplication::beep();
-			}
-			else setEditRow(editRow - 1, selecting);
-			return;
-		
-		case Qt::Key_Down:
-			if (ctrlDown)
-			{
-				float bias = 1.0f;
-				if (shiftDown) bias = 0.1f;
-				if (int(getTrackCount()) > editTrack) editBiasValue(-bias);
-				else
-					QApplication::beep();
-			}
-			else setEditRow(editRow + 1, selecting);
-			return;
-		
-		case Qt::Key_PageUp:
 			if (ctrlDown) {
-				float bias = 10.0f;
-				if (shiftDown)
-					bias = 100.0f;
-				editBiasValue(bias);
+				if (int(getTrackCount()) > editTrack)
+					editBiasValue(shiftDown ? 0.1f : 1.0f);
+				else
+					QApplication::beep();
 			} else
+				setEditRow(editRow - 1, selecting);
+			return;
+
+		case Qt::Key_Down:
+			if (ctrlDown) {
+				if (int(getTrackCount()) > editTrack)
+					editBiasValue(shiftDown ? -0.1f : -1.0f);
+				else
+					QApplication::beep();
+			} else
+				setEditRow(editRow + 1, selecting);
+			return;
+
+		case Qt::Key_PageUp:
+			if (ctrlDown)
+				editBiasValue(shiftDown ? 100.0f : 10.0f);
+			else
 				setEditRow(editRow - 0x10, selecting);
 			return;
-		
+
 		case Qt::Key_PageDown:
-			if (ctrlDown) {
-				float bias = 10.0f;
-				if (shiftDown)
-					bias = 100.0f;
-				editBiasValue(-bias);
-			} else
+			if (ctrlDown)
+				editBiasValue(shiftDown ? -100.0f : -10.0f);
+			else
 				setEditRow(editRow + 0x10, selecting);
 			return;
-		
+
 		case Qt::Key_Home:
-			if (ctrlDown) setEditTrack(0);
-			else setEditRow(0, selecting);
+			if (ctrlDown)
+				setEditTrack(0);
+			else
+				setEditRow(0, selecting);
 			return;
-		
+
 		case Qt::Key_End:
-			if (ctrlDown) setEditTrack(int(getTrackCount()) - 1);
-			else setEditRow(int(getRows()) - 1, selecting);
+			if (ctrlDown)
+				setEditTrack(int(getTrackCount()) - 1);
+			else
+				setEditRow(int(getRows()) - 1, selecting);
 			return;
 		}
 	}
-	
+
 	switch (event->key()) {
 	case Qt::Key_Return: editEnterValue(); break;
 	case Qt::Key_Delete: editClear(); break;
-	
+
 	case Qt::Key_Backspace:
 		if (editString.length()) {
 			editString.resize(editString.length() - 1);
@@ -972,7 +966,7 @@ void TrackView::keyPressEvent(QKeyEvent *event)
 		} else
 			QApplication::beep();
 		break;
-	
+
 	case Qt::Key_Cancel:
 	case Qt::Key_Escape:
 		if (editString.length()) {
@@ -994,6 +988,7 @@ void TrackView::keyPressEvent(QKeyEvent *event)
 			invalidatePos(editTrack, editRow);
 		}
 		break;
+
 	case Qt::Key_Period:
 		// only one '.' allowed
 		if (editString.indexOf('.') >= 0) {
@@ -1018,7 +1013,7 @@ void TrackView::keyPressEvent(QKeyEvent *event)
 		else
 			QApplication::beep();
 		break;
-	
+
 	case Qt::Key_I:
 		editToggleInterpolationType();
 		break;
