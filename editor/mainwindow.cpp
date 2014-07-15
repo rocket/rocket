@@ -45,33 +45,33 @@ MainWindow::MainWindow(QTcpServer *serverSocket) :
 void MainWindow::createMenuBar()
 {
 	fileMenu = menuBar()->addMenu("&File");
-	fileMenu->addAction("New", this, SLOT(fileNew()), QKeySequence::New);
-	fileMenu->addAction("&Open", this, SLOT(fileOpen()), QKeySequence::Open);
-	fileMenu->addAction("&Save", this, SLOT(fileSave()), QKeySequence::Save);
-	fileMenu->addAction("Save &As", this, SLOT(fileSaveAs()), QKeySequence::SaveAs);
+	fileMenu->addAction(QIcon::fromTheme("document-new"), "New", this, SLOT(fileNew()), QKeySequence::New);
+	fileMenu->addAction(QIcon::fromTheme("document-open"), "&Open", this, SLOT(fileOpen()), QKeySequence::Open);
+	fileMenu->addAction(QIcon::fromTheme("document-save"), "&Save", this, SLOT(fileSave()), QKeySequence::Save);
+	fileMenu->addAction(QIcon::fromTheme("document-save-as"),"Save &As", this, SLOT(fileSaveAs()), QKeySequence::SaveAs);
 	fileMenu->addSeparator();
 	fileMenu->addAction("Remote &Export", this, SLOT(fileRemoteExport()), Qt::CTRL + Qt::Key_E);
-	recentFilesMenu = fileMenu->addMenu("Recent &Files");
+	recentFilesMenu = fileMenu->addMenu(QIcon::fromTheme("document-open-recent"), "Recent &Files");
 	for (int i = 0; i < 5; ++i) {
-		recentFileActions[i] = recentFilesMenu->addAction("");
+		recentFileActions[i] = recentFilesMenu->addAction(QIcon::fromTheme("document-open-recent"), "");
 		recentFileActions[i]->setVisible(false);
 		connect(recentFileActions[i], SIGNAL(triggered()),
 		        this, SLOT(openRecentFile()));
 	}
 	updateRecentFiles();
 	fileMenu->addSeparator();
-	fileMenu->addAction("E&xit", this, SLOT(fileQuit()), QKeySequence::Quit);
+	fileMenu->addAction(QIcon::fromTheme("application-exit"), "E&xit", this, SLOT(fileQuit()), QKeySequence::Quit);
 
 	editMenu = menuBar()->addMenu("&Edit");
-	editMenu->addAction("Undo", trackView, SLOT(editUndo()), QKeySequence::Undo);
-	editMenu->addAction("Redo", trackView, SLOT(editRedo()), QKeySequence::Redo);
+	editMenu->addAction(QIcon::fromTheme("edit-undo"), "Undo", trackView, SLOT(editUndo()), QKeySequence::Undo);
+	editMenu->addAction(QIcon::fromTheme("edit-redo"), "Redo", trackView, SLOT(editRedo()), QKeySequence::Redo);
 	editMenu->addSeparator();
-	editMenu->addAction("&Copy", trackView, SLOT(editCopy()), QKeySequence::Copy);
-	editMenu->addAction("Cu&t", trackView, SLOT(editCut()), QKeySequence::Cut);
-	editMenu->addAction("&Paste", trackView, SLOT(editPaste()), QKeySequence::Paste);
-	editMenu->addAction("Clear", trackView, SLOT(editClear()), QKeySequence::Delete);
+	editMenu->addAction(QIcon::fromTheme("edit-copy"), "&Copy", trackView, SLOT(editCopy()), QKeySequence::Copy);
+	editMenu->addAction(QIcon::fromTheme("edit-cut"), "Cu&t", trackView, SLOT(editCut()), QKeySequence::Cut);
+	editMenu->addAction(QIcon::fromTheme("edit-paste"), "&Paste", trackView, SLOT(editPaste()), QKeySequence::Paste);
+	editMenu->addAction(QIcon::fromTheme("edit-clear"), "Clear", trackView, SLOT(editClear()), QKeySequence::Delete);
 	editMenu->addSeparator();
-	editMenu->addAction("Select All", trackView, SLOT(selectAll()), QKeySequence::SelectAll);
+	editMenu->addAction(QIcon::fromTheme("edit-select-all"), "Select All", trackView, SLOT(selectAll()), QKeySequence::SelectAll);
 	editMenu->addAction("Select Track", trackView, SLOT(selectTrack()), Qt::CTRL + Qt::Key_T);
 	editMenu->addAction("Select Row", trackView, SLOT(selectRow()));
 	editMenu->addSeparator();
