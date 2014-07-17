@@ -45,6 +45,24 @@ TrackView::TrackView(QWidget *parent) :
 	selectStartTrack = selectStopTrack = 0;
 	selectStartRow = selectStopRow = 0;
 
+	updatePalette();
+
+	handCursor = QCursor(Qt::OpenHandCursor);
+	setMouseTracking(true);
+
+	setupScrollBars();
+	QObject::connect(horizontalScrollBar(), SIGNAL(valueChanged(int)), this, SLOT(onHScroll(int)));
+	QObject::connect(verticalScrollBar(), SIGNAL(valueChanged(int)), this, SLOT(onVScroll(int)));
+
+	rowHeight = fontMetrics().lineSpacing();
+	trackWidth = fontMetrics().width('0') * 16;
+
+	topMarginHeight = rowHeight + 4;
+	leftMarginWidth = fontMetrics().width('0') * 8;
+}
+
+void TrackView::updatePalette()
+{
 	bgBaseBrush = palette().base();
 	bgDarkBrush = palette().window();
 
@@ -60,19 +78,6 @@ TrackView::TrackView(QWidget *parent) :
 
 	editBrush = Qt::yellow;
 	bookmarkBrush = QColor(128, 128, 255);
-
-	handCursor = QCursor(Qt::OpenHandCursor);
-	setMouseTracking(true);
-
-	setupScrollBars();
-	QObject::connect(horizontalScrollBar(), SIGNAL(valueChanged(int)), this, SLOT(onHScroll(int)));
-	QObject::connect(verticalScrollBar(), SIGNAL(valueChanged(int)), this, SLOT(onVScroll(int)));
-
-	rowHeight = fontMetrics().lineSpacing();
-	trackWidth = fontMetrics().width('0') * 16;
-
-	topMarginHeight = rowHeight + 4;
-	leftMarginWidth = fontMetrics().width('0') * 8;
 }
 
 TrackView::~TrackView()
@@ -1046,4 +1051,15 @@ void TrackView::resizeEvent(QResizeEvent *event)
 	
 	setEditRow(editRow);
 	setupScrollBars();
+}
+
+void TrackView::changeEvent(QEvent *event)
+{
+	switch (event->type()) {
+	case QEvent::PaletteChange:
+		updatePalette();
+		break;
+
+	default: ;
+	}
 }

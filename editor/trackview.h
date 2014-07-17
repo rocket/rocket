@@ -90,6 +90,7 @@ private:
 	void mouseMoveEvent(QMouseEvent *);
 	void mousePressEvent(QMouseEvent *);
 	void mouseReleaseEvent(QMouseEvent *);
+	void changeEvent(QEvent *);
 
 	void setupScrollBars();
 	void setScrollPos(int newScrollPosX, int newScrollPosY);
@@ -140,6 +141,7 @@ private:
 	QBrush editBrush, bookmarkBrush;
 	QPen lerpPen, cosinePen, rampPen;
 	QCursor handCursor;
+	void updatePalette();
 
 	/* cursor position */
 	int editRow, editTrack;
