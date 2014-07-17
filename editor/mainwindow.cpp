@@ -25,8 +25,6 @@ MainWindow::MainWindow(QTcpServer *serverSocket) :
 	serverSocket(serverSocket),
 	clientIndex(0)
 {
-	setWindowTitle("GNU Rocket System");
-
 	trackView = new TrackView(this);
 	setCentralWidget(trackView);
 
@@ -41,6 +39,17 @@ MainWindow::MainWindow(QTcpServer *serverSocket) :
 	connect(serverSocket, SIGNAL(newConnection()),
 	        this, SLOT(onNewConnection()));
 }
+
+void MainWindow::showEvent(QShowEvent *event)
+{
+	QMainWindow::showEvent(event);
+
+	// workaround for QTBUG-16507
+	QString filePath = windowFilePath();
+	setWindowFilePath(filePath + "foo");
+	setWindowFilePath(filePath);
+}
+
 
 void MainWindow::createMenuBar()
 {
@@ -184,13 +193,7 @@ void MainWindow::setCurrentFileName(const QString &fileName)
 	setRecentFiles(files);
 
 	updateRecentFiles();
-	setWindowFileName(fileName);
-}
-
-void MainWindow::setWindowFileName(const QString &fileName)
-{
-	QFileInfo info(fileName);
-	setWindowTitle(QString("GNU Rocket System - %1").arg(info.fileName()));
+	setWindowFilePath(fileName);
 }
 
 void MainWindow::setStatusText(const QString &text)
@@ -271,7 +274,7 @@ void MainWindow::setDocument(SyncDocument *newDoc)
 void MainWindow::fileNew()
 {
 	setDocument(new SyncDocument);
-	setWindowFileName("Untitled");
+	setWindowFilePath("Untitled");
 }
 
 bool MainWindow::loadDocument(const QString &path)

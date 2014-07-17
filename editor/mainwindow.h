@@ -18,11 +18,12 @@ class MainWindow : public QMainWindow {
 
 public:
 	MainWindow(QTcpServer *serverSocket);
+	void showEvent(QShowEvent *event);
+
 	void createMenuBar();
 	void createStatusBar();
 	void updateRecentFiles();
 	void setCurrentFileName(const QString &fileName);
-	void setWindowFileName(const QString &fileName);
 	bool loadDocument(const QString &path);
 	void setDocument(SyncDocument *newDoc);
 
