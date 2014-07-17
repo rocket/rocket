@@ -167,14 +167,14 @@ void TrackView::paintTracks(QPainter &painter, const QRect &rcTracks)
 {
 	const SyncDocument *doc = getDocument();
 	if (NULL == doc) return;
-	
+
 	int firstRow = editRow - windowRows / 2 - 1;
 	int lastRow  = editRow + windowRows / 2 + 1;
-	
+
 	/* clamp first & last row */
 	firstRow = qBound(0, firstRow, int(getRows()) - 1);
 	lastRow  = qBound(0, lastRow,  int(getRows()) - 1);
-	
+
 	for (int row = firstRow; row <= lastRow; ++row) {
 		QRect leftMargin(0, getScreenY(row), leftMarginWidth, rowHeight);
 		if (!rcTracks.intersects(leftMargin))
@@ -197,99 +197,12 @@ void TrackView::paintTracks(QPainter &painter, const QRect &rcTracks)
 		painter.drawText(leftMargin, QString("%1").arg(row, 5, 16, QChar('0')).toUpper() + "h");
 	}
 	
-	int selectLeft  = qMin(selectStartTrack, selectStopTrack);
-	int selectRight = qMax(selectStartTrack, selectStopTrack);
-	int selectTop    = qMin(selectStartRow, selectStopRow);
-	int selectBottom = qMax(selectStartRow, selectStopRow);
-	
 	int startTrack = scrollPosX / trackWidth;
 	int endTrack  = qMin(startTrack + windowTracks + 1, int(getTrackCount()));
 	
-	for (int track = startTrack; track < endTrack; ++track) {
-		const SyncTrack *t = doc->getTrack(doc->getTrackIndexFromPos(track));
-		QMap<int, SyncTrack::TrackKey> keyMap = t->getKeyMap();
+	for (int track = startTrack; track < endTrack; ++track)
+		paintTrack(painter, rcTracks, track);
 
-		for (int row = firstRow; row <= lastRow; ++row) {
-			QRect patternDataRect(getScreenX(track), getScreenY(row), trackWidth, rowHeight);
-			if (!rcTracks.intersects(patternDataRect))
-				continue;
-
-			QMap<int, SyncTrack::TrackKey>::const_iterator it = keyMap.lowerBound(row);
-			if (it != keyMap.constBegin() && it.key() != row)
-				--it;
-
-			SyncTrack::TrackKey::KeyType interpolationType =
-					(it != keyMap.constEnd() && it.key() <= row) ?
-					it->type : SyncTrack::TrackKey::STEP;
-			bool selected = (track >= selectLeft && track <= selectRight) && (row >= selectTop && row <= selectBottom);
-
-			QBrush baseBrush = bgBaseBrush;
-			QBrush darkBrush = bgDarkBrush;
-
-			if (selected)
-			{
-				baseBrush = selectBaseBrush;
-				darkBrush = selectDarkBrush;
-			}
-			
-			QBrush bgBrush = baseBrush;
-			if (row % 8 == 0) bgBrush = darkBrush;
-			
-			QRect fillRect = patternDataRect;
-			painter.fillRect(fillRect, bgBrush);
-			if (row % 8 == 0) {
-				if (selected) painter.setPen(rowSelectPen);
-				else          painter.setPen(rowPen);
-				painter.drawLine(patternDataRect.topLeft(),
-				                 patternDataRect.topRight());
-			}
-			
-			switch (interpolationType) {
-			case SyncTrack::TrackKey::STEP:
-				break;
-			case SyncTrack::TrackKey::LINEAR:
-				painter.setPen(QPen(QBrush(QColor(255, 0, 0)), 2));
-				break;
-			case SyncTrack::TrackKey::SMOOTH:
-				painter.setPen(QPen(QBrush(QColor(0, 255, 0)), 2));
-				break;
-			case SyncTrack::TrackKey::RAMP:
-				painter.setPen(QPen(QBrush(QColor(0, 0, 255)), 2));
-				break;
-			default:
-				Q_ASSERT(false);
-			}
-
-			if (interpolationType != SyncTrack::TrackKey::STEP) {
-				painter.drawLine(patternDataRect.topRight(),
-				                 patternDataRect.bottomRight());
-			}
-
-			bool drawEditString = false;
-			if (row == editRow && track == editTrack) {
-				painter.setPen(QColor(0, 0, 0));
-				painter.drawRect(fillRect.x(), fillRect.y(), fillRect.width() - 1, fillRect.height() - 1);
-				if (editString.size() > 0)
-					drawEditString = true;
-			}
-			/* format the text */
-			QString text;
-			if (drawEditString)
-				text = editString;
-			else if (!t->isKeyFrame(row))
-				text = "  ---";
-			else {
-				float val = t->getKeyFrame(row).value;
-				text = QString::number(val, 'f', 2);
-			}
-
-			painter.setPen(selected ?
-			    palette().color(QPalette::HighlightedText) :
-			    palette().color(QPalette::WindowText));
-			painter.drawText(patternDataRect, text);
-		}
-	}
-	
 	/* right margin */
 	{
 		QRect rightMargin(QPoint(getScreenX(getTrackCount()), getScreenY(0)),
@@ -307,6 +220,106 @@ void TrackView::paintTracks(QPainter &painter, const QRect &rcTracks)
 		QRect topPadding(QPoint(rcTracks.left(), qMax(int(rcTracks.top()), topMarginHeight)),
 		                 QPoint(rcTracks.right(), getScreenY(0) - 1));
 		painter.fillRect(topPadding, palette().dark());
+	}
+}
+
+void TrackView::paintTrack(QPainter &painter, const QRect &rcTracks, int track)
+{
+	int firstRow = editRow - windowRows / 2 - 1;
+	int lastRow  = editRow + windowRows / 2 + 1;
+
+	/* clamp first & last row */
+	firstRow = qBound(0, firstRow, int(getRows()) - 1);
+	lastRow  = qBound(0, lastRow,  int(getRows()) - 1);
+
+	int selectLeft  = qMin(selectStartTrack, selectStopTrack);
+	int selectRight = qMax(selectStartTrack, selectStopTrack);
+	int selectTop    = qMin(selectStartRow, selectStopRow);
+	int selectBottom = qMax(selectStartRow, selectStopRow);
+
+	const SyncTrack *t = getDocument()->getTrack(getDocument()->getTrackIndexFromPos(track));
+	QMap<int, SyncTrack::TrackKey> keyMap = t->getKeyMap();
+
+	for (int row = firstRow; row <= lastRow; ++row) {
+		QRect patternDataRect(getScreenX(track), getScreenY(row), trackWidth, rowHeight);
+		if (!rcTracks.intersects(patternDataRect))
+			continue;
+
+		QMap<int, SyncTrack::TrackKey>::const_iterator it = keyMap.lowerBound(row);
+		if (it != keyMap.constBegin() && it.key() != row)
+			--it;
+
+		SyncTrack::TrackKey::KeyType interpolationType =
+				(it != keyMap.constEnd() && it.key() <= row) ?
+				it->type : SyncTrack::TrackKey::STEP;
+		bool selected = (track >= selectLeft && track <= selectRight) && (row >= selectTop && row <= selectBottom);
+
+		QBrush baseBrush = bgBaseBrush;
+		QBrush darkBrush = bgDarkBrush;
+
+		if (selected) {
+			baseBrush = selectBaseBrush;
+			darkBrush = selectDarkBrush;
+		}
+
+		QBrush bgBrush = (row % 8 == 0) ? darkBrush : baseBrush;
+
+		QRect fillRect = patternDataRect;
+		painter.fillRect(fillRect, bgBrush);
+		if (row % 8 == 0) {
+			painter.setPen(selected ? rowSelectPen : rowPen);
+			painter.drawLine(patternDataRect.topLeft(),
+			                 patternDataRect.topRight());
+		}
+
+		switch (interpolationType) {
+		case SyncTrack::TrackKey::STEP:
+			break;
+
+		case SyncTrack::TrackKey::LINEAR:
+			painter.setPen(QPen(QBrush(QColor(255, 0, 0)), 2));
+			break;
+
+		case SyncTrack::TrackKey::SMOOTH:
+			painter.setPen(QPen(QBrush(QColor(0, 255, 0)), 2));
+			break;
+
+		case SyncTrack::TrackKey::RAMP:
+			painter.setPen(QPen(QBrush(QColor(0, 0, 255)), 2));
+			break;
+
+		default:
+			Q_ASSERT(false);
+		}
+
+		if (interpolationType != SyncTrack::TrackKey::STEP) {
+			painter.drawLine(patternDataRect.topRight(),
+			                 patternDataRect.bottomRight());
+		}
+
+		bool drawEditString = false;
+		if (row == editRow && track == editTrack) {
+			painter.setPen(QColor(0, 0, 0));
+			painter.drawRect(fillRect.x(), fillRect.y(), fillRect.width() - 1, fillRect.height() - 1);
+			if (editString.size() > 0)
+				drawEditString = true;
+		}
+
+		/* format the text */
+		QString text;
+		if (drawEditString)
+			text = editString;
+		else if (!t->isKeyFrame(row))
+			text = "  ---";
+		else {
+			float val = t->getKeyFrame(row).value;
+			text = QString::number(val, 'f', 2);
+		}
+
+		painter.setPen(selected ?
+		    palette().color(QPalette::HighlightedText) :
+		    palette().color(QPalette::WindowText));
+		painter.drawText(patternDataRect, text);
 	}
 }
 

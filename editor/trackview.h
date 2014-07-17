@@ -82,6 +82,7 @@ private:
 	/* paint helpers */
 	void paintTopMargin(QPainter &painter, const QRect &rcTracks);
 	void paintTracks(QPainter &painter, const QRect &rcTracks);
+	void paintTrack(QPainter &painter, const QRect &rcTracks, int track);
 
 	void paintEvent(QPaintEvent *);
 	void keyPressEvent(QKeyEvent *);
