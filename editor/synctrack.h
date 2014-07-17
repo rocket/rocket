@@ -72,6 +72,39 @@ public:
 		return &it.value();
 	}
 
+	static void getPolynomial(float coeffs[4], const TrackKey *key)
+	{
+		coeffs[0] = key->value;
+		switch (key->type) {
+		case TrackKey::STEP:
+			coeffs[1] = coeffs[2] = coeffs[3] = 0.0f;
+			break;
+
+		case TrackKey::LINEAR:
+			coeffs[1] = 1.0f;
+			coeffs[2] = coeffs[3] = 0.0f;
+			break;
+
+		case TrackKey::SMOOTH:
+			coeffs[1] =  0.0f;
+			coeffs[2] =  3.0f;
+			coeffs[3] = -2.0f;
+			break;
+
+		case TrackKey::RAMP:
+			coeffs[1] = coeffs[3] = 0.0f;
+			coeffs[2] = 1.0f;
+			break;
+
+		default:
+			Q_ASSERT(0);
+			coeffs[0] = 0.0f;
+			coeffs[1] = 0.0f;
+			coeffs[2] = 0.0f;
+			coeffs[3] = 0.0f;
+		}
+	}
+
 	double getValue(int row) const
 	{
 		if (!keys.size())
@@ -89,40 +122,13 @@ public:
 		if (prevKey == nextKey)
 			return prevKey->value;
 
-		float a = prevKey->value, b, c, d;
-		switch (prevKey->type) {
-		case TrackKey::STEP:
-			b = c = d = 0.0f;
-			break;
-
-		case TrackKey::LINEAR:
-			b = 1.0f;
-			c = d = 0.0f;
-			break;
-
-		case TrackKey::SMOOTH:
-			b =  0.0f;
-			c =  3.0f;
-			d = -2.0f;
-			break;
-
-		case TrackKey::RAMP:
-			b = d = 0.0f;
-			c = 1.0f;
-			break;
-
-		default:
-			Q_ASSERT(0);
-			a = 0.0f;
-			b = 0.0f;
-			c = 0.0f;
-			d = 0.0f;
-		}
+		float coeffs[4];
+		getPolynomial(coeffs, prevKey);
 
 		float x = double(row - prevKey->row) /
 			  double(nextKey->row - prevKey->row);
 		float mag = nextKey->value - prevKey->value;
-		return a + (b + (c + d * x) * x) * x * mag;
+		return coeffs[0] + (coeffs[1] + (coeffs[2] + coeffs[3] * x) * x) * x * mag;
 	}
 
 	const QMap<int, TrackKey> getKeyMap() const
