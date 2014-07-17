@@ -230,6 +230,10 @@ void MainWindow::setDocument(SyncDocument *newDoc)
 {
 	SyncDocument *oldDoc = trackView->getDocument();
 
+	if (oldDoc)
+		QObject::disconnect(oldDoc, SIGNAL(modifiedChanged(bool)),
+		                    this, SLOT(setWindowModified(bool)));
+
 	if (oldDoc && clientSocket.connected()) {
 		// delete old key frames
 		for (size_t i = 0; i < oldDoc->getTrackCount(); ++i) {
@@ -266,6 +270,9 @@ void MainWindow::setDocument(SyncDocument *newDoc)
 	trackView->setDocument(newDoc);
 	trackView->dirtyCurrentValue();
 	trackView->viewport()->update();
+
+	QObject::connect(newDoc, SIGNAL(modifiedChanged(bool)),
+	                 this, SLOT(setWindowModified(bool)));
 
 	if (oldDoc)
 		delete oldDoc;

@@ -9,7 +9,8 @@
 #include "clientsocket.h"
 #include "synctrack.h"
 
-class SyncDocument {
+class SyncDocument : public QObject {
+	Q_OBJECT
 public:
 	SyncDocument() :
 	    rows(128),
@@ -190,22 +191,30 @@ public:
 		cmd->exec(this);
 		clearRedoStack();
 
-		if (savePointDelta < 0) savePointUnreachable = true;
+		bool oldModified = modified();
+		if (savePointDelta < 0)
+			savePointUnreachable = true;
 		savePointDelta++;
+		if (oldModified != modified())
+			emit modifiedChanged(modified());
 	}
 	
 	bool undo()
 	{
-		if (undoStack.size() == 0) return false;
-		
+		if (undoStack.size() == 0)
+			return false;
+
 		Command *cmd = undoStack.top();
 		undoStack.pop();
-		
+
 		redoStack.push(cmd);
 		cmd->undo(this);
-		
+
+		bool oldModified = modified();
 		savePointDelta--;
-		
+		if (oldModified != modified())
+			emit modifiedChanged(modified());
+
 		return true;
 	}
 	
@@ -219,7 +228,10 @@ public:
 		undoStack.push(cmd);
 		cmd->exec(this);
 
+		bool oldModified = modified();
 		savePointDelta++;
+		if (oldModified != modified())
+			emit modifiedChanged(modified());
 
 		return true;
 	}
@@ -271,7 +283,8 @@ public:
 
 	bool modified() const
 	{
-		if (savePointUnreachable) return true;
+		if (savePointUnreachable)
+			return true;
 		return 0 != savePointDelta;
 	}
 
@@ -333,6 +346,8 @@ private:
 	int savePointDelta;        // how many undos must be done to get to the last saved state
 	bool savePointUnreachable; // is the save-point reachable?
 
+signals:
+	void modifiedChanged(bool modified);
 };
 
 #endif // !defined(SYNCDOCUMENT_H)
