@@ -27,6 +27,14 @@ MainWindow::MainWindow(QTcpServer *serverSocket) :
 {
 	trackView = new TrackView(this);
 	setCentralWidget(trackView);
+#ifdef Q_OS_WIN
+	trackView->setFont(QFont("Fixedsys"));
+#else
+	QFont font("Monospace");
+	font.setStyleHint(QFont::TypeWriter);
+	trackView->setFont(font);
+#endif
+
 
 	connect(trackView, SIGNAL(posChanged()),
 	        this, SLOT(onPosChanged()));

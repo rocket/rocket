@@ -21,14 +21,6 @@ TrackView::TrackView(QWidget *parent) :
 {
 	viewport()->setAutoFillBackground(false);
 
-#ifdef Q_OS_WIN
-	setFont(QFont("Fixedsys"));
-#else
-	QFont font("Monospace");
-	font.setStyleHint(QFont::TypeWriter);
-	setFont(font);
-#endif
-
 	setFocus(Qt::OtherFocusReason);
 
 	setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOn);
@@ -45,6 +37,7 @@ TrackView::TrackView(QWidget *parent) :
 	selectStartTrack = selectStopTrack = 0;
 	selectStartRow = selectStopRow = 0;
 
+	updateFont();
 	updatePalette();
 
 	handCursor = QCursor(Qt::OpenHandCursor);
@@ -53,12 +46,6 @@ TrackView::TrackView(QWidget *parent) :
 	setupScrollBars();
 	QObject::connect(horizontalScrollBar(), SIGNAL(valueChanged(int)), this, SLOT(onHScroll(int)));
 	QObject::connect(verticalScrollBar(), SIGNAL(valueChanged(int)), this, SLOT(onVScroll(int)));
-
-	rowHeight = fontMetrics().lineSpacing();
-	trackWidth = fontMetrics().width('0') * 16;
-
-	topMarginHeight = rowHeight + 4;
-	leftMarginWidth = fontMetrics().width('0') * 8;
 }
 
 void TrackView::updatePalette()
@@ -78,6 +65,15 @@ void TrackView::updatePalette()
 
 	editBrush = Qt::yellow;
 	bookmarkBrush = QColor(128, 128, 255);
+}
+
+void TrackView::updateFont()
+{
+	rowHeight = fontMetrics().lineSpacing();
+	trackWidth = fontMetrics().width('0') * 16;
+
+	topMarginHeight = rowHeight + 4;
+	leftMarginWidth = fontMetrics().width('0') * 8;
 }
 
 TrackView::~TrackView()
@@ -1056,6 +1052,10 @@ void TrackView::resizeEvent(QResizeEvent *event)
 void TrackView::changeEvent(QEvent *event)
 {
 	switch (event->type()) {
+	case QEvent::FontChange:
+		updateFont();
+		break;
+
 	case QEvent::PaletteChange:
 		updatePalette();
 		break;

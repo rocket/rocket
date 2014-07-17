@@ -130,10 +130,10 @@ private:
 	int selectStartRow, selectStopRow;
 
 	int rowHeight;
-	int fontWidth;
 	int trackWidth;
 	int topMarginHeight;
 	int leftMarginWidth;
+	void updateFont();
 
 	QBrush bgBaseBrush, bgDarkBrush;
 	QBrush selectBaseBrush, selectDarkBrush;
