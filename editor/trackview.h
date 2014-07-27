@@ -6,6 +6,7 @@
 #include <QKeyEvent>
 #include <QPainter>
 
+class QLineEdit;
 class SyncDocument;
 
 class TrackView : public QAbstractScrollArea
@@ -64,6 +65,7 @@ signals:
 private slots:
 	void onHScroll(int value);
 	void onVScroll(int value);
+	void onEditingFinished();
 
 public slots:
 	void editUndo();
@@ -151,8 +153,8 @@ private:
 	int windowRows,  windowTracks;
 	
 	SyncDocument *document;
-	
-	QString editString;
+
+	QLineEdit *lineEdit;
 
 	bool dragging;
 	int anchorTrack;

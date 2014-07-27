@@ -7,6 +7,8 @@
 #include <QScrollBar>
 #include <QMouseEvent>
 #include <QMimeData>
+#include <QLineEdit>
+#include <QDoubleValidator>
 
 TrackView::TrackView(QWidget *parent) :
     QAbstractScrollArea(parent),
@@ -17,6 +19,16 @@ TrackView::TrackView(QWidget *parent) :
     document(NULL),
     dragging(false)
 {
+	lineEdit = new QLineEdit(this);
+	lineEdit->setAutoFillBackground(true);
+	lineEdit->hide();
+	QDoubleValidator *lineEditValidator = new QDoubleValidator();
+	lineEditValidator->setNotation(QDoubleValidator::StandardNotation);
+	lineEditValidator->setLocale(QLocale::c());
+	lineEdit->setValidator(lineEditValidator);
+
+	QObject::connect(lineEdit, SIGNAL(editingFinished()), this, SLOT(onEditingFinished()));
+
 	viewport()->setAutoFillBackground(false);
 
 	setFocus(Qt::OtherFocusReason);
@@ -297,19 +309,14 @@ void TrackView::paintTrack(QPainter &painter, const QRect &rcTracks, int track)
 			                 patternDataRect.bottomRight());
 		}
 
-		bool drawEditString = false;
 		if (row == editRow && track == editTrack) {
 			painter.setPen(QColor(0, 0, 0));
 			painter.drawRect(fillRect.x(), fillRect.y(), fillRect.width() - 1, fillRect.height() - 1);
-			if (editString.size() > 0)
-				drawEditString = true;
 		}
 
 		/* format the text */
 		QString text;
-		if (drawEditString)
-			text = editString;
-		else if (!t->isKeyFrame(row))
+		if (!t->isKeyFrame(row))
 			text = "  ---";
 		else {
 			float val = t->getKeyFrame(row).value;
@@ -707,13 +714,18 @@ void TrackView::onHScroll(int value)
 	setEditTrack(value);
 }
 
+void TrackView::onEditingFinished()
+{
+	editEnterValue();
+}
+
 void TrackView::editEnterValue()
 {
 	SyncDocument *doc = getDocument();
-	if (NULL == doc) return;
-	
-	if (int(editString.size()) > 0 && editTrack < int(getTrackCount()))
-	{
+	if (!doc || !lineEdit->isVisible())
+		return;
+
+	if (lineEdit->text().length() > 0 && editTrack < int(getTrackCount())) {
 		int track = doc->getTrackIndexFromPos(editTrack);
 		const SyncTrack *t = doc->getTrack(track);
 
@@ -722,17 +734,19 @@ void TrackView::editEnterValue()
 		newKey.row = editRow;
 		if (t->isKeyFrame(editRow))
 			newKey = t->getKeyFrame(editRow); // copy old key
-		newKey.value = editString.toFloat(); // modify value
-		editString.clear();
+		QString text = lineEdit->text();
+		text.remove(lineEdit->validator()->locale().groupSeparator()); // workaround QTBUG-40456
+		newKey.value = lineEdit->validator()->locale().toFloat(text); // modify value
 
 		SyncDocument::Command *cmd = doc->getSetKeyFrameCommand(track, newKey);
 		doc->exec(cmd);
 
 		dirtyCurrentValue();
 		viewport()->update();
-	}
-	else
+	} else
 		QApplication::beep();
+
+	lineEdit->hide();
 }
 
 void TrackView::editToggleInterpolationType()
@@ -861,8 +875,8 @@ void TrackView::keyPressEvent(QKeyEvent *event)
 	SyncDocument *doc = getDocument();
 	if (NULL == doc) return;
 	
-	if (paused && editString.length()) {
-		switch(event->key()) {
+	if (paused && lineEdit->isVisible()) {
+		switch (event->key()) {
 		case Qt::Key_Up:
 		case Qt::Key_Down:
 		case Qt::Key_Left:
@@ -880,7 +894,7 @@ void TrackView::keyPressEvent(QKeyEvent *event)
 	bool ctrlDown = (event->modifiers() & Qt::ControlModifier) != 0;
 	bool selecting = shiftDown;
 
-	if (!editString.length()) {
+	if (lineEdit->isHidden()) {
 		switch (event->key()) {
 		case Qt::Key_Backtab:
 			ctrlDown = false;
@@ -918,7 +932,7 @@ void TrackView::keyPressEvent(QKeyEvent *event)
 		}
 	}
 
-	if (!editString.length() && paused) {
+	if (lineEdit->isHidden() && paused) {
 		switch (event->key()) {
 		case Qt::Key_Up:
 			if (ctrlDown) {
@@ -971,72 +985,46 @@ void TrackView::keyPressEvent(QKeyEvent *event)
 	}
 
 	switch (event->key()) {
-	case Qt::Key_Return: editEnterValue(); break;
-	case Qt::Key_Delete: editClear(); break;
-
-	case Qt::Key_Backspace:
-		if (paused && editString.length()) {
-			editString.resize(editString.length() - 1);
-			invalidatePos(editTrack, editRow);
-		} else
-			QApplication::beep();
-		break;
+	case Qt::Key_Delete: editClear(); return;
 
 	case Qt::Key_Cancel:
 	case Qt::Key_Escape:
-		if (paused && editString.length()) {
+		if (paused && lineEdit->isVisible()) {
 			// return to old value (i.e don't clear)
-			editString.clear();
-			invalidatePos(editTrack, editRow);
+			lineEdit->hide();
 			QApplication::beep();
 		}
-		break;
+		return;
 
 	case Qt::Key_Space:
 		if (connected) {
 			paused = !paused;
 			emit pauseChanged(paused);
 		}
-		break;
-
-	case Qt::Key_Minus:
-		if (paused && !editString.length()) {
-			editString.append(event->key());
-			invalidatePos(editTrack, editRow);
-		}
-		break;
-
-	case Qt::Key_Period:
-		// only one '.' allowed
-		if (!paused || editString.indexOf('.') >= 0) {
-			QApplication::beep();
-			break;
-		}
-	case Qt::Key_0:
-	case Qt::Key_1:
-	case Qt::Key_2:
-	case Qt::Key_3:
-	case Qt::Key_4:
-	case Qt::Key_5:
-	case Qt::Key_6:
-	case Qt::Key_7:
-	case Qt::Key_8:
-	case Qt::Key_9:
-		if (paused && editTrack < int(getTrackCount())) {
-			editString.push_back(event->key());
-			invalidatePos(editTrack, editRow);
-		} else
-			QApplication::beep();
-		break;
+		return;
 
 	case Qt::Key_I:
 		editToggleInterpolationType();
-		break;
+		return;
 
 	case Qt::Key_K:
 		getDocument()->toggleRowBookmark(getEditRow());
 		invalidateRow(getEditRow());
-		break;
+		return;
+	}
+
+	if (paused && lineEdit->isHidden() && event->text().length() && doc->getTrackCount()) {
+		// no line-edit, check if input matches a double
+		QString str = event->text();
+		int pos = 0;
+		if (lineEdit->validator()->validate(str, pos) != QValidator::Invalid) {
+			lineEdit->move(getScreenX(getEditTrack()), getScreenY(getEditRow()));
+			lineEdit->resize(trackWidth, rowHeight);
+			lineEdit->setText("");
+			lineEdit->show();
+			lineEdit->event(event);
+			lineEdit->setFocus();
+		}
 	}
 }
 
