@@ -1,7 +1,3 @@
-/* Copyright (C) 2007-2008 Erik Faye-Lund and Egbert Teeselink
- * For conditions of distribution and use, see copyright notice in COPYING
- */
-
 #include "trackview.h"
 #include "syncdocument.h"
 #include <qdrawutil.h>
