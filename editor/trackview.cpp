@@ -118,6 +118,7 @@ void TrackView::paintEvent(QPaintEvent *event)
 {
 	QPainter painter(this->viewport());
 	paintTopMargin(painter, event->rect());
+	paintLeftMargin(painter, event->rect());
 	paintTracks(painter, event->rect());
 }
 
@@ -175,7 +176,7 @@ void TrackView::paintTopMargin(QPainter &painter, const QRect &rcTracks)
 	painter.setClipRegion(QRect(0, topMarginHeight, rcTracks.right() + 1, rcTracks.bottom() + 1));
 }
 
-void TrackView::paintTracks(QPainter &painter, const QRect &rcTracks)
+void TrackView::paintLeftMargin(QPainter &painter, const QRect &rcTracks)
 {
 	const SyncDocument *doc = getDocument();
 	if (NULL == doc) return;
@@ -208,31 +209,39 @@ void TrackView::paintTracks(QPainter &painter, const QRect &rcTracks)
 
 		painter.drawText(leftMargin, QString("%1").arg(row, 5, 16, QChar('0')).toUpper() + "h");
 	}
-	
+}
+
+void TrackView::paintTracks(QPainter &painter, const QRect &rcTracks)
+{
+	const SyncDocument *doc = getDocument();
+	if (NULL == doc) return;
+
+	int firstRow = editRow - windowRows / 2 - 1;
+	int lastRow  = editRow + windowRows / 2 + 1;
+
+	/* clamp first & last row */
+	firstRow = qBound(0, firstRow, int(getRows()) - 1);
+	lastRow  = qBound(0, lastRow,  int(getRows()) - 1);
+
 	int startTrack = scrollPosX / trackWidth;
 	int endTrack  = qMin(startTrack + windowTracks + 1, int(getTrackCount()));
 	
 	for (int track = startTrack; track < endTrack; ++track)
 		paintTrack(painter, rcTracks, track);
 
-	/* right margin */
-	{
-		QRect rightMargin(QPoint(getScreenX(getTrackCount()), getScreenY(0)),
-		                  QPoint(rcTracks.right(), getScreenY(int(getRows())) - 1));
-		painter.fillRect(rightMargin, palette().dark());
-	}
+	/* paint margins */
+
+	QRect rightMargin(QPoint(getScreenX(getTrackCount()), getScreenY(0)),
+	                  QPoint(rcTracks.right(), getScreenY(int(getRows())) - 1));
+	painter.fillRect(rightMargin, palette().dark());
+
+	QRect bottomPadding(QPoint(rcTracks.left(), getScreenY(int(getRows()))),
+	                    QPoint(rcTracks.right(), rcTracks.bottom()));
+	painter.fillRect(bottomPadding, palette().dark());
 	
-	{
-		QRect bottomPadding(QPoint(rcTracks.left(), getScreenY(int(getRows()))),
-		                    QPoint(rcTracks.right(), rcTracks.bottom()));
-		painter.fillRect(bottomPadding, palette().dark());
-	}
-	
-	{
-		QRect topPadding(QPoint(rcTracks.left(), qMax(int(rcTracks.top()), topMarginHeight)),
-		                 QPoint(rcTracks.right(), getScreenY(0) - 1));
-		painter.fillRect(topPadding, palette().dark());
-	}
+	QRect topPadding(QPoint(rcTracks.left(), qMax(int(rcTracks.top()), topMarginHeight)),
+	                 QPoint(rcTracks.right(), getScreenY(0) - 1));
+	painter.fillRect(topPadding, palette().dark());
 }
 
 void TrackView::paintTrack(QPainter &painter, const QRect &rcTracks, int track)
