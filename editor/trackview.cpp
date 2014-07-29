@@ -644,7 +644,7 @@ void TrackView::setEditTrack(int newEditTrack, bool autoscroll, bool selecting)
 		invalidateTrack(editTrack);
 	}
 
-	if (autoscroll) {
+	if (autoscroll && windowTracks > 0) {
 		int firstTrack = scrollPosX / trackWidth;
 		int lastTrack  = firstTrack + windowTracks;
 
