@@ -244,6 +244,27 @@ void TrackView::paintTracks(QPainter &painter, const QRect &rcTracks)
 	painter.fillRect(topPadding, palette().dark());
 }
 
+static QPen getInterpolationBrush(SyncTrack::TrackKey::KeyType type)
+{
+	switch (type) {
+	case SyncTrack::TrackKey::STEP:
+		return QPen();
+
+	case SyncTrack::TrackKey::LINEAR:
+		return QPen(QBrush(QColor(255, 0, 0)), 2);
+
+	case SyncTrack::TrackKey::SMOOTH:
+		return QPen(QBrush(QColor(0, 255, 0)), 2);
+
+	case SyncTrack::TrackKey::RAMP:
+		return QPen(QBrush(QColor(0, 0, 255)), 2);
+
+	default:
+		Q_ASSERT(false);
+		return QPen();
+	}
+}
+
 void TrackView::paintTrack(QPainter &painter, const QRect &rcTracks, int track)
 {
 	int firstRow = editRow - windowRows / 2 - 1;
@@ -293,27 +314,8 @@ void TrackView::paintTrack(QPainter &painter, const QRect &rcTracks, int track)
 			                 patternDataRect.topRight());
 		}
 
-		switch (interpolationType) {
-		case SyncTrack::TrackKey::STEP:
-			break;
-
-		case SyncTrack::TrackKey::LINEAR:
-			painter.setPen(QPen(QBrush(QColor(255, 0, 0)), 2));
-			break;
-
-		case SyncTrack::TrackKey::SMOOTH:
-			painter.setPen(QPen(QBrush(QColor(0, 255, 0)), 2));
-			break;
-
-		case SyncTrack::TrackKey::RAMP:
-			painter.setPen(QPen(QBrush(QColor(0, 0, 255)), 2));
-			break;
-
-		default:
-			Q_ASSERT(false);
-		}
-
 		if (interpolationType != SyncTrack::TrackKey::STEP) {
+			painter.setPen(getInterpolationBrush(interpolationType));
 			painter.drawLine(patternDataRect.topRight(),
 			                 patternDataRect.bottomRight());
 		}
