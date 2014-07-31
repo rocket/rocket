@@ -199,140 +199,30 @@ public:
 			emit modifiedChanged(modified());
 	}
 	
-	bool undo()
-	{
-		if (undoStack.size() == 0)
-			return false;
+	bool undo();
+	bool redo();
+	void clearUndoStack();
+	void clearRedoStack();
+	bool modified() const;
 
-		Command *cmd = undoStack.top();
-		undoStack.pop();
+	Command *getSetKeyFrameCommand(int track, const SyncTrack::TrackKey &key);
 
-		redoStack.push(cmd);
-		cmd->undo(this);
-
-		bool oldModified = modified();
-		savePointDelta--;
-		if (oldModified != modified())
-			emit modifiedChanged(modified());
-
-		return true;
-	}
-	
-	bool redo()
-	{
-		if (redoStack.size() == 0) return false;
-		
-		Command *cmd = redoStack.top();
-		redoStack.pop();
-		
-		undoStack.push(cmd);
-		cmd->exec(this);
-
-		bool oldModified = modified();
-		savePointDelta++;
-		if (oldModified != modified())
-			emit modifiedChanged(modified());
-
-		return true;
-	}
-	
-	void clearUndoStack()
-	{
-		while (!undoStack.empty())
-		{
-			Command *cmd = undoStack.top();
-			undoStack.pop();
-			delete cmd;
-		}
-	}
-	
-	void clearRedoStack()
-	{
-		while (!redoStack.empty())
-		{
-			Command *cmd = redoStack.top();
-			redoStack.pop();
-			delete cmd;
-		}
-	}
-	
-	Command *getSetKeyFrameCommand(int track, const SyncTrack::TrackKey &key)
-	{
-		SyncTrack *t = getTrack(track);
-		if (t->isKeyFrame(key.row))
-			return new EditCommand(track, key);
-		else
-			return new InsertCommand(track, key);
-	}
-
-	size_t getTrackIndexFromPos(size_t track) const
-	{
-		Q_ASSERT(track < (size_t)trackOrder.size());
-		return trackOrder[track];
-	}
-
-	void swapTrackOrder(size_t t1, size_t t2)
-	{
-		Q_ASSERT(t1 < (size_t)trackOrder.size());
-		Q_ASSERT(t2 < (size_t)trackOrder.size());
-		std::swap(trackOrder[t1], trackOrder[t2]);
-	}
+	size_t getTrackIndexFromPos(size_t track) const;
+	void swapTrackOrder(size_t t1, size_t t2);
 
 	static SyncDocument *load(const QString &fileName);
 	bool save(const QString &fileName);
 
-	bool modified() const
-	{
-		if (savePointUnreachable)
-			return true;
-		return 0 != savePointDelta;
-	}
-
-	bool isRowBookmark(int row) const
-	{
-		QList<int>::const_iterator it = qLowerBound(rowBookmarks.begin(), rowBookmarks.end(), row);
-		return it != rowBookmarks.end() && *it == row;
-	}
-
-	void toggleRowBookmark(int row)
-	{
-		QList<int>::iterator it = qLowerBound(rowBookmarks.begin(), rowBookmarks.end(), row);
-		if (it == rowBookmarks.end() || *it != row)
-			rowBookmarks.insert(it, row);
-		else
-			rowBookmarks.erase(it);
-	}
+	bool isRowBookmark(int row) const;
+	void toggleRowBookmark(int row);
 
 	size_t getRows() const { return rows; }
 	void setRows(size_t rows) { this->rows = rows; }
 
 	QString fileName;
 
-	int nextRowBookmark(int row) const
-	{
-		QList<int>::const_iterator it = qLowerBound(rowBookmarks.begin(), rowBookmarks.end(), row);
-		if (it == rowBookmarks.end())
-			return -1;
-		return *it;
-	}
-
-	int prevRowBookmark(int row) const
-	{
-		QList<int>::const_iterator it = qLowerBound(rowBookmarks.begin(), rowBookmarks.end(), row);
-		if (it == rowBookmarks.end()) {
-
-			// this can only really happen if the list is empty
-			if (it == rowBookmarks.begin())
-				return -1;
-
-			// reached the end, pick the last bookmark if it's after the current row
-			it--;
-			return *it < row ? *it : -1;
-		}
-
-		// pick the previous key (if any)
-		return it != rowBookmarks.begin() ? *(--it) : -1;
-	}
+	int nextRowBookmark(int row) const;
+	int prevRowBookmark(int row) const;
 
 private:
 	QList<SyncTrack*> tracks;
