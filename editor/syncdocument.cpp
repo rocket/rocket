@@ -198,7 +198,7 @@ bool SyncDocument::undo()
 	undoStack.pop();
 
 	redoStack.push(cmd);
-	cmd->undo(this);
+	cmd->undo();
 
 	bool oldModified = modified();
 	savePointDelta--;
@@ -216,7 +216,7 @@ bool SyncDocument::redo()
 	redoStack.pop();
 
 	undoStack.push(cmd);
-	cmd->exec(this);
+	cmd->exec();
 
 	bool oldModified = modified();
 	savePointDelta++;
@@ -248,9 +248,9 @@ SyncDocument::Command *SyncDocument::getSetKeyFrameCommand(int track, const Sync
 {
 	SyncTrack *t = getTrack(track);
 	if (t->isKeyFrame(key.row))
-		return new EditCommand(track, key);
+		return new EditCommand(t, key);
 	else
-		return new InsertCommand(track, key);
+		return new InsertCommand(t, key);
 }
 
 bool SyncDocument::modified() const

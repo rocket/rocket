@@ -60,64 +60,61 @@ public:
 	{
 	public:
 		virtual ~Command() {}
-		virtual void exec(SyncDocument *data) = 0;
-		virtual void undo(SyncDocument *data) = 0;
+		virtual void exec() = 0;
+		virtual void undo() = 0;
 	};
-	
+
 	class InsertCommand : public Command
 	{
 	public:
-		InsertCommand(int track, const SyncTrack::TrackKey &key) :
+		InsertCommand(SyncTrack *track, const SyncTrack::TrackKey &key) :
 		    track(track),
 		    key(key)
 		{}
 
 		~InsertCommand() {}
 		
-		void exec(SyncDocument *data)
+		void exec()
 		{
-			SyncTrack *t = data->getTrack(track);
-			Q_ASSERT(!t->isKeyFrame(key.row));
-			t->setKey(key);
+			Q_ASSERT(!track->isKeyFrame(key.row));
+			track->setKey(key);
 		}
 		
-		void undo(SyncDocument *data)
+		void undo()
 		{
-			SyncTrack *t = data->getTrack(track);
-			Q_ASSERT(t->isKeyFrame(key.row));
-			t->removeKey(key.row);
+			Q_ASSERT(track->isKeyFrame(key.row));
+			track->removeKey(key.row);
 		}
 
 	private:
-		int track;
+		SyncTrack *track;
 		SyncTrack::TrackKey key;
 	};
 	
 	class DeleteCommand : public Command
 	{
 	public:
-		DeleteCommand(int track, int row) : track(track), row(row) {}
+		DeleteCommand(SyncTrack *track, int row) : track(track), row(row) {}
 		~DeleteCommand() {}
 		
-		void exec(SyncDocument *data)
+		void exec()
 		{
-			SyncTrack *t = data->getTrack(track);
-			Q_ASSERT(t->isKeyFrame(row));
-			oldKey = t->getKeyFrame(row);
+			Q_ASSERT(track->isKeyFrame(row));
+			oldKey = track->getKeyFrame(row);
 			Q_ASSERT(oldKey.row == row);
-			t->removeKey(row);
+			track->removeKey(row);
 		}
 		
-		void undo(SyncDocument *data)
+		void undo()
 		{
-			SyncTrack *t = data->getTrack(track);
-			Q_ASSERT(!t->isKeyFrame(row));
+			Q_ASSERT(!track->isKeyFrame(row));
 			Q_ASSERT(oldKey.row == row);
-			t->setKey(oldKey);
+			track->setKey(oldKey);
 		}
 
 	private:
-		int track, row;
+		SyncTrack *track;
+		int row;
 		SyncTrack::TrackKey oldKey;
 	};
 
@@ -125,28 +122,26 @@ public:
 	class EditCommand : public Command
 	{
 	public:
-		EditCommand(int track, const SyncTrack::TrackKey &key) : track(track), key(key) {}
+		EditCommand(SyncTrack *track, const SyncTrack::TrackKey &key) : track(track), key(key) {}
 		~EditCommand() {}
 
-		void exec(SyncDocument *data)
+		void exec()
 		{
-			SyncTrack *t = data->getTrack(track);
-			Q_ASSERT(t->isKeyFrame(key.row));
-			oldKey = t->getKeyFrame(key.row);
+			Q_ASSERT(track->isKeyFrame(key.row));
+			oldKey = track->getKeyFrame(key.row);
 			Q_ASSERT(key.row == oldKey.row);
-			t->setKey(key);
+			track->setKey(key);
 		}
 
-		void undo(SyncDocument *data)
+		void undo()
 		{
-			SyncTrack *t = data->getTrack(track);
-			Q_ASSERT(t->isKeyFrame(oldKey.row));
+			Q_ASSERT(track->isKeyFrame(oldKey.row));
 			Q_ASSERT(key.row == oldKey.row);
-			t->setKey(oldKey);
+			track->setKey(oldKey);
 		}
 
 	private:
-		int track;
+		SyncTrack *track;
 		SyncTrack::TrackKey oldKey, key;
 	};
 	
@@ -166,19 +161,19 @@ public:
 		
 		size_t getSize() const { return commands.size(); }
 		
-		void exec(SyncDocument *data)
+		void exec()
 		{
 			QListIterator<Command *> i(commands);
 			while (i.hasNext())
-				i.next()->exec(data);
+				i.next()->exec();
 		}
 		
-		void undo(SyncDocument *data)
+		void undo()
 		{
 			QListIterator<Command *> i(commands);
 			i.toBack();
 			while (i.hasPrevious())
-				i.previous()->undo(data);
+				i.previous()->undo();
 		}
 		
 	private:
@@ -188,7 +183,7 @@ public:
 	void exec(Command *cmd)
 	{
 		undoStack.push(cmd);
-		cmd->exec(this);
+		cmd->exec();
 		clearRedoStack();
 
 		bool oldModified = modified();

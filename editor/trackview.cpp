@@ -476,11 +476,11 @@ void TrackView::editPaste()
 			if (trackPos >= getTrackCount()) continue;
 
 			size_t trackIndex = doc->getTrackIndexFromPos(trackPos);
-			const SyncTrack *t = doc->getTrack(trackIndex);
+			SyncTrack *t = doc->getTrack(trackIndex);
 			for (int j = 0; j < buffer_height; ++j) {
 				int row = editRow + j;
 				if (t->isKeyFrame(row))
-					multiCmd->addCommand(new SyncDocument::DeleteCommand(int(trackIndex), row));
+					multiCmd->addCommand(new SyncDocument::DeleteCommand(t, row));
 			}
 		}
 		
@@ -503,7 +503,7 @@ void TrackView::editPaste()
 				key.row += editRow;
 
 				// since we deleted all keyframes in the edit-box already, we can just insert this one. 
-				SyncDocument::Command *cmd = new SyncDocument::InsertCommand(track, key);
+				SyncDocument::Command *cmd = new SyncDocument::InsertCommand(doc->getTrack(track), key);
 				multiCmd->addCommand(cmd);
 			}
 		}
@@ -805,11 +805,11 @@ void TrackView::editClear()
 	SyncDocument::MultiCommand *multiCmd = new SyncDocument::MultiCommand();
 	for (int track = selectLeft; track <= selectRight; ++track) {
 		int trackIndex = doc->getTrackIndexFromPos(track);
-		const SyncTrack *t = doc->getTrack(trackIndex);
+		SyncTrack *t = doc->getTrack(trackIndex);
 
 		for (int row = selectTop; row <= selectBottom; ++row) {
 			if (t->isKeyFrame(row)) {
-				SyncDocument::Command *cmd = new SyncDocument::DeleteCommand(trackIndex, row);
+				SyncDocument::Command *cmd = new SyncDocument::DeleteCommand(t, row);
 				multiCmd->addCommand(cmd);
 			}
 		}
