@@ -234,11 +234,11 @@ struct sync_device *sync_create_device(const char *base)
 #ifndef SYNC_PLAYER
 	d->row = -1;
 	d->sock = INVALID_SOCKET;
-#else
+#endif
+
 	d->io_cb.open = (void *(*)(const char *, const char *))fopen;
 	d->io_cb.read = (size_t (*)(void *, size_t, size_t, void *))fread;
 	d->io_cb.close = (int (*)(void *))fclose;
-#endif
 
 	return d;
 }
@@ -263,9 +263,7 @@ void sync_destroy_device(struct sync_device *d)
 #endif
 }
 
-#ifdef SYNC_PLAYER
-
-static int get_track_data(struct sync_device *d, struct sync_track *t)
+static int read_track_data(struct sync_device *d, struct sync_track *t)
 {
 	int i;
 	void *fp = d->io_cb.open(sync_track_path(d->base, t->name), "rb");
@@ -289,8 +287,6 @@ static int get_track_data(struct sync_device *d, struct sync_track *t)
 	d->io_cb.close(fp);
 	return 0;
 }
-
-#else
 
 static int save_track(const struct sync_track *t, const char *path)
 {
@@ -320,7 +316,9 @@ void sync_save_tracks(const struct sync_device *d)
 	}
 }
 
-static int get_track_data(struct sync_device *d, struct sync_track *t)
+#ifndef SYNC_PLAYER
+
+static int fetch_track_data(struct sync_device *d, struct sync_track *t)
 {
 	unsigned char cmd = GET_TRACK;
 	uint32_t name_len;
@@ -401,7 +399,7 @@ int sync_connect(struct sync_device *d, const char *host, unsigned short port)
 	}
 
 	for (i = 0; i < (int)d->num_tracks; ++i) {
-		if (get_track_data(d, d->tracks[i])) {
+		if (fetch_track_data(d, d->tracks[i])) {
 			closesocket(d->sock);
 			d->sock = INVALID_SOCKET;
 			return -1;
@@ -471,7 +469,7 @@ sockerr:
 	return -1;
 }
 
-#endif
+#endif /* !defined(SYNC_PLAYER) */
 
 static int create_track(struct sync_device *d, const char *name)
 {
@@ -501,6 +499,12 @@ const struct sync_track *sync_get_track(struct sync_device *d,
 	idx = create_track(d, name);
 	t = d->tracks[idx];
 
-	get_track_data(d, t);
+#ifndef SYNC_PLAYER
+	if (d->sock != INVALID_SOCKET)
+		fetch_track_data(d, t);
+	else
+#endif
+		read_track_data(d, t);
+
 	return t;
 }
