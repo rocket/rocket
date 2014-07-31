@@ -6,8 +6,8 @@
  #if defined(_MSC_VER) || defined(__GNUC__) || defined(__SASC)
   #define inline __inline
  #else
-  /* compiler does not support inline, make function static instead */
-  #define inline static
+  /* compiler does not support inline */
+  #define inline
  #endif
 #endif
 
