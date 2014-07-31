@@ -274,10 +274,10 @@ void TrackView::paintTrack(QPainter &painter, const QRect &rcTracks, int track)
 	firstRow = qBound(0, firstRow, int(getRows()) - 1);
 	lastRow  = qBound(0, lastRow,  int(getRows()) - 1);
 
-	int selectLeft  = qMin(selectStartTrack, selectStopTrack);
-	int selectRight = qMax(selectStartTrack, selectStopTrack);
-	int selectTop    = qMin(selectStartRow, selectStopRow);
-	int selectBottom = qMax(selectStartRow, selectStopRow);
+	QRect selection = QRect(QPoint(qMin(selectStartTrack, selectStopTrack),
+	                               qMin(selectStartRow, selectStopRow)),
+	                        QPoint(qMax(selectStartTrack, selectStopTrack),
+	                               qMax(selectStartRow, selectStopRow)));
 
 	const SyncTrack *t = getDocument()->getTrack(getDocument()->getTrackIndexFromPos(track));
 	QMap<int, SyncTrack::TrackKey> keyMap = t->getKeyMap();
@@ -294,7 +294,7 @@ void TrackView::paintTrack(QPainter &painter, const QRect &rcTracks, int track)
 		SyncTrack::TrackKey::KeyType interpolationType =
 				(it != keyMap.constEnd() && it.key() <= row) ?
 				it->type : SyncTrack::TrackKey::STEP;
-		bool selected = (track >= selectLeft && track <= selectRight) && (row >= selectTop && row <= selectBottom);
+		bool selected = selection.contains(track, row);
 
 		QBrush baseBrush = bgBaseBrush;
 		QBrush darkBrush = bgDarkBrush;
