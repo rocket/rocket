@@ -7,9 +7,6 @@
 
 SyncDocument::~SyncDocument()
 {
-	clearUndoStack();
-	clearRedoStack();
-
 	for (int i = 0; i < tracks.size(); ++i)
 		delete tracks[i];
 }
@@ -171,8 +168,7 @@ bool SyncDocument::save(const QString &fileName)
 	streamFileOut.flush();
 	file.close();
 
-	savePointDelta = 0;
-	savePointUnreachable = false;
+	undoStack.setClean();
 	return true;
 }
 
@@ -187,77 +183,6 @@ void SyncDocument::swapTrackOrder(size_t t1, size_t t2)
 	Q_ASSERT(t1 < (size_t)trackOrder.size());
 	Q_ASSERT(t2 < (size_t)trackOrder.size());
 	std::swap(trackOrder[t1], trackOrder[t2]);
-}
-
-bool SyncDocument::undo()
-{
-	if (undoStack.size() == 0)
-		return false;
-
-	Command *cmd = undoStack.top();
-	undoStack.pop();
-
-	redoStack.push(cmd);
-	cmd->undo();
-
-	bool oldModified = modified();
-	savePointDelta--;
-	if (oldModified != modified())
-		emit modifiedChanged(modified());
-
-	return true;
-}
-
-bool SyncDocument::redo()
-{
-	if (redoStack.size() == 0) return false;
-
-	Command *cmd = redoStack.top();
-	redoStack.pop();
-
-	undoStack.push(cmd);
-	cmd->exec();
-
-	bool oldModified = modified();
-	savePointDelta++;
-	if (oldModified != modified())
-		emit modifiedChanged(modified());
-
-	return true;
-}
-
-void SyncDocument::clearUndoStack()
-{
-	while (!undoStack.empty()) {
-		Command *cmd = undoStack.top();
-		undoStack.pop();
-		delete cmd;
-	}
-}
-
-void SyncDocument::clearRedoStack()
-{
-	while (!redoStack.empty()) {
-		Command *cmd = redoStack.top();
-		redoStack.pop();
-		delete cmd;
-	}
-}
-
-SyncDocument::Command *SyncDocument::getSetKeyFrameCommand(int track, const SyncTrack::TrackKey &key)
-{
-	SyncTrack *t = getTrack(track);
-	if (t->isKeyFrame(key.row))
-		return new EditCommand(t, key);
-	else
-		return new InsertCommand(t, key);
-}
-
-bool SyncDocument::modified() const
-{
-	if (savePointUnreachable)
-		return true;
-	return 0 != savePointDelta;
 }
 
 bool SyncDocument::isRowBookmark(int row) const
@@ -299,4 +224,103 @@ int SyncDocument::prevRowBookmark(int row) const
 
 	// pick the previous key (if any)
 	return it != rowBookmarks.begin() ? *(--it) : -1;
+}
+
+class InsertCommand : public QUndoCommand
+{
+public:
+	InsertCommand(SyncTrack *track, const SyncTrack::TrackKey &key, QUndoCommand *parent = 0) :
+	    QUndoCommand("insert", parent),
+	    track(track),
+	    key(key)
+	{}
+
+	void redo()
+	{
+		Q_ASSERT(!track->isKeyFrame(key.row));
+		track->setKey(key);
+	}
+
+	void undo()
+	{
+		Q_ASSERT(track->isKeyFrame(key.row));
+		track->removeKey(key.row);
+	}
+
+private:
+	SyncTrack *track;
+	SyncTrack::TrackKey key;
+};
+
+class DeleteCommand : public QUndoCommand
+{
+public:
+	DeleteCommand(SyncTrack *track, int row, QUndoCommand *parent = 0) :
+	    QUndoCommand("delete", parent),
+	    track(track),
+	    row(row)
+	{}
+
+	void redo()
+	{
+		Q_ASSERT(track->isKeyFrame(row));
+		oldKey = track->getKeyFrame(row);
+		Q_ASSERT(oldKey.row == row);
+		track->removeKey(row);
+	}
+
+	void undo()
+	{
+		Q_ASSERT(!track->isKeyFrame(row));
+		Q_ASSERT(oldKey.row == row);
+		track->setKey(oldKey);
+	}
+
+private:
+	SyncTrack *track;
+	int row;
+	SyncTrack::TrackKey oldKey;
+};
+
+
+class EditCommand : public QUndoCommand
+{
+public:
+	EditCommand(SyncTrack *track, const SyncTrack::TrackKey &key, QUndoCommand *parent = 0) :
+	        QUndoCommand("edit", parent),
+	        track(track),
+	        key(key)
+	{}
+
+	void redo()
+	{
+		Q_ASSERT(track->isKeyFrame(key.row));
+		oldKey = track->getKeyFrame(key.row);
+		Q_ASSERT(key.row == oldKey.row);
+		track->setKey(key);
+	}
+
+	void undo()
+	{
+		Q_ASSERT(track->isKeyFrame(oldKey.row));
+		Q_ASSERT(key.row == oldKey.row);
+		track->setKey(oldKey);
+	}
+
+private:
+	SyncTrack *track;
+	SyncTrack::TrackKey oldKey, key;
+};
+
+void SyncDocument::setKeyFrame(SyncTrack *track, const SyncTrack::TrackKey &key)
+{
+	if (track->isKeyFrame(key.row))
+		undoStack.push(new EditCommand(track, key));
+	else
+		undoStack.push(new InsertCommand(track, key));
+}
+
+void SyncDocument::deleteKeyFrame(SyncTrack *track, int row)
+{
+	undoStack.push(new DeleteCommand(track, row));
 }

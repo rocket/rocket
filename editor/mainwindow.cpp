@@ -349,7 +349,7 @@ void MainWindow::openRecentFile()
 void MainWindow::fileQuit()
 {
 	SyncDocument *doc = trackView->getDocument();
-	if (doc->modified()) {
+	if (doc->isModified()) {
 		QMessageBox::StandardButton res = QMessageBox::question(
 		    this, "GNU Rocket", "Save before exit?",
 		    QMessageBox::Yes | QMessageBox::No | QMessageBox::Cancel);

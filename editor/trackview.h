@@ -123,6 +123,14 @@ private:
 		invalidateRange(track, track, 0, getRows());
 	}
 
+	QRect getSelection() const
+	{
+		return QRect(QPoint(qMin(selectStartTrack, selectStopTrack),
+		                    qMin(selectStartRow, selectStopRow)),
+		             QPoint(qMax(selectStartTrack, selectStopTrack),
+		                    qMax(selectStartRow, selectStopRow)));
+	}
+
 	int getScreenY(int row) const;
 	int getScreenX(size_t track) const;
 	int getTrackFromX(int x) const;

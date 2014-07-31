@@ -274,10 +274,7 @@ void TrackView::paintTrack(QPainter &painter, const QRect &rcTracks, int track)
 	firstRow = qBound(0, firstRow, int(getRows()) - 1);
 	lastRow  = qBound(0, lastRow,  int(getRows()) - 1);
 
-	QRect selection = QRect(QPoint(qMin(selectStartTrack, selectStopTrack),
-	                               qMin(selectStartRow, selectStopRow)),
-	                        QPoint(qMax(selectStartTrack, selectStopTrack),
-	                               qMax(selectStartRow, selectStopRow)));
+	QRect selection = getSelection();
 
 	const SyncTrack *t = getDocument()->getTrack(getDocument()->getTrackIndexFromPos(track));
 	QMap<int, SyncTrack::TrackKey> keyMap = t->getKeyMap();
@@ -401,30 +398,27 @@ void TrackView::editCopy()
 		QApplication::beep();
 		return;
 	}
-	
-	int selectLeft  = qMin(selectStartTrack, selectStopTrack);
-	int selectRight = qMax(selectStartTrack, selectStopTrack);
-	int selectTop    = qMin(selectStartRow, selectStopRow);
-	int selectBottom = qMax(selectStartRow, selectStopRow);
+
+	QRect selection = getSelection();
 
 	QVector<struct CopyEntry> copyEntries;
-	for (int track = selectLeft; track <= selectRight; ++track) {
+	for (int track = selection.left(); track <= selection.right(); ++track) {
 		const size_t trackIndex  = doc->getTrackIndexFromPos(track);
 		const SyncTrack *t = doc->getTrack(trackIndex);
 
-		for (int row = selectTop; row <= selectBottom; ++row) {
+		for (int row = selection.top(); row <= selection.bottom(); ++row) {
 			if (t->isKeyFrame(row)) {
 				CopyEntry ce;
-				ce.track = track - selectLeft;
+				ce.track = track - selection.left();
 				ce.keyFrame = t->getKeyFrame(row);
-				ce.keyFrame.row -= selectTop;
+				ce.keyFrame.row -= selection.top();
 				copyEntries.push_back(ce);
 			}
 		}
 	}
 	
-	int buffer_width  = selectRight - selectLeft + 1;
-	int buffer_height = selectBottom - selectTop + 1;
+	int buffer_width  = selection.width();
+	int buffer_height = selection.height();
 	size_t buffer_size = copyEntries.size();
 
 	QByteArray data;
@@ -469,8 +463,8 @@ void TrackView::editPaste()
 		memcpy(&buffer_width,  clipbuf + 0,               sizeof(int));
 		memcpy(&buffer_height, clipbuf + sizeof(int),     sizeof(int));
 		memcpy(&buffer_size,   clipbuf + 2 * sizeof(int), sizeof(int));
-		
-		SyncDocument::MultiCommand *multiCmd = new SyncDocument::MultiCommand();
+
+		doc->beginMacro("paste");
 		for (int i = 0; i < buffer_width; ++i) {
 			size_t trackPos = editTrack + i;
 			if (trackPos >= getTrackCount()) continue;
@@ -480,7 +474,7 @@ void TrackView::editPaste()
 			for (int j = 0; j < buffer_height; ++j) {
 				int row = editRow + j;
 				if (t->isKeyFrame(row))
-					multiCmd->addCommand(new SyncDocument::DeleteCommand(t, row));
+					doc->deleteKeyFrame(t, row);
 			}
 		}
 		
@@ -503,12 +497,11 @@ void TrackView::editPaste()
 				key.row += editRow;
 
 				// since we deleted all keyframes in the edit-box already, we can just insert this one. 
-				SyncDocument::Command *cmd = new SyncDocument::InsertCommand(doc->getTrack(track), key);
-				multiCmd->addCommand(cmd);
+				doc->setKeyFrame(doc->getTrack(track), key);
 			}
 		}
+		doc->endMacro();
 
-		doc->exec(multiCmd);
 		viewport()->update();
 		dirtyCurrentValue();
 
@@ -522,8 +515,10 @@ void TrackView::editUndo()
 	if (NULL == getDocument())
 		return;
 
-	if (!getDocument()->undo())
+	if (!getDocument()->canUndo())
 		QApplication::beep();
+	else
+		getDocument()->undo();
 
 	// unfortunately, we don't know how much to invalidate... so we'll just invalidate it all.
 	viewport()->update();
@@ -534,8 +529,10 @@ void TrackView::editRedo()
 	if (NULL == getDocument())
 		return;
 
-	if (!getDocument()->redo())
+	if (!getDocument()->canRedo())
 		QApplication::beep();
+	else
+		getDocument()->redo();
 
 	// unfortunately, we don't know how much to invalidate... so we'll just invalidate it all.
 	viewport()->update();
@@ -731,7 +728,7 @@ void TrackView::editEnterValue()
 
 	if (lineEdit->text().length() > 0 && editTrack < int(getTrackCount())) {
 		int track = doc->getTrackIndexFromPos(editTrack);
-		const SyncTrack *t = doc->getTrack(track);
+		SyncTrack *t = doc->getTrack(track);
 
 		SyncTrack::TrackKey newKey;
 		newKey.type = SyncTrack::TrackKey::STEP;
@@ -742,8 +739,7 @@ void TrackView::editEnterValue()
 		text.remove(lineEdit->validator()->locale().groupSeparator()); // workaround QTBUG-40456
 		newKey.value = lineEdit->validator()->locale().toFloat(text); // modify value
 
-		SyncDocument::Command *cmd = doc->getSetKeyFrameCommand(track, newKey);
-		doc->exec(cmd);
+		doc->setKeyFrame(t, newKey);
 
 		dirtyCurrentValue();
 		viewport()->update();
@@ -760,7 +756,7 @@ void TrackView::editToggleInterpolationType()
 	
 	if (editTrack < int(getTrackCount())) {
 		int track = doc->getTrackIndexFromPos(editTrack);
-		const SyncTrack *t = doc->getTrack(track);
+		SyncTrack *t = doc->getTrack(track);
 		QMap<int, SyncTrack::TrackKey> keyMap = t->getKeyMap();
 
 		QMap<int, SyncTrack::TrackKey>::const_iterator it = keyMap.lowerBound(editRow);
@@ -778,8 +774,7 @@ void TrackView::editToggleInterpolationType()
 		    ((newKey.type + 1) % SyncTrack::TrackKey::KEY_TYPE_COUNT);
 
 		// apply change to data-set
-		SyncDocument::Command *cmd = doc->getSetKeyFrameCommand(track, newKey);
-		doc->exec(cmd);
+		doc->setKeyFrame(t, newKey);
 
 		// update user interface
 		dirtyCurrentValue();
@@ -793,85 +788,60 @@ void TrackView::editClear()
 {
 	SyncDocument *doc = getDocument();
 	if (NULL == doc) return;
-	
-	int selectLeft  = qMin(selectStartTrack, selectStopTrack);
-	int selectRight = qMax(selectStartTrack, selectStopTrack);
-	int selectTop    = qMin(selectStartRow, selectStopRow);
-	int selectBottom = qMax(selectStartRow, selectStopRow);
-	
+
+	QRect selection = getSelection();
+
 	if (0 == getTrackCount()) return;
-	Q_ASSERT(selectRight < int(getTrackCount()));
+	Q_ASSERT(selection.right() < int(getTrackCount()));
 	
-	SyncDocument::MultiCommand *multiCmd = new SyncDocument::MultiCommand();
-	for (int track = selectLeft; track <= selectRight; ++track) {
+	doc->beginMacro("clear");
+	for (int track = selection.left(); track <= selection.right(); ++track) {
 		int trackIndex = doc->getTrackIndexFromPos(track);
 		SyncTrack *t = doc->getTrack(trackIndex);
 
-		for (int row = selectTop; row <= selectBottom; ++row) {
-			if (t->isKeyFrame(row)) {
-				SyncDocument::Command *cmd = new SyncDocument::DeleteCommand(t, row);
-				multiCmd->addCommand(cmd);
-			}
+		for (int row = selection.top(); row <= selection.bottom(); ++row) {
+			if (t->isKeyFrame(row))
+				doc->deleteKeyFrame(t, row);
 		}
 	}
-	
-	if (0 == multiCmd->getSize()) {
-		QApplication::beep();
-		delete multiCmd;
-	}
-	else
-	{
-		doc->exec(multiCmd);
 
-		dirtyCurrentValue();
-		viewport()->update();
-	}
+	doc->endMacro();
+	dirtyCurrentValue();
+	viewport()->update();
 }
 
 void TrackView::editBiasValue(float amount)
 {
 	SyncDocument *doc = getDocument();
 	if (NULL == doc) return;
-	
-	int selectLeft  = qMin(selectStartTrack, selectStopTrack);
-	int selectRight = qMax(selectStartTrack, selectStopTrack);
-	int selectTop    = qMin(selectStartRow, selectStopRow);
-	int selectBottom = qMax(selectStartRow, selectStopRow);
-	
+
 	if (0 == getTrackCount()) {
 		QApplication::beep();
 		return;
 	}
-	
-	SyncDocument::MultiCommand *multiCmd = new SyncDocument::MultiCommand();
-	for (int track = selectLeft; track <= selectRight; ++track) {
+
+	QRect selection = getSelection();
+
+	doc->beginMacro("bias");
+	for (int track = selection.left(); track <= selection.right(); ++track) {
 		Q_ASSERT(track < int(getTrackCount()));
 		int trackIndex = doc->getTrackIndexFromPos(track);
-		const SyncTrack *t = doc->getTrack(trackIndex);
+		SyncTrack *t = doc->getTrack(trackIndex);
 
-		for (int row = selectTop; row <= selectBottom; ++row) {
+		for (int row = selection.top(); row <= selection.bottom(); ++row) {
 			if (t->isKeyFrame(row)) {
 				SyncTrack::TrackKey k = t->getKeyFrame(row); // copy old key
 				k.value += amount; // modify value
 
 				// add sub-command
-				SyncDocument::Command *cmd = doc->getSetKeyFrameCommand(trackIndex, k);
-				multiCmd->addCommand(cmd);
+				doc->setKeyFrame(t, k);
 			}
 		}
 	}
-	
-	if (0 == multiCmd->getSize()) {
-		QApplication::beep();
-		delete multiCmd;
-	}
-	else
-	{
-		doc->exec(multiCmd);
+	doc->endMacro();
 
-		dirtyCurrentValue();
-		invalidateRange(selectLeft, selectRight, selectTop, selectBottom);
-	}
+	dirtyCurrentValue();
+	invalidateRange(selection.left(), selection.right(), selection.top(), selection.bottom());
 }
 
 void TrackView::keyPressEvent(QKeyEvent *event)
