@@ -325,19 +325,12 @@ void TrackView::paintTrack(QPainter &painter, const QRect &rcTracks, int track)
 			painter.drawRect(fillRect.x(), fillRect.y(), fillRect.width() - 1, fillRect.height() - 1);
 		}
 
-		/* format the text */
-		QString text;
-		if (!t->isKeyFrame(row))
-			text = "  ---";
-		else {
-			float val = t->getKeyFrame(row).value;
-			text = QString::number(val, 'f', 2);
-		}
-
 		painter.setPen(selected ?
 		    palette().color(QPalette::HighlightedText) :
 		    palette().color(QPalette::WindowText));
-		painter.drawText(patternDataRect, text);
+		painter.drawText(patternDataRect, t->isKeyFrame(row) ?
+		                 QString::number(t->getKeyFrame(row).value, 'f', 2) :
+		                 "  ---");
 	}
 }
 
