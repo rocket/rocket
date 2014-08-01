@@ -158,7 +158,7 @@ private:
 	int editRow, editTrack;
 	
 	int scrollPosX,  scrollPosY;
-	int windowRows,  windowTracks;
+	int windowRows;
 	
 	SyncDocument *document;
 

@@ -15,7 +15,6 @@ TrackView::TrackView(QWidget *parent) :
     paused(true),
     connected(false),
     windowRows(0),
-    windowTracks(0),
     document(NULL),
     dragging(false)
 {
@@ -570,8 +569,8 @@ void TrackView::setupScrollBars()
 
 	horizontalScrollBar()->setValue(editTrack);
 	horizontalScrollBar()->setMinimum(0);
-	horizontalScrollBar()->setMaximum(int(getTrackCount()) - 1 + windowTracks - 1);
-	horizontalScrollBar()->setPageStep(windowTracks);
+	horizontalScrollBar()->setMaximum(int(getTrackCount()) - 1);
+	horizontalScrollBar()->setPageStep(1);
 }
 
 void TrackView::scrollWindow(int scrollX, int scrollY)
@@ -662,7 +661,7 @@ void TrackView::setEditTrack(int newEditTrack, bool autoscroll, bool selecting)
 		invalidateTrack(editTrack);
 	}
 
-	if (autoscroll && windowTracks > 0) {
+	if (autoscroll && viewport()->width() > 0) {
 		int firstTrack = getTrackFromX(leftMarginWidth);
 		int lastTrack  = getTrackFromX(viewport()->width());
 
@@ -1002,8 +1001,6 @@ void TrackView::keyPressEvent(QKeyEvent *event)
 void TrackView::resizeEvent(QResizeEvent *event)
 {
 	windowRows   = (event->size().height() - topMarginHeight) / rowHeight;
-	windowTracks = (event->size().width()  - leftMarginWidth) / trackWidth;
-	
 	setEditRow(editRow);
 	setupScrollBars();
 }
