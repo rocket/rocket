@@ -143,9 +143,8 @@ void TrackView::paintTopMargin(QPainter &painter, const QRect &rcTracks)
 	painter.fillRect(topRightMargin, palette().button());
 	qDrawWinButton(&painter, topRightMargin, palette());
 
-
-	int startTrack = scrollPosX / trackWidth;
-	int endTrack  = qMin(startTrack + windowTracks + 1, int(getTrackCount()));
+	int startTrack = qBound(0, getTrackFromX(qMax(rcTracks.left(), leftMarginWidth)), int(getTrackCount()));
+	int endTrack   = qBound(0, getTrackFromX(rcTracks.right()) + 1, int(getTrackCount()));
 
 	for (int track = startTrack; track < endTrack; ++track) {
 		size_t index = doc->getTrackIndexFromPos(track);
@@ -223,8 +222,8 @@ void TrackView::paintTracks(QPainter &painter, const QRect &rcTracks)
 	firstRow = qBound(0, firstRow, int(getRows()) - 1);
 	lastRow  = qBound(0, lastRow,  int(getRows()) - 1);
 
-	int startTrack = scrollPosX / trackWidth;
-	int endTrack  = qMin(startTrack + windowTracks + 1, int(getTrackCount()));
+	int startTrack = qBound(0, getTrackFromX(qMax(rcTracks.left(), leftMarginWidth)), int(getTrackCount()));
+	int endTrack   = qBound(0, getTrackFromX(rcTracks.right()) + 1, int(getTrackCount()));
 	
 	for (int track = startTrack; track < endTrack; ++track)
 		paintTrack(painter, rcTracks, track);
@@ -666,8 +665,8 @@ void TrackView::setEditTrack(int newEditTrack, bool autoscroll, bool selecting)
 	}
 
 	if (autoscroll && windowTracks > 0) {
-		int firstTrack = scrollPosX / trackWidth;
-		int lastTrack  = firstTrack + windowTracks;
+		int firstTrack = getTrackFromX(leftMarginWidth);
+		int lastTrack  = getTrackFromX(viewport()->width());
 
 		int newFirstTrack = firstTrack;
 		if (editTrack >= lastTrack)
