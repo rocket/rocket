@@ -38,9 +38,7 @@ TrackView::TrackView(QWidget *parent) :
 
 	scrollPosX = 0;
 	scrollPosY = 0;
-	windowWidth  = -1;
-	windowHeight = -1;
-	
+
 	editRow = 0;
 	editTrack = 0;
 	
@@ -632,7 +630,7 @@ void TrackView::setEditRow(int newEditRow, bool selecting)
 	invalidateRow(oldEditRow);
 	invalidateRow(editRow);
 	
-	setScrollPos(scrollPosX, (editRow * rowHeight) - ((windowHeight - topMarginHeight) / 2) + rowHeight / 2);
+	setScrollPos(scrollPosX, (editRow * rowHeight) - ((viewport()->height() - topMarginHeight) / 2) + rowHeight / 2);
 }
 
 void TrackView::setEditTrack(int newEditTrack, bool autoscroll, bool selecting)
@@ -1003,9 +1001,6 @@ void TrackView::keyPressEvent(QKeyEvent *event)
 
 void TrackView::resizeEvent(QResizeEvent *event)
 {
-	windowWidth  = event->size().width();
-	windowHeight = event->size().height();
-	
 	windowRows   = (event->size().height() - topMarginHeight) / rowHeight;
 	windowTracks = (event->size().width()  - leftMarginWidth) / trackWidth;
 	
