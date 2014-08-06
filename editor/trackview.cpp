@@ -221,23 +221,26 @@ void TrackView::paintTracks(QPainter &painter, const QRect &rcTracks)
 
 	int startTrack = qBound(0, getTrackFromX(qMax(rcTracks.left(), leftMarginWidth)), int(getTrackCount()));
 	int endTrack   = qBound(0, getTrackFromX(rcTracks.right()) + 1, int(getTrackCount()));
-	
+
+	QRect topPadding(QPoint(rcTracks.left(), qMax(int(rcTracks.top()), topMarginHeight)),
+			 QPoint(rcTracks.right(), getScreenY(0) - 1));
+	painter.fillRect(topPadding, palette().dark());
+
+	QRect bottomPadding(QPoint(rcTracks.left(), getScreenY(int(getRows()))),
+			    QPoint(rcTracks.right(), rcTracks.bottom()));
+	painter.fillRect(bottomPadding, palette().dark());
+
+	painter.setClipRect(leftMarginWidth,
+			    topMarginHeight,
+			    viewport()->width() - leftMarginWidth,
+			    viewport()->height() - topMarginHeight);
+
 	for (int track = startTrack; track < endTrack; ++track)
 		paintTrack(painter, rcTracks, track);
-
-	/* paint margins */
 
 	QRect rightMargin(QPoint(getScreenX(getTrackCount()), getScreenY(0)),
 	                  QPoint(rcTracks.right(), getScreenY(int(getRows())) - 1));
 	painter.fillRect(rightMargin, palette().dark());
-
-	QRect bottomPadding(QPoint(rcTracks.left(), getScreenY(int(getRows()))),
-	                    QPoint(rcTracks.right(), rcTracks.bottom()));
-	painter.fillRect(bottomPadding, palette().dark());
-	
-	QRect topPadding(QPoint(rcTracks.left(), qMax(int(rcTracks.top()), topMarginHeight)),
-	                 QPoint(rcTracks.right(), getScreenY(0) - 1));
-	painter.fillRect(topPadding, palette().dark());
 }
 
 static QPen getInterpolationBrush(SyncTrack::TrackKey::KeyType type)
@@ -567,10 +570,12 @@ void TrackView::setupScrollBars()
 	verticalScrollBar()->setMaximum(int(getRows()) - 1);
 	verticalScrollBar()->setPageStep(windowRows);
 
-	horizontalScrollBar()->setValue(editTrack);
-	horizontalScrollBar()->setMinimum(0);
-	horizontalScrollBar()->setMaximum(int(getTrackCount()) - 1);
-	horizontalScrollBar()->setPageStep(1);
+	int contentWidth = getTrackCount() * trackWidth;
+	int viewWidth = qMax(viewport()->width() - leftMarginWidth, 0);
+	horizontalScrollBar()->setValue(editTrack * trackWidth);
+	horizontalScrollBar()->setRange(0, contentWidth - viewWidth);
+	horizontalScrollBar()->setSingleStep(20);
+	horizontalScrollBar()->setPageStep(viewWidth);
 }
 
 void TrackView::scrollWindow(int scrollX, int scrollY)
@@ -588,18 +593,19 @@ void TrackView::setScrollPos(int newScrollPosX, int newScrollPosY)
 	// clamp newscrollPosX
 	newScrollPosX = qMax(newScrollPosX, 0);
 	
-	if (newScrollPosX != scrollPosX || newScrollPosY != scrollPosY)
-	{
-		int scrollX = scrollPosX - newScrollPosX;
-		int scrollY = scrollPosY - newScrollPosY;
-		
+	if (newScrollPosX != scrollPosX || newScrollPosY != scrollPosY) {
+		int deltaX = scrollPosX - newScrollPosX;
+		int deltaY = scrollPosY - newScrollPosY;
+
 		// update scrollPos
 		scrollPosX = newScrollPosX;
 		scrollPosY = newScrollPosY;
-		
-		scrollWindow(scrollX, scrollY);
+
+		scrollWindow(deltaX, deltaY);
 	}
-	setupScrollBars();
+
+	horizontalScrollBar()->setValue(newScrollPosX);
+	verticalScrollBar()->setValue(editRow);
 }
 
 void TrackView::setEditRow(int newEditRow, bool selecting)
@@ -662,15 +668,14 @@ void TrackView::setEditTrack(int newEditTrack, bool autoscroll, bool selecting)
 	}
 
 	if (autoscroll && viewport()->width() > 0) {
-		int firstTrack = getTrackFromX(leftMarginWidth);
-		int lastTrack  = getTrackFromX(viewport()->width());
+		int viewportWidth = viewport()->width() - leftMarginWidth;
+		int minX = editTrack * trackWidth;
+		int maxX = minX + trackWidth;
 
-		int newFirstTrack = firstTrack;
-		if (editTrack >= lastTrack)
-			newFirstTrack = editTrack - lastTrack + firstTrack + 1;
-		if (editTrack < firstTrack)
-			newFirstTrack = editTrack;
-		setScrollPos(newFirstTrack * trackWidth, scrollPosY);
+		if (minX < scrollPosX)
+			setScrollPos(minX, scrollPosY);
+		else if (maxX > scrollPosX + viewportWidth)
+			setScrollPos(maxX - viewportWidth, scrollPosY);
 	} else
 		setupScrollBars();
 }
@@ -708,7 +713,7 @@ void TrackView::onVScroll(int value)
 
 void TrackView::onHScroll(int value)
 {
-	setEditTrack(value);
+	setScrollPos(value, scrollPosY);
 }
 
 void TrackView::onEditingFinished()
