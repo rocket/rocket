@@ -101,10 +101,10 @@ private:
 
 	void invalidateRange(int startTrack, int stopTrack, int startRow, int stopRow)
 	{
-		QRect rect(QPoint(getScreenX(qMin(startTrack, stopTrack)),
-		                  getScreenY(qMin(startRow, stopRow))),
-		           QPoint(getScreenX(qMax(startTrack, stopTrack) + 1) - 1,
-		                  getScreenY(qMax(startRow, stopRow) + 1) - 1));
+		QRect rect(QPoint(getPhysicalX(qMin(startTrack, stopTrack)),
+		                  getPhysicalY(qMin(startRow, stopRow))),
+		           QPoint(getPhysicalX(qMax(startTrack, stopTrack) + 1) - 1,
+		                  getPhysicalY(qMax(startRow, stopRow) + 1) - 1));
 		viewport()->update(rect);
 	}
 
@@ -120,8 +120,8 @@ private:
 
 	void invalidateTrack(int track)
 	{
-		QRect rect(QPoint(getScreenX(track), 0),
-		           QPoint(getScreenX(track + 1) - 1, height()));
+		QRect rect(QPoint(getPhysicalX(track), 0),
+		           QPoint(getPhysicalX(track + 1) - 1, height()));
 		viewport()->update(rect);
 	}
 
@@ -133,9 +133,13 @@ private:
 		                    qMax(selectStartRow, selectStopRow)));
 	}
 
-	int getScreenY(int row) const;
-	int getScreenX(size_t track) const;
-	int getTrackFromX(int x) const;
+	int getLogicalX(int track) const;
+	int getLogicalY(int row) const;
+	int getPhysicalX(int track) const;
+	int getPhysicalY(int row) const;
+
+	int getTrackFromLogicalX(int x) const;
+	int getTrackFromPhysicalX(int x) const;
 
 	size_t getTrackCount() const;
 

@@ -89,14 +89,24 @@ TrackView::~TrackView()
 		delete document;
 }
 
-int TrackView::getScreenY(int row) const
+int TrackView::getLogicalX(int track) const
 {
-	return topMarginHeight + (row * rowHeight) - scrollPosY;
+	return track * trackWidth;
 }
 
-int TrackView::getScreenX(size_t track) const
+int TrackView::getLogicalY(int row) const
 {
-	return int(leftMarginWidth + (track * trackWidth)) - scrollPosX;
+	return row * rowHeight;
+}
+
+int TrackView::getPhysicalX(int track) const
+{
+	return leftMarginWidth + getLogicalX(track) - scrollPosX;
+}
+
+int TrackView::getPhysicalY(int row) const
+{
+	return topMarginHeight + getLogicalY(row) - scrollPosY;
 }
 
 inline int divfloor(int a, int b)
@@ -106,9 +116,14 @@ inline int divfloor(int a, int b)
 	return a / b;
 }
 
-int TrackView::getTrackFromX(int x) const
+int TrackView::getTrackFromLogicalX(int x) const
 {
-	return divfloor(x + scrollPosX - leftMarginWidth, trackWidth);
+	return divfloor(x, trackWidth);
+}
+
+int TrackView::getTrackFromPhysicalX(int x) const
+{
+	return getTrackFromLogicalX(x - leftMarginWidth + scrollPosX);
 }
 
 void TrackView::paintEvent(QPaintEvent *event)
@@ -135,19 +150,19 @@ void TrackView::paintTopMargin(QPainter &painter, const QRect &rcTracks)
 	QRect topRightMargin;
 	topRightMargin.setTop(-1);
 	topRightMargin.setBottom(topMarginHeight - 1);
-	topRightMargin.setLeft(getScreenX(getTrackCount()) - 1);
+	topRightMargin.setLeft(getPhysicalX(getTrackCount()) - 1);
 	topRightMargin.setRight(rcTracks.right() + 1);
 	painter.fillRect(topRightMargin, palette().button());
 	qDrawWinButton(&painter, topRightMargin, palette());
 
-	int startTrack = qBound(0, getTrackFromX(qMax(rcTracks.left(), leftMarginWidth)), int(getTrackCount()));
-	int endTrack   = qBound(0, getTrackFromX(rcTracks.right()) + 1, int(getTrackCount()));
+	int startTrack = qBound(0, getTrackFromPhysicalX(qMax(rcTracks.left(), leftMarginWidth)), int(getTrackCount()));
+	int endTrack   = qBound(0, getTrackFromPhysicalX(rcTracks.right()) + 1, int(getTrackCount()));
 
 	for (int track = startTrack; track < endTrack; ++track) {
 		size_t index = doc->getTrackIndexFromPos(track);
 		const SyncTrack *t = doc->getTrack(index);
 
-		QRect topMargin(getScreenX(track), 0, trackWidth, topMarginHeight);
+		QRect topMargin(getPhysicalX(track), 0, trackWidth, topMarginHeight);
 		if (!rcTracks.intersects(topMargin))
 			continue;
 
@@ -185,7 +200,7 @@ void TrackView::paintLeftMargin(QPainter &painter, const QRect &rcTracks)
 	lastRow  = qBound(0, lastRow,  int(getRows()) - 1);
 
 	for (int row = firstRow; row <= lastRow; ++row) {
-		QRect leftMargin(0, getScreenY(row), leftMarginWidth, rowHeight);
+		QRect leftMargin(0, getPhysicalY(row), leftMarginWidth, rowHeight);
 		if (!rcTracks.intersects(leftMargin))
 			continue;
 
@@ -219,14 +234,14 @@ void TrackView::paintTracks(QPainter &painter, const QRect &rcTracks)
 	firstRow = qBound(0, firstRow, int(getRows()) - 1);
 	lastRow  = qBound(0, lastRow,  int(getRows()) - 1);
 
-	int startTrack = qBound(0, getTrackFromX(qMax(rcTracks.left(), leftMarginWidth)), int(getTrackCount()));
-	int endTrack   = qBound(0, getTrackFromX(rcTracks.right()) + 1, int(getTrackCount()));
+	int startTrack = qBound(0, getTrackFromPhysicalX(qMax(rcTracks.left(), leftMarginWidth)), int(getTrackCount()));
+	int endTrack   = qBound(0, getTrackFromPhysicalX(rcTracks.right()) + 1, int(getTrackCount()));
 
 	QRect topPadding(QPoint(rcTracks.left(), qMax(int(rcTracks.top()), topMarginHeight)),
-			 QPoint(rcTracks.right(), getScreenY(0) - 1));
+			 QPoint(rcTracks.right(), getPhysicalY(0) - 1));
 	painter.fillRect(topPadding, palette().dark());
 
-	QRect bottomPadding(QPoint(rcTracks.left(), getScreenY(int(getRows()))),
+	QRect bottomPadding(QPoint(rcTracks.left(), getPhysicalY(int(getRows()))),
 			    QPoint(rcTracks.right(), rcTracks.bottom()));
 	painter.fillRect(bottomPadding, palette().dark());
 
@@ -238,8 +253,8 @@ void TrackView::paintTracks(QPainter &painter, const QRect &rcTracks)
 	for (int track = startTrack; track < endTrack; ++track)
 		paintTrack(painter, rcTracks, track);
 
-	QRect rightMargin(QPoint(getScreenX(getTrackCount()), getScreenY(0)),
-	                  QPoint(rcTracks.right(), getScreenY(int(getRows())) - 1));
+	QRect rightMargin(QPoint(getPhysicalX(getTrackCount()), getPhysicalY(0)),
+	                  QPoint(rcTracks.right(), getPhysicalY(int(getRows())) - 1));
 	painter.fillRect(rightMargin, palette().dark());
 }
 
@@ -279,7 +294,7 @@ void TrackView::paintTrack(QPainter &painter, const QRect &rcTracks, int track)
 	QMap<int, SyncTrack::TrackKey> keyMap = t->getKeyMap();
 
 	for (int row = firstRow; row <= lastRow; ++row) {
-		QRect patternDataRect(getScreenX(track), getScreenY(row), trackWidth, rowHeight);
+		QRect patternDataRect(getPhysicalX(track), getPhysicalY(row), trackWidth, rowHeight);
 		if (!rcTracks.intersects(patternDataRect))
 			continue;
 
@@ -332,7 +347,7 @@ void TrackView::paintTrack(QPainter &painter, const QRect &rcTracks, int track)
 
 void TrackView::mouseMoveEvent(QMouseEvent *event)
 {
-	int track = getTrackFromX(event->pos().x());
+	int track = getTrackFromPhysicalX(event->pos().x());
 	if (dragging) {
 		SyncDocument *doc = getDocument();
 		const int trackCount = getTrackCount();
@@ -364,7 +379,7 @@ void TrackView::mouseMoveEvent(QMouseEvent *event)
 
 void TrackView::mousePressEvent(QMouseEvent *event)
 {
-	int track = getTrackFromX(event->pos().x());
+	int track = getTrackFromPhysicalX(event->pos().x());
 	if (event->button() == Qt::LeftButton &&
 	    event->pos().y() < topMarginHeight &&
 	    track >= 0 && track < int(getTrackCount())) {
@@ -669,8 +684,8 @@ void TrackView::setEditTrack(int newEditTrack, bool autoscroll, bool selecting)
 
 	if (autoscroll && viewport()->width() > 0) {
 		int viewportWidth = viewport()->width() - leftMarginWidth;
-		int minX = editTrack * trackWidth;
-		int maxX = minX + trackWidth;
+		int minX = getLogicalX(editTrack);
+		int maxX = getLogicalX(editTrack + 1);
 
 		if (minX < scrollPosX)
 			setScrollPos(minX, scrollPosY);
@@ -993,7 +1008,7 @@ void TrackView::keyPressEvent(QKeyEvent *event)
 		QString str = event->text();
 		int pos = 0;
 		if (lineEdit->validator()->validate(str, pos) != QValidator::Invalid) {
-			lineEdit->move(getScreenX(getEditTrack()), getScreenY(getEditRow()));
+			lineEdit->move(getPhysicalX(getEditTrack()), getPhysicalY(getEditRow()));
 			lineEdit->resize(trackWidth, rowHeight);
 			lineEdit->setText("");
 			lineEdit->show();
