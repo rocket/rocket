@@ -253,7 +253,7 @@ void TrackView::paintTracks(QPainter &painter, const QRect &rcTracks)
 			}
 
 			if (interpolationType != KEY_STEP) {
-				painter.drawLine(patternDataRect.topRight(),
+				painter.drawLine(patternDataRect.topRight() + QPoint(0, 1),
 				                 patternDataRect.bottomRight());
 			}
 
