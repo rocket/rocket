@@ -39,7 +39,7 @@ public:
 	size_t clientIndex;
 
 	TrackView *trackView;
-	QLabel *statusText, *statusRow, *statusCol, *statusValue, *statusKeyType;
+	QLabel *statusPos, *statusValue, *statusKeyType;
 	QMenu *fileMenu, *recentFilesMenu, *editMenu;
 	QAction *recentFileActions[5];
 

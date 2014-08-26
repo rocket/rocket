@@ -102,23 +102,15 @@ void MainWindow::createMenuBar()
 
 void MainWindow::createStatusBar()
 {
-	statusText = new QLabel;
-	statusRow = new QLabel;
-	statusCol = new QLabel;
+	statusPos = new QLabel;
 	statusValue = new QLabel;
 	statusKeyType = new QLabel;
 
-	statusBar()->addWidget(statusText);
-	statusBar()->addWidget(statusRow);
-	statusBar()->addWidget(statusCol);
-	statusBar()->addWidget(statusValue);
-	statusBar()->addWidget(statusKeyType);
+	statusBar()->addPermanentWidget(statusPos);
+	statusBar()->addPermanentWidget(statusValue);
+	statusBar()->addPermanentWidget(statusKeyType);
 
-	statusText->setFrameStyle(QFrame::Panel | QFrame::Sunken);
-	statusRow->setFrameStyle(QFrame::Panel | QFrame::Sunken);
-	statusCol->setFrameStyle(QFrame::Panel | QFrame::Sunken);
-	statusValue->setFrameStyle(QFrame::Panel | QFrame::Sunken);
-	statusKeyType->setFrameStyle(QFrame::Panel | QFrame::Sunken);
+	statusBar()->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Fixed);
 
 	setStatusText("Not connected");
 	setStatusPosition(0, 0);
@@ -206,19 +198,18 @@ void MainWindow::setCurrentFileName(const QString &fileName)
 
 void MainWindow::setStatusText(const QString &text)
 {
-	statusText->setText(text);
+	statusBar()->showMessage(text);
 }
 
 void MainWindow::setStatusPosition(int row, int col)
 {
-	statusRow->setText(QString::number(row));
-	statusCol->setText(QString::number(col));
+	statusPos->setText(QString("Row %1, Col %2").arg(row).arg(col));
 }
 
 void MainWindow::setStatusValue(double val, bool valid)
 {
 	if (valid)
-		statusValue->setText(QString::number(val, 'f'));
+		statusValue->setText(QString::number(val, 'f', 3));
 	else
 		statusValue->setText("---");
 }
