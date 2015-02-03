@@ -25,3 +25,4 @@ SOURCES += clientsocket.cpp \
 RESOURCES += editor.qrc
 
 RC_FILE = editor.rc
+ICON = appicon.icns
