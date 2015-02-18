@@ -3,6 +3,21 @@
 
 #include <QTcpSocket>
 #include <QByteArray>
+#include <QObject>
+
+#include "synctrack.h"
+
+#define CLIENT_GREET "hello, synctracker!"
+#define SERVER_GREET "hello, demo!"
+
+enum {
+	SET_KEY = 0,
+	DELETE_KEY = 1,
+	GET_TRACK = 2,
+	SET_ROW = 3,
+	PAUSE = 4,
+	SAVE_TRACKS = 5
+};
 
 class TcpSocket {
 public:
@@ -96,9 +111,10 @@ private:
 	QByteArray buf;
 };
 
-class ClientSocket {
+class ClientSocket : public QObject {
+	Q_OBJECT
 public:
-	ClientSocket() : clientPaused(true), socket(NULL) {}
+	ClientSocket() : socket(NULL) {}
 
 	bool connected() const
 	{
@@ -135,15 +151,28 @@ public:
 		return socket->pollRead();
 	}
 
-	void sendSetKeyCommand(const QString &trackName, const struct track_key &key);
+	void sendSetKeyCommand(const QString &trackName, const SyncTrack::TrackKey &key);
 	void sendDeleteKeyCommand(const QString &trackName, int row);
 	void sendSetRowCommand(int row);
 	void sendPauseCommand(bool pause);
 	void sendSaveCommand();
 
-	bool clientPaused;
 	QMap<QString, size_t> clientTracks;
 	TcpSocket *socket;
+
+public slots:
+	void onPauseChanged(bool paused)
+	{
+		sendPauseCommand(paused);
+	}
+
+	void onKeyFrameChanged(const SyncTrack &track, int row)
+	{
+		if (track.isKeyFrame(row))
+			sendSetKeyCommand(track.name, track.getKeyFrame(row));
+		else
+			sendDeleteKeyCommand(track.name, row);
+	}
 };
 
 #endif // !defined(CLIENTSOCKET_H)

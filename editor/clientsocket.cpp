@@ -1,7 +1,6 @@
 #include "clientsocket.h"
-extern "C" {
-#include "../lib/track.h"
-}
+#include "syncdocument.h"
+
 #include <QCryptographicHash>
 #include <QtEndian>
 
@@ -135,7 +134,7 @@ WebSocket *WebSocket::upgradeFromHttp(QTcpSocket *socket)
 }
 
 
-void ClientSocket::sendSetKeyCommand(const QString &trackName, const struct track_key &key)
+void ClientSocket::sendSetKeyCommand(const QString &trackName, const SyncTrack::TrackKey &key)
 {
 	if (!connected() ||
 	    clientTracks.count(trackName) == 0)
@@ -150,7 +149,7 @@ void ClientSocket::sendSetKeyCommand(const QString &trackName, const struct trac
 	v.f = key.value;
 	v.i = qToBigEndian(v.i);
 
-	Q_ASSERT(key.type < KEY_TYPE_COUNT);
+	Q_ASSERT(key.type < SyncTrack::TrackKey::KEY_TYPE_COUNT);
 
 	unsigned char cmd = SET_KEY;
 	send((char *)&cmd, 1, false);
@@ -194,7 +193,6 @@ void ClientSocket::sendPauseCommand(bool pause)
 	unsigned char cmd = PAUSE, flag = pause;
 	send((char *)&cmd, 1, false);
 	send((char *)&flag, 1, true);
-	clientPaused = pause;
 }
 
 void ClientSocket::sendSaveCommand()

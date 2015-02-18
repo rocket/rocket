@@ -7,9 +7,8 @@
 
 SyncDocument::~SyncDocument()
 {
-	sync_data_deinit(this);
-	clearUndoStack();
-	clearRedoStack();
+	for (int i = 0; i < tracks.size(); ++i)
+		delete tracks[i];
 }
 
 SyncDocument *SyncDocument::load(const QString &fileName)
@@ -48,9 +47,11 @@ SyncDocument *SyncDocument::load(const QString &fileName)
 		QString name = attribs.namedItem("name").nodeValue();
 
 		// look up track-name, create it if it doesn't exist
-		int trackIndex = sync_find_track(ret, name.toUtf8());
-		if (0 > trackIndex)
-			trackIndex = int(ret->createTrack(name.toUtf8().constData()));
+		SyncTrack *t = ret->findTrack(name.toUtf8());
+		if (!t) {
+			int idx = ret->createTrack(name.toUtf8().constData());
+			t = ret->getTrack(idx);
+		}
 
 		QDomNodeList rowNodes = trackNode.childNodes();
 		for (int i = 0; i < int(rowNodes.length()); ++i) {
@@ -62,14 +63,13 @@ SyncDocument *SyncDocument::load(const QString &fileName)
 				QString valueString = rowAttribs.namedItem("value").nodeValue();
 				QString interpolationString = rowAttribs.namedItem("interpolation").nodeValue();
 
-				track_key k;
+				SyncTrack::TrackKey k;
 				k.row = rowString.toInt();
 				k.value = valueString.toFloat();
-				k.type = key_type(interpolationString.toInt());
+				k.type = SyncTrack::TrackKey::KeyType(interpolationString.toInt());
 
-				Q_ASSERT(!is_key_frame(ret->tracks[trackIndex], k.row));
-				if (sync_set_key(ret->tracks[trackIndex], &k))
-					qFatal("failed to insert key");
+				Q_ASSERT(!t->isKeyFrame(k.row));
+				t->setKey(k);
 			}
 		}
 	}
@@ -101,16 +101,19 @@ bool SyncDocument::save(const QString &fileName)
 	rootNode.appendChild(doc.createTextNode("\n\t"));
 	QDomElement tracksNode =
 	    doc.createElement("tracks");
-	for (size_t i = 0; i < num_tracks; ++i) {
-		const sync_track *t = tracks[trackOrder[i]];
+	for (size_t i = 0; i < getTrackCount(); ++i) {
+		const SyncTrack *t = getTrack(trackOrder[i]);
 
 		QDomElement trackElem =
 		    doc.createElement("track");
 		trackElem.setAttribute("name", t->name);
-		for (int i = 0; i < (int)t->num_keys; ++i) {
-			int row = t->keys[i].row;
-			float value = t->keys[i].value;
-			char interpolationType = char(t->keys[i].type);
+
+		QMap<int, SyncTrack::TrackKey> keyMap = t->getKeyMap();
+		QMap<int, SyncTrack::TrackKey>::const_iterator it;
+		for (it = keyMap.constBegin(); it != keyMap.constEnd(); ++it) {
+			int row = it.key();
+			float value = it->value;
+			char interpolationType = char(it->type);
 
 			QDomElement keyElem =
 			    doc.createElement("key");
@@ -124,14 +127,14 @@ bool SyncDocument::save(const QString &fileName)
 			    doc.createTextNode("\n\t\t\t"));
 			trackElem.appendChild(keyElem);
 		}
-		if (t->num_keys)
+		if (keyMap.size())
 			trackElem.appendChild(
 			    doc.createTextNode("\n\t\t"));
 
 		tracksNode.appendChild(doc.createTextNode("\n\t\t"));
 		tracksNode.appendChild(trackElem);
 	}
-	if (0 != num_tracks)
+	if (getTrackCount())
 		tracksNode.appendChild(doc.createTextNode("\n\t"));
 	rootNode.appendChild(tracksNode);
 	rootNode.appendChild(doc.createTextNode("\n\t"));
@@ -165,7 +168,159 @@ bool SyncDocument::save(const QString &fileName)
 	streamFileOut.flush();
 	file.close();
 
-	savePointDelta = 0;
-	savePointUnreachable = false;
+	undoStack.setClean();
 	return true;
+}
+
+size_t SyncDocument::getTrackIndexFromPos(size_t track) const
+{
+	Q_ASSERT(track < (size_t)trackOrder.size());
+	return trackOrder[track];
+}
+
+void SyncDocument::swapTrackOrder(size_t t1, size_t t2)
+{
+	Q_ASSERT(t1 < (size_t)trackOrder.size());
+	Q_ASSERT(t2 < (size_t)trackOrder.size());
+	std::swap(trackOrder[t1], trackOrder[t2]);
+}
+
+bool SyncDocument::isRowBookmark(int row) const
+{
+	QList<int>::const_iterator it = qLowerBound(rowBookmarks.begin(), rowBookmarks.end(), row);
+	return it != rowBookmarks.end() && *it == row;
+}
+
+void SyncDocument::toggleRowBookmark(int row)
+{
+	QList<int>::iterator it = qLowerBound(rowBookmarks.begin(), rowBookmarks.end(), row);
+	if (it == rowBookmarks.end() || *it != row)
+		rowBookmarks.insert(it, row);
+	else
+		rowBookmarks.erase(it);
+}
+
+int SyncDocument::nextRowBookmark(int row) const
+{
+	QList<int>::const_iterator it = qLowerBound(rowBookmarks.begin(), rowBookmarks.end(), row);
+	if (it == rowBookmarks.end())
+		return -1;
+	return *it;
+}
+
+int SyncDocument::prevRowBookmark(int row) const
+{
+	QList<int>::const_iterator it = qLowerBound(rowBookmarks.begin(), rowBookmarks.end(), row);
+	if (it == rowBookmarks.end()) {
+
+		// this can only really happen if the list is empty
+		if (it == rowBookmarks.begin())
+			return -1;
+
+		// reached the end, pick the last bookmark if it's after the current row
+		it--;
+		return *it < row ? *it : -1;
+	}
+
+	// pick the previous key (if any)
+	return it != rowBookmarks.begin() ? *(--it) : -1;
+}
+
+class InsertCommand : public QUndoCommand
+{
+public:
+	InsertCommand(SyncTrack *track, const SyncTrack::TrackKey &key, QUndoCommand *parent = 0) :
+	    QUndoCommand("insert", parent),
+	    track(track),
+	    key(key)
+	{}
+
+	void redo()
+	{
+		Q_ASSERT(!track->isKeyFrame(key.row));
+		track->setKey(key);
+	}
+
+	void undo()
+	{
+		Q_ASSERT(track->isKeyFrame(key.row));
+		track->removeKey(key.row);
+	}
+
+private:
+	SyncTrack *track;
+	SyncTrack::TrackKey key;
+};
+
+class DeleteCommand : public QUndoCommand
+{
+public:
+	DeleteCommand(SyncTrack *track, int row, QUndoCommand *parent = 0) :
+	    QUndoCommand("delete", parent),
+	    track(track),
+	    row(row)
+	{}
+
+	void redo()
+	{
+		Q_ASSERT(track->isKeyFrame(row));
+		oldKey = track->getKeyFrame(row);
+		Q_ASSERT(oldKey.row == row);
+		track->removeKey(row);
+	}
+
+	void undo()
+	{
+		Q_ASSERT(!track->isKeyFrame(row));
+		Q_ASSERT(oldKey.row == row);
+		track->setKey(oldKey);
+	}
+
+private:
+	SyncTrack *track;
+	int row;
+	SyncTrack::TrackKey oldKey;
+};
+
+
+class EditCommand : public QUndoCommand
+{
+public:
+	EditCommand(SyncTrack *track, const SyncTrack::TrackKey &key, QUndoCommand *parent = 0) :
+	        QUndoCommand("edit", parent),
+	        track(track),
+	        key(key)
+	{}
+
+	void redo()
+	{
+		Q_ASSERT(track->isKeyFrame(key.row));
+		oldKey = track->getKeyFrame(key.row);
+		Q_ASSERT(key.row == oldKey.row);
+		track->setKey(key);
+	}
+
+	void undo()
+	{
+		Q_ASSERT(track->isKeyFrame(oldKey.row));
+		Q_ASSERT(key.row == oldKey.row);
+		track->setKey(oldKey);
+	}
+
+private:
+	SyncTrack *track;
+	SyncTrack::TrackKey oldKey, key;
+};
+
+void SyncDocument::setKeyFrame(SyncTrack *track, const SyncTrack::TrackKey &key)
+{
+	if (track->isKeyFrame(key.row))
+		undoStack.push(new EditCommand(track, key));
+	else
+		undoStack.push(new InsertCommand(track, key));
+}
+
+void SyncDocument::deleteKeyFrame(SyncTrack *track, int row)
+{
+	undoStack.push(new DeleteCommand(track, row));
 }

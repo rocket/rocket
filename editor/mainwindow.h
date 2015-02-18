@@ -2,13 +2,13 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
+#include "synctrack.h"
+#include "clientsocket.h"
+
 class QLabel;
 class QAction;
 class QTcpServer;
 
-extern "C" {
-#include "../lib/track.h"
-}
 class SyncDocument;
 class TrackView;
 class ClientSocket;
@@ -32,10 +32,10 @@ public:
 	void setStatusPosition(int row, int col);
 	void setStatusText(const QString &text);
 	void setStatusValue(double val, bool valid);
-	void setStatusKeyType(enum key_type keyType, bool valid);
+	void setStatusKeyType(SyncTrack::TrackKey::KeyType keyType, bool valid);
 
-	bool guiConnected;
 	QTcpServer *serverSocket;
+	ClientSocket clientSocket;
 	size_t clientIndex;
 
 	TrackView *trackView;
@@ -59,7 +59,7 @@ public slots:
 	void editPreviousBookmark();
 	void editNextBookmark();
 
-	void onPosChanged();
+	void onPosChanged(int col, int row);
 	void onCurrValDirty();
 
 private slots:

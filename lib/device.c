@@ -1,8 +1,18 @@
 #include "device.h"
-#include "sync.h"
+#include "track.h"
 #include <stdio.h>
 #include <math.h>
 #include <assert.h>
+#include <string.h>
+
+static int find_track(struct sync_device *d, const char *name)
+{
+	int i;
+	for (i = 0; i < (int)d->num_tracks; ++i)
+		if (!strcmp(name, d->tracks[i]->name))
+			return i;
+	return -1; /* not found */
+}
 
 static const char *sync_track_path(const char *base, const char *name)
 {
@@ -16,6 +26,18 @@ static const char *sync_track_path(const char *base, const char *name)
 }
 
 #ifndef SYNC_PLAYER
+
+#define CLIENT_GREET "hello, synctracker!"
+#define SERVER_GREET "hello, demo!"
+
+enum {
+	SET_KEY = 0,
+	DELETE_KEY = 1,
+	GET_TRACK = 2,
+	SET_ROW = 3,
+	PAUSE = 4,
+	SAVE_TRACKS = 5
+};
 
 static inline int socket_poll(SOCKET socket)
 {
@@ -127,6 +149,17 @@ void sync_set_io_cb(struct sync_device *d, struct sync_io_cb *cb)
 
 #endif
 
+#ifdef NEED_STRDUP
+static inline char *rocket_strdup(const char *str)
+{
+	char *ret = malloc(strlen(str) + 1);
+	if (ret)
+		strcpy(ret, str);
+	return ret;
+}
+#define strdup rocket_strdup
+#endif
+
 struct sync_device *sync_create_device(const char *base)
 {
 	struct sync_device *d = malloc(sizeof(*d));
@@ -139,8 +172,8 @@ struct sync_device *sync_create_device(const char *base)
 		return NULL;
 	}
 
-	d->data.tracks = NULL;
-	d->data.num_tracks = 0;
+	d->tracks = NULL;
+	d->num_tracks = 0;
 
 #ifndef SYNC_PLAYER
 	d->row = -1;
@@ -156,8 +189,14 @@ struct sync_device *sync_create_device(const char *base)
 
 void sync_destroy_device(struct sync_device *d)
 {
+	int i;
+	for (i = 0; i < (int)d->num_tracks; ++i) {
+		free(d->tracks[i]->name);
+		free(d->tracks[i]->keys);
+		free(d->tracks[i]);
+	}
+	free(d->tracks);
 	free(d->base);
-	sync_data_deinit(&d->data);
 	free(d);
 
 #if defined(USE_AMITCP) && !defined(SYNC_PLAYER)
@@ -219,8 +258,8 @@ static int save_track(const struct sync_track *t, const char *path)
 void sync_save_tracks(const struct sync_device *d)
 {
 	int i;
-	for (i = 0; i < (int)d->data.num_tracks; ++i) {
-		const struct sync_track *t = d->data.tracks[i];
+	for (i = 0; i < (int)d->num_tracks; ++i) {
+		const struct sync_track *t = d->tracks[i];
 		save_track(t, sync_track_path(d->base, t->name));
 	}
 }
@@ -246,7 +285,7 @@ static int get_track_data(struct sync_device *d, struct sync_track *t)
 	return 0;
 }
 
-static int handle_set_key_cmd(SOCKET sock, struct sync_data *data)
+static int handle_set_key_cmd(SOCKET sock, struct sync_device *data)
 {
 	uint32_t track, row;
 	union {
@@ -274,7 +313,7 @@ static int handle_set_key_cmd(SOCKET sock, struct sync_data *data)
 	return sync_set_key(data->tracks[track], &key);
 }
 
-static int handle_del_key_cmd(SOCKET sock, struct sync_data *data)
+static int handle_del_key_cmd(SOCKET sock, struct sync_device *data)
 {
 	uint32_t track, row;
 
@@ -299,14 +338,14 @@ int sync_connect(struct sync_device *d, const char *host, unsigned short port)
 	if (d->sock == INVALID_SOCKET)
 		return -1;
 
-	for (i = 0; i < (int)d->data.num_tracks; ++i) {
-		free(d->data.tracks[i]->keys);
-		d->data.tracks[i]->keys = NULL;
-		d->data.tracks[i]->num_keys = 0;
+	for (i = 0; i < (int)d->num_tracks; ++i) {
+		free(d->tracks[i]->keys);
+		d->tracks[i]->keys = NULL;
+		d->tracks[i]->num_keys = 0;
 	}
 
-	for (i = 0; i < (int)d->data.num_tracks; ++i) {
-		if (get_track_data(d, d->data.tracks[i])) {
+	for (i = 0; i < (int)d->num_tracks; ++i) {
+		if (get_track_data(d, d->tracks[i])) {
 			closesocket(d->sock);
 			d->sock = INVALID_SOCKET;
 			return -1;
@@ -330,11 +369,11 @@ int sync_update(struct sync_device *d, int row, struct sync_cb *cb,
 
 		switch (cmd) {
 		case SET_KEY:
-			if (handle_set_key_cmd(d->sock, &d->data))
+			if (handle_set_key_cmd(d->sock, d))
 				goto sockerr;
 			break;
 		case DELETE_KEY:
-			if (handle_del_key_cmd(d->sock, &d->data))
+			if (handle_del_key_cmd(d->sock, d))
 				goto sockerr;
 			break;
 		case SET_ROW:
@@ -378,16 +417,33 @@ sockerr:
 
 #endif
 
+static int create_track(struct sync_device *d, const char *name)
+{
+	struct sync_track *t;
+	assert(find_track(d, name) < 0);
+
+	t = malloc(sizeof(*t));
+	t->name = strdup(name);
+	t->keys = NULL;
+	t->num_keys = 0;
+
+	d->num_tracks++;
+	d->tracks = realloc(d->tracks, sizeof(d->tracks[0]) * d->num_tracks);
+	d->tracks[d->num_tracks - 1] = t;
+
+	return (int)d->num_tracks - 1;
+}
+
 const struct sync_track *sync_get_track(struct sync_device *d,
     const char *name)
 {
 	struct sync_track *t;
-	int idx = sync_find_track(&d->data, name);
+	int idx = find_track(d, name);
 	if (idx >= 0)
-		return d->data.tracks[idx];
+		return d->tracks[idx];
 
-	idx = sync_create_track(&d->data, name);
-	t = d->data.tracks[idx];
+	idx = create_track(d, name);
+	t = d->tracks[idx];
 
 	get_track_data(d, t);
 	return t;
