@@ -17,7 +17,12 @@ ifdef COMSPEC
 	SDL_LIBS = -lSDL
 	LDLIBS += -lws2_32
 else
-	OPENGL_LIBS = -lGL -lGLU
+	ifeq ($(shell uname -s), Darwin)
+		OPENGL_LIBS = -framework OpenGL
+	else
+		OPENGL_LIBS = -lGL -lGLU
+	endif
+
 	SDL_CFLAGS = $(shell sdl-config --cflags)
 	SDL_LIBS = $(shell sdl-config --libs)
 	LDLIBS += -lm
