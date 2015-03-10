@@ -3,7 +3,9 @@
 #include <windows.h>
 #endif
 #include <SDL.h>
+#ifdef WIN32
 #undef main /* avoid SDL's nasty SDLmain hack */
+#endif
 #include <SDL_opengl.h>
 #include <bass.h>
 #include <stdio.h>
