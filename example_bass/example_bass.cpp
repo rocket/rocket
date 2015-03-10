@@ -3,7 +3,9 @@
 #include <windows.h>
 #endif
 #include <SDL.h>
+#ifdef WIN32
 #undef main /* avoid SDL's nasty SDLmain hack */
+#endif
 #include <SDL_opengl.h>
 #include <bass.h>
 #include <stdio.h>
@@ -75,7 +77,7 @@ static void die(const char *fmt, ...)
 static const unsigned int width  = 800;
 static const unsigned int height = 600;
 
-SDL_Surface *setup_sdl()
+void setup_sdl()
 {
 	if (SDL_Init(SDL_INIT_VIDEO))
 		die("%s", SDL_GetError());
@@ -88,7 +90,8 @@ SDL_Surface *setup_sdl()
 	SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 16);
 	SDL_GL_SetAttribute(SDL_GL_SWAP_CONTROL, 1);
 
-	return SDL_SetVideoMode(width, height, 32, SDL_OPENGL);
+	if (!SDL_SetVideoMode(width, height, 32, SDL_OPENGL))
+		die("%s", SDL_GetError());
 }
 
 void draw_cube()
@@ -142,13 +145,12 @@ void draw_cube()
 
 int main(int argc, char *argv[])
 {
-	SDL_Surface *screen;
 	HSTREAM stream;
 
 	const struct sync_track *clear_r, *clear_g, *clear_b;
 	const struct sync_track *cam_rot, *cam_dist;
 
-	screen = setup_sdl();
+	setup_sdl();
 
 	/* init BASS */
 	if (!BASS_Init(-1, 44100, 0, 0, 0))
