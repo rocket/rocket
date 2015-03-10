@@ -21,7 +21,7 @@ enum {
 
 class TcpSocket {
 public:
-	explicit TcpSocket(QTcpSocket *socket) : socket(socket) {}
+	explicit TcpSocket(QAbstractSocket *socket) : socket(socket) {}
 
 	bool connected() const
 	{
@@ -74,7 +74,7 @@ public:
 		return socket->bytesAvailable() > 0;
 	}
 
-	QTcpSocket *socket;
+	QAbstractSocket *socket;
 };
 
 class WebSocket : public TcpSocket {
