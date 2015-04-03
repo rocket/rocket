@@ -18,6 +18,14 @@ TrackView::TrackView(QWidget *parent) :
     document(NULL),
     dragging(false)
 {
+#ifdef Q_OS_WIN
+	setFont(QFont("Fixedsys"));
+#else
+	QFont font("Monospace");
+	font.setStyleHint(QFont::TypeWriter);
+	setFont(font);
+#endif
+
 	lineEdit = new QLineEdit(this);
 	lineEdit->setAutoFillBackground(true);
 	lineEdit->hide();
