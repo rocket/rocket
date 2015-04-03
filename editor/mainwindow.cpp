@@ -413,70 +413,78 @@ void MainWindow::onCurrValDirty()
 
 void MainWindow::processCommand(ClientSocket &sock)
 {
-	SyncDocument *doc = trackView->getDocument();
-	int strLen, newRow;
-	QString trackName;
-	QByteArray trackNameBuffer;
-	const SyncTrack *t;
 	unsigned char cmd = 0;
 	if (sock.recv((char*)&cmd, 1)) {
 		switch (cmd) {
 		case GET_TRACK:
-			// read data
-			sock.recv((char *)&strLen, sizeof(int));
-			strLen = qFromBigEndian((quint32)strLen);
-			if (!sock.connected())
-				return;
-
-			if (!strLen) {
-				sock.disconnect();
-				trackView->update();
-				return;
-			}
-
-			trackNameBuffer.resize(strLen);
-			if (!sock.recv(trackNameBuffer.data(), strLen))
-				return;
-
-			if (trackNameBuffer.contains('\0')) {
-				sock.disconnect();
-				trackView->update();
-				return;
-			}
-
-			trackName = QString::fromUtf8(trackNameBuffer);
-
-			// find track
-			t = doc->findTrack(trackName.toUtf8());
-			if (!t) {
-				int index = doc->createTrack(trackName);
-				t = doc->getTrack(index);
-			}
-
-			// hook up signals to slots
-			QObject::connect(t,             SIGNAL(keyFrameChanged(const SyncTrack &, int)),
-			                 &clientSocket, SLOT(onKeyFrameChanged(const SyncTrack &, int)));
-
-			// setup remap
-			clientSocket.clientTracks[trackName] = clientIndex++;
-
-			// send key frames
-			{
-			QMap<int, SyncTrack::TrackKey> keyMap = t->getKeyMap();
-			QMap<int, SyncTrack::TrackKey>::const_iterator it;
-			for (it = keyMap.constBegin(); it != keyMap.constEnd(); ++it)
-				clientSocket.sendSetKeyCommand(t->name.toUtf8().constData(), *it);
-			}
-
-			trackView->update();
+			processGetTrack(sock);
 			break;
 
 		case SET_ROW:
-			sock.recv((char*)&newRow, sizeof(int));
-			trackView->setEditRow(qToBigEndian((quint32)newRow));
+			processSetRow(sock);
 			break;
 		}
 	}
+}
+
+void MainWindow::processGetTrack(ClientSocket &sock)
+{
+	SyncDocument *doc = trackView->getDocument();
+
+	// read data
+	int strLen;
+	sock.recv((char *)&strLen, sizeof(int));
+	strLen = qFromBigEndian((quint32)strLen);
+	if (!sock.connected())
+		return;
+
+	if (!strLen) {
+		sock.disconnect();
+		trackView->update();
+		return;
+	}
+
+	QByteArray trackNameBuffer;
+	trackNameBuffer.resize(strLen);
+	if (!sock.recv(trackNameBuffer.data(), strLen))
+		return;
+
+	if (trackNameBuffer.contains('\0')) {
+		sock.disconnect();
+		trackView->update();
+		return;
+	}
+
+	QString trackName = QString::fromUtf8(trackNameBuffer);
+
+	// find track
+	const SyncTrack *t = doc->findTrack(trackName.toUtf8());
+	if (!t) {
+		int index = doc->createTrack(trackName);
+		t = doc->getTrack(index);
+	}
+
+	// hook up signals to slots
+	QObject::connect(t,             SIGNAL(keyFrameChanged(const SyncTrack &, int)),
+			 &clientSocket, SLOT(onKeyFrameChanged(const SyncTrack &, int)));
+
+	// setup remap
+	clientSocket.clientTracks[trackName] = clientIndex++;
+
+	// send key frames
+	QMap<int, SyncTrack::TrackKey> keyMap = t->getKeyMap();
+	QMap<int, SyncTrack::TrackKey>::const_iterator it;
+	for (it = keyMap.constBegin(); it != keyMap.constEnd(); ++it)
+		clientSocket.sendSetKeyCommand(t->name.toUtf8().constData(), *it);
+
+	trackView->update();
+}
+
+void MainWindow::processSetRow(ClientSocket &sock)
+{
+	int newRow;
+	sock.recv((char*)&newRow, sizeof(int));
+	trackView->setEditRow(qToBigEndian((quint32)newRow));
 }
 
 static TcpSocket *clientConnect(QTcpServer *serverSocket, QHostAddress *host)

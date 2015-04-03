@@ -28,6 +28,8 @@ public:
 	void setDocument(SyncDocument *newDoc);
 
 	void processCommand(ClientSocket &sock);
+	void processGetTrack(ClientSocket &sock);
+	void processSetRow(ClientSocket &sock);
 
 	void setStatusPosition(int row, int col);
 	void setStatusText(const QString &text);
