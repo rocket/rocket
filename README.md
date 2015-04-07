@@ -14,20 +14,17 @@ directly from QtCreator. See the qmake documentation for details.
 
 Compile Example
 ---------------
-GNU Rocket contains an example client called example_bass. This is a simple
+GNU Rocket contains an example client called example\_bass. This is a simple
 OpenGL, SDL 1.2 and BASS audio library application, that demonstrates how to
 use the GNU Rocket API.
 
-Before compiling the example, you need to make sure you have recent
-SDL and BASS libraries and includes. These can be downloaded from the
-following web-sites:
+Before compiling the example, you need to make sure you have recent [SDL](http://www.libsdl.org/)
+and [BASS](http://www.un4seen.com/) libraries and includes.
 
-http://www.libsdl.org/
-http://www.un4seen.com/
 
 The header files and libraries can be installed local to the project by
-copying all .lib-files to the example_bass/lib/, all .h files to
-example_bass/include/, and all .dll files to the example_bass/.
+copying all .lib-files to the example\_bass/lib/, all .h files to
+example\_bass/include/, and all .dll files to the example\_bass/.
 
 Once the prerequisites are installed, the example can be compiled much like
 the editor; by opening examples.sln and selecting "Build" -> "Build Solution"
@@ -62,26 +59,28 @@ Keyboard shortcuts
 Some of the GNU Rocket editor's features are available through the menu and
 some keyboard shortcut. Here's a list of the supported keyboard shortcuts:
 
-Up/Down/Left/Right        Move cursor
-PgUp/PgDn                 Move cursor 16 rows up/down
-Home/End                  Move cursor to begining/end
-Ctrl+Left/Right           Move track
-Enter                     Enter key frame value
-Del                       Delete key frame
-i                         Enumerate interpolation mode
-k                         Toggle bookmark
-Alt+PgUp/PgDn             Go to prev/next bookmark
-Space                     Pause/Resume demo
-Shift+Up/Down/Left/Right  Select
-Ctrl+C                    Copy
-Ctrl+V                    Paste
-Ctrl+Z                    Undo
-Shift+Ctrl+Z              Redo
-Ctrl+B                    Bias key frames
-Shift+Ctrl+Up/Down        Quick-bias by +/- 0.1
-Ctrl+Up/Down              Quick-bias by +/- 1
-Ctrl+PgUp/PgDn            Quick-bias by +/- 10
-Shift+Ctrl+PgUp/PgDn      Quick-bias by +/- 100
+| Shortcut                 | Action                       |
+|:-------------------------|:-----------------------------|
+| Up/Down/Left/Right       | Move cursor                  |
+| PgUp/PgDn                | Move cursor 16 rows up/down  |
+| Home/End                 | Move cursor to begining/end  |
+| Ctrl+Left/Right          | Move track                   |
+| Enter                    | Enter key frame value        |
+| Del                      | Delete key frame             |
+| i                        | Enumerate interpolation mode |
+| k                        | Toggle bookmark              |
+| Alt+PgUp/PgDn            | Go to prev/next bookmark     |
+| Space                    | Pause/Resume demo            |
+| Shift+Up/Down/Left/Right | Select                       |
+| Ctrl+C                   | Copy                         |
+| Ctrl+V                   | Paste                        |
+| Ctrl+Z                   | Undo                         |
+| Shift+Ctrl+Z             | Redo                         |
+| Ctrl+B                   | Bias key frames              |
+| Shift+Ctrl+Up/Down       | Quick-bias by +/- 0.1        |
+| Ctrl+Up/Down             | Quick-bias by +/- 1          |
+| Ctrl+PgUp/PgDn           | Quick-bias by +/- 10         |
+| Shift+Ctrl+PgUp/PgDn     | Quick-bias by +/- 100        |
 
 Bugs and feedback
 ------------------
