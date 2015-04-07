@@ -1,0 +1,10 @@
+language: c
+
+os:
+  - linux
+  - osx
+
+before_script:
+  - if [ "$TRAVIS_OS_NAME" = "osx" ]; then brew install qt; fi
+
+script: make
