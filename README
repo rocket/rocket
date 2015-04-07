@@ -27,7 +27,7 @@ http://www.un4seen.com/
 
 The header files and libraries can be installed local to the project by
 copying all .lib-files to the example_bass/lib/, all .h files to
-example_bass/inclide/, and all .dll files to the example_bass/.
+example_bass/include/, and all .dll files to the example_bass/.
 
 Once the prerequisites are installed, the example can be compiled much like
 the editor; by opening examples.sln and selecting "Build" -> "Build Solution"
