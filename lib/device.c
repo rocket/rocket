@@ -114,6 +114,7 @@ static SOCKET server_connect(const char *host, unsigned short nport)
 		sa.sin_family = he->h_addrtype;
 		sa.sin_port = htons(nport);
 		memcpy(&sa.sin_addr, *ap, he->h_length);
+		memset(&sa.sin_zero, 0, sizeof(sa.sin_zero));
 
 		sock = socket(he->h_addrtype, SOCK_STREAM, 0);
 		if (sock == INVALID_SOCKET)
