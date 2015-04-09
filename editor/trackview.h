@@ -120,9 +120,7 @@ private:
 
 	void invalidateTrack(int track)
 	{
-		QRect rect(QPoint(getPhysicalX(track), 0),
-		           QPoint(getPhysicalX(track + 1) - 1, height()));
-		viewport()->update(rect);
+		invalidateRange(track, track, 0, getRows());
 	}
 
 	QRect getSelection() const
