@@ -123,6 +123,11 @@ private:
 		invalidateRange(track, track, 0, getRows());
 	}
 
+	void invalidateAll()
+	{
+		invalidateRange(0, getTrackCount(), 0, getRows());
+	}
+
 	QRect getSelection() const
 	{
 		return QRect(QPoint(qMin(selectStartTrack, selectStopTrack),

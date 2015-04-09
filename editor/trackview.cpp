@@ -543,7 +543,7 @@ void TrackView::editUndo()
 		getDocument()->undo();
 
 	// unfortunately, we don't know how much to invalidate... so we'll just invalidate it all.
-	viewport()->update();
+	invalidateAll();
 }
 
 void TrackView::editRedo()
@@ -557,7 +557,7 @@ void TrackView::editRedo()
 		getDocument()->redo();
 
 	// unfortunately, we don't know how much to invalidate... so we'll just invalidate it all.
-	viewport()->update();
+	invalidateAll();
 }
 
 void TrackView::selectAll()
@@ -566,7 +566,7 @@ void TrackView::selectAll()
 	selectStopTrack = editTrack = 0;
 	selectStartRow = int(this->getRows()) - 1;
 	selectStopRow = editRow = 0;
-	viewport()->update();
+	invalidateAll();
 }
 
 void TrackView::selectTrack()
@@ -574,7 +574,7 @@ void TrackView::selectTrack()
 	selectStartTrack = selectStopTrack = editTrack;
 	selectStartRow = int(this->getRows()) - 1;
 	selectStopRow = editRow = 0;
-	viewport()->update();
+	invalidateAll();
 }
 
 void TrackView::selectRow()
@@ -582,7 +582,7 @@ void TrackView::selectRow()
 	selectStartTrack = int(this->getTrackCount()) - 1;
 	selectStopTrack = editTrack = 0;
 	selectStartRow = selectStopRow = editRow;
-	viewport()->update();
+	invalidateAll();
 }
 
 
