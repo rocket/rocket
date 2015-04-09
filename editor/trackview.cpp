@@ -524,7 +524,7 @@ void TrackView::editPaste()
 		}
 		doc->endMacro();
 
-		viewport()->update();
+		invalidateRange(editTrack, editTrack + buffer_width - 1, editRow, editRow + buffer_height - 1);
 		dirtyCurrentValue();
 
 		clipbuf = NULL;
@@ -766,7 +766,7 @@ void TrackView::editEnterValue()
 		doc->setKeyFrame(t, newKey);
 
 		dirtyCurrentValue();
-		viewport()->update();
+		invalidateTrack(editTrack);
 	} else
 		QApplication::beep();
 
@@ -802,7 +802,7 @@ void TrackView::editToggleInterpolationType()
 
 		// update user interface
 		dirtyCurrentValue();
-		viewport()->update();
+		invalidateTrack(editTrack);
 	}
 	else
 		QApplication::beep();
@@ -831,7 +831,7 @@ void TrackView::editClear()
 
 	doc->endMacro();
 	dirtyCurrentValue();
-	viewport()->update();
+	invalidateRange(selection.left(), selection.right(), selection.top(), selection.bottom());
 }
 
 void TrackView::editBiasValue(float amount)
