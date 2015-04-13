@@ -459,10 +459,8 @@ void MainWindow::processGetTrack(ClientSocket &sock)
 
 	// find track
 	const SyncTrack *t = doc->findTrack(trackName.toUtf8());
-	if (!t) {
-		int index = doc->createTrack(trackName);
-		t = doc->getTrack(index);
-	}
+	if (!t)
+		t = doc->createTrack(trackName);
 
 	// hook up signals to slots
 	QObject::connect(t,             SIGNAL(keyFrameChanged(const SyncTrack &, int)),

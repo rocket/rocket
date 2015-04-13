@@ -23,13 +23,15 @@ public:
 
 	~SyncDocument();
 
-	int createTrack(const QString &name)
+	SyncTrack *createTrack(const QString &name)
 	{
-		tracks.append(new SyncTrack(name));
+		SyncTrack *t = new SyncTrack(name);
+		tracks.append(t);
+
 		int index = tracks.size() - 1;
 		trackOrder.push_back(index);
 		Q_ASSERT(trackOrder.size() == tracks.size());
-		return index;
+		return t;
 	}
 
 	SyncTrack *getTrack(int index)

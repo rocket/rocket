@@ -48,10 +48,8 @@ SyncDocument *SyncDocument::load(const QString &fileName)
 
 		// look up track-name, create it if it doesn't exist
 		SyncTrack *t = ret->findTrack(name.toUtf8());
-		if (!t) {
-			int idx = ret->createTrack(name.toUtf8().constData());
-			t = ret->getTrack(idx);
-		}
+		if (!t)
+			t = ret->createTrack(name.toUtf8().constData());
 
 		QDomNodeList rowNodes = trackNode.childNodes();
 		for (int i = 0; i < int(rowNodes.length()); ++i) {
