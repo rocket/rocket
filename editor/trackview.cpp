@@ -534,13 +534,14 @@ void TrackView::editPaste()
 
 void TrackView::editUndo()
 {
-	if (NULL == getDocument())
+	SyncDocument *doc = getDocument();
+	if (!doc)
 		return;
 
-	if (!getDocument()->canUndo())
+	if (!doc->canUndo())
 		QApplication::beep();
 	else
-		getDocument()->undo();
+		doc->undo();
 
 	// unfortunately, we don't know how much to invalidate... so we'll just invalidate it all.
 	invalidateAll();
@@ -548,13 +549,14 @@ void TrackView::editUndo()
 
 void TrackView::editRedo()
 {
-	if (NULL == getDocument())
+	SyncDocument *doc = getDocument();
+	if (!doc)
 		return;
 
-	if (!getDocument()->canRedo())
+	if (!doc->canRedo())
 		QApplication::beep();
 	else
-		getDocument()->redo();
+		doc->redo();
 
 	// unfortunately, we don't know how much to invalidate... so we'll just invalidate it all.
 	invalidateAll();
