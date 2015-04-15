@@ -21,14 +21,14 @@ use the GNU Rocket API.
 Before compiling the example, you need to make sure you have recent [SDL](http://www.libsdl.org/)
 and [BASS](http://www.un4seen.com/) libraries and includes.
 
-
 The header files and libraries can be installed local to the project by
 copying all .lib-files to the example\_bass/lib/, all .h files to
 example\_bass/include/, and all .dll files to the example\_bass/.
 
-Once the prerequisites are installed, the example can be compiled much like
-the editor; by opening examples.sln and selecting "Build" -> "Build Solution"
-from the menu.
+Once the prerequisites are installed, the example can be compiled either by
+opening examples.sln and selecting "Build" -> "Build Solution" from Visual
+Studio 2008, or by doing "make example_bass/example_bass" on Unix-base
+systems.
 
 Using the editor
 ----------------
