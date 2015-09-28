@@ -217,7 +217,7 @@ static int get_track_data(struct sync_device *d, struct sync_track *t)
 	if (!fp)
 		return -1;
 
-	d->io_cb.read(&t->num_keys, sizeof(size_t), 1, fp);
+	d->io_cb.read(&t->num_keys, sizeof(int), 1, fp);
 	t->keys = malloc(sizeof(struct track_key) * t->num_keys);
 	if (!t->keys)
 		return -1;
@@ -244,7 +244,7 @@ static int save_track(const struct sync_track *t, const char *path)
 	if (!fp)
 		return -1;
 
-	fwrite(&t->num_keys, sizeof(size_t), 1, fp);
+	fwrite(&t->num_keys, sizeof(int), 1, fp);
 	for (i = 0; i < (int)t->num_keys; ++i) {
 		char type = (char)t->keys[i].type;
 		fwrite(&t->keys[i].row, sizeof(int), 1, fp);
