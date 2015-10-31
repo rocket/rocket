@@ -191,7 +191,7 @@ struct sync_device *sync_create_device(const char *base)
 	if (!d)
 		return NULL;
 
-	d->base = strdup(base);
+	d->base = _strdup(base);
 	if (!d->base) {
 		free(d);
 		return NULL;
@@ -448,7 +448,7 @@ static int create_track(struct sync_device *d, const char *name)
 	assert(find_track(d, name) < 0);
 
 	t = malloc(sizeof(*t));
-	t->name = strdup(name);
+	t->name = _strdup(name);
 	t->keys = NULL;
 	t->num_keys = 0;
 
