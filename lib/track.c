@@ -1,13 +1,15 @@
+#include "base.h"
+
 #include <stdlib.h>
 #include <assert.h>
 #include <math.h>
+
 #ifndef M_PI
 #define M_PI 3.141926
 #endif
 
 #include "sync.h"
 #include "track.h"
-#include "base.h"
 
 static double key_linear(const struct track_key k[2], double row)
 {
