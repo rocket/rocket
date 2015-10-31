@@ -1,6 +1,11 @@
 #ifndef SYNC_BASE_H
 #define SYNC_BASE_H
 
+/* ensure VS shuts up about supposedly deprecated CRT functions */
+#ifdef _MSC_VER
+ #define _CRT_SECURE_NO_WARNINGS
+#endif
+
 #include <stddef.h>
 
 /* configure inline keyword */
@@ -15,8 +20,11 @@
 
 /* configure lacking CRT features */
 #ifdef _MSC_VER
- #define strdup _strdup
- #define snprintf _snprintf
+ #if _MSC_VER < 1700
+   /* I'm keeping this intact for anything below VS 2012 */
+   #define strdup _strdup
+   #define snprintf _snprintf
+ #endif
  /* int is 32-bit for both x86 and x64 */
  typedef unsigned int uint32_t;
  #define UINT32_MAX UINT_MAX
