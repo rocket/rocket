@@ -1,11 +1,6 @@
 #ifndef SYNC_BASE_H
 #define SYNC_BASE_H
 
-/* ensure VS shuts up about supposedly deprecated CRT functions */
-#ifdef _MSC_VER
- #define _CRT_SECURE_NO_WARNINGS
-#endif
-
 #include <stddef.h>
 
 /* configure inline keyword */
