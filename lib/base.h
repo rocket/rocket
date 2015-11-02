@@ -21,9 +21,11 @@
 /* configure lacking CRT features */
 #ifdef _MSC_VER
  #if _MSC_VER < 1700
-   /* I'm keeping this intact for anything below VS 2012 */
-   #define strdup _strdup
-   #define snprintf _snprintf
+  #define snprintf _snprintf
+  #define strdup _strdup
+ #else
+  /* stupid VS2012 and up, complains about the strdup-define */
+  #define NEED_STRDUP
  #endif
  /* int is 32-bit for both x86 and x64 */
  typedef unsigned int uint32_t;

@@ -167,11 +167,7 @@ struct sync_device *sync_create_device(const char *base)
 	if (!d)
 		return NULL;
 
-#if _MSC_VER >= 1700
-	d->base = _strdup(base);
-#else
 	d->base = strdup(base);
-#endif
 	if (!d->base) {
 		free(d);
 		return NULL;
@@ -428,12 +424,7 @@ static int create_track(struct sync_device *d, const char *name)
 	assert(find_track(d, name) < 0);
 
 	t = malloc(sizeof(*t));
-
-#if _MSC_VER >= 1700
-	t->name = _strdup(name);
-#else
 	t->name = strdup(name);
-#endif
 
 	t->keys = NULL;
 	t->num_keys = 0;
