@@ -20,15 +20,8 @@
 
 /* configure lacking CRT features */
 #ifdef _MSC_VER
-<<<<<<< 15b35c4a0804c875defb786ad67ddb2a97486f82
  #if _MSC_VER < 1900
   #define snprintf _snprintf
-=======
- #if _MSC_VER < 1700
-   /* I'm keeping this intact for anything below VS 2012 */
-   #define strdup _strdup
-   #define snprintf _snprintf
->>>>>>> VS 2012+2015 compile fixes (w/o warnings)
  #endif
  /* int is 32-bit for both x86 and x64 */
  typedef unsigned int uint32_t;

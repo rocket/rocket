@@ -453,12 +453,7 @@ static int create_track(struct sync_device *d, const char *name)
 
 	t = malloc(sizeof(*t));
 
-#if _MSC_VER >= 1700
-	t->name = _strdup(name);
-#else
 	t->name = strdup(name);
-#endif
-
 	t->keys = NULL;
 	t->num_keys = 0;
 
