@@ -12,6 +12,12 @@
 #include <stdarg.h>
 #include <math.h>
 
+#if defined(__APPLE__) && defined(__MACH__)
+#include <GLKit/GLKMatrix4.h>
+#define gluPerspective(f, a, zn, zf) glMultMatrixf(GLKMatrix4MakePerspective((f) * M_PI / 180, a, zn, zf).m)
+#define gluLookAt(ex, ey, ez, cx, cy, cz, ux, uy, uz) glMultMatrixf(GLKMatrix4MakeLookAt(ex, ey, ez, cx, cy, cz, ux, uy, uz).m)
+#endif
+
 #include "../lib/sync.h"
 
 static const float bpm = 150.0f; /* beats per minute */
