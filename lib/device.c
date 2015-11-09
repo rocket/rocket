@@ -86,6 +86,10 @@ static SOCKET server_connect(const char *host, unsigned short nport)
 {
 #ifdef USE_GETADDRINFO
 	struct addrinfo *addr;
+<<<<<<< HEAD
+=======
+	char port[6];
+>>>>>>> upstream/master
 #else
 	struct hostent *he;
 	char **ap;
@@ -107,6 +111,7 @@ static SOCKET server_connect(const char *host, unsigned short nport)
 	}
 #endif
 
+<<<<<<< HEAD
 	struct sockaddr *sock_addr;
 	size_t sa_len;
 
@@ -145,6 +150,19 @@ static SOCKET server_connect(const char *host, unsigned short nport)
 			/* unsupported protocol: skip */
 			continue;
 		}
+=======
+#ifdef USE_GETADDRINFO
+
+	snprintf(port, sizeof(port), "%u", nport);
+	if (getaddrinfo(host, port, 0, &addr) != 0)
+		return INVALID_SOCKET;
+
+	for (; addr; addr = addr->ai_next) {
+		SOCKET sock;
+		int family = addr->ai_family;
+		struct sockaddr *sa = addr->ai_addr;
+		int sa_len = addr->ai_addrlen;
+>>>>>>> upstream/master
 
 #else
 
@@ -154,6 +172,7 @@ static SOCKET server_connect(const char *host, unsigned short nport)
 
 	for (ap = he->h_addr_list; *ap; ++ap) {
 		SOCKET sock;
+<<<<<<< HEAD
 		struct sockaddr_in sa4;
 
 		const int family = he->h_addrtype;
@@ -165,6 +184,17 @@ static SOCKET server_connect(const char *host, unsigned short nport)
 
 		sock_addr = (struct sockaddr *) &sa4;
 		sa_len = sizeof(sa4);
+=======
+		int family = he->h_addrtype;
+		struct sockaddr_in sin;
+		struct sockaddr *sa = (struct sockaddr *)&sin;
+		int sa_len = sizeof(*sa);
+
+		sin.sin_family = he->h_addrtype;
+		sin.sin_port = htons(nport);
+		memcpy(&sin.sin_addr, *ap, he->h_length);
+		memset(&sin.sin_zero, 0, sizeof(sin.sin_zero));
+>>>>>>> upstream/master
 
 #endif
 
@@ -172,7 +202,11 @@ static SOCKET server_connect(const char *host, unsigned short nport)
 		if (sock == INVALID_SOCKET)
 			continue;
 
+<<<<<<< HEAD
 		if (connect(sock, sock_addr, sa_len) >= 0) {
+=======
+		if (connect(sock, sa, sa_len) >= 0) {
+>>>>>>> upstream/master
 			char greet[128];
 
 			if (xsend(sock, CLIENT_GREET, strlen(CLIENT_GREET), 0) ||

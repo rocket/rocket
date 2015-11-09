@@ -17,7 +17,13 @@ ifdef COMSPEC
 	SDL_LIBS = -lSDL
 	LDLIBS += -lws2_32
 else
-	ifeq ($(shell uname -s), Darwin)
+	UNAME_S := $(shell uname -s)
+
+	ifeq ($(UNAME_S), Linux)
+		CPPFLAGS += -DUSE_GETADDRINFO
+		OPENGL_LIBS = -lGL -lGLU
+	else ifeq ($(UNAME_S), Darwin)
+		CPPFLAGS += -DUSE_GETADDRINFO
 		OPENGL_LIBS = -framework OpenGL
 	else
 		OPENGL_LIBS = -lGL -lGLU
