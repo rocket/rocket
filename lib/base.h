@@ -20,7 +20,7 @@
 
 /* configure lacking CRT features */
 #ifdef _MSC_VER
- #if _MSC_VER < 1700
+ #if _MSC_VER < 1900
   #define snprintf _snprintf
  #endif
  /* int is 32-bit for both x86 and x64 */
