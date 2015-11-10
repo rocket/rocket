@@ -118,7 +118,7 @@ static SOCKET server_connect(const char *host, unsigned short nport)
 		SOCKET sock;
 		int family = addr->ai_family;
 		struct sockaddr *sa = addr->ai_addr;
-		int sa_len = (int) addr->ai_addrlen; /* cast eliminates warning for (Windows) x64: size_t vs. int */
+		int sa_len = (int) addr->ai_addrlen; /* elim. warning on (at least) Win/x64, size_t vs. int/socklen_t */
 
 #else
 
