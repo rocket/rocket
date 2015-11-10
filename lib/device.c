@@ -118,7 +118,7 @@ static SOCKET server_connect(const char *host, unsigned short nport)
 		SOCKET sock;
 		int family = addr->ai_family;
 		struct sockaddr *sa = addr->ai_addr;
-		int sa_len = addr->ai_addrlen;
+		int sa_len = (int) addr->ai_addrlen; /* elim. warning on (at least) Win/x64, size_t vs. int/socklen_t */
 
 #else
 
@@ -191,7 +191,11 @@ struct sync_device *sync_create_device(const char *base)
 	if (!d)
 		return NULL;
 
+#if _MSC_VER >= 1700
+	d->base = _strdup(base);
+#else
 	d->base = strdup(base);
+#endif
 	if (!d->base) {
 		free(d);
 		return NULL;
@@ -448,6 +452,7 @@ static int create_track(struct sync_device *d, const char *name)
 	assert(find_track(d, name) < 0);
 
 	t = malloc(sizeof(*t));
+
 	t->name = strdup(name);
 	t->keys = NULL;
 	t->num_keys = 0;
