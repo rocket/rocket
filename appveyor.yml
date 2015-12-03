@@ -1,0 +1,29 @@
+environment:
+  matrix:
+  - platform: x64
+    cc: VS2013
+    QTDIR: C:\Qt\5.5\msvc2013_64
+  - platform: x86
+    cc: VS2013
+    QTDIR: C:\Qt\5.5\msvc2013
+
+configuration:
+  - Release
+
+before_build:
+  - set PATH=%QTDIR%\bin;%PATH%
+
+build_script:
+  - cd editor
+  - qmake -tp vc editor.pro
+  - msbuild
+
+after_build:
+  - mkdir staging
+  - cd staging
+  - copy ..\release\editor.exe .
+  - windeployqt --release editor.exe
+
+artifacts:
+  - path: editor\staging
+    name: editor
