@@ -1,5 +1,8 @@
 GNU Rocket
 ==========
+
+[![Build status](https://ci.appveyor.com/api/projects/status/dfq8qaedc6mtsefg/branch/master?svg=true)](https://ci.appveyor.com/project/kusma/rocket/branch/master)
+
 GNU Rocket is an intuitive new way of... bah, whatever. It's a sync-tracker,
 a tool for synchronizing music and visuals in demoscene productions. It
 consists of a GUI editor (using Qt), and an ANSI C library that can either
