@@ -1,3 +1,5 @@
+version: '{build}'
+
 environment:
   matrix:
   - platform: x64
