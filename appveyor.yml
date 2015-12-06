@@ -12,10 +12,27 @@ environment:
 configuration:
   - Release
 
+cache:
+  - packages -> **\packages.config
+
+install:
+  - nuget restore examples.vs2013.sln
+  # download and install bass
+  - curl -fsS -o bass24.zip http://www.un4seen.com/files/bass24.zip
+  - 7z x -obass24 bass24.zip > NUL
+  - mkdir example_bass\lib
+  - mkdir example_bass\lib64
+  - mkdir example_bass\include
+  - copy bass24\c\bass.lib example_bass\lib
+  - copy bass24\c\x64\bass.lib example_bass\lib64
+  - copy bass24\c\bass.h example_bass\include
+
 before_build:
   - set PATH=%QTDIR%\bin;%PATH%
 
 build_script:
+  - msbuild examples.vs2013.sln
+  - msbuild examples.vs2013.sln /property:Configuration="Release Client"
   - cd editor
   - qmake -tp vc editor.pro
   - msbuild
