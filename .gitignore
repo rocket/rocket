@@ -6,6 +6,8 @@
 *.suo
 *.idb
 *.user
+*.sdf
+*.opensdf
 moc_*.cpp
 qrc_*.cpp
 ui_*.h
@@ -32,4 +34,5 @@ ui_*.h
 /lib/Release Client/
 /lib/Release/
 /lib/x64/
+/packages/
 build-*
