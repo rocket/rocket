@@ -54,7 +54,7 @@ public:
 		return NULL;
 	}
 
-	size_t getTrackCount() const
+	int getTrackCount() const
 	{
 		Q_ASSERT(trackOrder.size() == tracks.size());
 		return tracks.size();
@@ -71,8 +71,8 @@ public:
 	void deleteKeyFrame(SyncTrack *track, int row);
 	void endMacro() { undoStack.endMacro(); }
 
-	size_t getTrackIndexFromPos(size_t track) const;
-	void swapTrackOrder(size_t t1, size_t t2);
+	int getTrackIndexFromPos(int track) const;
+	void swapTrackOrder(int t1, int t2);
 
 	static SyncDocument *load(const QString &fileName);
 	bool save(const QString &fileName);
@@ -80,8 +80,8 @@ public:
 	bool isRowBookmark(int row) const;
 	void toggleRowBookmark(int row);
 
-	size_t getRows() const { return rows; }
-	void setRows(size_t rows) { this->rows = rows; }
+	int getRows() const { return rows; }
+	void setRows(int rows) { this->rows = rows; }
 
 	QString fileName;
 
@@ -91,8 +91,8 @@ public:
 private:
 	QList<SyncTrack*> tracks;
 	QList<int> rowBookmarks;
-	QVector<size_t> trackOrder;
-	size_t rows;
+	QVector<int> trackOrder;
+	int rows;
 
 	QUndoStack undoStack;
 

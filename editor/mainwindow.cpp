@@ -228,7 +228,7 @@ void MainWindow::setDocument(SyncDocument *newDoc)
 
 	if (oldDoc && clientSocket.connected()) {
 		// delete old key frames
-		for (size_t i = 0; i < oldDoc->getTrackCount(); ++i) {
+		for (int i = 0; i < oldDoc->getTrackCount(); ++i) {
 			SyncTrack *t = oldDoc->getTrack(i);
 			QMap<int, SyncTrack::TrackKey> keyMap = t->getKeyMap();
 			QMap<int, SyncTrack::TrackKey>::const_iterator it;
@@ -247,7 +247,7 @@ void MainWindow::setDocument(SyncDocument *newDoc)
 					newDoc->createTrack(it.key());
 			}
 
-			for (size_t i = 0; i < newDoc->getTrackCount(); ++i) {
+			for (int i = 0; i < newDoc->getTrackCount(); ++i) {
 				SyncTrack *t = newDoc->getTrack(i);
 				QMap<int, SyncTrack::TrackKey> keyMap = t->getKeyMap();
 				QMap<int, SyncTrack::TrackKey>::const_iterator it;
@@ -516,7 +516,7 @@ static TcpSocket *clientConnect(QTcpServer *serverSocket, QHostAddress *host)
 	TcpSocket *ret = NULL;
 	if (line.startsWith("GET ")) {
 		ret = WebSocket::upgradeFromHttp(clientSocket);
-		line.resize(strlen(CLIENT_GREET));
+		line.resize(int(strlen(CLIENT_GREET)));
 		if (!ret || !ret->recv(line.data(), line.size())) {
 			clientSocket->close();
 			return NULL;
@@ -568,7 +568,7 @@ void MainWindow::onDisconnected()
 
 	// disconnect track-signals
 	SyncDocument *doc = trackView->getDocument();
-	for (size_t i = 0; i < doc->getTrackCount(); ++i)
+	for (int i = 0; i < doc->getTrackCount(); ++i)
 		QObject::disconnect(doc->getTrack(i), SIGNAL(keyFrameChanged(const SyncTrack &, int)),
 		                      &clientSocket, SLOT(onKeyFrameChanged(const SyncTrack &, int)));
 

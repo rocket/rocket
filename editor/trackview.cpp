@@ -167,7 +167,7 @@ void TrackView::paintTopMargin(QPainter &painter, const QRect &rcTracks)
 	int endTrack   = qBound(0, getTrackFromPhysicalX(rcTracks.right()) + 1, int(getTrackCount()));
 
 	for (int track = startTrack; track < endTrack; ++track) {
-		size_t index = doc->getTrackIndexFromPos(track);
+		int index = doc->getTrackIndexFromPos(track);
 		const SyncTrack *t = doc->getTrack(index);
 
 		QRect topMargin(getPhysicalX(track), 0, trackWidth, topMarginHeight);
@@ -425,7 +425,7 @@ void TrackView::editCopy()
 
 	QVector<struct CopyEntry> copyEntries;
 	for (int track = selection.left(); track <= selection.right(); ++track) {
-		const size_t trackIndex  = doc->getTrackIndexFromPos(track);
+		const int trackIndex  = doc->getTrackIndexFromPos(track);
 		const SyncTrack *t = doc->getTrack(trackIndex);
 
 		for (int row = selection.top(); row <= selection.bottom(); ++row) {
@@ -488,10 +488,10 @@ void TrackView::editPaste()
 
 		doc->beginMacro("paste");
 		for (int i = 0; i < buffer_width; ++i) {
-			size_t trackPos = editTrack + i;
+			int trackPos = editTrack + i;
 			if (trackPos >= getTrackCount()) continue;
 
-			size_t trackIndex = doc->getTrackIndexFromPos(trackPos);
+			int trackIndex = doc->getTrackIndexFromPos(trackPos);
 			SyncTrack *t = doc->getTrack(trackIndex);
 			for (int j = 0; j < buffer_height; ++j) {
 				int row = editRow + j;
@@ -512,7 +512,7 @@ void TrackView::editPaste()
 			Q_ASSERT(ce.keyFrame.row >= 0);
 			Q_ASSERT(ce.keyFrame.row < buffer_height);
 
-			size_t trackPos = editTrack + ce.track;
+			int trackPos = editTrack + ce.track;
 			if (trackPos < getTrackCount()) {
 				int track = doc->getTrackIndexFromPos(trackPos);
 				SyncTrack::TrackKey key = ce.keyFrame;
@@ -705,7 +705,7 @@ void TrackView::setEditTrack(int newEditTrack, bool autoscroll, bool selecting)
 		setupScrollBars();
 }
 
-void TrackView::setRows(size_t rows)
+void TrackView::setRows(int rows)
 {
 	SyncDocument *doc = getDocument();
 	Q_ASSERT(doc);
@@ -715,7 +715,7 @@ void TrackView::setRows(size_t rows)
 	setEditRow(qMin(editRow, int(rows) - 1));
 }
 
-size_t TrackView::getRows() const
+int TrackView::getRows() const
 {
 	const SyncDocument *doc = getDocument();
 	if (!doc)
@@ -723,7 +723,7 @@ size_t TrackView::getRows() const
 	return doc->getRows();
 }
 
-size_t TrackView::getTrackCount() const
+int TrackView::getTrackCount() const
 {
 	const SyncDocument *doc = getDocument();
 	if (!doc)

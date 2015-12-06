@@ -111,7 +111,7 @@ WebSocket *WebSocket::upgradeFromHttp(QTcpSocket *socket)
 
 		const char *prefix = "Sec-WebSocket-Key: ";
 		if (line.startsWith(prefix))
-			key = line.right(line.length() - strlen(prefix));
+			key = line.right(line.length() - int(strlen(prefix)));
 		else if (!line.length())
 			break;
 	}

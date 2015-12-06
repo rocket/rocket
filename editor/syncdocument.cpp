@@ -99,7 +99,7 @@ bool SyncDocument::save(const QString &fileName)
 	rootNode.appendChild(doc.createTextNode("\n\t"));
 	QDomElement tracksNode =
 	    doc.createElement("tracks");
-	for (size_t i = 0; i < getTrackCount(); ++i) {
+	for (int i = 0; i < getTrackCount(); ++i) {
 		const SyncTrack *t = getTrack(trackOrder[i]);
 
 		QDomElement trackElem =
@@ -170,16 +170,16 @@ bool SyncDocument::save(const QString &fileName)
 	return true;
 }
 
-size_t SyncDocument::getTrackIndexFromPos(size_t track) const
+int SyncDocument::getTrackIndexFromPos(int track) const
 {
-	Q_ASSERT(track < (size_t)trackOrder.size());
+	Q_ASSERT(track < trackOrder.size());
 	return trackOrder[track];
 }
 
-void SyncDocument::swapTrackOrder(size_t t1, size_t t2)
+void SyncDocument::swapTrackOrder(int t1, int t2)
 {
-	Q_ASSERT(t1 < (size_t)trackOrder.size());
-	Q_ASSERT(t2 < (size_t)trackOrder.size());
+	Q_ASSERT(t1 < trackOrder.size());
+	Q_ASSERT(t2 < trackOrder.size());
 	std::swap(trackOrder[t1], trackOrder[t2]);
 }
 

@@ -25,8 +25,8 @@ public:
 	const SyncDocument *getDocument() const { return document; }
 	SyncDocument *getDocument() { return document; }
 
-	void setRows(size_t rows);
-	size_t getRows() const;
+	void setRows(int rows);
+	int getRows() const;
 
 	void editEnterValue();
 	void editBiasValue(float amount);
@@ -144,7 +144,7 @@ private:
 	int getTrackFromLogicalX(int x) const;
 	int getTrackFromPhysicalX(int x) const;
 
-	size_t getTrackCount() const;
+	int getTrackCount() const;
 
 	int selectStartTrack, selectStopTrack;
 	int selectStartRow, selectStopRow;
