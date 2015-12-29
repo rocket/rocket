@@ -30,6 +30,8 @@ MainWindow::MainWindow(QTcpServer *serverSocket) :
 	        this, SLOT(onCurrValDirty()));
 
 	createMenuBar();
+	updateRecentFiles();
+
 	createStatusBar();
 
 	connect(serverSocket, SIGNAL(newConnection()),
@@ -63,7 +65,6 @@ void MainWindow::createMenuBar()
 		connect(recentFileActions[i], SIGNAL(triggered()),
 		        this, SLOT(openRecentFile()));
 	}
-	updateRecentFiles();
 	fileMenu->addSeparator();
 	fileMenu->addAction(QIcon::fromTheme("application-exit"), "E&xit", this, SLOT(fileQuit()), QKeySequence::Quit);
 
