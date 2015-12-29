@@ -36,7 +36,7 @@ public:
 	void setStatusValue(double val, bool valid);
 	void setStatusKeyType(SyncTrack::TrackKey::KeyType keyType, bool valid);
 
-	QTcpServer *serverSocket;
+	QTcpServer *tcpServer;
 	ClientSocket clientSocket;
 	size_t clientIndex;
 

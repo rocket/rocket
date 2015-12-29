@@ -33,12 +33,12 @@ MainWindow::MainWindow() :
 
 	createStatusBar();
 
-	serverSocket = new QTcpServer();
-	connect(serverSocket, SIGNAL(newConnection()),
+	tcpServer = new QTcpServer();
+	connect(tcpServer, SIGNAL(newConnection()),
 	        this, SLOT(onNewConnection()));
 
-	if (!serverSocket->listen(QHostAddress::Any, 1338))
-		setStatusText(QString("Could not start server: %1").arg(serverSocket->errorString()));
+	if (!tcpServer->listen(QHostAddress::Any, 1338))
+		setStatusText(QString("Could not start server: %1").arg(tcpServer->errorString()));
 }
 
 void MainWindow::showEvent(QShowEvent *event)
@@ -550,7 +550,7 @@ void MainWindow::onNewConnection()
 	if (!clientSocket.connected()) {
 		setStatusText("Accepting...");
 		QHostAddress client;
-		TcpSocket *socket = clientConnect(serverSocket, &client);
+		TcpSocket *socket = clientConnect(tcpServer, &client);
 		if (socket) {
 			setStatusText(QString("Connected to %1").arg(client.toString()));
 			clientSocket.socket = socket;
@@ -561,9 +561,9 @@ void MainWindow::onNewConnection()
 			clientSocket.sendSetRowCommand(trackView->getEditRow());
 			trackView->connected = true;
 		} else
-			setStatusText(QString("Not Connected: %1").arg(serverSocket->errorString()));
+			setStatusText(QString("Not Connected: %1").arg(tcpServer->errorString()));
 	} else
-		serverSocket->nextPendingConnection()->close();
+		tcpServer->nextPendingConnection()->close();
 }
 
 void MainWindow::onDisconnected()
