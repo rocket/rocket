@@ -14,9 +14,8 @@
 #include <QTcpServer>
 #include <QtEndian>
 
-MainWindow::MainWindow(QTcpServer *serverSocket) :
+MainWindow::MainWindow() :
 	QMainWindow(),
-	serverSocket(serverSocket),
 	clientIndex(0)
 {
 	trackView = new TrackView(this);
@@ -34,8 +33,12 @@ MainWindow::MainWindow(QTcpServer *serverSocket) :
 
 	createStatusBar();
 
+	serverSocket = new QTcpServer();
 	connect(serverSocket, SIGNAL(newConnection()),
 	        this, SLOT(onNewConnection()));
+
+	if (!serverSocket->listen(QHostAddress::Any, 1338))
+		setStatusText(QString("Could not start server: %1").arg(serverSocket->errorString()));
 }
 
 void MainWindow::showEvent(QShowEvent *event)

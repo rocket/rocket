@@ -17,7 +17,7 @@ class MainWindow : public QMainWindow {
 	Q_OBJECT
 
 public:
-	MainWindow(QTcpServer *serverSocket);
+	MainWindow();
 	void showEvent(QShowEvent *event);
 
 	void createMenuBar();
