@@ -14,6 +14,11 @@
 #include <QTcpServer>
 #include <QtEndian>
 
+#ifdef QT_WEBSOCKETS_LIB
+#include <QWebSocketServer>
+#include <QWebSocket>
+#endif
+
 MainWindow::MainWindow() :
 	QMainWindow(),
 	clientSocket(NULL),
@@ -34,10 +39,19 @@ MainWindow::MainWindow() :
 
 	tcpServer = new QTcpServer();
 	connect(tcpServer, SIGNAL(newConnection()),
-	        this, SLOT(onNewConnection()));
+	        this, SLOT(onNewTcpConnection()));
 
 	if (!tcpServer->listen(QHostAddress::Any, 1338))
 		setStatusText(QString("Could not start server: %1").arg(tcpServer->errorString()));
+
+#ifdef QT_WEBSOCKETS_LIB
+	wsServer = new QWebSocketServer("GNU Rocket Editor", QWebSocketServer::NonSecureMode);
+	connect(wsServer, SIGNAL(newConnection()),
+	        this, SLOT(onNewWsConnection()));
+
+	if (!wsServer->listen(QHostAddress::Any, 1339))
+		setStatusText(QString("Could not start server: %1").arg(tcpServer->errorString()));
+#endif
 }
 
 void MainWindow::showEvent(QShowEvent *event)
@@ -447,77 +461,74 @@ void MainWindow::onRowChanged(int row)
 	trackView->setEditRow(row);
 }
 
-static TcpSocket *clientConnect(QTcpServer *serverSocket, QHostAddress *host)
+void MainWindow::onNewTcpConnection()
 {
-	QTcpSocket *clientSocket = serverSocket->nextPendingConnection();
-	Q_ASSERT(clientSocket != NULL);
-
-	QByteArray line;
-
-	// Read greetings or WebSocket upgrade
-	// command from the socket
-	for (;;) {
-		char ch;
-		if (!clientSocket->getChar(&ch)) {
-			// Read failed; wait for data and try again
-			clientSocket->waitForReadyRead();
-			if(!clientSocket->getChar(&ch)) {
-				clientSocket->close();
-				return NULL;
-			}
-		}
-
-		if (ch == '\n')
-			break;
-		if (ch != '\r')
-			line.push_back(ch);
-		if (ch == '!')
-			break;
-	}
-
-	TcpSocket *ret = NULL;
-	if (line.startsWith("GET ")) {
-		ret = WebSocket::upgradeFromHttp(clientSocket);
-		line.resize(int(strlen(CLIENT_GREET)));
-		if (!ret || !ret->recv(line.data(), line.size())) {
-			clientSocket->close();
-			return NULL;
-		}
-	} else
-		ret = new TcpSocket(clientSocket);
-
-	if (!line.startsWith(CLIENT_GREET) ||
-	    !ret->send(SERVER_GREET, strlen(SERVER_GREET), true)) {
-		ret->disconnect();
-		return NULL;
-	}
-
-	if (NULL != host)
-		*host = clientSocket->peerAddress();
-	return ret;
-}
-
-void MainWindow::onNewConnection()
-{
+	QTcpSocket *pendingSocket = tcpServer->nextPendingConnection();
 	if (!clientSocket) {
 		setStatusText("Accepting...");
-		QHostAddress client;
-		TcpSocket *socket = clientConnect(tcpServer, &client);
-		if (socket) {
-			setStatusText(QString("Connected to %1").arg(client.toString()));
-			clientSocket = new ClientSocket(socket);
-			connect(trackView, SIGNAL(pauseChanged(bool)), clientSocket, SLOT(onPauseChanged(bool)));
-			connect(clientSocket, SIGNAL(trackRequested(const QString &)), this, SLOT(onTrackRequested(const QString &)));
-			connect(clientSocket, SIGNAL(rowChanged(int)), this, SLOT(onRowChanged(int)));
-			connect(socket->socket, SIGNAL(disconnected()), this, SLOT(onDisconnected()));
-			clientIndex = 0;
-			clientSocket->sendPauseCommand(trackView->paused);
-			clientSocket->sendSetRowCommand(trackView->getEditRow());
-			trackView->connected = true;
-		} else
+
+		QByteArray greeting = QString(CLIENT_GREET).toUtf8();
+		QByteArray response = QString(SERVER_GREET).toUtf8();
+
+		if (pendingSocket->bytesAvailable() < 1)
+			pendingSocket->waitForReadyRead();
+		QByteArray line = pendingSocket->read(greeting.length());
+		if (line != greeting ||
+		    pendingSocket->write(response) != response.length()) {
+			pendingSocket->close();
+
 			setStatusText(QString("Not Connected: %1").arg(tcpServer->errorString()));
+			return;
+		}
+
+		ClientSocket *client = new AbstractSocketClient(pendingSocket);
+
+		connect(trackView, SIGNAL(pauseChanged(bool)), client, SLOT(onPauseChanged(bool)));
+
+		connect(client, SIGNAL(trackRequested(const QString &)), this, SLOT(onTrackRequested(const QString &)));
+		connect(client, SIGNAL(rowChanged(int)), this, SLOT(onRowChanged(int)));
+		connect(client, SIGNAL(connected()), this, SLOT(onConnected()));
+		connect(client, SIGNAL(disconnected()), this, SLOT(onDisconnected()));
+
+		setStatusText(QString("Connected to %1").arg(pendingSocket->peerAddress().toString()));
+		clientSocket = client;
+
+		onConnected();
 	} else
-		tcpServer->nextPendingConnection()->close();
+		pendingSocket->close();
+}
+
+#ifdef QT_WEBSOCKETS_LIB
+
+void MainWindow::onNewWsConnection()
+{
+	QWebSocket *pendingSocket = wsServer->nextPendingConnection();
+
+	if (!clientSocket) {
+		setStatusText("Accepting...");
+
+		ClientSocket *client = new WebSocketClient(pendingSocket);
+		setStatusText(QString("Connected to %1").arg(pendingSocket->peerAddress().toString()));
+		clientSocket = client;
+
+		connect(trackView, SIGNAL(pauseChanged(bool)), client, SLOT(onPauseChanged(bool)));
+
+		connect(client, SIGNAL(trackRequested(const QString &)), this, SLOT(onTrackRequested(const QString &)));
+		connect(client, SIGNAL(rowChanged(int)), this, SLOT(onRowChanged(int)));
+		connect(client, SIGNAL(connected()), this, SLOT(onConnected()));
+		connect(client, SIGNAL(disconnected()), this, SLOT(onDisconnected()));
+	} else
+		pendingSocket->close();
+}
+
+#endif
+
+void MainWindow::onConnected()
+{
+	clientIndex = 0;
+	clientSocket->sendPauseCommand(trackView->paused);
+	clientSocket->sendSetRowCommand(trackView->getEditRow());
+	trackView->connected = true;
 }
 
 void MainWindow::onDisconnected()
@@ -531,7 +542,6 @@ void MainWindow::onDisconnected()
 		clientSocket, SLOT(onKeyFrameChanged(const SyncTrack &, int)));
 
 	if (clientSocket) {
-		clientSocket->disconnect();
 		delete clientSocket;
 		clientSocket = NULL;
 	}

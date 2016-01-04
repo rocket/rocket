@@ -8,6 +8,7 @@
 class QLabel;
 class QAction;
 class QTcpServer;
+class QWebSocketServer;
 
 class SyncDocument;
 class TrackView;
@@ -33,6 +34,8 @@ public:
 	void setStatusKeyType(SyncTrack::TrackKey::KeyType keyType, bool valid);
 
 	QTcpServer *tcpServer;
+	QWebSocketServer *wsServer;
+
 	ClientSocket *clientSocket;
 	size_t clientIndex;
 
@@ -63,7 +66,11 @@ public slots:
 private slots:
 	void onTrackRequested(const QString &trackName);
 	void onRowChanged(int row);
-	void onNewConnection();
+	void onNewTcpConnection();
+#ifdef QT_WEBSOCKETS_LIB
+	void onNewWsConnection();
+#endif
+	void onConnected();
 	void onDisconnected();
 };
 
