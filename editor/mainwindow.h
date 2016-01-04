@@ -27,10 +27,6 @@ public:
 	bool loadDocument(const QString &path);
 	void setDocument(SyncDocument *newDoc);
 
-	void processCommand(ClientSocket &sock);
-	void processGetTrack(ClientSocket &sock);
-	void processSetRow(ClientSocket &sock);
-
 	void setStatusPosition(int row, int col);
 	void setStatusText(const QString &text);
 	void setStatusValue(double val, bool valid);
@@ -65,7 +61,8 @@ public slots:
 	void onCurrValDirty();
 
 private slots:
-	void onReadyRead();
+	void onTrackRequested(const QString &trackName);
+	void onRowChanged(int row);
 	void onNewConnection();
 	void onDisconnected();
 };

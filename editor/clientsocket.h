@@ -151,6 +151,13 @@ public:
 		return socket->pollRead();
 	}
 
+	void setSocket(TcpSocket *socket)
+	{
+		this->socket = socket;
+		connect(socket->socket, SIGNAL(readyRead()), this, SLOT(onReadyRead()));
+	}
+
+
 	void sendSetKeyCommand(const QString &trackName, const SyncTrack::TrackKey &key);
 	void sendDeleteKeyCommand(const QString &trackName, int row);
 	void sendSetRowCommand(int row);
@@ -159,6 +166,18 @@ public:
 
 	QMap<QString, size_t> clientTracks;
 	TcpSocket *socket;
+
+private:
+	void processCommand();
+	void processGetTrack();
+	void processSetRow();
+
+signals:
+	void trackRequested(const QString &trackName);
+	void rowChanged(int row);
+
+private slots:
+	void onReadyRead();
 
 public slots:
 	void onPauseChanged(bool paused)

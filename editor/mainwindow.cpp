@@ -415,51 +415,9 @@ void MainWindow::onCurrValDirty()
 	}
 }
 
-void MainWindow::processCommand(ClientSocket &sock)
-{
-	unsigned char cmd = 0;
-	if (sock.recv((char*)&cmd, 1)) {
-		switch (cmd) {
-		case GET_TRACK:
-			processGetTrack(sock);
-			break;
-
-		case SET_ROW:
-			processSetRow(sock);
-			break;
-		}
-	}
-}
-
-void MainWindow::processGetTrack(ClientSocket &sock)
+void MainWindow::onTrackRequested(const QString &trackName)
 {
 	SyncDocument *doc = trackView->getDocument();
-
-	// read data
-	int strLen;
-	sock.recv((char *)&strLen, sizeof(int));
-	strLen = qFromBigEndian((quint32)strLen);
-	if (!sock.connected())
-		return;
-
-	if (!strLen) {
-		sock.disconnect();
-		trackView->update();
-		return;
-	}
-
-	QByteArray trackNameBuffer;
-	trackNameBuffer.resize(strLen);
-	if (!sock.recv(trackNameBuffer.data(), strLen))
-		return;
-
-	if (trackNameBuffer.contains('\0')) {
-		sock.disconnect();
-		trackView->update();
-		return;
-	}
-
-	QString trackName = QString::fromUtf8(trackNameBuffer);
 
 	// find track
 	const SyncTrack *t = doc->findTrack(trackName.toUtf8());
@@ -468,7 +426,7 @@ void MainWindow::processGetTrack(ClientSocket &sock)
 
 	// hook up signals to slots
 	QObject::connect(t,             SIGNAL(keyFrameChanged(const SyncTrack &, int)),
-			 &clientSocket, SLOT(onKeyFrameChanged(const SyncTrack &, int)));
+	                 &clientSocket, SLOT(onKeyFrameChanged(const SyncTrack &, int)));
 
 	// setup remap
 	clientSocket.clientTracks[trackName] = clientIndex++;
@@ -482,11 +440,9 @@ void MainWindow::processGetTrack(ClientSocket &sock)
 	trackView->update();
 }
 
-void MainWindow::processSetRow(ClientSocket &sock)
+void MainWindow::onRowChanged(int row)
 {
-	int newRow;
-	sock.recv((char*)&newRow, sizeof(int));
-	trackView->setEditRow(qToBigEndian((quint32)newRow));
+	trackView->setEditRow(row);
 }
 
 static TcpSocket *clientConnect(QTcpServer *serverSocket, QHostAddress *host)
@@ -539,12 +495,6 @@ static TcpSocket *clientConnect(QTcpServer *serverSocket, QHostAddress *host)
 	return ret;
 }
 
-void MainWindow::onReadyRead()
-{
-	while (clientSocket.pollRead())
-		processCommand(clientSocket);
-}
-
 void MainWindow::onNewConnection()
 {
 	if (!clientSocket.connected()) {
@@ -553,8 +503,9 @@ void MainWindow::onNewConnection()
 		TcpSocket *socket = clientConnect(tcpServer, &client);
 		if (socket) {
 			setStatusText(QString("Connected to %1").arg(client.toString()));
-			clientSocket.socket = socket;
-			connect(socket->socket, SIGNAL(readyRead()), this, SLOT(onReadyRead()));
+			clientSocket.setSocket(socket);
+			connect(&clientSocket, SIGNAL(trackRequested(const QString &)), this, SLOT(onTrackRequested(const QString &)));
+			connect(&clientSocket, SIGNAL(rowChanged(int)), this, SLOT(onRowChanged(int)));
 			connect(socket->socket, SIGNAL(disconnected()), this, SLOT(onDisconnected()));
 			clientIndex = 0;
 			clientSocket.sendPauseCommand(trackView->paused);

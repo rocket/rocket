@@ -203,3 +203,62 @@ void ClientSocket::sendSaveCommand()
 	unsigned char cmd = SAVE_TRACKS;
 	send((char *)&cmd, 1, true);
 }
+
+void ClientSocket::processCommand()
+{
+	unsigned char cmd = 0;
+	if (recv((char*)&cmd, 1)) {
+		switch (cmd) {
+		case GET_TRACK:
+			processGetTrack();
+			break;
+
+		case SET_ROW:
+			processSetRow();
+			break;
+		}
+	}
+}
+
+void ClientSocket::processGetTrack()
+{
+	// read data
+	int strLen;
+	recv((char *)&strLen, sizeof(int));
+	strLen = qFromBigEndian((quint32)strLen);
+	if (!connected())
+		return;
+
+	if (!strLen) {
+		disconnect();
+		return;
+	}
+
+	QByteArray trackNameBuffer;
+	trackNameBuffer.resize(strLen);
+	if (!recv(trackNameBuffer.data(), strLen))
+		return;
+
+	if (trackNameBuffer.contains('\0')) {
+		disconnect();
+		return;
+	}
+
+	QString trackName = QString::fromUtf8(trackNameBuffer);
+
+	emit trackRequested(trackName);
+}
+
+void ClientSocket::processSetRow()
+{
+	quint32 newRow;
+	recv((char *)&newRow, sizeof(newRow));
+
+	emit rowChanged(qToBigEndian(newRow));
+}
+
+void ClientSocket::onReadyRead()
+{
+	while (pollRead())
+		processCommand();
+}
