@@ -16,6 +16,7 @@
 
 MainWindow::MainWindow() :
 	QMainWindow(),
+	clientSocket(NULL),
 	clientIndex(0)
 {
 	trackView = new TrackView(this);
@@ -23,8 +24,6 @@ MainWindow::MainWindow() :
 
 	connect(trackView, SIGNAL(posChanged(int, int)),
 	        this, SLOT(onPosChanged(int, int)));
-	connect(trackView,     SIGNAL(pauseChanged(bool)),
-	        &clientSocket, SLOT(onPauseChanged(bool)));
 	connect(trackView, SIGNAL(currValDirty()),
 	        this, SLOT(onCurrValDirty()));
 
@@ -230,7 +229,7 @@ void MainWindow::setDocument(SyncDocument *newDoc)
 		QObject::disconnect(oldDoc, SIGNAL(modifiedChanged(bool)),
 		                    this, SLOT(setWindowModified(bool)));
 
-	if (oldDoc && clientSocket.connected()) {
+	if (oldDoc && clientSocket) {
 		// delete old key frames
 		for (int i = 0; i < oldDoc->getTrackCount(); ++i) {
 			SyncTrack *t = oldDoc->getTrack(i);
@@ -239,13 +238,13 @@ void MainWindow::setDocument(SyncDocument *newDoc)
 			for (it = keyMap.constBegin(); it != keyMap.constEnd(); ++it)
 				t->removeKey(it.key());
 			QObject::disconnect(t, SIGNAL(keyFrameChanged(const SyncTrack &, int)),
-			        &clientSocket, SLOT(onKeyFrameChanged(const SyncTrack &, int)));
+			        clientSocket, SLOT(onKeyFrameChanged(const SyncTrack &, int)));
 		}
 
 		if (newDoc) {
 			// add back missing client-tracks
 			QMap<QString, size_t>::const_iterator it;
-			for (it = clientSocket.clientTracks.begin(); it != clientSocket.clientTracks.end(); ++it) {
+			for (it = clientSocket->clientTracks.begin(); it != clientSocket->clientTracks.end(); ++it) {
 				SyncTrack *t = newDoc->findTrack(it.key());
 				if (!t)
 					newDoc->createTrack(it.key());
@@ -256,9 +255,9 @@ void MainWindow::setDocument(SyncDocument *newDoc)
 				QMap<int, SyncTrack::TrackKey> keyMap = t->getKeyMap();
 				QMap<int, SyncTrack::TrackKey>::const_iterator it;
 				for (it = keyMap.constBegin(); it != keyMap.constEnd(); ++it)
-					clientSocket.sendSetKeyCommand(t->name.toUtf8().constData(), *it);
-				QObject::connect(t,             SIGNAL(keyFrameChanged(const SyncTrack &, int)),
-						 &clientSocket, SLOT(onKeyFrameChanged(const SyncTrack &, int)));
+					clientSocket->sendSetKeyCommand(t->name.toUtf8().constData(), *it);
+				QObject::connect(t, SIGNAL(keyFrameChanged(const SyncTrack &, int)),
+						 clientSocket, SLOT(onKeyFrameChanged(const SyncTrack &, int)));
 			}
 		}
 	}
@@ -306,7 +305,9 @@ void MainWindow::fileSaveAs()
 	if (fileName.length()) {
 		SyncDocument *doc = trackView->getDocument();
 		if (doc->save(fileName)) {
-			clientSocket.sendSaveCommand();
+			if (clientSocket)
+				clientSocket->sendSaveCommand();
+
 			setCurrentFileName(fileName);
 			doc->fileName = fileName;
 		}
@@ -320,12 +321,13 @@ void MainWindow::fileSave()
 		return fileSaveAs();
 
 	if (!doc->save(doc->fileName))
-		clientSocket.sendSaveCommand();
+		fileRemoteExport();
 }
 
 void MainWindow::fileRemoteExport()
 {
-	clientSocket.sendSaveCommand();
+	if (clientSocket)
+		clientSocket->sendSaveCommand();
 }
 
 void MainWindow::openRecentFile()
@@ -391,8 +393,8 @@ void MainWindow::editNextBookmark()
 void MainWindow::onPosChanged(int col, int row)
 {
 	setStatusPosition(col, row);
-	if (trackView->paused && clientSocket.connected())
-		clientSocket.sendSetRowCommand(row);
+	if (trackView->paused && clientSocket)
+		clientSocket->sendSetRowCommand(row);
 }
 
 void MainWindow::onCurrValDirty()
@@ -425,17 +427,17 @@ void MainWindow::onTrackRequested(const QString &trackName)
 		t = doc->createTrack(trackName);
 
 	// hook up signals to slots
-	QObject::connect(t,             SIGNAL(keyFrameChanged(const SyncTrack &, int)),
-	                 &clientSocket, SLOT(onKeyFrameChanged(const SyncTrack &, int)));
+	QObject::connect(t, SIGNAL(keyFrameChanged(const SyncTrack &, int)),
+	                 clientSocket, SLOT(onKeyFrameChanged(const SyncTrack &, int)));
 
 	// setup remap
-	clientSocket.clientTracks[trackName] = clientIndex++;
+	clientSocket->clientTracks[trackName] = clientIndex++;
 
 	// send key frames
 	QMap<int, SyncTrack::TrackKey> keyMap = t->getKeyMap();
 	QMap<int, SyncTrack::TrackKey>::const_iterator it;
 	for (it = keyMap.constBegin(); it != keyMap.constEnd(); ++it)
-		clientSocket.sendSetKeyCommand(t->name.toUtf8().constData(), *it);
+		clientSocket->sendSetKeyCommand(t->name.toUtf8().constData(), *it);
 
 	trackView->update();
 }
@@ -497,19 +499,20 @@ static TcpSocket *clientConnect(QTcpServer *serverSocket, QHostAddress *host)
 
 void MainWindow::onNewConnection()
 {
-	if (!clientSocket.connected()) {
+	if (!clientSocket) {
 		setStatusText("Accepting...");
 		QHostAddress client;
 		TcpSocket *socket = clientConnect(tcpServer, &client);
 		if (socket) {
 			setStatusText(QString("Connected to %1").arg(client.toString()));
-			clientSocket.setSocket(socket);
-			connect(&clientSocket, SIGNAL(trackRequested(const QString &)), this, SLOT(onTrackRequested(const QString &)));
-			connect(&clientSocket, SIGNAL(rowChanged(int)), this, SLOT(onRowChanged(int)));
+			clientSocket = new ClientSocket(socket);
+			connect(trackView, SIGNAL(pauseChanged(bool)), clientSocket, SLOT(onPauseChanged(bool)));
+			connect(clientSocket, SIGNAL(trackRequested(const QString &)), this, SLOT(onTrackRequested(const QString &)));
+			connect(clientSocket, SIGNAL(rowChanged(int)), this, SLOT(onRowChanged(int)));
 			connect(socket->socket, SIGNAL(disconnected()), this, SLOT(onDisconnected()));
 			clientIndex = 0;
-			clientSocket.sendPauseCommand(trackView->paused);
-			clientSocket.sendSetRowCommand(trackView->getEditRow());
+			clientSocket->sendPauseCommand(trackView->paused);
+			clientSocket->sendSetRowCommand(trackView->getEditRow());
 			trackView->connected = true;
 		} else
 			setStatusText(QString("Not Connected: %1").arg(tcpServer->errorString()));
@@ -520,13 +523,18 @@ void MainWindow::onNewConnection()
 void MainWindow::onDisconnected()
 {
 	trackView->paused = true;
-	clientSocket.disconnect();
 
 	// disconnect track-signals
 	SyncDocument *doc = trackView->getDocument();
 	for (int i = 0; i < doc->getTrackCount(); ++i)
 		QObject::disconnect(doc->getTrack(i), SIGNAL(keyFrameChanged(const SyncTrack &, int)),
-		                      &clientSocket, SLOT(onKeyFrameChanged(const SyncTrack &, int)));
+		clientSocket, SLOT(onKeyFrameChanged(const SyncTrack &, int)));
+
+	if (clientSocket) {
+		clientSocket->disconnect();
+		delete clientSocket;
+		clientSocket = NULL;
+	}
 
 	trackView->update();
 	setStatusText("Not Connected.");

@@ -59,8 +59,6 @@ bool WebSocket::readFrame(QByteArray &buf)
 
 bool WebSocket::recv(char *buffer, int length)
 {
-	if (!connected())
-		return false;
 	while (length) {
 		while (!buf.length() && !readFrame(buf))
 			return false;
@@ -136,9 +134,9 @@ WebSocket *WebSocket::upgradeFromHttp(QTcpSocket *socket)
 
 void ClientSocket::sendSetKeyCommand(const QString &trackName, const SyncTrack::TrackKey &key)
 {
-	if (!connected() ||
-	    clientTracks.count(trackName) == 0)
+	if (clientTracks.count(trackName) == 0)
 		return;
+
 	quint32 track = qToBigEndian((quint32)clientTracks[trackName]);
 	quint32 row = qToBigEndian((quint32)key.row);
 
@@ -161,8 +159,7 @@ void ClientSocket::sendSetKeyCommand(const QString &trackName, const SyncTrack::
 
 void ClientSocket::sendDeleteKeyCommand(const QString &trackName, int row)
 {
-	if (!connected() ||
-	    clientTracks.count(trackName) == 0)
+	if (clientTracks.count(trackName) == 0)
 		return;
 
 	quint32 track = qToBigEndian((quint32)clientTracks[trackName]);
@@ -176,9 +173,6 @@ void ClientSocket::sendDeleteKeyCommand(const QString &trackName, int row)
 
 void ClientSocket::sendSetRowCommand(int row)
 {
-	if (!connected())
-		return;
-
 	unsigned char cmd = SET_ROW;
 	row = qToBigEndian((quint32)row);
 	send((char *)&cmd, 1, false);
@@ -187,9 +181,6 @@ void ClientSocket::sendSetRowCommand(int row)
 
 void ClientSocket::sendPauseCommand(bool pause)
 {
-	if (!connected())
-		return;
-
 	unsigned char cmd = PAUSE, flag = pause;
 	send((char *)&cmd, 1, false);
 	send((char *)&flag, 1, true);
@@ -197,9 +188,6 @@ void ClientSocket::sendPauseCommand(bool pause)
 
 void ClientSocket::sendSaveCommand()
 {
-	if (!connected())
-		return;
-
 	unsigned char cmd = SAVE_TRACKS;
 	send((char *)&cmd, 1, true);
 }
@@ -226,8 +214,6 @@ void ClientSocket::processGetTrack()
 	int strLen;
 	recv((char *)&strLen, sizeof(int));
 	strLen = qFromBigEndian((quint32)strLen);
-	if (!connected())
-		return;
 
 	if (!strLen) {
 		disconnect();

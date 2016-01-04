@@ -23,23 +23,14 @@ class TcpSocket {
 public:
 	explicit TcpSocket(QAbstractSocket *socket) : socket(socket) {}
 
-	bool connected() const
-	{
-		return socket != NULL;
-	}
-
 	virtual void disconnect()
 	{
-		if (connected())
-			socket->close();
+		socket->close();
 		socket = NULL;
 	}
 
 	virtual bool recv(char *buffer, int length)
 	{
-		if (!connected())
-			return false;
-
 		// wait for enough data to arrive
 		while (socket->bytesAvailable() < int(length)) {
 			if (!socket->waitForReadyRead(-1))
@@ -57,8 +48,6 @@ public:
 	virtual bool send(const char *buffer, size_t length, bool endOfMessage)
 	{
 		(void)endOfMessage;
-		if (!connected())
-			return false;
 		int ret = socket->write(buffer, length);
 		if (ret != int(length)) {
 			TcpSocket::disconnect();
@@ -69,8 +58,6 @@ public:
 
 	virtual bool pollRead()
 	{
-		if (!connected())
-			return false;
 		return socket->bytesAvailable() > 0;
 	}
 
@@ -114,49 +101,32 @@ private:
 class ClientSocket : public QObject {
 	Q_OBJECT
 public:
-	ClientSocket() : socket(NULL) {}
-
-	bool connected() const
+	explicit ClientSocket(TcpSocket *socket) :
+	    socket(socket)
 	{
-		if (!socket)
-			return false;
-		return socket->connected();
+		connect(socket->socket, SIGNAL(readyRead()), this, SLOT(onReadyRead()));
 	}
 
 	void disconnect()
 	{
-		if (socket)
-			socket->disconnect();
+		socket->disconnect();
 		clientTracks.clear();
 	}
 
 	bool recv(char *buffer, int length)
 	{
-		if (!socket)
-			return false;
 		return socket->recv(buffer, length);
 	}
 
 	bool send(const char *buffer, size_t length, bool endOfMessage)
 	{
-		if (!socket)
-			return false;
 		return socket->send(buffer, length, endOfMessage);
 	}
 
 	bool pollRead()
 	{
-		if (!connected())
-			return false;
 		return socket->pollRead();
 	}
-
-	void setSocket(TcpSocket *socket)
-	{
-		this->socket = socket;
-		connect(socket->socket, SIGNAL(readyRead()), this, SLOT(onReadyRead()));
-	}
-
 
 	void sendSetKeyCommand(const QString &trackName, const SyncTrack::TrackKey &key);
 	void sendDeleteKeyCommand(const QString &trackName, int row);
