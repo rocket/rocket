@@ -20,7 +20,6 @@
             
         var _demoMode = false, //Set to true for preview
             _syncDevice = new JSRocket.SyncDevice(),
-            _row = 0,
             _previousIntRow;
 
         //THREE variables
@@ -83,9 +82,9 @@
             }
 
             _syncDevice.on('ready', onSyncReady);
-            _syncDevice.on('update', onSyncUpdate);
-            _syncDevice.on('play', onPlay);
-            _syncDevice.on('pause', onPause);
+            _syncDevice.on('update', function(row) { _audio.currentTime = row / ROW_RATE; });
+            _syncDevice.on('play', function() { _audio.play(); });
+            _syncDevice.on('pause', function() { _audio.pause(); });
         }
 
         function onSyncReady() {
@@ -109,74 +108,46 @@
         }
         
         function onAudioReady() {
-            if(_demoMode) { 
-                render();
+            if(_demoMode) {
                 _audio.play();
-            } else {
-                _audio.pause();
-                _audio.currentTime = _row / ROW_RATE;
-            }
-        }
-
-        function onSyncUpdate(row) {
-
-            if (!isNaN(row)) {
-                _row = row;
             }
             render();
-        }
-
-        function onPlay() {
-
-            _audio.currentTime = _row / ROW_RATE;
-            _audio.play();
-            render();
-        }
-
-        function onPause() {
-
-            _row = _audio.currentTime * ROW_RATE;
-            window.cancelAnimationFrame(render, document);
-            _audio.pause();
         }
 
         function render() {
+            var row = _audio.currentTime * ROW_RATE;
 
             if(_audio.paused === false) {
                 //otherwise we may jump into a point in the audio where there's
                 //no timeframe, resulting in Rocket setting row 2 and we report
                 //row 1 back - thus Rocket spasming out
-                _row = _audio.currentTime * ROW_RATE;
 
-				// this informs Rocket where we are
-            	_syncDevice.update(_row);
+                // this informs Rocket where we are
+                _syncDevice.update(row);
             }
 
-            var rot = (_cameraRotation.getValue(_row) || 0) / 180 * Math.PI,
+            var rot = (_cameraRotation.getValue(row) || 0) / 180 * Math.PI,
                 color = new THREE.Color();
 
             //update Field Of View
-            _camera.fov = (_fov.getValue(_row) || FOV);
+            _camera.fov = (_fov.getValue(row) || FOV);
             //_camera.aspect = WIDTH / HEIGHT;
             _camera.updateProjectionMatrix();
 
             //rotate that cam
-            _camera.position.x = Math.cos(rot) * (_cameraDistance.getValue(_row) || 0);
-            _camera.position.z = Math.sin(rot) * (_cameraDistance.getValue(_row) || 0);
+            _camera.position.x = Math.cos(rot) * (_cameraDistance.getValue(row) || 0);
+            _camera.position.z = Math.sin(rot) * (_cameraDistance.getValue(row) || 0);
             _camera.lookAt(_scene.position);
 
             //the background color
-            color.setRGB((_clearR.getValue(_row) || 0) / 255,
-                        (_clearG.getValue(_row) || 0) / 255,
-                        (_clearB.getValue(_row) || 0) / 255);
+            color.setRGB((_clearR.getValue(row) || 0) / 255,
+                        (_clearG.getValue(row) || 0) / 255,
+                        (_clearB.getValue(row) || 0) / 255);
             _renderer.setClearColor(color);
 
             _renderer.render(_scene, _camera);
             
-            if((_demoMode === true)  || (_audio.paused === false))
-                window.requestAnimationFrame(render, document);
-            else
-                window.cancelAnimationFrame(render, document);
+            window.requestAnimationFrame(render);
         }
     }());
 </script>
