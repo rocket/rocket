@@ -69,9 +69,6 @@ JSRocket.SyncDeviceClient = function (cfg) {
             interpolation = toInt(queue.subarray(13, 14));
             _syncData.getTrack(track).add(row, value, interpolation);
 
-            //don't set row, as this could also be a interpolation change
-            _eventHandler.update();
-
             //DELETE
         } else if (CMD_DELETE_KEY === cmd) {
 
@@ -79,8 +76,6 @@ JSRocket.SyncDeviceClient = function (cfg) {
             row = toInt(queue.subarray(5, 9));
 
             _syncData.getTrack(track).remove(row);
-
-            _eventHandler.update();
 
             //SAVE
         } else if (CMD_SAVE_TRACKS === cmd) {
