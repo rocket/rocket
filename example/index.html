@@ -8,8 +8,8 @@
 </head>
 <body>
 
-<script src="../_common/three.min.js"></script>
-<script src="../../build/jsRocket.js"></script>
+<script src="_common/three.min.js"></script>
+<script src="../build/jsRocket.js"></script>
 
 <script>
     var Demo = (function () {
@@ -17,7 +17,7 @@
         var BPM = 120,
             ROWS_PER_BEAT = 8,
             ROW_RATE = BPM / 60 * ROWS_PER_BEAT;
-            
+
         var _demoMode = false, //Set to true for preview
             _syncDevice = new JSRocket.SyncDevice(),
             _previousIntRow;
@@ -39,12 +39,12 @@
             _clearG = 41,
             _clearB = 44,
             _fov = FOV;
-        
+
         (function init() {
             prepareScene();
             prepareSync();
         }());
-        
+
         function prepareScene() {
 
             addCube();
@@ -88,7 +88,7 @@
         }
 
         function onSyncReady() {
-            
+
             _clearR = _syncDevice.getTrack('clearR');
             _clearG = _syncDevice.getTrack('clearG');
             _clearB = _syncDevice.getTrack('clearB');
@@ -106,7 +106,7 @@
             _audio.preload = true;
             _audio.addEventListener('canplay', onAudioReady);
         }
-        
+
         function onAudioReady() {
             if(_demoMode) {
                 _audio.play();
@@ -146,7 +146,7 @@
             _renderer.setClearColor(color);
 
             _renderer.render(_scene, _camera);
-            
+
             window.requestAnimationFrame(render);
         }
     }());
