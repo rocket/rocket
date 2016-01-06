@@ -45,10 +45,10 @@ var syncDevice = new JSRocket.SyncDevice(),
     //the current row we're on
     row;
 
-//ws://localhost:8080 sucks?
-//syncDevice.setConfig({socketURL:"ws://lolcathost:1337"});
+//syncDevice.setConfig({socketURL:"ws://lolcathost:1338"});
 
-//initialize the connection, default URL is ws://localhost:8080
+//initialize the connection, default URL is ws://localhost:1338/
+
 syncDevice.init();
 
 //-- set up all the things --
