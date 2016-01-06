@@ -66,8 +66,8 @@
             }
 
             _cube = new THREE.Mesh(
-                    new THREE.CubeGeometry(_diameter, _diameter, _diameter, 1, 1, 1, _materials),
-                    new THREE.MeshFaceMaterial());
+                    new THREE.BoxGeometry(_diameter, _diameter, _diameter),
+                    new THREE.MeshFaceMaterial( _materials ));
 
             _scene.add(_cube);
         }
