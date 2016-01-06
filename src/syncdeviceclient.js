@@ -109,8 +109,18 @@ JSRocket.SyncDeviceClient = function (cfg) {
             return _syncData.getTrack(index);
         }
 
-        _ws.send(new Uint8Array([CMD_GET_TRACK, 0, 0,  0, name.length]).buffer);
-        _ws.send(name);
+        var utf8Name = encodeURIComponent(name).replace(/%([\dA-F]{2})/g, function(m, c) {
+		return String.fromCharCode('0x' + c);
+        });
+        var message = [CMD_GET_TRACK,
+                        (utf8Name.length >> 24) & 0xFF, (utf8Name.length >> 16) & 0xFF,
+                        (utf8Name.length >> 8) & 0xFF, (utf8Name.length ) & 0xFF];
+
+        for (var i = 0; i < utf8Name.length; i++) {
+            message.push(utf8Name.charCodeAt(i));
+        }
+
+        _ws.send(new Uint8Array(message).buffer);
 
         _syncData.createIndex(name);
         return _syncData.getTrack(_syncData.getTrackLength() - 1);
