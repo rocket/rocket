@@ -558,7 +558,8 @@ void MainWindow::onNewConnection()
 			trackView->connected = true;
 		} else
 			setStatusText(QString("Not Connected: %1").arg(serverSocket->errorString()));
-	}
+	} else
+		serverSocket->nextPendingConnection()->close();
 }
 
 void MainWindow::onDisconnected()
