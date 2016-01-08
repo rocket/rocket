@@ -388,7 +388,7 @@ int sync_update(struct sync_device *d, int row, struct sync_cb *cb,
 	/* look for new commands */
 	while (socket_poll(d->sock)) {
 		unsigned char cmd = 0, flag;
-		uint32_t row;
+		uint32_t new_row;
 		if (xrecv(d->sock, (char *)&cmd, 1, 0))
 			goto sockerr;
 
@@ -402,10 +402,10 @@ int sync_update(struct sync_device *d, int row, struct sync_cb *cb,
 				goto sockerr;
 			break;
 		case SET_ROW:
-			if (xrecv(d->sock, (char *)&row, sizeof(row), 0))
+			if (xrecv(d->sock, (char *)&new_row, sizeof(new_row), 0))
 				goto sockerr;
 			if (cb && cb->set_row)
-				cb->set_row(cb_param, ntohl(row));
+				cb->set_row(cb_param, ntohl(new_row));
 			break;
 		case PAUSE:
 			if (xrecv(d->sock, (char *)&flag, 1, 0))
