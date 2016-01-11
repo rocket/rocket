@@ -33,6 +33,13 @@ Once the prerequisites are installed, the example can be compiled either by
 opening examples.sln and selecting "Build" -> "Build Solution" from Visual
 Studio 2008, or by doing `make examples/example_bass` on Unix-based systems.
 
+JavaScript
+----------
+
+Thanks to the excellent work of [mog](http://github.com/mog), there's now
+JavaScript support. Have a look in `js/README.md` for more information.
+
+
 Using the editor
 ----------------
 The GNU Rocket editor is laid out like a music-tracker; tracks (or columns)

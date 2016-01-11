@@ -1,21 +1,6 @@
 jsRocket
 ========
-Let's you use <a href="https://github.com/kusma/rocket/">GNU Rocket</a> with your JavaScript / Browser demo.
-
-tl;dr
------
-<a href="https://github.com/mog/jsRocket/wiki/Screenshots"><img src="https://a248.e.akamai.net/camo.github.com/ad694c41ec7eb0e454b310866e207fbd4c705d49/687474703a2f2f692e696d6775722e636f6d2f6f7a55454530592e706e67"></a>.
-
-Rocket?
--------
-To sync stuff to music, or just change values over time, you might currently hardcode them somewhere in your demo. Rocket gives you a tracker alike interface, which might make your musician feel right at home.
-
-**Windows**
-
-Compiled from kusmas <a href="https://github.com/kusma/rocket/commit/0a7d3822bbe054fc718ffca9b1b374d43b9eddce">work/websocket</a> branch.
-
-<a href="https://github.com/mog/jsRocket/raw/RocketWebsocket/bin-windows/sync_editor.exe">Download GNU Rocket</a>
-
+Lets you use GNU Rocket with your JavaScript / Browser demo.
 
 js?
 ---
