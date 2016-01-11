@@ -1,0 +1,125 @@
+<tracks rows="128">
+	<track name="clearR">
+		<key row="0" value="45.000000" interpolation="0"/>
+		<key row="11" value="45.000000" interpolation="2"/>
+		<key row="14" value="242.000000" interpolation="0"/>
+		<key row="25" value="255.000000" interpolation="3"/>
+		<key row="29" value="255.000000" interpolation="3"/>
+		<key row="34" value="51.000000" interpolation="0"/>
+		<key row="48" value="51.000000" interpolation="2"/>
+		<key row="50" value="255.000000" interpolation="3"/>
+		<key row="51" value="51.000000" interpolation="0"/>
+		<key row="52" value="255.000000" interpolation="3"/>
+		<key row="53" value="51.000000" interpolation="0"/>
+		<key row="58" value="51.000000" interpolation="2"/>
+		<key row="60" value="255.000000" interpolation="3"/>
+		<key row="62" value="51.000000" interpolation="0"/>
+		<key row="90" value="255.000000" interpolation="3"/>
+		<key row="94" value="255.000000" interpolation="3"/>
+		<key row="99" value="51.000000" interpolation="0"/>
+		<key row="113" value="51.000000" interpolation="2"/>
+		<key row="115" value="255.000000" interpolation="3"/>
+		<key row="116" value="51.000000" interpolation="0"/>
+		<key row="117" value="255.000000" interpolation="3"/>
+		<key row="118" value="51.000000" interpolation="0"/>
+		<key row="123" value="51.000000" interpolation="2"/>
+		<key row="125" value="255.000000" interpolation="3"/>
+		<key row="127" value="51.000000" interpolation="0"/>
+	</track>
+	<track name="clearG">
+		<key row="0" value="166.000000" interpolation="0"/>
+		<key row="11" value="166.000000" interpolation="2"/>
+		<key row="14" value="242.000000" interpolation="0"/>
+		<key row="25" value="98.000000" interpolation="3"/>
+		<key row="29" value="179.000000" interpolation="3"/>
+		<key row="34" value="41.000000" interpolation="0"/>
+		<key row="48" value="41.000000" interpolation="2"/>
+		<key row="50" value="255.000000" interpolation="3"/>
+		<key row="51" value="41.000000" interpolation="0"/>
+		<key row="52" value="255.000000" interpolation="3"/>
+		<key row="53" value="41.000000" interpolation="0"/>
+		<key row="58" value="41.000000" interpolation="2"/>
+		<key row="60" value="255.000000" interpolation="3"/>
+		<key row="62" value="41.000000" interpolation="0"/>
+		<key row="90" value="98.000000" interpolation="3"/>
+		<key row="94" value="179.000000" interpolation="3"/>
+		<key row="99" value="41.000000" interpolation="0"/>
+		<key row="113" value="41.000000" interpolation="2"/>
+		<key row="115" value="255.000000" interpolation="3"/>
+		<key row="116" value="41.000000" interpolation="0"/>
+		<key row="117" value="255.000000" interpolation="3"/>
+		<key row="118" value="41.000000" interpolation="0"/>
+		<key row="123" value="41.000000" interpolation="2"/>
+		<key row="125" value="255.000000" interpolation="3"/>
+		<key row="127" value="41.000000" interpolation="0"/>
+	</track>
+	<track name="clearB">
+		<key row="0" value="154.000000" interpolation="0"/>
+		<key row="11" value="154.000000" interpolation="2"/>
+		<key row="14" value="242.000000" interpolation="0"/>
+		<key row="25" value="0.000000" interpolation="0"/>
+		<key row="29" value="0.000000" interpolation="3"/>
+		<key row="34" value="44.000000" interpolation="0"/>
+		<key row="48" value="44.000000" interpolation="2"/>
+		<key row="50" value="255.000000" interpolation="3"/>
+		<key row="51" value="44.000000" interpolation="0"/>
+		<key row="52" value="255.000000" interpolation="3"/>
+		<key row="53" value="44.000000" interpolation="0"/>
+		<key row="58" value="44.000000" interpolation="2"/>
+		<key row="60" value="255.000000" interpolation="3"/>
+		<key row="62" value="44.000000" interpolation="0"/>
+		<key row="90" value="0.000000" interpolation="0"/>
+		<key row="94" value="0.000000" interpolation="3"/>
+		<key row="99" value="44.000000" interpolation="0"/>
+		<key row="113" value="44.000000" interpolation="2"/>
+		<key row="115" value="255.000000" interpolation="3"/>
+		<key row="116" value="44.000000" interpolation="0"/>
+		<key row="117" value="255.000000" interpolation="3"/>
+		<key row="118" value="44.000000" interpolation="0"/>
+		<key row="123" value="44.000000" interpolation="2"/>
+		<key row="125" value="255.000000" interpolation="3"/>
+		<key row="127" value="44.000000" interpolation="0"/>
+	</track>
+	<track name="rotation">
+		<key row="0" value="0.000000" interpolation="2"/>
+		<key row="5" value="45.000000" interpolation="0"/>
+		<key row="11" value="20.000000" interpolation="3"/>
+		<key row="14" value="122.000000" interpolation="0"/>
+		<key row="25" value="496.000000" interpolation="2"/>
+		<key row="29" value="315.000000" interpolation="0"/>
+		<key row="34" value="315.000000" interpolation="3"/>
+		<key row="38" value="300.000000" interpolation="0"/>
+		<key row="46" value="300.000000" interpolation="3"/>
+		<key row="48" value="330.000000" interpolation="0"/>
+		<key row="68" value="40.000000" interpolation="2"/>
+		<key row="72" value="45.000000" interpolation="0"/>
+		<key row="76" value="50.000000" interpolation="2"/>
+		<key row="80" value="64.000000" interpolation="0"/>
+		<key row="90" value="496.000000" interpolation="2"/>
+		<key row="94" value="315.000000" interpolation="0"/>
+		<key row="99" value="315.000000" interpolation="3"/>
+		<key row="103" value="300.000000" interpolation="0"/>
+		<key row="111" value="300.000000" interpolation="3"/>
+		<key row="113" value="330.000000" interpolation="0"/>
+		<key row="133" value="40.000000" interpolation="2"/>
+		<key row="137" value="45.000000" interpolation="0"/>
+		<key row="141" value="50.000000" interpolation="2"/>
+		<key row="145" value="64.000000" interpolation="0"/>
+	</track>
+	<track name="distance">
+		<key row="0" value="400.000000" interpolation="0"/>
+		<key row="5" value="130.000000" interpolation="0"/>
+		<key row="11" value="400.000000" interpolation="3"/>
+		<key row="14" value="130.000000" interpolation="0"/>
+	</track>
+	<track name="FOV">
+		<key row="0" value="35.000000" interpolation="3"/>
+		<key row="5" value="90.000000" interpolation="0"/>
+		<key row="11" value="35.000000" interpolation="3"/>
+		<key row="14" value="90.000000" interpolation="0"/>
+		<key row="25" value="120.000000" interpolation="2"/>
+		<key row="46" value="90.000000" interpolation="2"/>
+		<key row="90" value="120.000000" interpolation="2"/>
+		<key row="111" value="90.000000" interpolation="2"/>
+	</track>
+</tracks>

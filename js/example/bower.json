@@ -1,0 +1,16 @@
+{
+  "name": "jsRocket example",
+  "homepage": "https://github.com/mog/jsRocket",
+  "authors": [
+    "mog <mog@trbl.at>",
+    "Erik Faye-Lund <kusmabite@gmail.com>"
+  ],
+  "description": "an example of how to use the jsRocket API",
+  "main": "index.html",
+  "moduleType": [],
+  "license": "MIT",
+  "private": true,
+  "dependencies": {
+    "three.js": "threejs#*"
+  }
+}
