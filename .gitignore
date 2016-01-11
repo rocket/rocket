@@ -25,15 +25,15 @@ ui_*.h
 /editor/release/
 /editor/editor/
 /editor/editor.app/
-/example_bass/example_bass
-/example_bass/Debug Client/
-/example_bass/Debug/
-/example_bass/Release Client/
-/example_bass/Release/
-/example_bass/x64/
-/example_bass/include/
-/example_bass/lib/
-/example_bass/lib64/
+/examples/example_bass
+/examples/Debug Client/
+/examples/Debug/
+/examples/Release Client/
+/examples/Release/
+/examples/x64/
+/examples/include/
+/examples/lib/
+/examples/lib64/
 /lib/Debug Client/
 /lib/Debug/
 /lib/Release Client/

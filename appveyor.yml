@@ -20,12 +20,12 @@ install:
   # download and install bass
   - curl -fsS -o bass24.zip http://www.un4seen.com/files/bass24.zip
   - 7z x -obass24 bass24.zip > NUL
-  - mkdir example_bass\lib
-  - mkdir example_bass\lib64
-  - mkdir example_bass\include
-  - copy bass24\c\bass.lib example_bass\lib
-  - copy bass24\c\x64\bass.lib example_bass\lib64
-  - copy bass24\c\bass.h example_bass\include
+  - mkdir examples\lib
+  - mkdir examples\lib64
+  - mkdir examples\include
+  - copy bass24\c\bass.lib examples\lib
+  - copy bass24\c\x64\bass.lib examples\lib64
+  - copy bass24\c\bass.h examples\include
 
 before_build:
   - set PATH=%QTDIR%\bin;%PATH%
