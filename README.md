@@ -31,8 +31,7 @@ example\_bass/include/, and all .dll files to the example\_bass/.
 
 Once the prerequisites are installed, the example can be compiled either by
 opening examples.sln and selecting "Build" -> "Build Solution" from Visual
-Studio 2008, or by doing `make examples/example_bass` on Unix-base
-systems.
+Studio 2008, or by doing `make examples/example_bass` on Unix-based systems.
 
 Using the editor
 ----------------
