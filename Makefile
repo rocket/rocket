@@ -40,14 +40,14 @@ LIB_OBJS = \
 
 all: lib/librocket.a lib/librocket-player.a editor
 
-example_bass/%$X: CPPFLAGS += -Iexample_bass/include
-example_bass/%$X: CXXFLAGS += $(SDL_CFLAGS)
-example_bass/%$X: LDLIBS += -Lexample_bass/lib -lbass
-example_bass/%$X: LDLIBS += $(OPENGL_LIBS) $(SDL_LIBS)
+examples/%$X: CPPFLAGS += -Iexamples/include
+examples/%$X: CXXFLAGS += $(SDL_CFLAGS)
+examples/%$X: LDLIBS += -Lexamples/lib -lbass
+examples/%$X: LDLIBS += $(OPENGL_LIBS) $(SDL_LIBS)
 
 clean:
 	$(RM) $(LIB_OBJS) lib/librocket.a lib/librocket-player.a
-	$(RM) example_bass/example_bass$X example_bass/example_bass-player$X
+	$(RM) examples/example_bass$X examples/example_bass-player$X
 	if test -e editor/Makefile; then $(MAKE) -C editor clean; fi;
 	$(RM) editor/editor editor/Makefile
 
@@ -60,10 +60,10 @@ lib/librocket.a: $(LIB_OBJS)
 lib/librocket-player.a: $(LIB_OBJS:.o=.player.o)
 	$(AR) $(ARFLAGS) $@ $^
 
-example_bass/example_bass$X: example_bass/example_bass.cpp lib/librocket.a
+examples/example_bass$X: examples/example_bass.cpp lib/librocket.a
 	$(LINK.cpp) $^ $(LOADLIBES) $(LDLIBS) -o $@
 
-example_bass/example_bass-player$X: example_bass/example_bass.cpp lib/librocket-player.a
+examples/example_bass-player$X: examples/example_bass.cpp lib/librocket-player.a
 	$(LINK.cpp) -DSYNC_PLAYER $^ $(LOADLIBES) $(LDLIBS) -o $@
 
 editor/Makefile: editor/editor.pro
