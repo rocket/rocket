@@ -14,6 +14,10 @@ ui_*.h
 .*.swp
 .DS_Store
 *~
+/Debug Client/
+/Debug/
+/Release Client/
+/Release/
 /editor/Makefile*
 /editor/editor.vcproj
 /editor/editor.sln
@@ -29,10 +33,12 @@ ui_*.h
 /example_bass/x64/
 /example_bass/include/
 /example_bass/lib/
+/example_bass/lib64/
 /lib/Debug Client/
 /lib/Debug/
 /lib/Release Client/
 /lib/Release/
 /lib/x64/
 /packages/
+/x64/
 build-*
