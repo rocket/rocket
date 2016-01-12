@@ -20,6 +20,8 @@ ui_*.h
 /Release/
 /editor/Makefile*
 /editor/editor.vcproj
+/editor/editor.vcxproj
+/editor/editor.vcxproj.filters
 /editor/editor.sln
 /editor/debug/
 /editor/release/
