@@ -1,0 +1,7 @@
+root = true
+[*.{c,cpp,h}]
+	indent_style = tab
+
+[js/**.js]
+	indent_style = space
+	indent_size = 4
