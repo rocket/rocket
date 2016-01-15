@@ -136,7 +136,7 @@ Demos
 
 <a href="http://pouet.net/prod.php?which=61269">Cubedance by Indigo</a>
 
-<a href="http://plnkr.co/edit/uQO1MTeCLIoVLYbo0zim?p=preview">CubeDance Demo from the example folder</a>
+<a href="http://plnkr.co/edit/gPb2rYwmydisTmpg5p7g?p=preview">CubeDance Demo from the example folder</a>
 
 Other JS demoframeworks
 ---------------------
