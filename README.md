@@ -92,7 +92,14 @@ some keyboard shortcut. Here's a list of the supported keyboard shortcuts:
 | Ctrl+PgUp/PgDn           | Quick-bias by +/- 10         |
 | Shift+Ctrl+PgUp/PgDn     | Quick-bias by +/- 100        |
 
+Alternatives and ports
+----------------------
+* [PBRocket](https://github.com/dartcode/pbrocket), a PureBasic port of the GNU Rocket editor, client and player.
+* [RocketEditor](https://github.com/emoon/rocket), an alternative editor written in pure C using OpenGL for the GUI.
+* [GroundControl](https://github.com/edoreshef/ground-control), an alternative editor written in C# using WPF for the GUI.
+* [RocketNet](https://github.com/kebby/RocketNet), a pure .NET implementation of the client and player.
+
 Bugs and feedback
-------------------
+-----------------
 Please report bugs or other feedback to the GNU Rocket mailing list:
 gnu-rocket@googlegroups.com
