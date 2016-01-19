@@ -40,7 +40,7 @@ SyncDocument *SyncDocument::load(const QString &fileName)
 
 	QDomNodeList trackNodes =
 	    doc.documentElement().elementsByTagName("track");
-	for (int i = 0; i < int(trackNodes.length()); ++i) {
+	for (int i = 0; i < trackNodes.count(); ++i) {
 		QDomNode trackNode = trackNodes.item(i);
 		QDomNamedNodeMap attribs = trackNode.attributes();
 
@@ -52,7 +52,7 @@ SyncDocument *SyncDocument::load(const QString &fileName)
 			t = ret->createTrack(name.toUtf8().constData());
 
 		QDomNodeList rowNodes = trackNode.childNodes();
-		for (int i = 0; i < int(rowNodes.length()); ++i) {
+		for (int i = 0; i < rowNodes.count(); ++i) {
 			QDomNode keyNode = rowNodes.item(i);
 			QString baseName = keyNode.nodeName();
 			if (baseName == "key") {
@@ -75,7 +75,7 @@ SyncDocument *SyncDocument::load(const QString &fileName)
 	// YUCK: gathers from entire document
 	QDomNodeList bookmarkNodes =
 	    doc.documentElement().elementsByTagName("bookmark");
-	for (int i = 0; i < int(bookmarkNodes.length()); ++i) {
+	for (int i = 0; i < bookmarkNodes.count(); ++i) {
 		QDomNode bookmarkNode =
 		    bookmarkNodes.item(i);
 		QDomNamedNodeMap bookmarkAttribs =
@@ -93,7 +93,7 @@ bool SyncDocument::save(const QString &fileName)
 {
 	QDomDocument doc;
 	QDomElement rootNode = doc.createElement("sync");
-	rootNode.setAttribute("rows", int(getRows()));
+	rootNode.setAttribute("rows", getRows());
 	doc.appendChild(rootNode);
 
 	rootNode.appendChild(doc.createTextNode("\n\t"));

@@ -163,8 +163,8 @@ void TrackView::paintTopMargin(QPainter &painter, const QRect &rcTracks)
 	painter.fillRect(topRightMargin, palette().button());
 	qDrawWinButton(&painter, topRightMargin, palette());
 
-	int startTrack = qBound(0, getTrackFromPhysicalX(qMax(rcTracks.left(), leftMarginWidth)), int(getTrackCount()));
-	int endTrack   = qBound(0, getTrackFromPhysicalX(rcTracks.right()) + 1, int(getTrackCount()));
+	int startTrack = qBound(0, getTrackFromPhysicalX(qMax(rcTracks.left(), leftMarginWidth)), getTrackCount());
+	int endTrack   = qBound(0, getTrackFromPhysicalX(rcTracks.right()) + 1, getTrackCount());
 
 	for (int track = startTrack; track < endTrack; ++track) {
 		int index = doc->getTrackIndexFromPos(track);
@@ -204,8 +204,8 @@ void TrackView::paintLeftMargin(QPainter &painter, const QRect &rcTracks)
 	int lastRow  = editRow + windowRows / 2 + 1;
 
 	/* clamp first & last row */
-	firstRow = qBound(0, firstRow, int(getRows()) - 1);
-	lastRow  = qBound(0, lastRow,  int(getRows()) - 1);
+	firstRow = qBound(0, firstRow, getRows() - 1);
+	lastRow  = qBound(0, lastRow,  getRows() - 1);
 
 	for (int row = firstRow; row <= lastRow; ++row) {
 		QRect leftMargin(0, getPhysicalY(row), leftMarginWidth, rowHeight);
@@ -239,17 +239,17 @@ void TrackView::paintTracks(QPainter &painter, const QRect &rcTracks)
 	int lastRow  = editRow + windowRows / 2 + 1;
 
 	/* clamp first & last row */
-	firstRow = qBound(0, firstRow, int(getRows()) - 1);
-	lastRow  = qBound(0, lastRow,  int(getRows()) - 1);
+	firstRow = qBound(0, firstRow, getRows() - 1);
+	lastRow  = qBound(0, lastRow,  getRows() - 1);
 
-	int startTrack = qBound(0, getTrackFromPhysicalX(qMax(rcTracks.left(), leftMarginWidth)), int(getTrackCount()));
-	int endTrack   = qBound(0, getTrackFromPhysicalX(rcTracks.right()) + 1, int(getTrackCount()));
+	int startTrack = qBound(0, getTrackFromPhysicalX(qMax(rcTracks.left(), leftMarginWidth)), getTrackCount());
+	int endTrack   = qBound(0, getTrackFromPhysicalX(rcTracks.right()) + 1, getTrackCount());
 
-	QRect topPadding(QPoint(rcTracks.left(), qMax(int(rcTracks.top()), topMarginHeight)),
+	QRect topPadding(QPoint(rcTracks.left(), qMax(rcTracks.top(), topMarginHeight)),
 			 QPoint(rcTracks.right(), getPhysicalY(0) - 1));
 	painter.fillRect(topPadding, palette().dark());
 
-	QRect bottomPadding(QPoint(rcTracks.left(), getPhysicalY(int(getRows()))),
+	QRect bottomPadding(QPoint(rcTracks.left(), getPhysicalY(getRows())),
 			    QPoint(rcTracks.right(), rcTracks.bottom()));
 	painter.fillRect(bottomPadding, palette().dark());
 
@@ -262,7 +262,7 @@ void TrackView::paintTracks(QPainter &painter, const QRect &rcTracks)
 		paintTrack(painter, rcTracks, track);
 
 	QRect rightMargin(QPoint(getPhysicalX(getTrackCount()), getPhysicalY(0)),
-	                  QPoint(rcTracks.right(), getPhysicalY(int(getRows())) - 1));
+	                  QPoint(rcTracks.right(), getPhysicalY(getRows()) - 1));
 	painter.fillRect(rightMargin, palette().dark());
 }
 
@@ -293,8 +293,8 @@ void TrackView::paintTrack(QPainter &painter, const QRect &rcTracks, int track)
 	int lastRow  = editRow + windowRows / 2 + 1;
 
 	/* clamp first & last row */
-	firstRow = qBound(0, firstRow, int(getRows()) - 1);
-	lastRow  = qBound(0, lastRow,  int(getRows()) - 1);
+	firstRow = qBound(0, firstRow, getRows() - 1);
+	lastRow  = qBound(0, lastRow,  getRows() - 1);
 
 	QRect selection = getSelection();
 
@@ -378,7 +378,7 @@ void TrackView::mouseMoveEvent(QMouseEvent *event)
 		}
 	} else {
 		if (event->pos().y() < topMarginHeight &&
-		    track >= 0 && track < int(getTrackCount())) {
+		    track >= 0 && track < getTrackCount()) {
 			setCursor(handCursor);
 		} else
 			setCursor(QCursor(Qt::ArrowCursor));
@@ -390,7 +390,7 @@ void TrackView::mousePressEvent(QMouseEvent *event)
 	int track = getTrackFromPhysicalX(event->pos().x());
 	if (event->button() == Qt::LeftButton &&
 	    event->pos().y() < topMarginHeight &&
-	    track >= 0 && track < int(getTrackCount())) {
+	    track >= 0 && track < getTrackCount()) {
 		dragging = true;
 		anchorTrack = track;
 	}
@@ -564,9 +564,9 @@ void TrackView::editRedo()
 
 void TrackView::selectAll()
 {
-	selectStartTrack = int(this->getTrackCount()) - 1;
+	selectStartTrack = getTrackCount() - 1;
 	selectStopTrack = editTrack = 0;
-	selectStartRow = int(this->getRows()) - 1;
+	selectStartRow = getRows() - 1;
 	selectStopRow = editRow = 0;
 	invalidateAll();
 }
@@ -574,14 +574,14 @@ void TrackView::selectAll()
 void TrackView::selectTrack()
 {
 	selectStartTrack = selectStopTrack = editTrack;
-	selectStartRow = int(this->getRows()) - 1;
+	selectStartRow = getRows() - 1;
 	selectStopRow = editRow = 0;
 	invalidateAll();
 }
 
 void TrackView::selectRow()
 {
-	selectStartTrack = int(this->getTrackCount()) - 1;
+	selectStartTrack = getTrackCount() - 1;
 	selectStopTrack = editTrack = 0;
 	selectStartRow = selectStopRow = editRow;
 	invalidateAll();
@@ -592,7 +592,7 @@ void TrackView::setupScrollBars()
 {
 	verticalScrollBar()->setValue(editRow);
 	verticalScrollBar()->setMinimum(0);
-	verticalScrollBar()->setMaximum(int(getRows()) - 1);
+	verticalScrollBar()->setMaximum(getRows() - 1);
 	verticalScrollBar()->setPageStep(windowRows);
 
 	int contentWidth = getTrackCount() * trackWidth;
@@ -642,7 +642,7 @@ void TrackView::setEditRow(int newEditRow, bool selecting)
 	editRow = newEditRow;
 
 	// clamp to document
-	editRow = qBound(0, editRow, int(getRows()) - 1);
+	editRow = qBound(0, editRow, getRows() - 1);
 
 	if (oldEditRow != editRow) {
 		if (selecting) {
@@ -671,7 +671,7 @@ void TrackView::setEditTrack(int newEditTrack, bool autoscroll, bool selecting)
 	editTrack = newEditTrack;
 
 	// clamp to document
-	editTrack = qBound(0, editTrack, int(getTrackCount()) - 1);
+	editTrack = qBound(0, editTrack, getTrackCount() - 1);
 
 	if (oldEditTrack != editTrack)
 	{
@@ -712,7 +712,7 @@ void TrackView::setRows(int rows)
 
 	doc->setRows(rows);
 	viewport()->update();
-	setEditRow(qMin(editRow, int(rows) - 1));
+	setEditRow(qMin(editRow, rows - 1));
 }
 
 int TrackView::getRows() const
@@ -752,7 +752,7 @@ void TrackView::editEnterValue()
 	if (!doc || !lineEdit->isVisible())
 		return;
 
-	if (lineEdit->text().length() > 0 && editTrack < int(getTrackCount())) {
+	if (lineEdit->text().length() > 0 && editTrack < getTrackCount()) {
 		int track = doc->getTrackIndexFromPos(editTrack);
 		SyncTrack *t = doc->getTrack(track);
 
@@ -780,7 +780,7 @@ void TrackView::editToggleInterpolationType()
 	SyncDocument *doc = getDocument();
 	if (NULL == doc) return;
 
-	if (editTrack < int(getTrackCount())) {
+	if (editTrack < getTrackCount()) {
 		int track = doc->getTrackIndexFromPos(editTrack);
 		SyncTrack *t = doc->getTrack(track);
 		QMap<int, SyncTrack::TrackKey> keyMap = t->getKeyMap();
@@ -818,7 +818,7 @@ void TrackView::editClear()
 	QRect selection = getSelection();
 
 	if (0 == getTrackCount()) return;
-	Q_ASSERT(selection.right() < int(getTrackCount()));
+	Q_ASSERT(selection.right() < getTrackCount());
 
 	doc->beginMacro("clear");
 	for (int track = selection.left(); track <= selection.right(); ++track) {
@@ -850,7 +850,7 @@ void TrackView::editBiasValue(float amount)
 
 	doc->beginMacro("bias");
 	for (int track = selection.left(); track <= selection.right(); ++track) {
-		Q_ASSERT(track < int(getTrackCount()));
+		Q_ASSERT(track < getTrackCount());
 		int trackIndex = doc->getTrackIndexFromPos(track);
 		SyncTrack *t = doc->getTrack(trackIndex);
 
@@ -920,7 +920,7 @@ void TrackView::keyPressEvent(QKeyEvent *event)
 			// FALLTHROUGH
 		case Qt::Key_Right:
 			if (ctrlDown) {
-				if (int(getTrackCount()) > editTrack + 1) {
+				if (getTrackCount() > editTrack + 1) {
 					doc->swapTrackOrder(editTrack, editTrack + 1);
 					viewport()->update();
 				} else
@@ -938,7 +938,7 @@ void TrackView::keyPressEvent(QKeyEvent *event)
 		switch (event->key()) {
 		case Qt::Key_Up:
 			if (ctrlDown) {
-				if (int(getTrackCount()) > editTrack)
+				if (getTrackCount() > editTrack)
 					editBiasValue(shiftDown ? 0.1f : 1.0f);
 				else
 					QApplication::beep();
@@ -948,7 +948,7 @@ void TrackView::keyPressEvent(QKeyEvent *event)
 
 		case Qt::Key_Down:
 			if (ctrlDown) {
-				if (int(getTrackCount()) > editTrack)
+				if (getTrackCount() > editTrack)
 					editBiasValue(shiftDown ? -0.1f : -1.0f);
 				else
 					QApplication::beep();
@@ -979,9 +979,9 @@ void TrackView::keyPressEvent(QKeyEvent *event)
 
 		case Qt::Key_End:
 			if (ctrlDown)
-				setEditTrack(int(getTrackCount()) - 1);
+				setEditTrack(getTrackCount() - 1);
 			else
-				setEditRow(int(getRows()) - 1, selecting);
+				setEditRow(getRows() - 1, selecting);
 			return;
 		}
 	}
