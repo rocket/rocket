@@ -13,9 +13,19 @@ SyncDocument::~SyncDocument()
 
 SyncTrack *SyncDocument::createTrack(const QString &name)
 {
-	SyncTrack *t = new SyncTrack(name);
+	QStringList parts = name.split(':');
+	SyncPage *page = defaultSyncPage;
+	QString visibleName = name;
+	if (parts.size() > 1) {
+		page = findSyncPage(parts[0]);
+		if (!page)
+			page = createSyncPage(parts[0]);
+		visibleName = name.right(name.length() - parts[0].length() - 1);
+	}
+
+	SyncTrack *t = new SyncTrack(name, visibleName);
 	tracks.append(t);
-	defaultSyncPage->addTrack(t);
+	page->addTrack(t);
 	return t;
 }
 

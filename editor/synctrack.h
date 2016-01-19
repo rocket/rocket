@@ -7,8 +7,8 @@
 class SyncTrack : public QObject {
 	Q_OBJECT
 public:
-	SyncTrack(const QString &name) :
-	    name(name), active(false)
+	SyncTrack(const QString &name, const QString &displayName) :
+	    name(name), displayName(displayName), active(false)
 	{
 	}
 
@@ -161,9 +161,10 @@ public:
 	}
 
 	const QString &getName() const { return name; }
+	const QString &getDisplayName() const { return displayName; }
 
 private:
-	QString name;
+	QString name, displayName;
 	bool active;
 	QMap<int, TrackKey> keys;
 
