@@ -54,6 +54,16 @@ public slots:
 
 	void editBiasSelection();
 
+	void editUndo();
+	void editRedo();
+	void editCopy();
+	void editCut();
+	void editPaste();
+	void editClear();
+	void editSelectAll();
+	void editSelectTrack();
+	void editSelectRow();
+
 	void editSetRows();
 
 	void editPreviousBookmark();

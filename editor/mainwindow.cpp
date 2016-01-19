@@ -84,17 +84,17 @@ void MainWindow::createMenuBar()
 	fileMenu->addAction(QIcon::fromTheme("application-exit"), "E&xit", this, SLOT(fileQuit()), QKeySequence::Quit);
 
 	editMenu = menuBar()->addMenu("&Edit");
-	editMenu->addAction(QIcon::fromTheme("edit-undo"), "Undo", trackView, SLOT(editUndo()), QKeySequence::Undo);
-	editMenu->addAction(QIcon::fromTheme("edit-redo"), "Redo", trackView, SLOT(editRedo()), QKeySequence::Redo);
+	editMenu->addAction(QIcon::fromTheme("edit-undo"), "Undo", this, SLOT(editUndo()), QKeySequence::Undo);
+	editMenu->addAction(QIcon::fromTheme("edit-redo"), "Redo", this, SLOT(editRedo()), QKeySequence::Redo);
 	editMenu->addSeparator();
-	editMenu->addAction(QIcon::fromTheme("edit-copy"), "&Copy", trackView, SLOT(editCopy()), QKeySequence::Copy);
-	editMenu->addAction(QIcon::fromTheme("edit-cut"), "Cu&t", trackView, SLOT(editCut()), QKeySequence::Cut);
-	editMenu->addAction(QIcon::fromTheme("edit-paste"), "&Paste", trackView, SLOT(editPaste()), QKeySequence::Paste);
-	editMenu->addAction(QIcon::fromTheme("edit-clear"), "Clear", trackView, SLOT(editClear()), QKeySequence::Delete);
+	editMenu->addAction(QIcon::fromTheme("edit-copy"), "&Copy", this, SLOT(editCopy()), QKeySequence::Copy);
+	editMenu->addAction(QIcon::fromTheme("edit-cut"), "Cu&t", this, SLOT(editCut()), QKeySequence::Cut);
+	editMenu->addAction(QIcon::fromTheme("edit-paste"), "&Paste", this, SLOT(editPaste()), QKeySequence::Paste);
+	editMenu->addAction(QIcon::fromTheme("edit-clear"), "Clear", this, SLOT(editClear()), QKeySequence::Delete);
 	editMenu->addSeparator();
-	editMenu->addAction(QIcon::fromTheme("edit-select-all"), "Select All", trackView, SLOT(selectAll()), QKeySequence::SelectAll);
-	editMenu->addAction("Select Track", trackView, SLOT(selectTrack()), Qt::CTRL + Qt::Key_T);
-	editMenu->addAction("Select Row", trackView, SLOT(selectRow()));
+	editMenu->addAction(QIcon::fromTheme("edit-select-all"), "Select All", this, SLOT(editSelectAll()), QKeySequence::SelectAll);
+	editMenu->addAction("Select Track", this, SLOT(editSelectTrack()), Qt::CTRL + Qt::Key_T);
+	editMenu->addAction("Select Row", this, SLOT(editSelectRow()));
 	editMenu->addSeparator();
 	editMenu->addAction("Bias Selection", this, SLOT(editBiasSelection()), Qt::CTRL + Qt::Key_B);
 	editMenu->addSeparator();
@@ -367,6 +367,51 @@ void MainWindow::fileQuit()
 			QApplication::quit();
 	}
 	else QApplication::quit();
+}
+
+void MainWindow::editUndo()
+{
+	trackView->editUndo();
+}
+
+void MainWindow::editRedo()
+{
+	trackView->editRedo();
+}
+
+void MainWindow::editCopy()
+{
+	trackView->editCopy();
+}
+
+void MainWindow::editCut()
+{
+	trackView->editCut();
+}
+
+void MainWindow::editPaste()
+{
+	trackView->editPaste();
+}
+
+void MainWindow::editClear()
+{
+	trackView->editClear();
+}
+
+void MainWindow::editSelectAll()
+{
+	trackView->selectAll();
+}
+
+void MainWindow::editSelectTrack()
+{
+	trackView->selectTrack();
+}
+
+void MainWindow::editSelectRow()
+{
+	trackView->selectRow();
 }
 
 void MainWindow::editBiasSelection()
