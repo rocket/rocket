@@ -15,6 +15,7 @@ TrackView::TrackView(QWidget *parent) :
     QAbstractScrollArea(parent),
     windowRows(0),
     document(NULL),
+    page(NULL),
     readOnly(false),
     dragging(false)
 {
@@ -88,6 +89,14 @@ TrackView::~TrackView()
 {
 	if (document)
 		delete document;
+}
+
+void TrackView::setDocument(SyncDocument *document)
+{
+	this->document = document;
+	page = document->getSyncPage(0);
+	setupScrollBars();
+	setEditTrack(editTrack); // force the old edit-track to get clamped to new range
 }
 
 int TrackView::getLogicalX(int track) const
@@ -331,13 +340,13 @@ void TrackView::mouseMoveEvent(QMouseEvent *event)
 
 		if (track > anchorTrack) {
 			for (int i = anchorTrack; i < track; ++i)
-				doc->swapTrackOrder(i, i + 1);
+				page->swapTrackOrder(i, i + 1);
 			anchorTrack = track;
 			setEditTrack(track);
 			viewport()->update();
 		} else if (track < anchorTrack) {
 			for (int i = anchorTrack; i > track; --i)
-				doc->swapTrackOrder(i, i - 1);
+				page->swapTrackOrder(i, i - 1);
 			anchorTrack = track;
 			setEditTrack(track);
 			viewport()->update();
@@ -683,20 +692,17 @@ int TrackView::getRows() const
 	return doc->getRows();
 }
 
-SyncTrack *TrackView::getTrack(int track)
+SyncTrack *TrackView::getTrack(int index)
 {
-	SyncDocument *doc = getDocument();
-	Q_ASSERT(doc);
-	int index = doc->getTrackIndexFromPos(track);
-	return doc->getTrack(index);
+	Q_ASSERT(page);
+	return page->getTrack(index);
 }
 
 int TrackView::getTrackCount() const
 {
-	const SyncDocument *doc = getDocument();
-	if (!doc)
+	if (!page)
 		return 0;
-	return doc->getTrackCount();
+	return page->getTrackCount();
 }
 
 void TrackView::onVScroll(int value)
@@ -870,7 +876,7 @@ void TrackView::keyPressEvent(QKeyEvent *event)
 		case Qt::Key_Left:
 			if (ctrlDown) {
 				if (0 < editTrack) {
-					doc->swapTrackOrder(editTrack, editTrack - 1);
+					page->swapTrackOrder(editTrack, editTrack - 1);
 					viewport()->update();
 				} else
 					QApplication::beep();
@@ -888,7 +894,7 @@ void TrackView::keyPressEvent(QKeyEvent *event)
 		case Qt::Key_Right:
 			if (ctrlDown) {
 				if (getTrackCount() > editTrack + 1) {
-					doc->swapTrackOrder(editTrack, editTrack + 1);
+					page->swapTrackOrder(editTrack, editTrack + 1);
 					viewport()->update();
 				} else
 					QApplication::beep();

@@ -12,6 +12,7 @@ class QFontMetrics;
 class QLineEdit;
 class QStylePainter;
 class SyncDocument;
+class SyncPage;
 
 class TrackView : public QAbstractScrollArea
 {
@@ -20,13 +21,7 @@ public:
 	TrackView(QWidget *parent);
 	~TrackView();
 
-	void setDocument(SyncDocument *document)
-	{
-		this->document = document;
-		setupScrollBars();
-		setEditTrack(editTrack); // force the old edit-track to get clamped to new range
-	}
-
+	void setDocument(SyncDocument *document);
 	const SyncDocument *getDocument() const { return document; }
 	SyncDocument *getDocument() { return document; }
 
@@ -169,6 +164,8 @@ private:
 
 	int getTrackFromLogicalX(int x) const;
 	int getTrackFromPhysicalX(int x) const;
+
+	SyncPage *page;
 
 	int selectStartTrack, selectStopTrack;
 	int selectStartRow, selectStopRow;

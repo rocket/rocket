@@ -7,9 +7,11 @@
 #include <QString>
 #include <QUndoCommand>
 #include <QUndoStack>
+#include <QStringList>
 
 #include "clientsocket.h"
 #include "synctrack.h"
+#include "syncpage.h"
 
 class SyncDocument : public QObject {
 	Q_OBJECT
@@ -17,22 +19,14 @@ public:
 	SyncDocument() :
 	    rows(128)
 	{
+		defaultSyncPage = createSyncPage("default");
 		QObject::connect(&undoStack, SIGNAL(cleanChanged(bool)),
 		                 this,       SLOT(onCleanChanged(bool)));
 	}
 
 	~SyncDocument();
 
-	SyncTrack *createTrack(const QString &name)
-	{
-		SyncTrack *t = new SyncTrack(name);
-		tracks.append(t);
-
-		int index = tracks.size() - 1;
-		trackOrder.push_back(index);
-		Q_ASSERT(trackOrder.size() == tracks.size());
-		return t;
-	}
+	SyncTrack *createTrack(const QString &name);
 
 	SyncTrack *getTrack(int index)
 	{
@@ -50,7 +44,6 @@ public:
 
 	int getTrackCount() const
 	{
-		Q_ASSERT(trackOrder.size() == tracks.size());
 		return tracks.size();
 	}
 
@@ -64,9 +57,6 @@ public:
 	void setKeyFrame(SyncTrack *track, const SyncTrack::TrackKey &key);
 	void deleteKeyFrame(SyncTrack *track, int row);
 	void endMacro() { undoStack.endMacro(); }
-
-	int getTrackIndexFromPos(int track) const;
-	void swapTrackOrder(int t1, int t2);
 
 	static SyncDocument *load(const QString &fileName);
 	bool save(const QString &fileName);
@@ -82,16 +72,47 @@ public:
 	int nextRowBookmark(int row) const;
 	int prevRowBookmark(int row) const;
 
+	SyncPage *findSyncPage(const QString &name)
+	{
+		for (int i = 0; i < syncPages.size(); ++i)
+			if (name == syncPages[i]->getName())
+				return syncPages[i];
+		return NULL;
+	}
+
+	SyncPage *createSyncPage(const QString &name)
+	{
+		SyncPage *syncPage = new SyncPage(this, name);
+		syncPages.append(syncPage);
+
+		emit syncPageAdded(syncPage);
+		return syncPage;
+	}
+
+	int getSyncPageCount() const
+	{
+		return syncPages.size();
+	}
+
+	SyncPage *getSyncPage(int index)
+	{
+		Q_ASSERT(index >= 0 && index < syncPages.size());
+		return syncPages[index];
+	}
+
 private:
 	QList<SyncTrack*> tracks;
 	QList<int> rowBookmarks;
-	QVector<int> trackOrder;
+	QList<SyncPage*> syncPages;
+	SyncPage *defaultSyncPage;
 	int rows;
 
 	QUndoStack undoStack;
 
 signals:
+	void syncPageAdded(SyncPage *page);
 	void modifiedChanged(bool modified);
+	void trackModified(int track);
 
 private slots:
 	void onCleanChanged(bool clean) { emit modifiedChanged(!clean); }
