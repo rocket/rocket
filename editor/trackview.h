@@ -31,10 +31,10 @@ public:
 	void editEnterValue();
 	void editBiasValue(float amount);
 	void editToggleInterpolationType();
-	
+
 	void setEditRow(int newEditRow, bool selecting = false);
 	int  getEditRow() const { return editRow; }
-	
+
 	void setEditTrack(int newEditTrack, bool autoscroll = true, bool selecting = false);
 	int  getEditTrack() const { return editTrack; }
 
@@ -165,10 +165,10 @@ private:
 
 	/* cursor position */
 	int editRow, editTrack;
-	
+
 	int scrollPosX,  scrollPosY;
 	int windowRows;
-	
+
 	SyncDocument *document;
 
 	QLineEdit *lineEdit;

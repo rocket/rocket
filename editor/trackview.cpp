@@ -48,7 +48,7 @@ TrackView::TrackView(QWidget *parent) :
 
 	editRow = 0;
 	editTrack = 0;
-	
+
 	selectStartTrack = selectStopTrack = 0;
 	selectStartRow = selectStopRow = 0;
 
@@ -147,7 +147,7 @@ void TrackView::paintTopMargin(QPainter &painter, const QRect &rcTracks)
 	QRect topLeftMargin;
 	const SyncDocument *doc = getDocument();
 	if (NULL == doc) return;
-	
+
 	topLeftMargin.setTop(-1);
 	topLeftMargin.setBottom(topMarginHeight - 1);
 	topLeftMargin.setLeft(-1);
@@ -415,7 +415,7 @@ void TrackView::editCopy()
 {
 	const SyncDocument *doc = getDocument();
 	if (NULL == doc) return;
-	
+
 	if (0 == getTrackCount()) {
 		QApplication::beep();
 		return;
@@ -438,7 +438,7 @@ void TrackView::editCopy()
 			}
 		}
 	}
-	
+
 	int buffer_width  = selection.width();
 	int buffer_height = selection.height();
 	size_t buffer_size = copyEntries.size();
@@ -460,7 +460,7 @@ void TrackView::editCut()
 		QApplication::beep();
 		return;
 	}
-	
+
 	editCopy();
 	editClear();
 }
@@ -469,7 +469,7 @@ void TrackView::editPaste()
 {
 	SyncDocument *doc = getDocument();
 	if (NULL == doc) return;
-	
+
 	if (0 == getTrackCount()) {
 		QApplication::beep();
 		return;
@@ -479,7 +479,7 @@ void TrackView::editPaste()
 	if (mimeData->hasFormat("application/x-gnu-rocket")) {
 		const QByteArray mimeDataBuffer = mimeData->data("application/x-gnu-rocket");
 		const char *clipbuf = mimeDataBuffer.data();
-		
+
 		// copy data
 		int buffer_width, buffer_height, buffer_size;
 		memcpy(&buffer_width,  clipbuf + 0,               sizeof(int));
@@ -499,7 +499,7 @@ void TrackView::editPaste()
 					doc->deleteKeyFrame(t, row);
 			}
 		}
-		
+
 		const char *src = clipbuf + 2 * sizeof(int) + sizeof(size_t);
 		for (int i = 0; i < buffer_size; ++i)
 		{
@@ -518,7 +518,7 @@ void TrackView::editPaste()
 				SyncTrack::TrackKey key = ce.keyFrame;
 				key.row += editRow;
 
-				// since we deleted all keyframes in the edit-box already, we can just insert this one. 
+				// since we deleted all keyframes in the edit-box already, we can just insert this one.
 				doc->setKeyFrame(doc->getTrack(track), key);
 			}
 		}
@@ -617,7 +617,7 @@ void TrackView::setScrollPos(int newScrollPosX, int newScrollPosY)
 {
 	// clamp newscrollPosX
 	newScrollPosX = qMax(newScrollPosX, 0);
-	
+
 	if (newScrollPosX != scrollPosX || newScrollPosY != scrollPosY) {
 		int deltaX = scrollPosX - newScrollPosX;
 		int deltaY = scrollPosY - newScrollPosY;
@@ -637,13 +637,13 @@ void TrackView::setEditRow(int newEditRow, bool selecting)
 {
 	SyncDocument *doc = getDocument();
 	if (NULL == doc) return;
-	
+
 	int oldEditRow = editRow;
 	editRow = newEditRow;
-	
+
 	// clamp to document
 	editRow = qBound(0, editRow, int(getRows()) - 1);
-	
+
 	if (oldEditRow != editRow) {
 		if (selecting) {
 			selectStopRow = editRow;
@@ -656,23 +656,23 @@ void TrackView::setEditRow(int newEditRow, bool selecting)
 		dirtyPosition();
 		dirtyCurrentValue();
 	}
-	
+
 	invalidateRow(oldEditRow);
 	invalidateRow(editRow);
-	
+
 	setScrollPos(scrollPosX, (editRow * rowHeight) - ((viewport()->height() - topMarginHeight) / 2) + rowHeight / 2);
 }
 
 void TrackView::setEditTrack(int newEditTrack, bool autoscroll, bool selecting)
 {
 	if (0 == getTrackCount()) return;
-	
+
 	int oldEditTrack = editTrack;
 	editTrack = newEditTrack;
-	
+
 	// clamp to document
 	editTrack = qBound(0, editTrack, int(getTrackCount()) - 1);
-	
+
 	if (oldEditTrack != editTrack)
 	{
 		if (selecting)
@@ -779,7 +779,7 @@ void TrackView::editToggleInterpolationType()
 {
 	SyncDocument *doc = getDocument();
 	if (NULL == doc) return;
-	
+
 	if (editTrack < int(getTrackCount())) {
 		int track = doc->getTrackIndexFromPos(editTrack);
 		SyncTrack *t = doc->getTrack(track);
@@ -819,7 +819,7 @@ void TrackView::editClear()
 
 	if (0 == getTrackCount()) return;
 	Q_ASSERT(selection.right() < int(getTrackCount()));
-	
+
 	doc->beginMacro("clear");
 	for (int track = selection.left(); track <= selection.right(); ++track) {
 		int trackIndex = doc->getTrackIndexFromPos(track);
@@ -874,7 +874,7 @@ void TrackView::keyPressEvent(QKeyEvent *event)
 {
 	SyncDocument *doc = getDocument();
 	if (NULL == doc) return;
-	
+
 	if (paused && lineEdit->isVisible()) {
 		switch (event->key()) {
 		case Qt::Key_Up:
