@@ -13,6 +13,7 @@ qrc_*.cpp
 ui_*.h
 .*.swp
 .DS_Store
+.qmake.stash
 *~
 /Debug Client/
 /Debug/
