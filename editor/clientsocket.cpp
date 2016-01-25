@@ -213,8 +213,12 @@ void ClientSocket::processCommand()
 void ClientSocket::processGetTrack()
 {
 	// read data
-	int strLen;
-	recv((char *)&strLen, sizeof(int));
+	quint32 strLen;
+	if (!recv((char *)&strLen, sizeof(strLen))) {
+		disconnect();
+		return;
+	}
+
 	strLen = qFromBigEndian((quint32)strLen);
 
 	if (!strLen) {
@@ -224,10 +228,8 @@ void ClientSocket::processGetTrack()
 
 	QByteArray trackNameBuffer;
 	trackNameBuffer.resize(strLen);
-	if (!recv(trackNameBuffer.data(), strLen))
-		return;
-
-	if (trackNameBuffer.contains('\0')) {
+	if (!recv(trackNameBuffer.data(), strLen) ||
+	    trackNameBuffer.contains('\0')) {
 		disconnect();
 		return;
 	}
