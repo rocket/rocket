@@ -2,6 +2,7 @@
 #include "syncdocument.h"
 
 #include <QCryptographicHash>
+#include <QDataStream>
 #include <QtEndian>
 
 bool WebSocket::readFrame(QByteArray &buf)
@@ -137,24 +138,22 @@ void ClientSocket::sendSetKeyCommand(const QString &trackName, const SyncTrack::
 	if (clientTracks.count(trackName) == 0)
 		return;
 
-	quint32 track = qToBigEndian((quint32)clientTracks[trackName]);
-	quint32 row = qToBigEndian((quint32)key.row);
-
 	union {
 		float f;
 		quint32 i;
 	} v;
 	v.f = key.value;
-	v.i = qToBigEndian(v.i);
 
 	Q_ASSERT(key.type < SyncTrack::TrackKey::KEY_TYPE_COUNT);
 
-	unsigned char cmd = SET_KEY;
-	send((char *)&cmd, 1, false);
-	send((char *)&track, sizeof(track), false);
-	send((char *)&row, sizeof(row), false);
-	send((char *)&v.i, sizeof(v.i), false);
-	send((char *)&key.type, 1, true);
+	QByteArray data;
+	QDataStream ds(&data, QIODevice::WriteOnly);
+	ds << (unsigned char)SET_KEY;
+	ds << (quint32)clientTracks[trackName];
+	ds << (quint32)key.row;
+	ds << v.i;
+	ds << (unsigned char)key.type;
+	send(data.constData(), data.size(), true);
 }
 
 void ClientSocket::sendDeleteKeyCommand(const QString &trackName, int row)
@@ -162,34 +161,37 @@ void ClientSocket::sendDeleteKeyCommand(const QString &trackName, int row)
 	if (clientTracks.count(trackName) == 0)
 		return;
 
-	quint32 track = qToBigEndian((quint32)clientTracks[trackName]);
-	row = qToBigEndian((quint32)row);
-
-	unsigned char cmd = DELETE_KEY;
-	send((char *)&cmd, 1, false);
-	send((char *)&track, sizeof(int), false);
-	send((char *)&row,   sizeof(int), true);
+	QByteArray data;
+	QDataStream ds(&data, QIODevice::WriteOnly);
+	ds << (unsigned char)DELETE_KEY;
+	ds << (quint32)clientTracks[trackName];
+	ds << (quint32)row;
+	send(data.constData(), data.size(), true);
 }
 
 void ClientSocket::sendSetRowCommand(int row)
 {
-	unsigned char cmd = SET_ROW;
-	row = qToBigEndian((quint32)row);
-	send((char *)&cmd, 1, false);
-	send((char *)&row, sizeof(int), true);
+	QByteArray data;
+	QDataStream ds(&data, QIODevice::WriteOnly);
+	ds << (unsigned char)SET_ROW;
+	ds << (quint32)row;
+	send(data.constData(), data.size(), true);
 }
 
 void ClientSocket::sendPauseCommand(bool pause)
 {
-	unsigned char cmd = PAUSE, flag = pause;
-	send((char *)&cmd, 1, false);
-	send((char *)&flag, 1, true);
+	QByteArray data;
+	QDataStream ds(&data, QIODevice::WriteOnly);
+	ds << (unsigned char)PAUSE;
+	ds << (unsigned char)pause;
+	send(data.constData(), data.size(), true);
 }
 
 void ClientSocket::sendSaveCommand()
 {
-	unsigned char cmd = SAVE_TRACKS;
-	send((char *)&cmd, 1, true);
+	QByteArray data;
+	data.append(SAVE_TRACKS);
+	send(data.constData(), data.size(), true);
 }
 
 void ClientSocket::processCommand()
