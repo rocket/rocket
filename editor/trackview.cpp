@@ -902,9 +902,10 @@ void TrackView::keyPressEvent(QKeyEvent *event)
 			// FALLTHROUGH
 		case Qt::Key_Left:
 			if (ctrlDown) {
-				if (0 < editTrack)
+				if (0 < editTrack) {
 					doc->swapTrackOrder(editTrack, editTrack - 1);
-				else
+					viewport()->update();
+				} else
 					QApplication::beep();
 			}
 			if (0 != getTrackCount())
@@ -919,9 +920,10 @@ void TrackView::keyPressEvent(QKeyEvent *event)
 			// FALLTHROUGH
 		case Qt::Key_Right:
 			if (ctrlDown) {
-				if (int(getTrackCount()) > editTrack + 1)
+				if (int(getTrackCount()) > editTrack + 1) {
 					doc->swapTrackOrder(editTrack, editTrack + 1);
-				else
+					viewport()->update();
+				} else
 					QApplication::beep();
 			}
 			if (0 != getTrackCount())
