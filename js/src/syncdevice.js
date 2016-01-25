@@ -6,7 +6,7 @@ JSRocket.SyncDevice = function () {
         _device,
         _previousIntRow,
         _config = {
-            "socketURL":"ws://localhost:1338",
+            "socketURL":"ws://localhost:1339",
             "rocketXML":""
         },
         _eventHandler = {

@@ -1,6 +1,5 @@
 #include <QApplication>
 #include <QMessageBox>
-#include <QTcpServer>
 #include "mainwindow.h"
 
 int main(int argc, char *argv[])
@@ -10,13 +9,7 @@ int main(int argc, char *argv[])
 	app.setApplicationName("GNU Rocket Editor");
 	app.setWindowIcon(QIcon(":appicon.ico"));
 
-	QTcpServer serverSocket;
-	if (!serverSocket.listen(QHostAddress::Any, 1338)) {
-		QMessageBox::critical(NULL, NULL, QString("Could not start server:\n%1").arg(serverSocket.errorString()), QMessageBox::Ok);
-		exit(EXIT_FAILURE);
-	}
-
-	MainWindow mainWindow(&serverSocket);
+	MainWindow mainWindow;
 
 	if (app.arguments().size() > 1) {
 		if (app.arguments().size() > 2) {

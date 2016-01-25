@@ -14,9 +14,14 @@
 #include <QTcpServer>
 #include <QtEndian>
 
-MainWindow::MainWindow(QTcpServer *serverSocket) :
+#ifdef QT_WEBSOCKETS_LIB
+#include <QWebSocketServer>
+#include <QWebSocket>
+#endif
+
+MainWindow::MainWindow() :
 	QMainWindow(),
-	serverSocket(serverSocket),
+	clientSocket(NULL),
 	clientIndex(0)
 {
 	trackView = new TrackView(this);
@@ -24,16 +29,29 @@ MainWindow::MainWindow(QTcpServer *serverSocket) :
 
 	connect(trackView, SIGNAL(posChanged(int, int)),
 	        this, SLOT(onPosChanged(int, int)));
-	connect(trackView,     SIGNAL(pauseChanged(bool)),
-	        &clientSocket, SLOT(onPauseChanged(bool)));
 	connect(trackView, SIGNAL(currValDirty()),
 	        this, SLOT(onCurrValDirty()));
 
 	createMenuBar();
+	updateRecentFiles();
+
 	createStatusBar();
 
-	connect(serverSocket, SIGNAL(newConnection()),
-	        this, SLOT(onNewConnection()));
+	tcpServer = new QTcpServer();
+	connect(tcpServer, SIGNAL(newConnection()),
+	        this, SLOT(onNewTcpConnection()));
+
+	if (!tcpServer->listen(QHostAddress::Any, 1338))
+		setStatusText(QString("Could not start server: %1").arg(tcpServer->errorString()));
+
+#ifdef QT_WEBSOCKETS_LIB
+	wsServer = new QWebSocketServer("GNU Rocket Editor", QWebSocketServer::NonSecureMode);
+	connect(wsServer, SIGNAL(newConnection()),
+	        this, SLOT(onNewWsConnection()));
+
+	if (!wsServer->listen(QHostAddress::Any, 1339))
+		setStatusText(QString("Could not start server: %1").arg(tcpServer->errorString()));
+#endif
 }
 
 void MainWindow::showEvent(QShowEvent *event)
@@ -63,7 +81,6 @@ void MainWindow::createMenuBar()
 		connect(recentFileActions[i], SIGNAL(triggered()),
 		        this, SLOT(openRecentFile()));
 	}
-	updateRecentFiles();
 	fileMenu->addSeparator();
 	fileMenu->addAction(QIcon::fromTheme("application-exit"), "E&xit", this, SLOT(fileQuit()), QKeySequence::Quit);
 
@@ -226,7 +243,7 @@ void MainWindow::setDocument(SyncDocument *newDoc)
 		QObject::disconnect(oldDoc, SIGNAL(modifiedChanged(bool)),
 		                    this, SLOT(setWindowModified(bool)));
 
-	if (oldDoc && clientSocket.connected()) {
+	if (oldDoc && clientSocket) {
 		// delete old key frames
 		for (int i = 0; i < oldDoc->getTrackCount(); ++i) {
 			SyncTrack *t = oldDoc->getTrack(i);
@@ -235,13 +252,13 @@ void MainWindow::setDocument(SyncDocument *newDoc)
 			for (it = keyMap.constBegin(); it != keyMap.constEnd(); ++it)
 				t->removeKey(it.key());
 			QObject::disconnect(t, SIGNAL(keyFrameChanged(const SyncTrack &, int)),
-			        &clientSocket, SLOT(onKeyFrameChanged(const SyncTrack &, int)));
+			        clientSocket, SLOT(onKeyFrameChanged(const SyncTrack &, int)));
 		}
 
 		if (newDoc) {
 			// add back missing client-tracks
 			QMap<QString, size_t>::const_iterator it;
-			for (it = clientSocket.clientTracks.begin(); it != clientSocket.clientTracks.end(); ++it) {
+			for (it = clientSocket->clientTracks.begin(); it != clientSocket->clientTracks.end(); ++it) {
 				SyncTrack *t = newDoc->findTrack(it.key());
 				if (!t)
 					newDoc->createTrack(it.key());
@@ -252,9 +269,9 @@ void MainWindow::setDocument(SyncDocument *newDoc)
 				QMap<int, SyncTrack::TrackKey> keyMap = t->getKeyMap();
 				QMap<int, SyncTrack::TrackKey>::const_iterator it;
 				for (it = keyMap.constBegin(); it != keyMap.constEnd(); ++it)
-					clientSocket.sendSetKeyCommand(t->name.toUtf8().constData(), *it);
-				QObject::connect(t,             SIGNAL(keyFrameChanged(const SyncTrack &, int)),
-						 &clientSocket, SLOT(onKeyFrameChanged(const SyncTrack &, int)));
+					clientSocket->sendSetKeyCommand(t->name.toUtf8().constData(), *it);
+				QObject::connect(t, SIGNAL(keyFrameChanged(const SyncTrack &, int)),
+						 clientSocket, SLOT(onKeyFrameChanged(const SyncTrack &, int)));
 			}
 		}
 	}
@@ -302,7 +319,9 @@ void MainWindow::fileSaveAs()
 	if (fileName.length()) {
 		SyncDocument *doc = trackView->getDocument();
 		if (doc->save(fileName)) {
-			clientSocket.sendSaveCommand();
+			if (clientSocket)
+				clientSocket->sendSaveCommand();
+
 			setCurrentFileName(fileName);
 			doc->fileName = fileName;
 		}
@@ -316,12 +335,13 @@ void MainWindow::fileSave()
 		return fileSaveAs();
 
 	if (!doc->save(doc->fileName))
-		clientSocket.sendSaveCommand();
+		fileRemoteExport();
 }
 
 void MainWindow::fileRemoteExport()
 {
-	clientSocket.sendSaveCommand();
+	if (clientSocket)
+		clientSocket->sendSaveCommand();
 }
 
 void MainWindow::openRecentFile()
@@ -387,8 +407,8 @@ void MainWindow::editNextBookmark()
 void MainWindow::onPosChanged(int col, int row)
 {
 	setStatusPosition(col, row);
-	if (trackView->paused && clientSocket.connected())
-		clientSocket.sendSetRowCommand(row);
+	if (trackView->paused && clientSocket)
+		clientSocket->sendSetRowCommand(row);
 }
 
 void MainWindow::onCurrValDirty()
@@ -411,51 +431,9 @@ void MainWindow::onCurrValDirty()
 	}
 }
 
-void MainWindow::processCommand(ClientSocket &sock)
-{
-	unsigned char cmd = 0;
-	if (sock.recv((char*)&cmd, 1)) {
-		switch (cmd) {
-		case GET_TRACK:
-			processGetTrack(sock);
-			break;
-
-		case SET_ROW:
-			processSetRow(sock);
-			break;
-		}
-	}
-}
-
-void MainWindow::processGetTrack(ClientSocket &sock)
+void MainWindow::onTrackRequested(const QString &trackName)
 {
 	SyncDocument *doc = trackView->getDocument();
-
-	// read data
-	int strLen;
-	sock.recv((char *)&strLen, sizeof(int));
-	strLen = qFromBigEndian((quint32)strLen);
-	if (!sock.connected())
-		return;
-
-	if (!strLen) {
-		sock.disconnect();
-		trackView->update();
-		return;
-	}
-
-	QByteArray trackNameBuffer;
-	trackNameBuffer.resize(strLen);
-	if (!sock.recv(trackNameBuffer.data(), strLen))
-		return;
-
-	if (trackNameBuffer.contains('\0')) {
-		sock.disconnect();
-		trackView->update();
-		return;
-	}
-
-	QString trackName = QString::fromUtf8(trackNameBuffer);
 
 	// find track
 	const SyncTrack *t = doc->findTrack(trackName.toUtf8());
@@ -463,115 +441,110 @@ void MainWindow::processGetTrack(ClientSocket &sock)
 		t = doc->createTrack(trackName);
 
 	// hook up signals to slots
-	QObject::connect(t,             SIGNAL(keyFrameChanged(const SyncTrack &, int)),
-			 &clientSocket, SLOT(onKeyFrameChanged(const SyncTrack &, int)));
+	QObject::connect(t, SIGNAL(keyFrameChanged(const SyncTrack &, int)),
+	                 clientSocket, SLOT(onKeyFrameChanged(const SyncTrack &, int)));
 
 	// setup remap
-	clientSocket.clientTracks[trackName] = clientIndex++;
+	clientSocket->clientTracks[trackName] = clientIndex++;
 
 	// send key frames
 	QMap<int, SyncTrack::TrackKey> keyMap = t->getKeyMap();
 	QMap<int, SyncTrack::TrackKey>::const_iterator it;
 	for (it = keyMap.constBegin(); it != keyMap.constEnd(); ++it)
-		clientSocket.sendSetKeyCommand(t->name.toUtf8().constData(), *it);
+		clientSocket->sendSetKeyCommand(t->name.toUtf8().constData(), *it);
 
 	trackView->update();
 }
 
-void MainWindow::processSetRow(ClientSocket &sock)
+void MainWindow::onRowChanged(int row)
 {
-	int newRow;
-	sock.recv((char*)&newRow, sizeof(int));
-	trackView->setEditRow(qToBigEndian((quint32)newRow));
+	trackView->setEditRow(row);
 }
 
-static TcpSocket *clientConnect(QTcpServer *serverSocket, QHostAddress *host)
+void MainWindow::onNewTcpConnection()
 {
-	QTcpSocket *clientSocket = serverSocket->nextPendingConnection();
-	Q_ASSERT(clientSocket != NULL);
-
-	QByteArray line;
-
-	// Read greetings or WebSocket upgrade
-	// command from the socket
-	for (;;) {
-		char ch;
-		if (!clientSocket->getChar(&ch)) {
-			// Read failed; wait for data and try again
-			clientSocket->waitForReadyRead();
-			if(!clientSocket->getChar(&ch)) {
-				clientSocket->close();
-				return NULL;
-			}
-		}
-
-		if (ch == '\n')
-			break;
-		if (ch != '\r')
-			line.push_back(ch);
-		if (ch == '!')
-			break;
-	}
-
-	TcpSocket *ret = NULL;
-	if (line.startsWith("GET ")) {
-		ret = WebSocket::upgradeFromHttp(clientSocket);
-		line.resize(int(strlen(CLIENT_GREET)));
-		if (!ret || !ret->recv(line.data(), line.size())) {
-			clientSocket->close();
-			return NULL;
-		}
-	} else
-		ret = new TcpSocket(clientSocket);
-
-	if (!line.startsWith(CLIENT_GREET) ||
-	    !ret->send(SERVER_GREET, strlen(SERVER_GREET), true)) {
-		ret->disconnect();
-		return NULL;
-	}
-
-	if (NULL != host)
-		*host = clientSocket->peerAddress();
-	return ret;
-}
-
-void MainWindow::onReadyRead()
-{
-	while (clientSocket.pollRead())
-		processCommand(clientSocket);
-}
-
-void MainWindow::onNewConnection()
-{
-	if (!clientSocket.connected()) {
+	QTcpSocket *pendingSocket = tcpServer->nextPendingConnection();
+	if (!clientSocket) {
 		setStatusText("Accepting...");
-		QHostAddress client;
-		TcpSocket *socket = clientConnect(serverSocket, &client);
-		if (socket) {
-			setStatusText(QString("Connected to %1").arg(client.toString()));
-			clientSocket.socket = socket;
-			connect(socket->socket, SIGNAL(readyRead()), this, SLOT(onReadyRead()));
-			connect(socket->socket, SIGNAL(disconnected()), this, SLOT(onDisconnected()));
-			clientIndex = 0;
-			clientSocket.sendPauseCommand(trackView->paused);
-			clientSocket.sendSetRowCommand(trackView->getEditRow());
-			trackView->connected = true;
-		} else
-			setStatusText(QString("Not Connected: %1").arg(serverSocket->errorString()));
+
+		QByteArray greeting = QString(CLIENT_GREET).toUtf8();
+		QByteArray response = QString(SERVER_GREET).toUtf8();
+
+		if (pendingSocket->bytesAvailable() < 1)
+			pendingSocket->waitForReadyRead();
+		QByteArray line = pendingSocket->read(greeting.length());
+		if (line != greeting ||
+		    pendingSocket->write(response) != response.length()) {
+			pendingSocket->close();
+
+			setStatusText(QString("Not Connected: %1").arg(tcpServer->errorString()));
+			return;
+		}
+
+		ClientSocket *client = new AbstractSocketClient(pendingSocket);
+
+		connect(trackView, SIGNAL(pauseChanged(bool)), client, SLOT(onPauseChanged(bool)));
+
+		connect(client, SIGNAL(trackRequested(const QString &)), this, SLOT(onTrackRequested(const QString &)));
+		connect(client, SIGNAL(rowChanged(int)), this, SLOT(onRowChanged(int)));
+		connect(client, SIGNAL(connected()), this, SLOT(onConnected()));
+		connect(client, SIGNAL(disconnected()), this, SLOT(onDisconnected()));
+
+		setStatusText(QString("Connected to %1").arg(pendingSocket->peerAddress().toString()));
+		clientSocket = client;
+
+		onConnected();
 	} else
-		serverSocket->nextPendingConnection()->close();
+		pendingSocket->close();
+}
+
+#ifdef QT_WEBSOCKETS_LIB
+
+void MainWindow::onNewWsConnection()
+{
+	QWebSocket *pendingSocket = wsServer->nextPendingConnection();
+
+	if (!clientSocket) {
+		setStatusText("Accepting...");
+
+		ClientSocket *client = new WebSocketClient(pendingSocket);
+		setStatusText(QString("Connected to %1").arg(pendingSocket->peerAddress().toString()));
+		clientSocket = client;
+
+		connect(trackView, SIGNAL(pauseChanged(bool)), client, SLOT(onPauseChanged(bool)));
+
+		connect(client, SIGNAL(trackRequested(const QString &)), this, SLOT(onTrackRequested(const QString &)));
+		connect(client, SIGNAL(rowChanged(int)), this, SLOT(onRowChanged(int)));
+		connect(client, SIGNAL(connected()), this, SLOT(onConnected()));
+		connect(client, SIGNAL(disconnected()), this, SLOT(onDisconnected()));
+	} else
+		pendingSocket->close();
+}
+
+#endif
+
+void MainWindow::onConnected()
+{
+	clientIndex = 0;
+	clientSocket->sendPauseCommand(trackView->paused);
+	clientSocket->sendSetRowCommand(trackView->getEditRow());
+	trackView->connected = true;
 }
 
 void MainWindow::onDisconnected()
 {
 	trackView->paused = true;
-	clientSocket.disconnect();
 
 	// disconnect track-signals
 	SyncDocument *doc = trackView->getDocument();
 	for (int i = 0; i < doc->getTrackCount(); ++i)
 		QObject::disconnect(doc->getTrack(i), SIGNAL(keyFrameChanged(const SyncTrack &, int)),
-		                      &clientSocket, SLOT(onKeyFrameChanged(const SyncTrack &, int)));
+		clientSocket, SLOT(onKeyFrameChanged(const SyncTrack &, int)));
+
+	if (clientSocket) {
+		delete clientSocket;
+		clientSocket = NULL;
+	}
 
 	trackView->update();
 	setStatusText("Not Connected.");

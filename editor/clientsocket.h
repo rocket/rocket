@@ -19,137 +19,12 @@ enum {
 	SAVE_TRACKS = 5
 };
 
-class TcpSocket {
-public:
-	explicit TcpSocket(QAbstractSocket *socket) : socket(socket) {}
-
-	bool connected() const
-	{
-		return socket != NULL;
-	}
-
-	virtual void disconnect()
-	{
-		if (connected())
-			socket->close();
-		socket = NULL;
-	}
-
-	virtual bool recv(char *buffer, int length)
-	{
-		if (!connected())
-			return false;
-
-		// wait for enough data to arrive
-		while (socket->bytesAvailable() < int(length)) {
-			if (!socket->waitForReadyRead(-1))
-				break;
-		}
-
-		qint64 ret = socket->read(buffer, length);
-		if (ret != int(length)) {
-			TcpSocket::disconnect();
-			return false;
-		}
-		return true;
-	}
-
-	virtual bool send(const char *buffer, size_t length, bool endOfMessage)
-	{
-		(void)endOfMessage;
-		if (!connected())
-			return false;
-		int ret = socket->write(buffer, length);
-		if (ret != int(length)) {
-			TcpSocket::disconnect();
-			return false;
-		}
-		return true;
-	}
-
-	virtual bool pollRead()
-	{
-		if (!connected())
-			return false;
-		return socket->bytesAvailable() > 0;
-	}
-
-	QAbstractSocket *socket;
-};
-
-class WebSocket : public TcpSocket {
-public:
-	explicit WebSocket(QTcpSocket *socket) : TcpSocket(socket), firstFrame(true) {}
-
-	bool recv(char *buffer, int length);
-	bool send(const char *buffer, size_t length, bool endOfMessage)
-	{
-		return sendFrame(firstFrame ? 2 : 0, buffer, length, endOfMessage);
-	}
-
-
-	virtual void disconnect()
-	{
-		sendFrame(8, NULL, 0, true);
-		TcpSocket::disconnect();
-	}
-
-	bool pollRead()
-	{
-		if (buf.length() > 0)
-			return true;
-		return TcpSocket::pollRead();
-	}
-
-	// helpers
-	bool readFrame(QByteArray &buf);
-	bool sendFrame(int opcode, const char *payloadData, size_t payloadLength, bool endOfMessage);
-	static WebSocket *upgradeFromHttp(QTcpSocket *socket);
-
-private:
-	bool firstFrame;
-	QByteArray buf;
-};
-
 class ClientSocket : public QObject {
 	Q_OBJECT
+
 public:
-	ClientSocket() : socket(NULL) {}
-
-	bool connected() const
-	{
-		if (!socket)
-			return false;
-		return socket->connected();
-	}
-
-	void disconnect()
-	{
-		if (socket)
-			socket->disconnect();
-		clientTracks.clear();
-	}
-
-	bool recv(char *buffer, int length)
-	{
-		if (!socket)
-			return false;
-		return socket->recv(buffer, length);
-	}
-
-	bool send(const char *buffer, size_t length, bool endOfMessage)
-	{
-		if (!socket)
-			return false;
-		return socket->send(buffer, length, endOfMessage);
-	}
-
-	bool pollRead()
-	{
-		if (!connected())
-			return false;
-		return socket->pollRead();
-	}
+	virtual void close() = 0;
+	virtual qint64 sendData(const QByteArray &data) = 0;
 
 	void sendSetKeyCommand(const QString &trackName, const SyncTrack::TrackKey &key);
 	void sendDeleteKeyCommand(const QString &trackName, int row);
@@ -158,7 +33,12 @@ public:
 	void sendSaveCommand();
 
 	QMap<QString, size_t> clientTracks;
-	TcpSocket *socket;
+
+signals:
+	void connected();
+	void disconnected();
+	void trackRequested(const QString &trackName);
+	void rowChanged(int row);
 
 public slots:
 	void onPauseChanged(bool paused)
@@ -173,6 +53,68 @@ public slots:
 		else
 			sendDeleteKeyCommand(track.name, row);
 	}
+
+protected slots:
+	void onDisconnected()
+	{
+		emit disconnected();
+	}
 };
+
+class AbstractSocketClient : public ClientSocket {
+	Q_OBJECT
+public:
+	explicit AbstractSocketClient(QAbstractSocket *socket) : socket(socket)
+	{
+		connect(socket, SIGNAL(readyRead()), this, SLOT(onReadyRead()));
+		connect(socket, SIGNAL(disconnected()), this, SLOT(onDisconnected()));
+	}
+
+	virtual void close()
+	{
+		disconnect(socket, SIGNAL(readyRead()), this, SLOT(onReadyRead()));
+		disconnect(socket, SIGNAL(disconnected()), this, SLOT(onDisconnected()));
+		socket->close();
+	}
+
+	qint64 sendData(const QByteArray &data)
+	{
+		qint64 ret = socket->write(data);
+		socket->flush();
+		return ret;
+	}
+
+private:
+	QAbstractSocket *socket;
+	bool recv(char *buffer, qint64 length);
+
+	void processCommand();
+	void processGetTrack();
+	void processSetRow();
+
+private slots:
+	void onReadyRead();
+};
+
+#ifdef QT_WEBSOCKETS_LIB
+
+class QWebSocket;
+
+class WebSocketClient : public ClientSocket {
+	Q_OBJECT
+public:
+	explicit WebSocketClient(QWebSocket *socket);
+	void close();
+	qint64 sendData(const QByteArray &data);
+
+public slots:
+	void processTextMessage(const QString &message);
+	void onMessageReceived(const QByteArray &data);
+
+private:
+	QWebSocket *socket;
+};
+
+#endif
 
 #endif // !defined(CLIENTSOCKET_H)
