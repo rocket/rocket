@@ -219,7 +219,7 @@ void ClientSocket::processGetTrack()
 		return;
 	}
 
-	strLen = qFromBigEndian((quint32)strLen);
+	strLen = qFromBigEndian(strLen);
 
 	if (!strLen) {
 		disconnect();
