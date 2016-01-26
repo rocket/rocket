@@ -29,7 +29,7 @@ MainWindow::MainWindow() :
 #endif
 	clientSocket(NULL),
 	doc(NULL),
-	trackView(NULL)
+	currentTrackView(NULL)
 {
 #ifdef Q_OS_WIN
 	trackViewFont = QFont("Consolas", 11);
@@ -314,8 +314,8 @@ void MainWindow::setDocument(SyncDocument *newDoc)
 	QObject::connect(newDoc, SIGNAL(modifiedChanged(bool)),
 	                 this, SLOT(setWindowModified(bool)));
 
-	trackView->dirtyCurrentValue();
-	trackView->viewport()->update();
+	currentTrackView->dirtyCurrentValue();
+	currentTrackView->viewport()->update();
 }
 
 void MainWindow::fileNew()
@@ -404,47 +404,47 @@ void MainWindow::fileQuit()
 
 void MainWindow::editUndo()
 {
-	trackView->editUndo();
+	currentTrackView->editUndo();
 }
 
 void MainWindow::editRedo()
 {
-	trackView->editRedo();
+	currentTrackView->editRedo();
 }
 
 void MainWindow::editCopy()
 {
-	trackView->editCopy();
+	currentTrackView->editCopy();
 }
 
 void MainWindow::editCut()
 {
-	trackView->editCut();
+	currentTrackView->editCut();
 }
 
 void MainWindow::editPaste()
 {
-	trackView->editPaste();
+	currentTrackView->editPaste();
 }
 
 void MainWindow::editClear()
 {
-	trackView->editClear();
+	currentTrackView->editClear();
 }
 
 void MainWindow::editSelectAll()
 {
-	trackView->selectAll();
+	currentTrackView->selectAll();
 }
 
 void MainWindow::editSelectTrack()
 {
-	trackView->selectTrack();
+	currentTrackView->selectTrack();
 }
 
 void MainWindow::editSelectRow()
 {
-	trackView->selectRow();
+	currentTrackView->selectRow();
 }
 
 void MainWindow::editBiasSelection()
@@ -452,15 +452,15 @@ void MainWindow::editBiasSelection()
 	bool ok = false;
 	float bias = QInputDialog::getDouble(this, "Bias Selection", "", 0, INT_MIN, INT_MAX, 1, &ok);
 	if (ok)
-		trackView->editBiasValue(bias);
+		currentTrackView->editBiasValue(bias);
 }
 
 void MainWindow::editSetRows()
 {
 	bool ok = false;
-	int rows = QInputDialog::getInt(this, "Set Rows", "", trackView->getRows(), 0, INT_MAX, 1, &ok);
+	int rows = QInputDialog::getInt(this, "Set Rows", "", currentTrackView->getRows(), 0, INT_MAX, 1, &ok);
 	if (ok)
-		trackView->setRows(rows);
+		currentTrackView->setRows(rows);
 }
 
 void MainWindow::editSetFont()
@@ -476,16 +476,16 @@ void MainWindow::editSetFont()
 
 void MainWindow::editPreviousBookmark()
 {
-	int row = doc->prevRowBookmark(trackView->getEditRow());
+	int row = doc->prevRowBookmark(currentTrackView->getEditRow());
 	if (row >= 0)
-		trackView->setEditRow(row);
+		currentTrackView->setEditRow(row);
 }
 
 void MainWindow::editNextBookmark()
 {
-	int row = doc->nextRowBookmark(trackView->getEditRow());
+	int row = doc->nextRowBookmark(currentTrackView->getEditRow());
 	if (row >= 0)
-		trackView->setEditRow(row);
+		currentTrackView->setEditRow(row);
 }
 
 void MainWindow::onPosChanged(int col, int row)
@@ -497,9 +497,9 @@ void MainWindow::onPosChanged(int col, int row)
 
 void MainWindow::onCurrValDirty()
 {
-	if (doc && trackView->getTrackCount() > 0) {
-		const SyncTrack *t = trackView->getTrack(trackView->getEditTrack());
-		int row = trackView->getEditRow();
+	if (doc && currentTrackView->getTrackCount() > 0) {
+		const SyncTrack *t = currentTrackView->getTrack(currentTrackView->getEditTrack());
+		int row = currentTrackView->getEditRow();
 
 		setStatusValue(t->getValue(row), true);
 
@@ -524,20 +524,20 @@ TrackView *MainWindow::addTrackView(SyncPage *page)
 
 void MainWindow::setTrackView(TrackView *newTrackView)
 {
-	if (trackView) {
-		disconnect(trackView, SIGNAL(posChanged(int, int)),
-		           this,      SLOT(onPosChanged(int, int)));
-		disconnect(trackView, SIGNAL(currValDirty()),
-		           this,      SLOT(onCurrValDirty()));
+	if (currentTrackView) {
+		disconnect(currentTrackView, SIGNAL(posChanged(int, int)),
+		           this,             SLOT(onPosChanged(int, int)));
+		disconnect(currentTrackView, SIGNAL(currValDirty()),
+		           this,             SLOT(onCurrValDirty()));
 	}
 
-	trackView = newTrackView;
+	currentTrackView = newTrackView;
 
-	if (trackView) {
-		connect(trackView, SIGNAL(posChanged(int, int)),
-		        this,      SLOT(onPosChanged(int, int)));
-		connect(trackView, SIGNAL(currValDirty()),
-		        this,      SLOT(onCurrValDirty()));
+	if (currentTrackView) {
+		connect(currentTrackView, SIGNAL(posChanged(int, int)),
+		        this,             SLOT(onPosChanged(int, int)));
+		connect(currentTrackView, SIGNAL(currValDirty()),
+		        this,             SLOT(onCurrValDirty()));
 	}
 }
 
@@ -549,14 +549,14 @@ void MainWindow::onSyncPageAdded(SyncPage *page)
 void MainWindow::onTabChanged(int index)
 {
 	int row = 0;
-	if (trackView)
-		row = trackView->getEditRow();
+	if (currentTrackView)
+		row = currentTrackView->getEditRow();
 
 	setTrackView(index < 0 ? NULL : trackViews[index]);
 
-	if (trackView) {
-		trackView->setEditRow(row);
-		trackView->setFocus();
+	if (currentTrackView) {
+		currentTrackView->setEditRow(row);
+		currentTrackView->setFocus();
 	}
 }
 
@@ -579,12 +579,12 @@ void MainWindow::onTrackRequested(const QString &trackName)
 
 	t->setActive(true);
 
-	trackView->update();
+	currentTrackView->update();
 }
 
 void MainWindow::onRowChanged(int row)
 {
-	trackView->setEditRow(row);
+	currentTrackView->setEditRow(row);
 }
 
 void MainWindow::setPaused(bool pause)
@@ -657,7 +657,7 @@ void MainWindow::onNewWsConnection()
 void MainWindow::onConnected()
 {
 	setPaused(true);
-	clientSocket->sendSetRowCommand(trackView->getEditRow());
+	clientSocket->sendSetRowCommand(currentTrackView->getEditRow());
 }
 
 void MainWindow::onDisconnected()
@@ -679,6 +679,6 @@ void MainWindow::onDisconnected()
 		clientSocket = NULL;
 	}
 
-	trackView->update();
+	currentTrackView->update();
 	setStatusText("Not Connected.");
 }
