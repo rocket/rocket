@@ -55,11 +55,13 @@ public:
 		emit posChanged(editTrack, editRow);
 	}
 
-	bool paused, connected;
+	void setReadOnly(bool readOnly)
+	{
+		this->readOnly = readOnly;
+	}
 
 signals:
 	void posChanged(int col, int row);
-	void pauseChanged(bool paused);
 	void currValDirty();
 
 private slots:
@@ -173,6 +175,7 @@ private:
 
 	QLineEdit *lineEdit;
 
+	bool readOnly;
 	bool dragging;
 	int anchorTrack;
 };

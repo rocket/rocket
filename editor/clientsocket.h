@@ -24,16 +24,19 @@ class ClientSocket : public QObject {
 	Q_OBJECT
 
 public:
+	ClientSocket() : paused(false) { }
+
 	virtual void close() = 0;
 	virtual qint64 sendData(const QByteArray &data) = 0;
 
 	void sendSetKeyCommand(const QString &trackName, const SyncTrack::TrackKey &key);
 	void sendDeleteKeyCommand(const QString &trackName, int row);
 	void sendSetRowCommand(int row);
-	void sendPauseCommand(bool pause);
 	void sendSaveCommand();
 
 	const QStringList getTrackNames() { return clientTracks.keys(); }
+	bool isPaused() { return paused; }
+	void setPaused(bool);
 
 signals:
 	void connected();
@@ -42,11 +45,6 @@ signals:
 	void rowChanged(int row);
 
 public slots:
-	void onPauseChanged(bool paused)
-	{
-		sendPauseCommand(paused);
-	}
-
 	void onKeyFrameChanged(const SyncTrack &track, int row)
 	{
 		if (track.isKeyFrame(row))
@@ -63,8 +61,10 @@ protected slots:
 
 protected:
 	void requestTrack(const QString &trackName);
+	void sendPauseCommand(bool pause);
 
 	QMap<QString, qint32> clientTracks;
+	bool paused;
 };
 
 class AbstractSocketClient : public ClientSocket {

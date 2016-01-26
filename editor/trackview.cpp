@@ -12,10 +12,9 @@
 
 TrackView::TrackView(QWidget *parent) :
     QAbstractScrollArea(parent),
-    paused(true),
-    connected(false),
     windowRows(0),
     document(NULL),
+    readOnly(false),
     dragging(false)
 {
 #ifdef Q_OS_WIN
@@ -875,7 +874,7 @@ void TrackView::keyPressEvent(QKeyEvent *event)
 	SyncDocument *doc = getDocument();
 	if (NULL == doc) return;
 
-	if (paused && lineEdit->isVisible()) {
+	if (!readOnly && lineEdit->isVisible()) {
 		switch (event->key()) {
 		case Qt::Key_Up:
 		case Qt::Key_Down:
@@ -887,6 +886,7 @@ void TrackView::keyPressEvent(QKeyEvent *event)
 		case Qt::Key_End:
 		case Qt::Key_Space:
 			editEnterValue();
+			return;
 		}
 	}
 
@@ -934,7 +934,7 @@ void TrackView::keyPressEvent(QKeyEvent *event)
 		}
 	}
 
-	if (lineEdit->isHidden() && paused) {
+	if (!readOnly && lineEdit->isHidden()) {
 		switch (event->key()) {
 		case Qt::Key_Up:
 			if (ctrlDown) {
@@ -991,17 +991,10 @@ void TrackView::keyPressEvent(QKeyEvent *event)
 
 	case Qt::Key_Cancel:
 	case Qt::Key_Escape:
-		if (paused && lineEdit->isVisible()) {
+		if (!readOnly && lineEdit->isVisible()) {
 			// return to old value (i.e don't clear)
 			lineEdit->hide();
 			QApplication::beep();
-		}
-		return;
-
-	case Qt::Key_Space:
-		if (connected) {
-			paused = !paused;
-			emit pauseChanged(paused);
 		}
 		return;
 
@@ -1015,7 +1008,7 @@ void TrackView::keyPressEvent(QKeyEvent *event)
 		return;
 	}
 
-	if (paused && lineEdit->isHidden() && event->text().length() && doc->getTrackCount()) {
+	if (!readOnly && lineEdit->isHidden() && event->text().length() && doc->getTrackCount()) {
 		// no line-edit, check if input matches a double
 		QString str = event->text();
 		int pos = 0;
@@ -1026,8 +1019,11 @@ void TrackView::keyPressEvent(QKeyEvent *event)
 			lineEdit->show();
 			lineEdit->event(event);
 			lineEdit->setFocus();
+			return;
 		}
 	}
+
+	event->ignore();
 }
 
 void TrackView::resizeEvent(QResizeEvent *event)

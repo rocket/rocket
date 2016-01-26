@@ -20,6 +20,7 @@ class MainWindow : public QMainWindow {
 public:
 	MainWindow();
 	void showEvent(QShowEvent *event);
+	void keyPressEvent(QKeyEvent *event);
 
 	void createMenuBar();
 	void createStatusBar();
@@ -42,6 +43,9 @@ public:
 	QLabel *statusPos, *statusValue, *statusKeyType;
 	QMenu *fileMenu, *recentFilesMenu, *editMenu;
 	QAction *recentFileActions[5];
+
+private:
+	void setPaused(bool pause);
 
 public slots:
 	void fileNew();

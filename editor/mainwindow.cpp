@@ -63,6 +63,17 @@ void MainWindow::showEvent(QShowEvent *event)
 	setWindowFilePath(filePath);
 }
 
+void MainWindow::keyPressEvent(QKeyEvent *event)
+{
+	switch (event->key()) {
+	case Qt::Key_Space:
+		if (clientSocket) {
+			setPaused(!clientSocket->isPaused());
+			return;
+		}
+		break;
+	}
+}
 
 void MainWindow::createMenuBar()
 {
@@ -447,7 +458,7 @@ void MainWindow::editNextBookmark()
 void MainWindow::onPosChanged(int col, int row)
 {
 	setStatusPosition(col, row);
-	if (trackView->paused && clientSocket)
+	if (clientSocket && clientSocket->isPaused())
 		clientSocket->sendSetRowCommand(row);
 }
 
@@ -495,6 +506,14 @@ void MainWindow::onRowChanged(int row)
 	trackView->setEditRow(row);
 }
 
+void MainWindow::setPaused(bool pause)
+{
+	if (clientSocket)
+		clientSocket->setPaused(pause);
+
+	trackView->setReadOnly(!pause);
+}
+
 void MainWindow::onNewTcpConnection()
 {
 	QTcpSocket *pendingSocket = tcpServer->nextPendingConnection();
@@ -516,8 +535,6 @@ void MainWindow::onNewTcpConnection()
 		}
 
 		ClientSocket *client = new AbstractSocketClient(pendingSocket);
-
-		connect(trackView, SIGNAL(pauseChanged(bool)), client, SLOT(onPauseChanged(bool)));
 
 		connect(client, SIGNAL(trackRequested(const QString &)), this, SLOT(onTrackRequested(const QString &)));
 		connect(client, SIGNAL(rowChanged(int)), this, SLOT(onRowChanged(int)));
@@ -545,8 +562,6 @@ void MainWindow::onNewWsConnection()
 		setStatusText(QString("Connected to %1").arg(pendingSocket->peerAddress().toString()));
 		clientSocket = client;
 
-		connect(trackView, SIGNAL(pauseChanged(bool)), client, SLOT(onPauseChanged(bool)));
-
 		connect(client, SIGNAL(trackRequested(const QString &)), this, SLOT(onTrackRequested(const QString &)));
 		connect(client, SIGNAL(rowChanged(int)), this, SLOT(onRowChanged(int)));
 		connect(client, SIGNAL(connected()), this, SLOT(onConnected()));
@@ -559,14 +574,13 @@ void MainWindow::onNewWsConnection()
 
 void MainWindow::onConnected()
 {
-	clientSocket->sendPauseCommand(trackView->paused);
+	setPaused(true);
 	clientSocket->sendSetRowCommand(trackView->getEditRow());
-	trackView->connected = true;
 }
 
 void MainWindow::onDisconnected()
 {
-	trackView->paused = true;
+	setPaused(true);
 
 	// disconnect track-signals
 	SyncDocument *doc = trackView->getDocument();
@@ -581,5 +595,4 @@ void MainWindow::onDisconnected()
 
 	trackView->update();
 	setStatusText("Not Connected.");
-	trackView->connected = false;
 }

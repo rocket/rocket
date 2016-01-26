@@ -65,6 +65,14 @@ void ClientSocket::sendSaveCommand()
 	sendData(data);
 }
 
+void ClientSocket::setPaused(bool pause)
+{
+	if (pause != paused) {
+		sendPauseCommand(pause);
+		paused = pause;
+	}
+}
+
 void ClientSocket::requestTrack(const QString &trackName)
 {
 	quint32 trackIndex = (quint32)clientTracks.count();
