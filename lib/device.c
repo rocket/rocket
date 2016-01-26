@@ -84,8 +84,9 @@ static struct Library *socket_base = NULL;
 
 static SOCKET server_connect(const char *host, unsigned short nport)
 {
+	SOCKET sock = INVALID_SOCKET;
 #ifdef USE_GETADDRINFO
-	struct addrinfo *addr;
+	struct addrinfo *addr, *curr;
 	char port[6];
 #else
 	struct hostent *he;
@@ -114,11 +115,10 @@ static SOCKET server_connect(const char *host, unsigned short nport)
 	if (getaddrinfo(host, port, 0, &addr) != 0)
 		return INVALID_SOCKET;
 
-	for (; addr; addr = addr->ai_next) {
-		SOCKET sock;
-		int family = addr->ai_family;
-		struct sockaddr *sa = addr->ai_addr;
-		int sa_len = (int) addr->ai_addrlen; /* elim. warning on (at least) Win/x64, size_t vs. int/socklen_t */
+	for (curr = addr; curr; curr = curr->ai_next) {
+		int family = curr->ai_family;
+		struct sockaddr *sa = curr->ai_addr;
+		int sa_len = (int)curr->ai_addrlen; /* elim. warning on (at least) Win/x64, size_t vs. int/socklen_t */
 
 #else
 
@@ -127,7 +127,6 @@ static SOCKET server_connect(const char *host, unsigned short nport)
 		return INVALID_SOCKET;
 
 	for (ap = he->h_addr_list; *ap; ++ap) {
-		SOCKET sock;
 		int family = he->h_addrtype;
 		struct sockaddr_in sin;
 		struct sockaddr *sa = (struct sockaddr *)&sin;
@@ -148,19 +147,24 @@ static SOCKET server_connect(const char *host, unsigned short nport)
 			char greet[128];
 
 			if (xsend(sock, CLIENT_GREET, strlen(CLIENT_GREET), 0) ||
-				xrecv(sock, greet, strlen(SERVER_GREET), 0)) {
+			    xrecv(sock, greet, strlen(SERVER_GREET), 0)) {
 				closesocket(sock);
+				sock = INVALID_SOCKET;
 				continue;
 			}
 
 			if (!strncmp(SERVER_GREET, greet, strlen(SERVER_GREET)))
-				return sock;
+				break;
 		}
 
 		closesocket(sock);
 	}
 
-	return INVALID_SOCKET;
+#ifdef USE_GETADDRINFO
+	freeaddrinfo(addr);
+#endif
+
+	return sock;
 }
 
 #else
