@@ -33,7 +33,6 @@ public:
 	void sendPauseCommand(bool pause);
 	void sendSaveCommand();
 
-	QMap<QString, size_t> clientTracks;
 	const QStringList getTrackNames() { return clientTracks.keys(); }
 
 signals:
@@ -61,6 +60,11 @@ protected slots:
 	{
 		emit disconnected();
 	}
+
+protected:
+	void requestTrack(const QString &trackName);
+
+	QMap<QString, qint32> clientTracks;
 };
 
 class AbstractSocketClient : public ClientSocket {

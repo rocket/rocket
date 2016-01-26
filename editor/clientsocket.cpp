@@ -20,7 +20,7 @@ void ClientSocket::sendSetKeyCommand(const QString &trackName, const SyncTrack::
 	QByteArray data;
 	QDataStream ds(&data, QIODevice::WriteOnly);
 	ds << (unsigned char)SET_KEY;
-	ds << (quint32)clientTracks[trackName];
+	ds << clientTracks[trackName];
 	ds << (quint32)key.row;
 	ds << v.i;
 	ds << (unsigned char)key.type;
@@ -35,7 +35,7 @@ void ClientSocket::sendDeleteKeyCommand(const QString &trackName, int row)
 	QByteArray data;
 	QDataStream ds(&data, QIODevice::WriteOnly);
 	ds << (unsigned char)DELETE_KEY;
-	ds << (quint32)clientTracks[trackName];
+	ds << clientTracks[trackName];
 	ds << (quint32)row;
 	sendData(data);
 }
@@ -63,6 +63,13 @@ void ClientSocket::sendSaveCommand()
 	QByteArray data;
 	data.append(SAVE_TRACKS);
 	sendData(data);
+}
+
+void ClientSocket::requestTrack(const QString &trackName)
+{
+	quint32 trackIndex = (quint32)clientTracks.count();
+	clientTracks[trackName] = trackIndex;
+	emit trackRequested(trackName);
 }
 
 bool AbstractSocketClient::recv(char *buffer, qint64 length)
@@ -119,9 +126,7 @@ void AbstractSocketClient::processGetTrack()
 		return;
 	}
 
-	QString trackName = QString::fromUtf8(trackNameBuffer);
-
-	emit trackRequested(trackName);
+	requestTrack(QString::fromUtf8(trackNameBuffer));
 }
 
 void AbstractSocketClient::processSetRow()
@@ -186,7 +191,7 @@ void WebSocketClient::onMessageReceived(const QByteArray &data)
 		ds >> length;
 		Q_ASSERT(1 + sizeof(length) + length == data.length());
 		QByteArray nameData(data.constData() + 1 + sizeof(length), length);
-		emit trackRequested(QString::fromUtf8(nameData));
+		requestTrack(QString::fromUtf8(nameData));
 	}
 	break;
 

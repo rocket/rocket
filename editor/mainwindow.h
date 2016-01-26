@@ -37,7 +37,6 @@ public:
 	QWebSocketServer *wsServer;
 
 	ClientSocket *clientSocket;
-	size_t clientIndex;
 
 	TrackView *trackView;
 	QLabel *statusPos, *statusValue, *statusKeyType;
