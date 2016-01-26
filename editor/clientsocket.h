@@ -4,6 +4,7 @@
 #include <QTcpSocket>
 #include <QByteArray>
 #include <QObject>
+#include <QStringList>
 
 #include "synctrack.h"
 
@@ -33,6 +34,7 @@ public:
 	void sendSaveCommand();
 
 	QMap<QString, size_t> clientTracks;
+	const QStringList getTrackNames() { return clientTracks.keys(); }
 
 signals:
 	void connected();

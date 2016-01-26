@@ -253,11 +253,11 @@ void MainWindow::setDocument(SyncDocument *newDoc)
 
 		if (newDoc) {
 			// add back missing client-tracks
-			QMap<QString, size_t>::const_iterator it;
-			for (it = clientSocket->clientTracks.begin(); it != clientSocket->clientTracks.end(); ++it) {
-				SyncTrack *t = newDoc->findTrack(it.key());
+			QStringList trackNames = clientSocket->getTrackNames();
+			for (int i = 0; i < trackNames.size(); ++i) {
+				SyncTrack *t = newDoc->findTrack(trackNames[i]);
 				if (!t)
-					newDoc->createTrack(it.key());
+					newDoc->createTrack(trackNames[i]);
 			}
 
 			for (int i = 0; i < newDoc->getTrackCount(); ++i) {
