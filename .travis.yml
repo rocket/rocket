@@ -5,6 +5,28 @@ os:
   - osx
 
 before_script:
-  - if [ "$TRAVIS_OS_NAME" = "osx" ]; then brew install qt; fi
+  - if [ "$TRAVIS_OS_NAME" = "osx" ]; then
+      brew install qt &&
+      brew install sdl;
+    fi
+  - wget http://www.un4seen.com/files/bass24-$TRAVIS_OS_NAME.zip -O bass24.zip &&
+    mkdir examples/include &&
+    mkdir examples/lib &&
+    unzip -d bass24 bass24.zip &&
+    cp bass24/bass.h examples/include/;
+    if [ "$TRAVIS_OS_NAME" = "osx" ]; then
+      cp bass24/libbass.dylib examples/lib/;
+    fi;
+    if [ "$TRAVIS_OS_NAME" = "linux" ]; then
+      cp bass24/x64/libbass.so examples/lib/;
+    fi
 
-script: make
+script:
+  - make &&
+    make examples/example_bass &&
+    make examples/example_bass-player
+
+addons:
+  apt:
+    packages:
+      - libsdl1.2-dev
