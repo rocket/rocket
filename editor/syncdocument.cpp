@@ -256,13 +256,13 @@ public:
 	DeleteCommand(SyncTrack *track, int row, QUndoCommand *parent = 0) :
 	    QUndoCommand("delete", parent),
 	    track(track),
-	    row(row)
+	    row(row),
+	    oldKey(track->getKeyFrame(row))
 	{}
 
 	void redo()
 	{
 		Q_ASSERT(track->isKeyFrame(row));
-		oldKey = track->getKeyFrame(row);
 		Q_ASSERT(oldKey.row == row);
 		track->removeKey(row);
 	}
@@ -285,15 +285,15 @@ class EditCommand : public QUndoCommand
 {
 public:
 	EditCommand(SyncTrack *track, const SyncTrack::TrackKey &key, QUndoCommand *parent = 0) :
-	        QUndoCommand("edit", parent),
-	        track(track),
-	        key(key)
+	    QUndoCommand("edit", parent),
+	    track(track),
+	    key(key),
+	    oldKey(track->getKeyFrame(key.row))
 	{}
 
 	void redo()
 	{
 		Q_ASSERT(track->isKeyFrame(key.row));
-		oldKey = track->getKeyFrame(key.row);
 		Q_ASSERT(key.row == oldKey.row);
 		track->setKey(key);
 	}
