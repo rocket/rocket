@@ -233,13 +233,13 @@ public:
 	    key(key)
 	{}
 
-	void redo()
+	virtual void redo()
 	{
 		Q_ASSERT(!track->isKeyFrame(key.row));
 		track->setKey(key);
 	}
 
-	void undo()
+	virtual void undo()
 	{
 		Q_ASSERT(track->isKeyFrame(key.row));
 		track->removeKey(key.row);
@@ -260,7 +260,7 @@ public:
 	    oldKey(track->getKeyFrame(row))
 	{}
 
-	void redo()
+	virtual void redo()
 	{
 		Q_ASSERT(track->isKeyFrame(row));
 		Q_ASSERT(oldKey.row == row);
@@ -268,7 +268,7 @@ public:
 		track->removeKey(row);
 	}
 
-	void undo()
+	virtual void undo()
 	{
 		Q_ASSERT(!track->isKeyFrame(row));
 		Q_ASSERT(oldKey.row == row);
@@ -292,7 +292,7 @@ public:
 	    oldKey(track->getKeyFrame(key.row))
 	{}
 
-	void redo()
+	virtual void redo()
 	{
 		Q_ASSERT(track->isKeyFrame(key.row));
 		Q_ASSERT(key.row == oldKey.row);
@@ -300,7 +300,7 @@ public:
 		track->setKey(key);
 	}
 
-	void undo()
+	virtual void undo()
 	{
 		Q_ASSERT(track->isKeyFrame(oldKey.row));
 		Q_ASSERT(key.row == oldKey.row);
