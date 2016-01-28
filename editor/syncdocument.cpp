@@ -264,6 +264,7 @@ public:
 	{
 		Q_ASSERT(track->isKeyFrame(row));
 		Q_ASSERT(oldKey.row == row);
+		Q_ASSERT(track->getKeyFrame(row) == oldKey);
 		track->removeKey(row);
 	}
 
@@ -295,6 +296,7 @@ public:
 	{
 		Q_ASSERT(track->isKeyFrame(key.row));
 		Q_ASSERT(key.row == oldKey.row);
+		Q_ASSERT(track->getKeyFrame(key.row) == oldKey);
 		track->setKey(key);
 	}
 
@@ -302,6 +304,7 @@ public:
 	{
 		Q_ASSERT(track->isKeyFrame(oldKey.row));
 		Q_ASSERT(key.row == oldKey.row);
+		Q_ASSERT(track->getKeyFrame(key.row) == key);
 		track->setKey(oldKey);
 	}
 

@@ -13,6 +13,13 @@ public:
 	}
 
 	struct TrackKey {
+		bool operator ==(const TrackKey &k) const
+		{
+			return row == k.row &&
+			       value == k.value &&
+			       type == k.type;
+		}
+
 		int row;
 		float value;
 		enum KeyType {
