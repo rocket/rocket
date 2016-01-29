@@ -57,7 +57,7 @@ public slots:
 		sendSetKeyCommand(track->getName(), track->getKeyFrame(row));
 	}
 
-	void onKeyFrameRemoved(int row)
+	void onKeyFrameRemoved(int row, const SyncTrack::TrackKey &)
 	{
 		const SyncTrack *track = qobject_cast<SyncTrack *>(sender());
 		sendDeleteKeyCommand(track->getName(), row);

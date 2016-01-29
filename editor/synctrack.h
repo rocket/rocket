@@ -46,8 +46,9 @@ public:
 	void removeKey(int row)
 	{
 		Q_ASSERT(keys.find(row) != keys.end());
+		const TrackKey oldKey = keys[row];
 		keys.remove(row);
-		emit keyFrameRemoved(row);
+		emit keyFrameRemoved(row, oldKey);
 	}
 
 	bool isKeyFrame(int row) const
@@ -171,7 +172,7 @@ private:
 signals:
 	void keyFrameAdded(int row);
 	void keyFrameChanged(int row, const SyncTrack::TrackKey &old);
-	void keyFrameRemoved(int row);
+	void keyFrameRemoved(int row, const SyncTrack::TrackKey &old);
 };
 
 #endif // !defined(SYNCTRACK_H)
