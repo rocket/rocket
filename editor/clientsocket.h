@@ -45,12 +45,19 @@ signals:
 	void rowChanged(int row);
 
 public slots:
-	void onKeyFrameChanged(const SyncTrack &track, int row)
+	void onKeyFrameAdded(const SyncTrack &track, int row)
 	{
-		if (track.isKeyFrame(row))
-			sendSetKeyCommand(track.getName(), track.getKeyFrame(row));
-		else
-			sendDeleteKeyCommand(track.getName(), row);
+		sendSetKeyCommand(track.getName(), track.getKeyFrame(row));
+	}
+
+	void onKeyFrameChanged(const SyncTrack &track, int row, const SyncTrack::TrackKey &)
+	{
+		sendSetKeyCommand(track.getName(), track.getKeyFrame(row));
+	}
+
+	void onKeyFrameRemoved(const SyncTrack &track, int row)
+	{
+		sendDeleteKeyCommand(track.getName(), row);
 	}
 
 protected slots:
