@@ -167,8 +167,7 @@ void WebSocketClient::processTextMessage(const QString &message)
 	if (message != CLIENT_GREET ||
 		sendData(response) != response.length()) {
 		socket->close();
-	}
-	else {
+	} else {
 		connect(socket, SIGNAL(binaryMessageReceived(const QByteArray &)), this, SLOT(onMessageReceived(const QByteArray &)));
 		emit connected();
 	}
