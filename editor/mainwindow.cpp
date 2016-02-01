@@ -269,7 +269,7 @@ void MainWindow::setDocument(SyncDocument *newDoc)
 				QMap<int, SyncTrack::TrackKey> keyMap = t->getKeyMap();
 				QMap<int, SyncTrack::TrackKey>::const_iterator it;
 				for (it = keyMap.constBegin(); it != keyMap.constEnd(); ++it)
-					clientSocket->sendSetKeyCommand(t->name.toUtf8().constData(), *it);
+					clientSocket->sendSetKeyCommand(t->name, *it);
 				QObject::connect(t, SIGNAL(keyFrameChanged(const SyncTrack &, int)),
 						 clientSocket, SLOT(onKeyFrameChanged(const SyncTrack &, int)));
 			}
@@ -451,7 +451,7 @@ void MainWindow::onTrackRequested(const QString &trackName)
 	QMap<int, SyncTrack::TrackKey> keyMap = t->getKeyMap();
 	QMap<int, SyncTrack::TrackKey>::const_iterator it;
 	for (it = keyMap.constBegin(); it != keyMap.constEnd(); ++it)
-		clientSocket->sendSetKeyCommand(t->name.toUtf8().constData(), *it);
+		clientSocket->sendSetKeyCommand(t->name, *it);
 
 	trackView->update();
 }
