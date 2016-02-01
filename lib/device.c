@@ -1,6 +1,7 @@
 #include "device.h"
 #include "track.h"
 #include <assert.h>
+#include <ctype.h>
 #include <math.h>
 #include <stdio.h>
 #include <string.h>
@@ -14,13 +15,39 @@ static int find_track(struct sync_device *d, const char *name)
 	return -1; /* not found */
 }
 
+static const char *path_encode(const char *path)
+{
+	static char temp[FILENAME_MAX];
+	int i, pos = 0;
+	size_t path_len = strlen(path);
+	for (i = 0; i < path_len; ++i) {
+		int ch = path[i];
+		if (isalnum(ch) || ch == '.' || ch == '_') {
+			if (pos >= sizeof(temp) - 1)
+				break;
+
+			temp[pos++] = (char)ch;
+		} else {
+			if (pos >= sizeof(temp) - 3)
+				break;
+
+			temp[pos++] = '-';
+			temp[pos++] = "0123456789ABCDEF"[(ch >> 4) & 0xF];
+			temp[pos++] = "0123456789ABCDEF"[ch & 0xF];
+		}
+	}
+
+	temp[pos] = '\0';
+	return temp;
+}
+
 static const char *sync_track_path(const char *base, const char *name)
 {
 	static char temp[FILENAME_MAX];
 	strncpy(temp, base, sizeof(temp) - 1);
 	temp[sizeof(temp) - 1] = '\0';
 	strncat(temp, "_", sizeof(temp) - 1);
-	strncat(temp, name, sizeof(temp) - 1);
+	strncat(temp, path_encode(name), sizeof(temp) - 1);
 	strncat(temp, ".track", sizeof(temp) - 1);
 	return temp;
 }
@@ -195,7 +222,7 @@ struct sync_device *sync_create_device(const char *base)
 	if (!d)
 		return NULL;
 
-	d->base = strdup(base);
+	d->base = strdup(path_encode(base));
 	if (!d->base) {
 		free(d);
 		return NULL;
