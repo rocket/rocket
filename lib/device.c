@@ -1,8 +1,8 @@
 #include "device.h"
 #include "track.h"
-#include <stdio.h>
-#include <math.h>
 #include <assert.h>
+#include <math.h>
+#include <stdio.h>
 #include <string.h>
 
 static int find_track(struct sync_device *d, const char *name)
