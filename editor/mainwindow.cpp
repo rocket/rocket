@@ -120,7 +120,7 @@ void MainWindow::createStatusBar()
 	setStatusText("Not connected");
 	setStatusPosition(0, 0);
 	setStatusValue(0.0f, false);
-	setStatusKeyType(SyncTrack::TrackKey::STEP, false);
+	setStatusKeyType(SyncTrack::TrackKey::KEY_TYPE_COUNT);
 }
 
 static QStringList getRecentFiles()
@@ -219,18 +219,14 @@ void MainWindow::setStatusValue(double val, bool valid)
 		statusValue->setText("---");
 }
 
-void MainWindow::setStatusKeyType(SyncTrack::TrackKey::KeyType keyType, bool valid)
+void MainWindow::setStatusKeyType(const SyncTrack::TrackKey::KeyType keyType)
 {
-	if (!valid) {
-		statusKeyType->setText("---");
-		return;
-	}
-
 	switch (keyType) {
-	case SyncTrack::TrackKey::STEP:   statusKeyType->setText("step"); break;
-	case SyncTrack::TrackKey::LINEAR: statusKeyType->setText("linear"); break;
-	case SyncTrack::TrackKey::SMOOTH: statusKeyType->setText("smooth"); break;
-	case SyncTrack::TrackKey::RAMP:   statusKeyType->setText("ramp"); break;
+	case SyncTrack::TrackKey::STEP:           statusKeyType->setText("step"); break;
+	case SyncTrack::TrackKey::LINEAR:         statusKeyType->setText("linear"); break;
+	case SyncTrack::TrackKey::SMOOTH:         statusKeyType->setText("smooth"); break;
+	case SyncTrack::TrackKey::RAMP:           statusKeyType->setText("ramp"); break;
+	case SyncTrack::TrackKey::KEY_TYPE_COUNT: statusKeyType->setText("---"); break;
 	default: Q_ASSERT(false);
 	}
 }
@@ -421,13 +417,10 @@ void MainWindow::onCurrValDirty()
 		setStatusValue(t->getValue(row), true);
 
 		const SyncTrack::TrackKey *k = t->getPrevKeyFrame(row);
-		if (k)
-			setStatusKeyType(k->type, true);
-		else
-			setStatusKeyType(SyncTrack::TrackKey::STEP, false);
+		setStatusKeyType(k ? k->type : SyncTrack::TrackKey::KEY_TYPE_COUNT);
 	} else {
 		setStatusValue(0.0f, false);
-		setStatusKeyType(SyncTrack::TrackKey::STEP, false);
+		setStatusKeyType(SyncTrack::TrackKey::KEY_TYPE_COUNT);
 	}
 }
 
