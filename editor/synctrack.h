@@ -148,8 +148,10 @@ public:
 		return receivers(SIGNAL(keyFrameChanged(const SyncTrack &, int))) > 0;
 	}
 
-	QString name;
+	const QString &getName() const { return name; }
+
 private:
+	QString name;
 	QMap<int, TrackKey> keys;
 
 signals:

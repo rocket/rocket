@@ -49,7 +49,7 @@ public:
 	SyncTrack *findTrack(const QString &name)
 	{
 		for (int i = 0; i < tracks.size(); ++i)
-			if (name == tracks[i]->name)
+			if (name == tracks[i]->getName())
 				return tracks[i];
 		return NULL;
 	}

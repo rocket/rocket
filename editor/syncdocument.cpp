@@ -104,7 +104,7 @@ bool SyncDocument::save(const QString &fileName)
 
 		QDomElement trackElem =
 		    doc.createElement("track");
-		trackElem.setAttribute("name", t->name);
+		trackElem.setAttribute("name", t->getName());
 
 		QMap<int, SyncTrack::TrackKey> keyMap = t->getKeyMap();
 		QMap<int, SyncTrack::TrackKey>::const_iterator it;

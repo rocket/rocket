@@ -48,9 +48,9 @@ public slots:
 	void onKeyFrameChanged(const SyncTrack &track, int row)
 	{
 		if (track.isKeyFrame(row))
-			sendSetKeyCommand(track.name, track.getKeyFrame(row));
+			sendSetKeyCommand(track.getName(), track.getKeyFrame(row));
 		else
-			sendDeleteKeyCommand(track.name, row);
+			sendDeleteKeyCommand(track.getName(), row);
 	}
 
 protected slots:
