@@ -18,7 +18,7 @@ public:
 	    rows(128)
 	{
 		QObject::connect(&undoStack, SIGNAL(cleanChanged(bool)),
-		                 this, SLOT(cleanChanged(bool)));
+		                 this,       SLOT(onCleanChanged(bool)));
 	}
 
 	~SyncDocument();
@@ -100,7 +100,7 @@ signals:
 	void modifiedChanged(bool modified);
 
 private slots:
-	void cleanChanged(bool clean) { emit modifiedChanged(!clean); }
+	void onCleanChanged(bool clean) { emit modifiedChanged(!clean); }
 };
 
 #endif // !defined(SYNCDOCUMENT_H)
