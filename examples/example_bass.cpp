@@ -153,9 +153,6 @@ int main(int argc, char *argv[])
 {
 	HSTREAM stream;
 
-	const struct sync_track *clear_r, *clear_g, *clear_b;
-	const struct sync_track *cam_rot, *cam_dist;
-
 	setup_sdl();
 
 	/* init BASS */
@@ -176,11 +173,11 @@ int main(int argc, char *argv[])
 #endif
 
 	/* get tracks */
-	clear_r = sync_get_track(rocket, "clear.r");
-	clear_g = sync_get_track(rocket, "clear.g");
-	clear_b = sync_get_track(rocket, "clear.b");
-	cam_rot = sync_get_track(rocket, "cam.rot"),
-	cam_dist = sync_get_track(rocket, "cam.dist");
+	const sync_track *clear_r = sync_get_track(rocket, "clear.r");
+	const sync_track *clear_g = sync_get_track(rocket, "clear.g");
+	const sync_track *clear_b = sync_get_track(rocket, "clear.b");
+	const sync_track *cam_rot = sync_get_track(rocket, "cam.rot");
+	const sync_track *cam_dist = sync_get_track(rocket, "cam.dist");
 
 	/* let's roll! */
 	BASS_Start();
