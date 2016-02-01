@@ -288,8 +288,8 @@ public:
 	EditCommand(SyncTrack *track, const SyncTrack::TrackKey &key, QUndoCommand *parent = 0) :
 	    QUndoCommand("edit", parent),
 	    track(track),
-	    key(key),
-	    oldKey(track->getKeyFrame(key.row))
+	    oldKey(track->getKeyFrame(key.row)),
+	    key(key)
 	{}
 
 	virtual void redo()
