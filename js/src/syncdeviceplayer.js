@@ -55,8 +55,7 @@ JSRocket.SyncDevicePlayer = function (cfg) {
                 key = keyList[k];
                 track.add(parseInt(key.getAttribute('row'), 10),
                     parseFloat(key.getAttribute('value')),
-                    parseInt(key.getAttribute('interpolation'), 10),
-                    true);
+                    parseInt(key.getAttribute('interpolation'), 10));
 
             }
             track.sortIndex();

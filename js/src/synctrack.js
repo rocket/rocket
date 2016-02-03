@@ -59,7 +59,7 @@ JSRocket.Track = function () {
         }
     }
 
-    function add(row, value, interpolation, delaySort) {
+    function add(row, value, interpolation) {
         data[row] = { "value"         :value,
                       "interpolation" :interpolation};
     }
