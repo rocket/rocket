@@ -145,7 +145,7 @@ static SOCKET server_connect(const char *host, unsigned short nport)
 	for (curr = addr; curr; curr = curr->ai_next) {
 		int family = curr->ai_family;
 		struct sockaddr *sa = curr->ai_addr;
-		int sa_len = (int)curr->ai_addrlen; /* elim. warning on (at least) Win/x64, size_t vs. int/socklen_t */
+		int sa_len = (int)curr->ai_addrlen;
 
 #else
 
