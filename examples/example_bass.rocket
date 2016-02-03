@@ -1,0 +1,37 @@
+<sync rows="128">
+	<tracks>
+		<track name="clear.r">
+			<key row="0" interpolation="1" value="0.5"/>
+			<key row="4" interpolation="0" value="0"/>
+			<key row="16" interpolation="1" value="0.5"/>
+			<key row="20" interpolation="0" value="0"/>
+		</track>
+		<track name="clear.g">
+			<key row="0" interpolation="0" value="0"/>
+			<key row="8" interpolation="1" value="0.5"/>
+			<key row="12" interpolation="0" value="0"/>
+			<key row="16" interpolation="1" value="0.5"/>
+			<key row="20" interpolation="0" value="0"/>
+		</track>
+		<track name="clear.b">
+			<key row="0" interpolation="0" value="0"/>
+			<key row="16" interpolation="1" value="0.5"/>
+			<key row="20" interpolation="0" value="0"/>
+		</track>
+		<track name="camera:rot.y">
+			<key row="0" interpolation="1" value="0"/>
+			<key row="1" interpolation="0" value="2"/>
+			<key row="7" interpolation="1" value="2"/>
+			<key row="8" interpolation="0" value="3"/>
+			<key row="15" interpolation="1" value="3"/>
+			<key row="16" interpolation="0" value="4.3"/>
+			<key row="23" interpolation="1" value="4"/>
+			<key row="24" interpolation="0" value="3"/>
+		</track>
+		<track name="camera:dist">
+			<key row="0" interpolation="1" value="10"/>
+			<key row="15" interpolation="0" value="3"/>
+		</track>
+	</tracks>
+	<bookmarks/>
+</sync>
