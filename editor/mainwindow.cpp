@@ -484,7 +484,7 @@ void MainWindow::onTrackRequested(const QString &trackName)
 	SyncDocument *doc = trackView->getDocument();
 
 	// find track
-	const SyncTrack *t = doc->findTrack(trackName.toUtf8());
+	SyncTrack *t = doc->findTrack(trackName.toUtf8());
 	if (!t)
 		t = doc->createTrack(trackName);
 
@@ -497,6 +497,8 @@ void MainWindow::onTrackRequested(const QString &trackName)
 	QMap<int, SyncTrack::TrackKey>::const_iterator it;
 	for (it = keyMap.constBegin(); it != keyMap.constEnd(); ++it)
 		clientSocket->sendSetKeyCommand(t->getName(), *it);
+
+	t->setActive(true);
 
 	trackView->update();
 }
@@ -584,9 +586,14 @@ void MainWindow::onDisconnected()
 
 	// disconnect track-signals
 	SyncDocument *doc = trackView->getDocument();
-	for (int i = 0; i < doc->getTrackCount(); ++i)
-		QObject::disconnect(doc->getTrack(i), SIGNAL(keyFrameChanged(const SyncTrack &, int)),
+	for (int i = 0; i < doc->getTrackCount(); ++i) {
+		SyncTrack *t = doc->getTrack(i);
+
+		QObject::disconnect(t, SIGNAL(keyFrameChanged(const SyncTrack &, int)),
 		clientSocket, SLOT(onKeyFrameChanged(const SyncTrack &, int)));
+
+		t->setActive(false);
+	}
 
 	if (clientSocket) {
 		delete clientSocket;
