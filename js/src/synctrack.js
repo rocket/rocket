@@ -30,7 +30,7 @@ JSRocket.Track = function () {
 
         if (!keys.length) {
             return 0.0;
-	}
+        }
 
         var idx = findKeyIndex(keys, Math.floor(row));
         if (idx < 0) {
