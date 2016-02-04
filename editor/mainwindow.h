@@ -44,7 +44,10 @@ public:
 
 	ClientSocket *clientSocket;
 
+	SyncDocument *doc;
+
 	TrackView *trackView;
+
 	QLabel *statusPos, *statusValue, *statusKeyType;
 	QMenu *fileMenu, *recentFilesMenu, *editMenu;
 	QAction *recentFileActions[5];
