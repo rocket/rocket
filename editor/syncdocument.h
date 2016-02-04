@@ -40,12 +40,6 @@ public:
 		return tracks[index];
 	}
 
-	const SyncTrack *getTrack(int index) const
-	{
-		Q_ASSERT(index >= 0 && index < tracks.size());
-		return tracks[index];
-	}
-
 	SyncTrack *findTrack(const QString &name)
 	{
 		for (int i = 0; i < tracks.size(); ++i)
