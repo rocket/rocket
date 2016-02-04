@@ -253,16 +253,14 @@ void MainWindow::setStatusKeyType(const SyncTrack::TrackKey::KeyType keyType)
 
 void MainWindow::setDocument(SyncDocument *newDoc)
 {
-	SyncDocument *oldDoc = doc;
-
-	if (oldDoc)
-		QObject::disconnect(oldDoc, SIGNAL(modifiedChanged(bool)),
+	if (doc)
+		QObject::disconnect(doc, SIGNAL(modifiedChanged(bool)),
 		                    this, SLOT(setWindowModified(bool)));
 
-	if (oldDoc && clientSocket) {
+	if (doc && clientSocket) {
 		// delete old key frames
-		for (int i = 0; i < oldDoc->getTrackCount(); ++i) {
-			SyncTrack *t = oldDoc->getTrack(i);
+		for (int i = 0; i < doc->getTrackCount(); ++i) {
+			SyncTrack *t = doc->getTrack(i);
 			QMap<int, SyncTrack::TrackKey> keyMap = t->getKeyMap();
 			QMap<int, SyncTrack::TrackKey>::const_iterator it;
 			for (it = keyMap.constBegin(); it != keyMap.constEnd(); ++it)
@@ -293,17 +291,16 @@ void MainWindow::setDocument(SyncDocument *newDoc)
 		}
 	}
 
+	if (doc)
+		delete doc;
 	doc = newDoc;
-
-	trackView->setDocument(newDoc);
-	trackView->dirtyCurrentValue();
-	trackView->viewport()->update();
 
 	QObject::connect(newDoc, SIGNAL(modifiedChanged(bool)),
 	                 this, SLOT(setWindowModified(bool)));
 
-	if (oldDoc)
-		delete oldDoc;
+	trackView->setDocument(newDoc);
+	trackView->dirtyCurrentValue();
+	trackView->viewport()->update();
 }
 
 void MainWindow::fileNew()
