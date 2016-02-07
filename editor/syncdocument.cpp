@@ -89,6 +89,34 @@ SyncDocument *SyncDocument::load(const QString &fileName)
 	return ret;
 }
 
+static QDomElement serializeTrack(QDomDocument &doc, const SyncTrack *t)
+{
+	QDomElement trackElem = doc.createElement("track");
+	trackElem.setAttribute("name", t->getName());
+
+	QMap<int, SyncTrack::TrackKey> keyMap = t->getKeyMap();
+	QMap<int, SyncTrack::TrackKey>::const_iterator it;
+	for (it = keyMap.constBegin(); it != keyMap.constEnd(); ++it) {
+		int row = it.key();
+		float value = it->value;
+		char interpolationType = char(it->type);
+
+		QDomElement keyElem = doc.createElement("key");
+
+		keyElem.setAttribute("row", row);
+		keyElem.setAttribute("value", value);
+		keyElem.setAttribute("interpolation", (int)interpolationType);
+
+		trackElem.appendChild(doc.createTextNode("\n\t\t\t"));
+		trackElem.appendChild(keyElem);
+	}
+
+	if (keyMap.size())
+		trackElem.appendChild(doc.createTextNode("\n\t\t"));
+
+	return trackElem;
+}
+
 bool SyncDocument::save(const QString &fileName)
 {
 	QDomDocument doc;
@@ -101,33 +129,7 @@ bool SyncDocument::save(const QString &fileName)
 	    doc.createElement("tracks");
 	for (int i = 0; i < getTrackCount(); ++i) {
 		const SyncTrack *t = getTrack(trackOrder[i]);
-
-		QDomElement trackElem =
-		    doc.createElement("track");
-		trackElem.setAttribute("name", t->getName());
-
-		QMap<int, SyncTrack::TrackKey> keyMap = t->getKeyMap();
-		QMap<int, SyncTrack::TrackKey>::const_iterator it;
-		for (it = keyMap.constBegin(); it != keyMap.constEnd(); ++it) {
-			int row = it.key();
-			float value = it->value;
-			char interpolationType = char(it->type);
-
-			QDomElement keyElem =
-			    doc.createElement("key");
-				
-			keyElem.setAttribute("row", row);
-			keyElem.setAttribute("value", value);
-			keyElem.setAttribute("interpolation",
-			    (int)interpolationType);
-
-			trackElem.appendChild(
-			    doc.createTextNode("\n\t\t\t"));
-			trackElem.appendChild(keyElem);
-		}
-		if (keyMap.size())
-			trackElem.appendChild(
-			    doc.createTextNode("\n\t\t"));
+		QDomElement trackElem = serializeTrack(doc, t);
 
 		tracksNode.appendChild(doc.createTextNode("\n\t\t"));
 		tracksNode.appendChild(trackElem);
