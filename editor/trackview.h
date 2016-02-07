@@ -8,6 +8,7 @@
 
 class QLineEdit;
 class SyncDocument;
+class SyncTrack;
 
 class TrackView : public QAbstractScrollArea
 {
@@ -27,6 +28,9 @@ public:
 
 	void setRows(int rows);
 	int getRows() const;
+
+	SyncTrack *getTrack(int index);
+	int getTrackCount() const;
 
 	void editEnterValue();
 	void editBiasValue(float amount);
@@ -145,8 +149,6 @@ private:
 
 	int getTrackFromLogicalX(int x) const;
 	int getTrackFromPhysicalX(int x) const;
-
-	int getTrackCount() const;
 
 	int selectStartTrack, selectStopTrack;
 	int selectStartRow, selectStopRow;
