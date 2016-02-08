@@ -13,6 +13,7 @@
 #include <QMessageBox>
 #include <QFileDialog>
 #include <QInputDialog>
+#include <QTabWidget>
 #include <QTcpServer>
 #include <QtEndian>
 
@@ -27,30 +28,28 @@ MainWindow::MainWindow() :
 	settings("HKEY_CURRENT_USER\\Software\\GNU Rocket", QSettings::NativeFormat),
 #endif
 	clientSocket(NULL),
-	doc(NULL)
+	doc(NULL),
+	trackView(NULL)
 {
-	trackView = new TrackView(this);
-
 #ifdef Q_OS_WIN
-	QFont font("Consolas", 11);
+	trackViewFont = QFont("Consolas", 11);
 #elif defined(Q_OS_OSX)
-	QFont font("Monaco");
+	trackViewFont = QFont("Monaco");
 #else
-	QFont font("Monospace");
-	font.setStyleHint(QFont::TypeWriter);
+	trackViewFont = QFont("Monospace");
+	trackViewFont.setStyleHint(QFont::TypeWriter);
 #endif
 
 	QVariant fontSetting = settings.value("font");
 	if (fontSetting.isValid() && fontSetting.type() == QVariant::String)
-		font.fromString(fontSetting.toString());
-	trackView->setFont(font);
+		trackViewFont.fromString(fontSetting.toString());
 
-	setCentralWidget(trackView);
+	tabWidget = new QTabWidget(this);
+	tabWidget->setDocumentMode(true);
+	connect(tabWidget, SIGNAL(currentChanged(int)),
+	        this, SLOT(onTabChanged(int)));
 
-	connect(trackView, SIGNAL(posChanged(int, int)),
-	        this, SLOT(onPosChanged(int, int)));
-	connect(trackView, SIGNAL(currValDirty()),
-	        this, SLOT(onCurrValDirty()));
+	setCentralWidget(tabWidget);
 
 	createMenuBar();
 	updateRecentFiles();
@@ -253,9 +252,12 @@ void MainWindow::setStatusKeyType(const SyncTrack::TrackKey::KeyType keyType)
 
 void MainWindow::setDocument(SyncDocument *newDoc)
 {
-	if (doc)
+	if (doc) {
+		QObject::disconnect(doc, SIGNAL(syncPageAdded(SyncPage *)),
+		                    this, SLOT(onSyncPageAdded(SyncPage *)));
 		QObject::disconnect(doc, SIGNAL(modifiedChanged(bool)),
 		                    this, SLOT(setWindowModified(bool)));
+	}
 
 	if (doc && clientSocket) {
 		// delete old key frames
@@ -291,14 +293,27 @@ void MainWindow::setDocument(SyncDocument *newDoc)
 		}
 	}
 
+	// recreate empty set of trackViews
+	setTrackView(NULL);
+	while (trackViews.count() > 0) {
+		TrackView *trackView = trackViews.front();
+		trackViews.removeFirst();
+		delete trackView;
+	}
+	trackViews.clear();
+
+	for (int i = 0; i < newDoc->getSyncPageCount(); ++i)
+		addTrackView(newDoc->getSyncPage(i));
+
 	if (doc)
 		delete doc;
 	doc = newDoc;
 
+	QObject::connect(doc, SIGNAL(syncPageAdded(SyncPage *)),
+	                 this, SLOT(onSyncPageAdded(SyncPage *)));
 	QObject::connect(newDoc, SIGNAL(modifiedChanged(bool)),
 	                 this, SLOT(setWindowModified(bool)));
 
-	trackView->setDocument(newDoc);
 	trackView->dirtyCurrentValue();
 	trackView->viewport()->update();
 }
@@ -451,9 +466,10 @@ void MainWindow::editSetRows()
 void MainWindow::editSetFont()
 {
 	bool ok = false;
-	QFont font = QFontDialog::getFont(&ok, trackView->font(), this);
+	QFont font = QFontDialog::getFont(&ok, trackViewFont, this);
 	if (ok) {
-		trackView->setFont(font);
+		for (int i = 0; i < trackViews.size(); ++i)
+			trackViews[i]->setFont(font);
 		settings.setValue("font", font.toString());
 	}
 }
@@ -481,7 +497,7 @@ void MainWindow::onPosChanged(int col, int row)
 
 void MainWindow::onCurrValDirty()
 {
-	if (doc && doc->getTrackCount() > 0) {
+	if (doc && trackView->getTrackCount() > 0) {
 		const SyncTrack *t = trackView->getTrack(trackView->getEditTrack());
 		int row = trackView->getEditRow();
 
@@ -492,6 +508,55 @@ void MainWindow::onCurrValDirty()
 	} else {
 		setStatusValue(0.0f, false);
 		setStatusKeyType(SyncTrack::TrackKey::KEY_TYPE_COUNT);
+	}
+}
+
+TrackView *MainWindow::addTrackView(SyncPage *page)
+{
+	TrackView *trackView = new TrackView(page, NULL);
+	trackView->setFont(trackViewFont);
+
+	trackViews.append(trackView);
+	tabWidget->addTab(trackView, page->getName());
+
+	return trackView;
+}
+
+void MainWindow::setTrackView(TrackView *newTrackView)
+{
+	if (trackView) {
+		disconnect(trackView, SIGNAL(posChanged(int, int)),
+		           this,      SLOT(onPosChanged(int, int)));
+		disconnect(trackView, SIGNAL(currValDirty()),
+		           this,      SLOT(onCurrValDirty()));
+	}
+
+	trackView = newTrackView;
+
+	if (trackView) {
+		connect(trackView, SIGNAL(posChanged(int, int)),
+		        this,      SLOT(onPosChanged(int, int)));
+		connect(trackView, SIGNAL(currValDirty()),
+		        this,      SLOT(onCurrValDirty()));
+	}
+}
+
+void MainWindow::onSyncPageAdded(SyncPage *page)
+{
+	addTrackView(page);
+}
+
+void MainWindow::onTabChanged(int index)
+{
+	int row = 0;
+	if (trackView)
+		row = trackView->getEditRow();
+
+	setTrackView(index < 0 ? NULL : trackViews[index]);
+
+	if (trackView) {
+		trackView->setEditRow(row);
+		trackView->setFocus();
 	}
 }
 
@@ -527,7 +592,8 @@ void MainWindow::setPaused(bool pause)
 	if (clientSocket)
 		clientSocket->setPaused(pause);
 
-	trackView->setReadOnly(!pause);
+	for (int i = 0; i < trackViews.count(); ++i)
+		trackViews[i]->setReadOnly(!pause);
 }
 
 void MainWindow::onNewTcpConnection()

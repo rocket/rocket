@@ -11,14 +11,15 @@
 #include <QScrollBar>
 #include <QStylePainter>
 
-TrackView::TrackView(QWidget *parent) :
+TrackView::TrackView(SyncPage *page, QWidget *parent) :
     QAbstractScrollArea(parent),
+    page(page),
     windowRows(0),
-    document(NULL),
-    page(NULL),
     readOnly(false),
     dragging(false)
 {
+	Q_ASSERT(page);
+
 	lineEdit = new QLineEdit(this);
 	lineEdit->setAutoFillBackground(true);
 	lineEdit->hide();
@@ -83,20 +84,6 @@ void TrackView::updateFont(const QFontMetrics &fontMetrics)
 
 	topMarginHeight = rowHeight + 4;
 	leftMarginWidth = fontMetrics.width('0') * 8;
-}
-
-TrackView::~TrackView()
-{
-	if (document)
-		delete document;
-}
-
-void TrackView::setDocument(SyncDocument *document)
-{
-	this->document = document;
-	page = document->getSyncPage(0);
-	setupScrollBars();
-	setEditTrack(editTrack); // force the old edit-track to get clamped to new range
 }
 
 int TrackView::getLogicalX(int track) const
@@ -191,7 +178,6 @@ void TrackView::paintTopMargin(QStylePainter &painter, const QRect &rcTracks)
 void TrackView::paintLeftMargin(QStylePainter &painter, const QRect &rcTracks)
 {
 	const SyncDocument *doc = getDocument();
-	Q_ASSERT(doc);
 
 	int firstRow = editRow - windowRows / 2 - 1;
 	int lastRow  = editRow + windowRows / 2 + 1;
@@ -331,8 +317,6 @@ void TrackView::mouseMoveEvent(QMouseEvent *event)
 {
 	int track = getTrackFromPhysicalX(event->pos().x());
 	if (dragging) {
-		SyncDocument *doc = getDocument();
-		Q_ASSERT(doc);
 		const int trackCount = getTrackCount();
 
 		if (track < 0 || track >= trackCount)
@@ -439,7 +423,6 @@ void TrackView::editCut()
 void TrackView::editPaste()
 {
 	SyncDocument *doc = getDocument();
-	Q_ASSERT(doc);
 
 	if (0 == getTrackCount()) {
 		QApplication::beep();
@@ -504,7 +487,6 @@ void TrackView::editPaste()
 void TrackView::editUndo()
 {
 	SyncDocument *doc = getDocument();
-	Q_ASSERT(doc);
 
 	if (!doc->canUndo())
 		QApplication::beep();
@@ -518,7 +500,6 @@ void TrackView::editUndo()
 void TrackView::editRedo()
 {
 	SyncDocument *doc = getDocument();
-	Q_ASSERT(doc);
 
 	if (!doc->canRedo())
 		QApplication::beep();
@@ -677,7 +658,6 @@ void TrackView::setEditTrack(int newEditTrack, bool autoscroll, bool selecting)
 void TrackView::setRows(int rows)
 {
 	SyncDocument *doc = getDocument();
-	Q_ASSERT(doc);
 
 	doc->setRows(rows);
 	viewport()->update();
@@ -686,23 +666,22 @@ void TrackView::setRows(int rows)
 
 int TrackView::getRows() const
 {
-	const SyncDocument *doc = getDocument();
-	if (!doc)
-		return 0;
-	return doc->getRows();
+	return page->getDocument()->getRows();
 }
 
 SyncTrack *TrackView::getTrack(int index)
 {
-	Q_ASSERT(page);
 	return page->getTrack(index);
 }
 
 int TrackView::getTrackCount() const
 {
-	if (!page)
-		return 0;
 	return page->getTrackCount();
+}
+
+SyncDocument *TrackView::getDocument()
+{
+	return page->getDocument();
 }
 
 void TrackView::onVScroll(int value)
@@ -723,8 +702,6 @@ void TrackView::onEditingFinished()
 void TrackView::editEnterValue()
 {
 	SyncDocument *doc = getDocument();
-	Q_ASSERT(doc);
-
 	if (!lineEdit->isVisible())
 		return;
 
@@ -748,12 +725,12 @@ void TrackView::editEnterValue()
 		QApplication::beep();
 
 	lineEdit->hide();
+	setFocus();
 }
 
 void TrackView::editToggleInterpolationType()
 {
 	SyncDocument *doc = getDocument();
-	Q_ASSERT(doc);
 
 	if (editTrack < getTrackCount()) {
 		SyncTrack *t = getTrack(editTrack);
@@ -787,7 +764,6 @@ void TrackView::editToggleInterpolationType()
 void TrackView::editClear()
 {
 	SyncDocument *doc = getDocument();
-	Q_ASSERT(doc);
 
 	QRect selection = getSelection();
 
@@ -812,7 +788,6 @@ void TrackView::editClear()
 void TrackView::editBiasValue(float amount)
 {
 	SyncDocument *doc = getDocument();
-	Q_ASSERT(doc);
 
 	if (0 == getTrackCount()) {
 		QApplication::beep();
@@ -845,7 +820,6 @@ void TrackView::editBiasValue(float amount)
 void TrackView::keyPressEvent(QKeyEvent *event)
 {
 	SyncDocument *doc = getDocument();
-	Q_ASSERT(doc);
 
 	if (!readOnly && lineEdit->isVisible()) {
 		switch (event->key()) {
@@ -967,6 +941,7 @@ void TrackView::keyPressEvent(QKeyEvent *event)
 		if (!readOnly && lineEdit->isVisible()) {
 			// return to old value (i.e don't clear)
 			lineEdit->hide();
+			setFocus();
 			QApplication::beep();
 		}
 		return;
@@ -976,7 +951,7 @@ void TrackView::keyPressEvent(QKeyEvent *event)
 		return;
 
 	case Qt::Key_K:
-		getDocument()->toggleRowBookmark(getEditRow());
+		doc->toggleRowBookmark(getEditRow());
 		invalidateRow(getEditRow());
 		return;
 	}

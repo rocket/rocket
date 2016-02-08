@@ -7,6 +7,7 @@
 #include <QPen>
 
 #include "synctrack.h"
+#include "syncpage.h"
 
 class QFontMetrics;
 class QLineEdit;
@@ -18,16 +19,12 @@ class TrackView : public QAbstractScrollArea
 {
 	Q_OBJECT
 public:
-	TrackView(QWidget *parent);
-	~TrackView();
-
-	void setDocument(SyncDocument *document);
-	const SyncDocument *getDocument() const { return document; }
-	SyncDocument *getDocument() { return document; }
+	TrackView(SyncPage *page, QWidget *parent);
 
 	void setRows(int rows);
 	int getRows() const;
 
+	SyncDocument *getDocument();
 	SyncTrack *getTrack(int index);
 	int getTrackCount() const;
 
@@ -189,8 +186,6 @@ private:
 
 	int scrollPosX,  scrollPosY;
 	int windowRows;
-
-	SyncDocument *document;
 
 	QLineEdit *lineEdit;
 
