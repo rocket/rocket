@@ -84,10 +84,10 @@ public slots:
 private:
 
 	/* paint helpers */
-	void paintTopMargin(QStylePainter &painter, const QRect &rcTracks);
-	void paintLeftMargin(QStylePainter &painter, const QRect &rcTracks);
-	void paintTracks(QStylePainter &painter, const QRect &rcTracks);
-	void paintTrack(QStylePainter &painter, const QRect &rcTracks, int track);
+	void paintTopMargin(QStylePainter &painter, const QRegion &region);
+	void paintLeftMargin(QStylePainter &painter, const QRegion &region);
+	void paintTracks(QStylePainter &painter, const QRegion &region);
+	void paintTrack(QStylePainter &painter, const QRegion &region, int track);
 
 	void paintEvent(QPaintEvent *);
 	void keyPressEvent(QKeyEvent *);
