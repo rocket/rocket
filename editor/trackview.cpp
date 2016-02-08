@@ -292,20 +292,15 @@ void TrackView::paintTrack(QPainter &painter, const QRect &rcTracks, int track)
 	QRect selection = getSelection();
 
 	const SyncTrack *t = getDocument()->getTrack(getDocument()->getTrackIndexFromPos(track));
-	QMap<int, SyncTrack::TrackKey> keyMap = t->getKeyMap();
 
 	for (int row = firstRow; row <= lastRow; ++row) {
 		QRect patternDataRect(getPhysicalX(track), getPhysicalY(row), trackWidth, rowHeight);
 		if (!rcTracks.intersects(patternDataRect))
 			continue;
 
-		QMap<int, SyncTrack::TrackKey>::const_iterator it = keyMap.lowerBound(row);
-		if (it != keyMap.constBegin() && it.key() != row)
-			--it;
+		const SyncTrack::TrackKey *key = t->getPrevKeyFrame(row);
 
-		SyncTrack::TrackKey::KeyType interpolationType =
-				(it != keyMap.constEnd() && it.key() <= row) ?
-				it->type : SyncTrack::TrackKey::STEP;
+		SyncTrack::TrackKey::KeyType interpolationType = key ? key->type : SyncTrack::TrackKey::STEP;
 		bool selected = selection.contains(track, row);
 
 		QBrush baseBrush = bgBaseBrush;
