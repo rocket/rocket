@@ -58,7 +58,6 @@ JSRocket.SyncDevicePlayer = function (cfg) {
                     parseInt(key.getAttribute('interpolation'), 10));
 
             }
-            track.sortIndex();
         }
 
         _eventHandler.ready();
