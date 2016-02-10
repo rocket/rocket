@@ -197,7 +197,7 @@ void WebSocketClient::onMessageReceived(const QByteArray &data)
 	{
 		quint32 length;
 		ds >> length;
-		Q_ASSERT(1 + sizeof(length) + length == data.length());
+		Q_ASSERT(1 + sizeof(length) + length == size_t(data.length()));
 		QByteArray nameData(data.constData() + 1 + sizeof(length), length);
 		requestTrack(QString::fromUtf8(nameData));
 	}
