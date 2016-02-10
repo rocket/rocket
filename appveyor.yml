@@ -14,11 +14,12 @@ configuration:
 
 cache:
   - packages -> **\packages.config
+  - bass24.zip
 
 install:
   - nuget restore examples.vs2013.sln
   # download and install bass
-  - curl -fsS -o bass24.zip http://www.un4seen.com/files/bass24.zip
+  - if not exist bass24.zip curl -fsS -o bass24.zip http://www.un4seen.com/files/bass24.zip
   - 7z x -obass24 bass24.zip > NUL
   - mkdir examples\lib
   - mkdir examples\lib64
