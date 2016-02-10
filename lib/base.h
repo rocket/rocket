@@ -2,8 +2,8 @@
 #define SYNC_BASE_H
 
 #ifdef _MSC_VER
- #define _CRT_SECURE_NO_WARNINGS
- #define _CRT_NONSTDC_NO_DEPRECATE
+ #define _CRT_SECURE_NO_WARNINGS 1
+ #define _CRT_NONSTDC_NO_DEPRECATE 1
 #endif
 
 #include <stddef.h>
