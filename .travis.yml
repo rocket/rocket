@@ -12,10 +12,15 @@ before_script:
       brew install qt &&
       brew install sdl;
     fi
-  - wget http://www.un4seen.com/files/bass24-$TRAVIS_OS_NAME.zip -O bass24.zip &&
+  - if [ ! -f deps/bass24.zip ]; then
+        mkdir -p deps && (
+            cd deps &&
+            wget http://www.un4seen.com/files/bass24-$TRAVIS_OS_NAME.zip -O bass24.zip
+        )
+    fi &&
     mkdir examples/include &&
     mkdir examples/lib &&
-    unzip -d bass24 bass24.zip &&
+    unzip -d bass24 deps/bass24.zip &&
     cp bass24/bass.h examples/include/;
     if [ "$TRAVIS_OS_NAME" = "osx" ]; then
       cp bass24/libbass.dylib examples/lib/;
@@ -28,6 +33,10 @@ script:
   - make &&
     make examples/example_bass &&
     make examples/example_bass-player
+
+cache:
+  directories:
+    - deps
 
 addons:
   apt:
