@@ -168,7 +168,7 @@ int main(int argc, char *argv[])
 		die("out of memory?");
 
 #ifndef SYNC_PLAYER
-	if (sync_connect(rocket, "localhost", SYNC_DEFAULT_PORT))
+	if (sync_tcp_connect(rocket, "localhost", SYNC_DEFAULT_PORT))
 		die("failed to connect to host");
 #endif
 
@@ -188,7 +188,7 @@ int main(int argc, char *argv[])
 		double row = bass_get_row(stream);
 #ifndef SYNC_PLAYER
 		if (sync_update(rocket, (int)floor(row), &bass_cb, (void *)&stream))
-			sync_connect(rocket, "localhost", SYNC_DEFAULT_PORT);
+			sync_tcp_connect(rocket, "localhost", SYNC_DEFAULT_PORT);
 #endif
 
 		/* draw */
