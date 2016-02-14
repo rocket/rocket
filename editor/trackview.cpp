@@ -235,13 +235,6 @@ void TrackView::paintTracks(QPainter &painter, const QRect &rcTracks)
 	const SyncDocument *doc = getDocument();
 	if (NULL == doc) return;
 
-	int firstRow = editRow - windowRows / 2 - 1;
-	int lastRow  = editRow + windowRows / 2 + 1;
-
-	/* clamp first & last row */
-	firstRow = qBound(0, firstRow, getRows() - 1);
-	lastRow  = qBound(0, lastRow,  getRows() - 1);
-
 	int startTrack = qBound(0, getTrackFromPhysicalX(qMax(rcTracks.left(), leftMarginWidth)), getTrackCount());
 	int endTrack   = qBound(0, getTrackFromPhysicalX(rcTracks.right()) + 1, getTrackCount());
 
