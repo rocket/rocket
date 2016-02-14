@@ -197,7 +197,8 @@ void TrackView::paintTopMargin(QPainter &painter, const QRect &rcTracks)
 void TrackView::paintLeftMargin(QPainter &painter, const QRect &rcTracks)
 {
 	const SyncDocument *doc = getDocument();
-	if (NULL == doc) return;
+	if (!doc)
+		return;
 
 	int firstRow = editRow - windowRows / 2 - 1;
 	int lastRow  = editRow + windowRows / 2 + 1;
