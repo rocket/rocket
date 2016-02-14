@@ -139,6 +139,16 @@ int TrackView::getTrackFromPhysicalX(int x) const
 	return getTrackFromLogicalX(x - leftMarginWidth + scrollPosX);
 }
 
+int TrackView::getRowFromLogicalY(int y) const
+{
+	return divfloor(y, rowHeight);
+}
+
+int TrackView::getRowFromPhysicalY(int y) const
+{
+	return getRowFromLogicalY(y - topMarginHeight + scrollPosY);
+}
+
 void TrackView::paintEvent(QPaintEvent *event)
 {
 	QStylePainter painter(this->viewport());
@@ -197,12 +207,8 @@ void TrackView::paintLeftMargin(QStylePainter &painter, const QRegion &region)
 	const QRect &rect = region.boundingRect();
 	const SyncDocument *doc = getDocument();
 
-	int firstRow = editRow - windowRows / 2 - 1;
-	int lastRow  = editRow + windowRows / 2 + 1;
-
-	/* clamp first & last row */
-	firstRow = qBound(0, firstRow, getRows() - 1);
-	lastRow  = qBound(0, lastRow,  getRows() - 1);
+	int firstRow = qBound(0, getRowFromPhysicalY(qMax(rect.top(), topMarginHeight)), getRows() - 1);
+	int lastRow = qBound(0, getRowFromPhysicalY(qMax(rect.bottom(), topMarginHeight)), getRows() - 1);
 
 	painter.setClipRect(QRectF(QPointF(0.0f, topMarginHeight - 0.5f),
 	                           QPointF(leftMarginWidth - 0.5f, rect.bottom() + 1.0f)));
@@ -272,12 +278,9 @@ QPen TrackView::getInterpolationPen(SyncTrack::TrackKey::KeyType type)
 
 void TrackView::paintTrack(QStylePainter &painter, const QRegion &region, int track)
 {
-	int firstRow = editRow - windowRows / 2 - 1;
-	int lastRow  = editRow + windowRows / 2 + 1;
-
-	/* clamp first & last row */
-	firstRow = qBound(0, firstRow, getRows() - 1);
-	lastRow  = qBound(0, lastRow,  getRows() - 1);
+	const QRect &rect = region.boundingRect();
+	int firstRow = qBound(0, getRowFromPhysicalY(qMax(rect.top(), topMarginHeight)), getRows() - 1);
+	int lastRow = qBound(0, getRowFromPhysicalY(qMax(rect.bottom(), topMarginHeight)), getRows() - 1);
 
 	QRect selection = getSelection();
 

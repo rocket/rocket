@@ -126,6 +126,8 @@ private:
 
 	int getTrackFromLogicalX(int x) const;
 	int getTrackFromPhysicalX(int x) const;
+	int getRowFromLogicalY(int y) const;
+	int getRowFromPhysicalY(int y) const;
 
 	SyncPage *page;
 
