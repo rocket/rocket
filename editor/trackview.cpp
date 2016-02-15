@@ -73,9 +73,9 @@ void TrackView::updatePalette()
 	rowPen       = QPen(QBrush(palette().base().color().darker(100.0 / 0.7)), 1);
 	rowSelectPen = QPen(QBrush(palette().highlight().color().darker(100.0 / 0.7)), 1);
 
-	lerpPen   = QPen(QBrush(QColor(255, 0, 0)), 2);
-	cosinePen = QPen(QBrush(QColor(0, 255, 0)), 2);
-	rampPen   = QPen(QBrush(QColor(0, 0, 255)), 2);
+	lerpPen   = QPen(QBrush(Qt::red), 2);
+	cosinePen = QPen(QBrush(Qt::green), 2);
+	rampPen   = QPen(QBrush(Qt::blue), 2);
 
 	editBrush = Qt::yellow;
 	bookmarkBrush = QColor(128, 128, 255);
