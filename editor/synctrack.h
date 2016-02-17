@@ -36,10 +36,10 @@ public:
 		if (isKeyFrame(key.row)) {
 			const TrackKey oldKey = keys[key.row];
 			keys[key.row] = key;
-			emit keyFrameChanged(*this, key.row, oldKey);
+			emit keyFrameChanged(key.row, oldKey);
 		} else {
 			keys[key.row] = key;
-			emit keyFrameAdded(*this, key.row);
+			emit keyFrameAdded(key.row);
 		}
 	}
 
@@ -47,7 +47,7 @@ public:
 	{
 		Q_ASSERT(keys.find(row) != keys.end());
 		keys.remove(row);
-		emit keyFrameRemoved(*this, row);
+		emit keyFrameRemoved(row);
 	}
 
 	bool isKeyFrame(int row) const
@@ -169,9 +169,9 @@ private:
 	QMap<int, TrackKey> keys;
 
 signals:
-	void keyFrameAdded(const SyncTrack &track, int row);
-	void keyFrameChanged(const SyncTrack &track, int row, const SyncTrack::TrackKey &old);
-	void keyFrameRemoved(const SyncTrack &track, int row);
+	void keyFrameAdded(int row);
+	void keyFrameChanged(int row, const SyncTrack::TrackKey &old);
+	void keyFrameRemoved(int row);
 };
 
 #endif // !defined(SYNCTRACK_H)
