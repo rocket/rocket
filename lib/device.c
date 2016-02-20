@@ -246,6 +246,13 @@ struct sync_device *sync_create_device(const char *base)
 void sync_destroy_device(struct sync_device *d)
 {
 	int i;
+
+#ifndef SYNC_PLAYER
+	if (d->sock != INVALID_SOCKET)
+		closesocket(d->sock);
+	d->sock = INVALID_SOCKET;
+#endif
+
 	for (i = 0; i < (int)d->num_tracks; ++i) {
 		free(d->tracks[i]->name);
 		free(d->tracks[i]->keys);
