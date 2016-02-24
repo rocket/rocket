@@ -19,7 +19,7 @@ static const char *path_encode(const char *path)
 {
 	static char temp[FILENAME_MAX];
 	int i, pos = 0;
-	size_t path_len = strlen(path);
+	int path_len = (int)strlen(path);
 	for (i = 0; i < path_len; ++i) {
 		int ch = path[i];
 		if (isalnum(ch) || ch == '.' || ch == '_') {
