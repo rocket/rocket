@@ -37,7 +37,7 @@ JavaScript
 ----------
 
 Thanks to the excellent work of [mog](http://github.com/mog), there's now
-JavaScript support. Have a look in `js/README.md` for more information.
+JavaScript support. Have a look at `js/README.md` for more information.
 
 
 Using the editor
