@@ -8,6 +8,7 @@
 
 #include "synctrack.h"
 
+class QFontMetrics;
 class QLineEdit;
 class QPainter;
 class SyncDocument;
@@ -176,7 +177,7 @@ private:
 	int trackWidth;
 	int topMarginHeight;
 	int leftMarginWidth;
-	void updateFont();
+	void updateFont(const QFontMetrics &fontMetrics);
 
 	QBrush bgBaseBrush, bgDarkBrush;
 	QBrush selectBaseBrush, selectDarkBrush;

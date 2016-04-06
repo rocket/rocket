@@ -44,7 +44,7 @@ TrackView::TrackView(QWidget *parent) :
 	selectStartTrack = selectStopTrack = 0;
 	selectStartRow = selectStopRow = 0;
 
-	updateFont();
+	updateFont(fontMetrics());
 	updatePalette();
 
 	stepPen = QPen();
@@ -75,13 +75,13 @@ void TrackView::updatePalette()
 	rowSelectPen = QPen(QBrush(palette().highlight().color().darker(100.0 / 0.7)), 1);
 }
 
-void TrackView::updateFont()
+void TrackView::updateFont(const QFontMetrics &fontMetrics)
 {
-	rowHeight = fontMetrics().lineSpacing();
-	trackWidth = fontMetrics().width('0') * 16;
+	rowHeight = fontMetrics.lineSpacing();
+	trackWidth = fontMetrics.width('0') * 16;
 
 	topMarginHeight = rowHeight + 4;
-	leftMarginWidth = fontMetrics().width('0') * 8;
+	leftMarginWidth = fontMetrics.width('0') * 8;
 }
 
 TrackView::~TrackView()
@@ -1014,7 +1014,7 @@ void TrackView::changeEvent(QEvent *event)
 {
 	switch (event->type()) {
 	case QEvent::FontChange:
-		updateFont();
+		updateFont(fontMetrics());
 		update();
 		break;
 
