@@ -130,6 +130,9 @@ int TrackView::getTrackFromPhysicalX(int x) const
 void TrackView::paintEvent(QPaintEvent *event)
 {
 	QPainter painter(this->viewport());
+
+	updateFont(painter.fontMetrics()); // HACK: the fontMetrics we get from QWidget is not scaled properly
+
 	paintTopMargin(painter, event->rect());
 	paintLeftMargin(painter, event->rect());
 	paintTracks(painter, event->rect());
