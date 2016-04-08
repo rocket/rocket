@@ -21,6 +21,9 @@
 
 MainWindow::MainWindow() :
 	QMainWindow(),
+#ifdef Q_OS_WIN32
+	settings("HKEY_CURRENT_USER\\Software\\GNU Rocket", QSettings::NativeFormat),
+#endif
 	clientSocket(NULL)
 {
 	trackView = new TrackView(this);
@@ -133,14 +136,8 @@ void MainWindow::createStatusBar()
 	setStatusKeyType(SyncTrack::TrackKey::KEY_TYPE_COUNT);
 }
 
-static QStringList getRecentFiles()
+QStringList MainWindow::getRecentFiles() const
 {
-#ifdef Q_OS_WIN32
-	QSettings settings("HKEY_CURRENT_USER\\Software\\GNU Rocket",
-	                   QSettings::NativeFormat);
-#else
-	QSettings settings;
-#endif
 	QStringList list;
 	for (int i = 0; i < 5; ++i) {
 		QVariant string = settings.value(QString("RecentFile%1").arg(i));
@@ -150,15 +147,8 @@ static QStringList getRecentFiles()
 	return list;
 }
 
-static void setRecentFiles(const QStringList &files)
+void MainWindow::setRecentFiles(const QStringList &files)
 {
-#ifdef Q_OS_WIN32
-	QSettings settings("HKEY_CURRENT_USER\\Software\\GNU Rocket",
-	                   QSettings::NativeFormat);
-#else
-	QSettings settings;
-#endif
-
 	for (int i = 0; i < files.size(); ++i)
 		settings.setValue(QString("RecentFile%1").arg(i), files[i]);
 
