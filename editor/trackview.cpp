@@ -314,8 +314,9 @@ void TrackView::paintTrack(QPainter &painter, const QRect &rcTracks, int track)
 		}
 
 		if (row == editRow && track == editTrack) {
+			QRectF selectRect = QRectF(patternDataRect).adjusted(0.5, 0.5, -0.5, -0.5);
 			painter.setPen(QColor(0, 0, 0));
-			painter.drawRect(fillRect.x(), fillRect.y(), fillRect.width() - 1, fillRect.height() - 1);
+			painter.drawRect(selectRect);
 		}
 
 		painter.setPen(selected ?
