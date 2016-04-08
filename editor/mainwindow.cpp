@@ -31,7 +31,7 @@ MainWindow::MainWindow() :
 	trackView = new TrackView(this);
 
 #ifdef Q_OS_WIN
-	QFont font("Fixedsys");
+	QFont font("Consolas", 11);
 #else
 	QFont font("Monospace");
 	font.setStyleHint(QFont::TypeWriter);
