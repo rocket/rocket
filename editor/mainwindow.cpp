@@ -7,6 +7,7 @@
 #include <QStatusBar>
 #include <QLabel>
 #include <QFileInfo>
+#include <QFont>
 #include <QFontDialog>
 #include <QSettings>
 #include <QMessageBox>
@@ -28,6 +29,19 @@ MainWindow::MainWindow() :
 	clientSocket(NULL)
 {
 	trackView = new TrackView(this);
+
+#ifdef Q_OS_WIN
+	QFont font("Fixedsys");
+#else
+	QFont font("Monospace");
+	font.setStyleHint(QFont::TypeWriter);
+#endif
+
+	QVariant fontSetting = settings.value("font");
+	if (fontSetting.isValid() && fontSetting.type() == QVariant::String)
+		font.fromString(fontSetting.toString());
+	trackView->setFont(font);
+
 	setCentralWidget(trackView);
 
 	connect(trackView, SIGNAL(posChanged(int, int)),
@@ -438,8 +452,10 @@ void MainWindow::editSetFont()
 {
 	bool ok = false;
 	QFont font = QFontDialog::getFont(&ok, trackView->font(), this);
-	if (ok)
+	if (ok) {
 		trackView->setFont(font);
+		settings.setValue("font", font.toString());
+	}
 }
 
 void MainWindow::editPreviousBookmark()
