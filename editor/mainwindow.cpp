@@ -7,6 +7,7 @@
 #include <QStatusBar>
 #include <QLabel>
 #include <QFileInfo>
+#include <QFontDialog>
 #include <QSettings>
 #include <QMessageBox>
 #include <QFileDialog>
@@ -113,6 +114,8 @@ void MainWindow::createMenuBar()
 	editMenu->addAction("Bias Selection", this, SLOT(editBiasSelection()), Qt::CTRL + Qt::Key_B);
 	editMenu->addSeparator();
 	editMenu->addAction("Set Rows", this, SLOT(editSetRows()), Qt::CTRL + Qt::Key_R);
+	editMenu->addSeparator();
+	editMenu->addAction("Set Font", this, SLOT(editSetFont()));
 	editMenu->addSeparator();
 	editMenu->addAction("Previous Bookmark", this, SLOT(editPreviousBookmark()), Qt::ALT + Qt::Key_PageUp);
 	editMenu->addAction("Next Bookmark", this, SLOT(editNextBookmark()), Qt::ALT + Qt::Key_PageDown);
@@ -429,6 +432,14 @@ void MainWindow::editSetRows()
 	int rows = QInputDialog::getInt(this, "Set Rows", "", trackView->getRows(), 0, INT_MAX, 1, &ok);
 	if (ok)
 		trackView->setRows(rows);
+}
+
+void MainWindow::editSetFont()
+{
+	bool ok = false;
+	QFont font = QFontDialog::getFont(&ok, trackView->font(), this);
+	if (ok)
+		trackView->setFont(font);
 }
 
 void MainWindow::editPreviousBookmark()

@@ -1035,6 +1035,7 @@ void TrackView::changeEvent(QEvent *event)
 	switch (event->type()) {
 	case QEvent::FontChange:
 		updateFont();
+		update();
 		break;
 
 	case QEvent::PaletteChange:

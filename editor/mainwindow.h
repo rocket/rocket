@@ -74,6 +74,7 @@ public slots:
 	void editSelectRow();
 
 	void editSetRows();
+	void editSetFont();
 
 	void editPreviousBookmark();
 	void editNextBookmark();
