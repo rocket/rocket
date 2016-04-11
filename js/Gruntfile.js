@@ -27,10 +27,10 @@ module.exports = function (grunt) {
                 src:[
                     'src/jsRocket.js',
                     'src/syncdata.js',
-					'src/synctrack.js',
-					'src/syncdeviceplayer.js',
-					'src/syncdeviceclient.js',
-					'src/syncdevice.js'],
+                    'src/synctrack.js',
+                    'src/syncdeviceplayer.js',
+                    'src/syncdeviceclient.js',
+                    'src/syncdevice.js'],
                 dest:'build/<%= pkg.name %>.js'
             }
         },
