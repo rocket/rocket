@@ -121,6 +121,13 @@ private:
 		viewport()->update(rect);
 	}
 
+	void invalidateLeftMarginRow(int row)
+	{
+		QRect rect(QPoint(0,               getPhysicalY(row)),
+		           QPoint(leftMarginWidth, getPhysicalY(row + 1) - 1));
+		viewport()->update(rect);
+	}
+
 	void invalidatePos(int track, int row)
 	{
 		invalidateRange(track, track, row, row);

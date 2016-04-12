@@ -639,10 +639,12 @@ void TrackView::setEditRow(int newEditRow, bool selecting)
 		}
 		dirtyPosition();
 		dirtyCurrentValue();
-	}
 
-	invalidateRow(oldEditRow);
-	invalidateRow(editRow);
+		invalidatePos(editTrack, oldEditRow);
+		invalidatePos(editTrack, editRow);
+		invalidateLeftMarginRow(oldEditRow);
+		invalidateLeftMarginRow(editRow);
+	}
 
 	setScrollPos(scrollPosX, (editRow * rowHeight) - ((viewport()->height() - topMarginHeight) / 2) + rowHeight / 2);
 }
