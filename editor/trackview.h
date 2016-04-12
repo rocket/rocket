@@ -114,6 +114,13 @@ private:
 		viewport()->update(rect);
 	}
 
+	void invalidateTopMarginTrack(int track)
+	{
+		QRect rect(QPoint(getPhysicalX(track),         0),
+		           QPoint(getPhysicalX(track + 1) - 1, topMarginHeight));
+		viewport()->update(rect);
+	}
+
 	void invalidatePos(int track, int row)
 	{
 		invalidateRange(track, track, row, row);

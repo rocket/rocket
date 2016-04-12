@@ -672,8 +672,11 @@ void TrackView::setEditTrack(int newEditTrack, bool autoscroll, bool selecting)
 		}
 		dirtyPosition();
 		dirtyCurrentValue();
-		invalidateTrack(oldEditTrack);
-		invalidateTrack(editTrack);
+
+		invalidatePos(oldEditTrack, editRow);
+		invalidatePos(editTrack, editRow);
+		invalidateTopMarginTrack(oldEditTrack);
+		invalidateTopMarginTrack(editTrack);
 	}
 
 	if (autoscroll && viewport()->width() > 0) {
