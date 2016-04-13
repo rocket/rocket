@@ -71,7 +71,7 @@ public:
 
 	const TrackKey *getNextKeyFrame(int row) const
 	{
-		QMap<int, TrackKey>::const_iterator it = keys.lowerBound(row);
+		QMap<int, TrackKey>::const_iterator it = keys.lowerBound(row + 1);
 
 		if (it == keys.constEnd() || it.key() < row)
 			return NULL;
@@ -121,6 +121,7 @@ public:
 		const TrackKey *nextKey = getNextKeyFrame(row);
 
 		Q_ASSERT(prevKey != NULL || nextKey != NULL);
+		Q_ASSERT(prevKey != nextKey);
 
 		if (!prevKey)
 			return nextKey->value;
