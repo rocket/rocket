@@ -324,8 +324,8 @@ void TrackView::paintTrack(QPainter &painter, const QRect &rcTracks, int track)
 
 		if (interpolationType != SyncTrack::TrackKey::STEP) {
 			painter.setPen(getInterpolationPen(interpolationType));
-			painter.drawLine(patternDataRect.topRight(),
-			                 patternDataRect.bottomRight());
+			painter.drawLine(QPoint(patternDataRect.right(), patternDataRect.top() + 1),
+			                 QPoint(patternDataRect.right(), patternDataRect.bottom()));
 		}
 
 		if (row == editRow && track == editTrack) {
