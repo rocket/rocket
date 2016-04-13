@@ -2,12 +2,13 @@
 #define TRACKVIEW_H
 
 #include <QAbstractScrollArea>
-#include <QPaintEvent>
 #include <QKeyEvent>
-#include <QPainter>
+#include <QPaintEvent>
+#include <QPen>
 
 #include "synctrack.h"
 
+class QPainter;
 class QLineEdit;
 class SyncDocument;
 

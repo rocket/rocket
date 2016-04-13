@@ -8,6 +8,7 @@
 #include <QLineEdit>
 #include <QMouseEvent>
 #include <QMimeData>
+#include <QPainter>
 #include <QScrollBar>
 
 TrackView::TrackView(QWidget *parent) :
