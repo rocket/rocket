@@ -140,21 +140,13 @@ void TrackView::paintEvent(QPaintEvent *event)
 
 void TrackView::paintTopMargin(QStylePainter &painter, const QRect &rcTracks)
 {
-	QRect topLeftMargin;
-	topLeftMargin.setTop(-1);
-	topLeftMargin.setBottom(topMarginHeight - 1);
-	topLeftMargin.setLeft(-1);
-	topLeftMargin.setRight(leftMarginWidth + 1);
-	painter.fillRect(topLeftMargin, palette().button());
-	qDrawWinButton(&painter, topLeftMargin, palette());
+	painter.setClipRect(QRectF(QPointF(0.0f, 0.0f),
+	                    QPointF(rcTracks.right() + 1.0f, topMarginHeight - 0.5f)));
 
-	QRect topRightMargin;
-	topRightMargin.setTop(-1);
-	topRightMargin.setBottom(topMarginHeight - 1);
-	topRightMargin.setLeft(getPhysicalX(getTrackCount()) - 1);
-	topRightMargin.setRight(rcTracks.right() + 1);
-	painter.fillRect(topRightMargin, palette().button());
-	qDrawWinButton(&painter, topRightMargin, palette());
+	QRect topMargin(QPoint(-2, 0),
+	                QPoint(rcTracks.right() + 3, topMarginHeight - 1));
+	painter.fillRect(topMargin.adjusted(1, 1, -1, -1), palette().button());
+	qDrawWinButton(&painter, topMargin, palette());
 
 	int startTrack = qBound(0, getTrackFromPhysicalX(qMax(rcTracks.left(), leftMarginWidth)), getTrackCount());
 	int endTrack   = qBound(0, getTrackFromPhysicalX(rcTracks.right()) + 1, getTrackCount());
@@ -172,8 +164,8 @@ void TrackView::paintTopMargin(QStylePainter &painter, const QRect &rcTracks)
 		if (track == editTrack)
 			bgBrush = editBrush;
 
-		painter.fillRect(fillRect, bgBrush);
-		qDrawWinButton(&painter, fillRect, palette());
+		painter.fillRect(fillRect.adjusted(1, 1, -1, -1), bgBrush);
+		qDrawWinButton(&painter, fillRect, bgBrush.color());
 
 		if (!t->isActive())
 			painter.setPen(QColor(128, 128, 128));
@@ -199,6 +191,13 @@ void TrackView::paintLeftMargin(QStylePainter &painter, const QRect &rcTracks)
 	firstRow = qBound(0, firstRow, getRows() - 1);
 	lastRow  = qBound(0, lastRow,  getRows() - 1);
 
+	painter.setClipRect(QRectF(QPointF(0.0f, topMarginHeight - 0.5f),
+	                           QPointF(leftMarginWidth - 0.5f, rcTracks.bottom() + 1.0f)));
+
+	QRectF padding(QPointF(rcTracks.left(), topMarginHeight - 0.5f),
+	                  QPointF(leftMarginWidth - 0.5f, rcTracks.bottom() + 1.0f));
+	painter.fillRect(padding, palette().dark());
+
 	for (int row = firstRow; row <= lastRow; ++row) {
 		QRect leftMargin(0, getPhysicalY(row), leftMarginWidth, rowHeight);
 		if (!rcTracks.intersects(leftMargin))
@@ -211,9 +210,10 @@ void TrackView::paintLeftMargin(QStylePainter &painter, const QRect &rcTracks)
 			fillBrush = bookmarkBrush;
 		else
 			fillBrush = palette().button();
-		painter.fillRect(leftMargin, fillBrush);
 
-		qDrawWinButton(&painter, leftMargin, palette());
+		painter.fillRect(leftMargin.adjusted(1, 1, -1, -1), fillBrush);
+		qDrawWinButton(&painter, leftMargin, QPalette(fillBrush.color()));
+
 		if ((row % 8) == 0)      painter.setPen(QColor(0, 0, 0));
 		else if ((row % 4) == 0) painter.setPen(QColor(64, 64, 64));
 		else                     painter.setPen(QColor(128, 128, 128));
@@ -227,25 +227,12 @@ void TrackView::paintTracks(QStylePainter &painter, const QRect &rcTracks)
 	int startTrack = qBound(0, getTrackFromPhysicalX(qMax(rcTracks.left(), leftMarginWidth)), getTrackCount());
 	int endTrack   = qBound(0, getTrackFromPhysicalX(rcTracks.right()) + 1, getTrackCount());
 
-	QRect topPadding(QPoint(rcTracks.left(), qMax(rcTracks.top(), topMarginHeight)),
-			 QPoint(rcTracks.right(), getPhysicalY(0) - 1));
-	painter.fillRect(topPadding, palette().dark());
-
-	QRect bottomPadding(QPoint(rcTracks.left(), getPhysicalY(getRows())),
-			    QPoint(rcTracks.right(), rcTracks.bottom()));
-	painter.fillRect(bottomPadding, palette().dark());
-
-	painter.setClipRect(leftMarginWidth,
-			    topMarginHeight,
-			    viewport()->width() - leftMarginWidth,
-			    viewport()->height() - topMarginHeight);
+	painter.setClipRect(QRectF(QPointF(leftMarginWidth - 0.5f, topMarginHeight - 0.5f),
+	                           QPointF(rcTracks.right() + 1.0f, rcTracks.bottom() + 1.0f)));
+	painter.fillRect(rcTracks, palette().dark());
 
 	for (int track = startTrack; track < endTrack; ++track)
 		paintTrack(painter, rcTracks, track);
-
-	QRect rightMargin(QPoint(getPhysicalX(getTrackCount()), getPhysicalY(0)),
-	                  QPoint(rcTracks.right(), getPhysicalY(getRows()) - 1));
-	painter.fillRect(rightMargin, palette().dark());
 }
 
 QPen TrackView::getInterpolationPen(SyncTrack::TrackKey::KeyType type)
