@@ -303,8 +303,8 @@ void TrackView::paintTrack(QPainter &painter, const QRect &rcTracks, int track)
 		painter.fillRect(fillRect, bgBrush);
 		if (row % 8 == 0) {
 			painter.setPen(selected ? rowSelectPen : rowPen);
-			painter.drawLine(patternDataRect.topLeft(),
-			                 patternDataRect.topRight());
+			painter.drawLine(QPointF(patternDataRect.left() + 0.5, patternDataRect.top() + 0.5),
+			                 QPointF(patternDataRect.right() + 0.5, patternDataRect.top() + 0.5));
 		}
 
 		if (interpolationType != SyncTrack::TrackKey::STEP) {
