@@ -20,10 +20,10 @@ else
 	UNAME_S := $(shell uname -s)
 
 	ifeq ($(UNAME_S), Linux)
-		CPPFLAGS += -DUSE_GETADDRINFO
+		LIB_CPPFLAGS += -DUSE_GETADDRINFO
 		OPENGL_LIBS = -lGL -lGLU
 	else ifeq ($(UNAME_S), Darwin)
-		CPPFLAGS += -DUSE_GETADDRINFO
+		LIB_CPPFLAGS += -DUSE_GETADDRINFO
 		OPENGL_LIBS = -framework OpenGL
 	else
 		OPENGL_LIBS = -lGL -lGLU
@@ -40,6 +40,7 @@ LIB_OBJS = \
 
 all: lib/librocket.a lib/librocket-player.a editor
 
+lib/%.o: CPPFLAGS += $(LIB_CPPFLAGS)
 examples/%$X: CPPFLAGS += -Iexamples/include
 examples/%$X: CXXFLAGS += $(SDL_CFLAGS)
 examples/%$X: LDLIBS += -Lexamples/lib -lbass
