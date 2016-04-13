@@ -73,8 +73,9 @@ void TrackView::updatePalette()
 	rowPen       = QPen(QBrush(palette().base().color().darker(100.0 / 0.7)), 1);
 	rowSelectPen = QPen(QBrush(palette().highlight().color().darker(100.0 / 0.7)), 1);
 
+	stepPen   = QPen();
 	lerpPen   = QPen(QBrush(Qt::red), 2);
-	cosinePen = QPen(QBrush(Qt::green), 2);
+	smoothPen = QPen(QBrush(Qt::green), 2);
 	rampPen   = QPen(QBrush(Qt::blue), 2);
 
 	editBrush = Qt::yellow;
@@ -258,20 +259,20 @@ void TrackView::paintTracks(QPainter &painter, const QRect &rcTracks)
 	painter.fillRect(rightMargin, palette().dark());
 }
 
-static QPen getInterpolationBrush(SyncTrack::TrackKey::KeyType type)
+QPen TrackView::getInterpolationPen(SyncTrack::TrackKey::KeyType type)
 {
 	switch (type) {
 	case SyncTrack::TrackKey::STEP:
-		return QPen();
+		return stepPen;
 
 	case SyncTrack::TrackKey::LINEAR:
-		return QPen(QBrush(QColor(255, 0, 0)), 2);
+		return lerpPen;
 
 	case SyncTrack::TrackKey::SMOOTH:
-		return QPen(QBrush(QColor(0, 255, 0)), 2);
+		return smoothPen;
 
 	case SyncTrack::TrackKey::RAMP:
-		return QPen(QBrush(QColor(0, 0, 255)), 2);
+		return rampPen;
 
 	default:
 		Q_ASSERT(false);
@@ -321,7 +322,7 @@ void TrackView::paintTrack(QPainter &painter, const QRect &rcTracks, int track)
 		}
 
 		if (interpolationType != SyncTrack::TrackKey::STEP) {
-			painter.setPen(getInterpolationBrush(interpolationType));
+			painter.setPen(getInterpolationPen(interpolationType));
 			painter.drawLine(patternDataRect.topRight(),
 			                 patternDataRect.bottomRight());
 		}

@@ -6,9 +6,10 @@
 #include <QKeyEvent>
 #include <QPainter>
 
+#include "synctrack.h"
+
 class QLineEdit;
 class SyncDocument;
-class SyncTrack;
 
 class TrackView : public QAbstractScrollArea
 {
@@ -156,6 +157,8 @@ private:
 		                    qMax(selectStartRow, selectStopRow)));
 	}
 
+	QPen getInterpolationPen(SyncTrack::TrackKey::KeyType type);
+
 	int getLogicalX(int track) const;
 	int getLogicalY(int row) const;
 	int getPhysicalX(int track) const;
@@ -177,7 +180,7 @@ private:
 	QBrush selectBaseBrush, selectDarkBrush;
 	QPen rowPen, rowSelectPen;
 	QBrush editBrush, bookmarkBrush;
-	QPen lerpPen, cosinePen, rampPen;
+	QPen stepPen, lerpPen, smoothPen, rampPen;
 	QCursor handCursor;
 	void updatePalette();
 
