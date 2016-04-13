@@ -4,11 +4,11 @@
 #include <QApplication>
 #include <QByteArray>
 #include <QClipboard>
-#include <QScrollBar>
+#include <QDoubleValidator>
+#include <QLineEdit>
 #include <QMouseEvent>
 #include <QMimeData>
-#include <QLineEdit>
-#include <QDoubleValidator>
+#include <QScrollBar>
 
 TrackView::TrackView(QWidget *parent) :
     QAbstractScrollArea(parent),
