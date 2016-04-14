@@ -1,9 +1,6 @@
 #include <stdlib.h>
 #include <assert.h>
 #include <math.h>
-#ifndef M_PI
-#define M_PI 3.141926
-#endif
 
 #include "sync.h"
 #include "track.h"
