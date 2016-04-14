@@ -8,8 +8,8 @@
 
 #include "synctrack.h"
 
-class QPainter;
 class QLineEdit;
+class QPainter;
 class SyncDocument;
 
 class TrackView : public QAbstractScrollArea
