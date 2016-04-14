@@ -55,6 +55,14 @@ TrackView::TrackView(QWidget *parent) :
 	updateFont();
 	updatePalette();
 
+	stepPen = QPen();
+	lerpPen = QPen(QBrush(Qt::red), 2);
+	smoothPen = QPen(QBrush(Qt::green), 2);
+	rampPen = QPen(QBrush(Qt::blue), 2);
+
+	editBrush = Qt::yellow;
+	bookmarkBrush = QColor(128, 128, 255);
+
 	handCursor = QCursor(Qt::OpenHandCursor);
 	setMouseTracking(true);
 
@@ -73,14 +81,6 @@ void TrackView::updatePalette()
 
 	rowPen       = QPen(QBrush(palette().base().color().darker(100.0 / 0.7)), 1);
 	rowSelectPen = QPen(QBrush(palette().highlight().color().darker(100.0 / 0.7)), 1);
-
-	stepPen   = QPen();
-	lerpPen   = QPen(QBrush(Qt::red), 2);
-	smoothPen = QPen(QBrush(Qt::green), 2);
-	rampPen   = QPen(QBrush(Qt::blue), 2);
-
-	editBrush = Qt::yellow;
-	bookmarkBrush = QColor(128, 128, 255);
 }
 
 void TrackView::updateFont()
