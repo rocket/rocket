@@ -6,7 +6,7 @@ all:
 QMAKE ?= qmake
 
 # default build flags
-CFLAGS = -g -O2 -Wall
+CFLAGS += -g -O2 -Wall
 
 # user-defined config file (if available)
 -include config.mak
