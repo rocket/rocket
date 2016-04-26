@@ -145,10 +145,11 @@ void TrackView::paintEvent(QPaintEvent *event)
 
 void TrackView::paintTopMargin(QPainter &painter, const QRect &rcTracks)
 {
-	QRect topLeftMargin;
 	const SyncDocument *doc = getDocument();
-	if (NULL == doc) return;
+	if (!doc)
+		return;
 
+	QRect topLeftMargin;
 	topLeftMargin.setTop(-1);
 	topLeftMargin.setBottom(topMarginHeight - 1);
 	topLeftMargin.setLeft(-1);
