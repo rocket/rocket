@@ -32,6 +32,8 @@ MainWindow::MainWindow() :
 
 #ifdef Q_OS_WIN
 	QFont font("Consolas", 11);
+#elif defined(Q_OS_OSX)
+	QFont font("Monaco");
 #else
 	QFont font("Monospace");
 	font.setStyleHint(QFont::TypeWriter);
