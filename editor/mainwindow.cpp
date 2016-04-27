@@ -7,6 +7,8 @@
 #include <QStatusBar>
 #include <QLabel>
 #include <QFileInfo>
+#include <QFont>
+#include <QFontDialog>
 #include <QSettings>
 #include <QMessageBox>
 #include <QFileDialog>
@@ -21,9 +23,25 @@
 
 MainWindow::MainWindow() :
 	QMainWindow(),
+#ifdef Q_OS_WIN32
+	settings("HKEY_CURRENT_USER\\Software\\GNU Rocket", QSettings::NativeFormat),
+#endif
 	clientSocket(NULL)
 {
 	trackView = new TrackView(this);
+
+#ifdef Q_OS_WIN
+	QFont font("Fixedsys");
+#else
+	QFont font("Monospace");
+	font.setStyleHint(QFont::TypeWriter);
+#endif
+
+	QVariant fontSetting = settings.value("font");
+	if (fontSetting.isValid() && fontSetting.type() == QVariant::String)
+		font.fromString(fontSetting.toString());
+	trackView->setFont(font);
+
 	setCentralWidget(trackView);
 
 	connect(trackView, SIGNAL(posChanged(int, int)),
@@ -111,6 +129,8 @@ void MainWindow::createMenuBar()
 	editMenu->addSeparator();
 	editMenu->addAction("Set Rows", this, SLOT(editSetRows()), Qt::CTRL + Qt::Key_R);
 	editMenu->addSeparator();
+	editMenu->addAction("Set Font", this, SLOT(editSetFont()));
+	editMenu->addSeparator();
 	editMenu->addAction("Previous Bookmark", this, SLOT(editPreviousBookmark()), Qt::ALT + Qt::Key_PageUp);
 	editMenu->addAction("Next Bookmark", this, SLOT(editNextBookmark()), Qt::ALT + Qt::Key_PageDown);
 }
@@ -133,14 +153,8 @@ void MainWindow::createStatusBar()
 	setStatusKeyType(SyncTrack::TrackKey::KEY_TYPE_COUNT);
 }
 
-static QStringList getRecentFiles()
+QStringList MainWindow::getRecentFiles() const
 {
-#ifdef Q_OS_WIN32
-	QSettings settings("HKEY_CURRENT_USER\\Software\\GNU Rocket",
-	                   QSettings::NativeFormat);
-#else
-	QSettings settings;
-#endif
 	QStringList list;
 	for (int i = 0; i < 5; ++i) {
 		QVariant string = settings.value(QString("RecentFile%1").arg(i));
@@ -150,15 +164,8 @@ static QStringList getRecentFiles()
 	return list;
 }
 
-static void setRecentFiles(const QStringList &files)
+void MainWindow::setRecentFiles(const QStringList &files)
 {
-#ifdef Q_OS_WIN32
-	QSettings settings("HKEY_CURRENT_USER\\Software\\GNU Rocket",
-	                   QSettings::NativeFormat);
-#else
-	QSettings settings;
-#endif
-
 	for (int i = 0; i < files.size(); ++i)
 		settings.setValue(QString("RecentFile%1").arg(i), files[i]);
 
@@ -439,6 +446,16 @@ void MainWindow::editSetRows()
 	int rows = QInputDialog::getInt(this, "Set Rows", "", trackView->getRows(), 0, INT_MAX, 1, &ok);
 	if (ok)
 		trackView->setRows(rows);
+}
+
+void MainWindow::editSetFont()
+{
+	bool ok = false;
+	QFont font = QFontDialog::getFont(&ok, trackView->font(), this);
+	if (ok) {
+		trackView->setFont(font);
+		settings.setValue("font", font.toString());
+	}
 }
 
 void MainWindow::editPreviousBookmark()

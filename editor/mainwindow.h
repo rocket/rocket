@@ -2,6 +2,8 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
+#include <QSettings>
+#include <QStringList>
 #include "synctrack.h"
 #include "clientsocket.h"
 
@@ -25,6 +27,8 @@ public:
 	void createMenuBar();
 	void createStatusBar();
 	void updateRecentFiles();
+	QStringList getRecentFiles() const;
+	void setRecentFiles(const QStringList &files);
 	void setCurrentFileName(const QString &fileName);
 	bool loadDocument(const QString &path);
 	void setDocument(SyncDocument *newDoc);
@@ -34,6 +38,7 @@ public:
 	void setStatusValue(double val, bool valid);
 	void setStatusKeyType(const SyncTrack::TrackKey::KeyType keyType);
 
+	QSettings settings;
 	QTcpServer *tcpServer;
 	QWebSocketServer *wsServer;
 
@@ -69,6 +74,7 @@ public slots:
 	void editSelectRow();
 
 	void editSetRows();
+	void editSetFont();
 
 	void editPreviousBookmark();
 	void editNextBookmark();

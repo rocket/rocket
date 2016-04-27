@@ -18,14 +18,6 @@ TrackView::TrackView(QWidget *parent) :
     readOnly(false),
     dragging(false)
 {
-#ifdef Q_OS_WIN
-	setFont(QFont("Fixedsys"));
-#else
-	QFont font("Monospace");
-	font.setStyleHint(QFont::TypeWriter);
-	setFont(font);
-#endif
-
 	lineEdit = new QLineEdit(this);
 	lineEdit->setAutoFillBackground(true);
 	lineEdit->hide();
@@ -145,10 +137,11 @@ void TrackView::paintEvent(QPaintEvent *event)
 
 void TrackView::paintTopMargin(QPainter &painter, const QRect &rcTracks)
 {
-	QRect topLeftMargin;
 	const SyncDocument *doc = getDocument();
-	if (NULL == doc) return;
+	if (!doc)
+		return;
 
+	QRect topLeftMargin;
 	topLeftMargin.setTop(-1);
 	topLeftMargin.setBottom(topMarginHeight - 1);
 	topLeftMargin.setLeft(-1);
@@ -1034,6 +1027,7 @@ void TrackView::changeEvent(QEvent *event)
 	switch (event->type()) {
 	case QEvent::FontChange:
 		updateFont();
+		update();
 		break;
 
 	case QEvent::PaletteChange:
