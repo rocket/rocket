@@ -10,7 +10,7 @@
 
 class QFontMetrics;
 class QLineEdit;
-class QPainter;
+class QStylePainter;
 class SyncDocument;
 
 class TrackView : public QAbstractScrollArea
@@ -92,10 +92,10 @@ public slots:
 private:
 
 	/* paint helpers */
-	void paintTopMargin(QPainter &painter, const QRect &rcTracks);
-	void paintLeftMargin(QPainter &painter, const QRect &rcTracks);
-	void paintTracks(QPainter &painter, const QRect &rcTracks);
-	void paintTrack(QPainter &painter, const QRect &rcTracks, int track);
+	void paintTopMargin(QStylePainter &painter, const QRect &rcTracks);
+	void paintLeftMargin(QStylePainter &painter, const QRect &rcTracks);
+	void paintTracks(QStylePainter &painter, const QRect &rcTracks);
+	void paintTrack(QStylePainter &painter, const QRect &rcTracks, int track);
 
 	void paintEvent(QPaintEvent *);
 	void keyPressEvent(QKeyEvent *);

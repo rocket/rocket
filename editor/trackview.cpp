@@ -8,8 +8,8 @@
 #include <QLineEdit>
 #include <QMouseEvent>
 #include <QMimeData>
-#include <QPainter>
 #include <QScrollBar>
+#include <QStylePainter>
 
 TrackView::TrackView(QWidget *parent) :
     QAbstractScrollArea(parent),
@@ -129,7 +129,7 @@ int TrackView::getTrackFromPhysicalX(int x) const
 
 void TrackView::paintEvent(QPaintEvent *event)
 {
-	QPainter painter(this->viewport());
+	QStylePainter painter(this->viewport());
 
 	updateFont(painter.fontMetrics()); // HACK: the fontMetrics we get from QWidget is not scaled properly
 
@@ -138,7 +138,7 @@ void TrackView::paintEvent(QPaintEvent *event)
 	paintTracks(painter, event->rect());
 }
 
-void TrackView::paintTopMargin(QPainter &painter, const QRect &rcTracks)
+void TrackView::paintTopMargin(QStylePainter &painter, const QRect &rcTracks)
 {
 	QRect topLeftMargin;
 	topLeftMargin.setTop(-1);
@@ -187,7 +187,7 @@ void TrackView::paintTopMargin(QPainter &painter, const QRect &rcTracks)
 	painter.setClipRegion(QRect(0, topMarginHeight, rcTracks.right() + 1, rcTracks.bottom() + 1));
 }
 
-void TrackView::paintLeftMargin(QPainter &painter, const QRect &rcTracks)
+void TrackView::paintLeftMargin(QStylePainter &painter, const QRect &rcTracks)
 {
 	const SyncDocument *doc = getDocument();
 	Q_ASSERT(doc);
@@ -222,7 +222,7 @@ void TrackView::paintLeftMargin(QPainter &painter, const QRect &rcTracks)
 	}
 }
 
-void TrackView::paintTracks(QPainter &painter, const QRect &rcTracks)
+void TrackView::paintTracks(QStylePainter &painter, const QRect &rcTracks)
 {
 	int startTrack = qBound(0, getTrackFromPhysicalX(qMax(rcTracks.left(), leftMarginWidth)), getTrackCount());
 	int endTrack   = qBound(0, getTrackFromPhysicalX(rcTracks.right()) + 1, getTrackCount());
@@ -269,7 +269,7 @@ QPen TrackView::getInterpolationPen(SyncTrack::TrackKey::KeyType type)
 	}
 }
 
-void TrackView::paintTrack(QPainter &painter, const QRect &rcTracks, int track)
+void TrackView::paintTrack(QStylePainter &painter, const QRect &rcTracks, int track)
 {
 	int firstRow = editRow - windowRows / 2 - 1;
 	int lastRow  = editRow + windowRows / 2 + 1;
