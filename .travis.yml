@@ -28,6 +28,11 @@ before_script:
     if [ "$TRAVIS_OS_NAME" = "linux" ]; then
       cp bass24/x64/libbass.so examples/lib/;
     fi
+  - if [ -n "$TRAVIS_TAG" ]; then
+      export VERSION_TAG=${TRAVIS_TAG:1};
+    else
+      export VERSION_TAG=$TRAVIS_BRANCH;
+    fi
 
 script:
   - make &&
@@ -42,3 +47,20 @@ addons:
   apt:
     packages:
       - libsdl1.2-dev
+
+before_deploy:
+  - if [ "$TRAVIS_OS_NAME" = "osx" ]; then
+      (cd editor &&
+      macdeployqt editor.app &&
+      zip -r rocket-editor-$VERSION_TAG-$TRAVIS_OS_NAME.zip editor.app)
+    fi
+
+deploy:
+  provider: releases
+  skip_cleanup: true
+  api_key:
+    secure: aCUNNh7Gevkxjjw6RE6xf1JpWPIHFrmmTGBsOgJ9J0hLDanxZRVZM0f4xgK3PArIFjL/9l3ollGlTjZuvkpiU7SieIpfbA5XJHwl/P1Kyw7lTu81e+CWttVDfL9r/x3JTT42lSM6ICLOJLuvZryrnNxRGTcntxebm7+g2vmh8nQ=
+  file: editor/rocket-editor-$VERSION_TAG-$TRAVIS_OS_NAME.zip
+  on:
+    tags: true
+    condition: $TRAVIS_OS_NAME = osx
