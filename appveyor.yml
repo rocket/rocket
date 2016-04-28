@@ -54,9 +54,7 @@ artifacts:
 
 deploy:
   provider: GitHub
-  release: GNU Rocket $(VERSION_TAG)
   auth_token:
     secure: 3VHmG5xkjCw69oeiIal5Sd5qfK0+8vZxMIPjyp2z73A2LLd2Y289U3yT/NUCT/QS
   on:
     appveyor_repo_tag: true
-  draft: true
