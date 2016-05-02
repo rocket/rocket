@@ -274,7 +274,8 @@ void MainWindow::setDocument(SyncDocument *newDoc)
 			for (int i = 0; i < trackNames.size(); ++i) {
 				SyncTrack *t = newDoc->findTrack(trackNames[i]);
 				if (!t)
-					newDoc->createTrack(trackNames[i]);
+					t = newDoc->createTrack(trackNames[i]);
+				t->setActive(true);
 			}
 
 			for (int i = 0; i < newDoc->getTrackCount(); ++i) {
