@@ -137,9 +137,6 @@ void TrackView::paintEvent(QPaintEvent *event)
 
 void TrackView::paintTopMargin(QPainter &painter, const QRect &rcTracks)
 {
-	const SyncDocument *doc = getDocument();
-	Q_ASSERT(doc);
-
 	QRect topLeftMargin;
 	topLeftMargin.setTop(-1);
 	topLeftMargin.setBottom(topMarginHeight - 1);
@@ -224,9 +221,6 @@ void TrackView::paintLeftMargin(QPainter &painter, const QRect &rcTracks)
 
 void TrackView::paintTracks(QPainter &painter, const QRect &rcTracks)
 {
-	const SyncDocument *doc = getDocument();
-	Q_ASSERT(doc);
-
 	int startTrack = qBound(0, getTrackFromPhysicalX(qMax(rcTracks.left(), leftMarginWidth)), getTrackCount());
 	int endTrack   = qBound(0, getTrackFromPhysicalX(rcTracks.right()) + 1, getTrackCount());
 
@@ -394,9 +388,6 @@ struct CopyEntry
 
 void TrackView::editCopy()
 {
-	const SyncDocument *doc = getDocument();
-	Q_ASSERT(doc);
-
 	if (0 == getTrackCount()) {
 		QApplication::beep();
 		return;
@@ -611,9 +602,6 @@ void TrackView::setScrollPos(int newScrollPosX, int newScrollPosY)
 
 void TrackView::setEditRow(int newEditRow, bool selecting)
 {
-	SyncDocument *doc = getDocument();
-	Q_ASSERT(doc);
-
 	int oldEditRow = editRow;
 	editRow = newEditRow;
 
