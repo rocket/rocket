@@ -22,7 +22,8 @@ public:
 	void setDocument(SyncDocument *document)
 	{
 		this->document = document;
-		this->setupScrollBars();
+		setupScrollBars();
+		setEditTrack(editTrack); // force the old edit-track to get clamped to new range
 	}
 
 	const SyncDocument *getDocument() const { return document; }
