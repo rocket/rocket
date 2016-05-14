@@ -6,7 +6,8 @@
 
 void ClientSocket::sendSetKeyCommand(const QString &trackName, const SyncTrack::TrackKey &key)
 {
-	if (clientTracks.count(trackName) == 0)
+	int trackIndex = trackNames.indexOf(trackName);
+	if (trackIndex < 0)
 		return;
 
 	union {
@@ -20,7 +21,7 @@ void ClientSocket::sendSetKeyCommand(const QString &trackName, const SyncTrack::
 	QByteArray data;
 	QDataStream ds(&data, QIODevice::WriteOnly);
 	ds << (unsigned char)SET_KEY;
-	ds << clientTracks[trackName];
+	ds << (quint32)trackIndex;
 	ds << (quint32)key.row;
 	ds << v.i;
 	ds << (unsigned char)key.type;
@@ -29,13 +30,14 @@ void ClientSocket::sendSetKeyCommand(const QString &trackName, const SyncTrack::
 
 void ClientSocket::sendDeleteKeyCommand(const QString &trackName, int row)
 {
-	if (clientTracks.count(trackName) == 0)
+	int trackIndex = trackNames.indexOf(trackName);
+	if (trackIndex < 0)
 		return;
 
 	QByteArray data;
 	QDataStream ds(&data, QIODevice::WriteOnly);
 	ds << (unsigned char)DELETE_KEY;
-	ds << clientTracks[trackName];
+	ds << (quint32)trackIndex;
 	ds << (quint32)row;
 	sendData(data);
 }
@@ -75,8 +77,7 @@ void ClientSocket::setPaused(bool pause)
 
 void ClientSocket::requestTrack(const QString &trackName)
 {
-	quint32 trackIndex = (quint32)clientTracks.count();
-	clientTracks[trackName] = trackIndex;
+	trackNames.append(trackName);
 	emit trackRequested(trackName);
 }
 

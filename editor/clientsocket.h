@@ -34,7 +34,7 @@ public:
 	void sendSetRowCommand(int row);
 	void sendSaveCommand();
 
-	const QStringList getTrackNames() { return clientTracks.keys(); }
+	const QStringList getTrackNames() { return trackNames; }
 	bool isPaused() { return paused; }
 	void setPaused(bool);
 
@@ -63,7 +63,7 @@ protected:
 	void requestTrack(const QString &trackName);
 	void sendPauseCommand(bool pause);
 
-	QMap<QString, qint32> clientTracks;
+	QList<QString> trackNames;
 	bool paused;
 };
 
