@@ -20,11 +20,11 @@ enum {
 	SAVE_TRACKS = 5
 };
 
-class ClientSocket : public QObject {
+class SyncClient : public QObject {
 	Q_OBJECT
 
 public:
-	ClientSocket() : paused(false) { }
+	SyncClient() : paused(false) { }
 
 	virtual void close() = 0;
 	virtual qint64 sendData(const QByteArray &data) = 0;
@@ -77,7 +77,7 @@ protected:
 	bool paused;
 };
 
-class AbstractSocketClient : public ClientSocket {
+class AbstractSocketClient : public SyncClient {
 	Q_OBJECT
 public:
 	explicit AbstractSocketClient(QAbstractSocket *socket) : socket(socket)
@@ -116,7 +116,7 @@ private slots:
 
 class QWebSocket;
 
-class WebSocketClient : public ClientSocket {
+class WebSocketClient : public SyncClient {
 	Q_OBJECT
 public:
 	explicit WebSocketClient(QWebSocket *socket);
