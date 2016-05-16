@@ -151,6 +151,11 @@ void AbstractSocketClient::onReadyRead()
 		processCommand();
 }
 
+void AbstractSocketClient::onDisconnected()
+{
+	emit disconnected(socket->errorString());
+}
+
 #ifdef QT_WEBSOCKETS_LIB
 #include <QWebSocket>
 
@@ -160,7 +165,7 @@ WebSocketClient::WebSocketClient(QWebSocket *socket) :
 	connect(socket, SIGNAL(textMessageReceived(const QString &)), this, SLOT(processTextMessage(const QString &)));
 	connect(socket, SIGNAL(disconnected()), this, SLOT(onDisconnected()));
 	if (!socket->isValid())
-		emit disconnected();
+		emit disconnected(socket->errorString());
 }
 
 void WebSocketClient::close()
@@ -212,6 +217,11 @@ void WebSocketClient::onMessageReceived(const QByteArray &data)
 	}
 	break;
 	}
+}
+
+void WebSocketClient::onDisconnected()
+{
+	emit disconnected(socket->errorString());
 }
 
 #endif // defined(QT_WEBSOCKETS_LIB)

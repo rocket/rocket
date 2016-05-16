@@ -102,7 +102,7 @@ private slots:
 	void onNewWsConnection();
 #endif
 	void onConnected();
-	void onDisconnected();
+	void onDisconnected(const QString &error);
 
 	void onSyncPageAdded(SyncPage *);
 	void onTabChanged(int index);
