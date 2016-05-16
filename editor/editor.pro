@@ -14,14 +14,14 @@ greaterThan(QT_MAJOR_VERSION, 4) {
 !contains(QT, websockets): message("QWebSockets module not found, disabling websocket support...")
 
 # Input
-HEADERS += clientsocket.h \
+HEADERS += syncclient.h \
     mainwindow.h \
     syncdocument.h \
     synctrack.h \
     trackview.h \
     syncpage.h
 
-SOURCES += clientsocket.cpp \
+SOURCES += syncclient.cpp \
     editor.cpp \
     mainwindow.cpp \
     syncdocument.cpp \

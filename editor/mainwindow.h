@@ -5,7 +5,6 @@
 #include <QSettings>
 #include <QStringList>
 #include "synctrack.h"
-#include "clientsocket.h"
 
 class QLabel;
 class QAction;
@@ -13,10 +12,10 @@ class QTabWidget;
 class QTcpServer;
 class QWebSocketServer;
 
+class SyncClient;
 class SyncDocument;
 class SyncPage;
 class TrackView;
-class ClientSocket;
 
 class MainWindow : public QMainWindow {
 	Q_OBJECT
@@ -49,7 +48,7 @@ public:
 	QTcpServer *tcpServer;
 	QWebSocketServer *wsServer;
 
-	ClientSocket *clientSocket;
+	SyncClient *syncClient;
 
 	SyncDocument *doc;
 

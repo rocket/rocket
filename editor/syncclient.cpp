@@ -1,10 +1,10 @@
-#include "clientsocket.h"
+#include "syncclient.h"
 #include "syncdocument.h"
 
 #include <QDataStream>
 #include <QtEndian>
 
-void ClientSocket::sendSetKeyCommand(const QString &trackName, const SyncTrack::TrackKey &key)
+void SyncClient::sendSetKeyCommand(const QString &trackName, const SyncTrack::TrackKey &key)
 {
 	int trackIndex = trackNames.indexOf(trackName);
 	if (trackIndex < 0)
@@ -28,7 +28,7 @@ void ClientSocket::sendSetKeyCommand(const QString &trackName, const SyncTrack::
 	sendData(data);
 }
 
-void ClientSocket::sendDeleteKeyCommand(const QString &trackName, int row)
+void SyncClient::sendDeleteKeyCommand(const QString &trackName, int row)
 {
 	int trackIndex = trackNames.indexOf(trackName);
 	if (trackIndex < 0)
@@ -42,7 +42,7 @@ void ClientSocket::sendDeleteKeyCommand(const QString &trackName, int row)
 	sendData(data);
 }
 
-void ClientSocket::sendSetRowCommand(int row)
+void SyncClient::sendSetRowCommand(int row)
 {
 	QByteArray data;
 	QDataStream ds(&data, QIODevice::WriteOnly);
@@ -51,7 +51,7 @@ void ClientSocket::sendSetRowCommand(int row)
 	sendData(data);
 }
 
-void ClientSocket::sendPauseCommand(bool pause)
+void SyncClient::sendPauseCommand(bool pause)
 {
 	QByteArray data;
 	QDataStream ds(&data, QIODevice::WriteOnly);
@@ -60,14 +60,14 @@ void ClientSocket::sendPauseCommand(bool pause)
 	sendData(data);
 }
 
-void ClientSocket::sendSaveCommand()
+void SyncClient::sendSaveCommand()
 {
 	QByteArray data;
 	data.append(SAVE_TRACKS);
 	sendData(data);
 }
 
-void ClientSocket::setPaused(bool pause)
+void SyncClient::setPaused(bool pause)
 {
 	if (pause != paused) {
 		sendPauseCommand(pause);
@@ -75,7 +75,7 @@ void ClientSocket::setPaused(bool pause)
 	}
 }
 
-void ClientSocket::requestTrack(const QString &trackName)
+void SyncClient::requestTrack(const QString &trackName)
 {
 	trackNames.append(trackName);
 	emit trackRequested(trackName);

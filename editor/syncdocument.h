@@ -9,7 +9,6 @@
 #include <QUndoStack>
 #include <QStringList>
 
-#include "clientsocket.h"
 #include "synctrack.h"
 #include "syncpage.h"
 
