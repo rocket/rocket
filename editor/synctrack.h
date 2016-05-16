@@ -7,8 +7,8 @@
 class SyncTrack : public QObject {
 	Q_OBJECT
 public:
-	SyncTrack(const QString &name) :
-	    name(name), active(false)
+	SyncTrack(const QString &name, const QString &displayName) :
+	    name(name), displayName(displayName), active(false)
 	{
 	}
 
@@ -33,15 +33,22 @@ public:
 
 	void setKey(const TrackKey &key)
 	{
-		keys[key.row] = key;
-		emit keyFrameChanged(*this, key.row);
+		if (isKeyFrame(key.row)) {
+			const TrackKey oldKey = keys[key.row];
+			keys[key.row] = key;
+			emit keyFrameChanged(key.row, oldKey);
+		} else {
+			keys[key.row] = key;
+			emit keyFrameAdded(key.row);
+		}
 	}
 
 	void removeKey(int row)
 	{
 		Q_ASSERT(keys.find(row) != keys.end());
+		const TrackKey oldKey = keys[row];
 		keys.remove(row);
-		emit keyFrameChanged(*this, row);
+		emit keyFrameRemoved(row, oldKey);
 	}
 
 	bool isKeyFrame(int row) const
@@ -71,7 +78,7 @@ public:
 
 	const TrackKey *getNextKeyFrame(int row) const
 	{
-		QMap<int, TrackKey>::const_iterator it = keys.lowerBound(row);
+		QMap<int, TrackKey>::const_iterator it = keys.lowerBound(row + 1);
 
 		if (it == keys.constEnd() || it.key() < row)
 			return NULL;
@@ -121,6 +128,7 @@ public:
 		const TrackKey *nextKey = getNextKeyFrame(row);
 
 		Q_ASSERT(prevKey != NULL || nextKey != NULL);
+		Q_ASSERT(prevKey != nextKey);
 
 		if (!prevKey)
 			return nextKey->value;
@@ -154,14 +162,17 @@ public:
 	}
 
 	const QString &getName() const { return name; }
+	const QString &getDisplayName() const { return displayName; }
 
 private:
-	QString name;
+	QString name, displayName;
 	bool active;
 	QMap<int, TrackKey> keys;
 
 signals:
-	void keyFrameChanged(const SyncTrack &track, int row);
+	void keyFrameAdded(int row);
+	void keyFrameChanged(int row, const SyncTrack::TrackKey &old);
+	void keyFrameRemoved(int row, const SyncTrack::TrackKey &old);
 };
 
 #endif // !defined(SYNCTRACK_H)

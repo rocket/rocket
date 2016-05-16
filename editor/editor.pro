@@ -18,13 +18,15 @@ HEADERS += clientsocket.h \
     mainwindow.h \
     syncdocument.h \
     synctrack.h \
-    trackview.h
+    trackview.h \
+    syncpage.h
 
 SOURCES += clientsocket.cpp \
     editor.cpp \
     mainwindow.cpp \
     syncdocument.cpp \
-    trackview.cpp
+    trackview.cpp \
+    syncpage.cpp
 
 RESOURCES += editor.qrc
 

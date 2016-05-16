@@ -45,12 +45,22 @@ signals:
 	void rowChanged(int row);
 
 public slots:
-	void onKeyFrameChanged(const SyncTrack &track, int row)
+	void onKeyFrameAdded(int row)
 	{
-		if (track.isKeyFrame(row))
-			sendSetKeyCommand(track.getName(), track.getKeyFrame(row));
-		else
-			sendDeleteKeyCommand(track.getName(), row);
+		const SyncTrack *track = qobject_cast<SyncTrack *>(sender());
+		sendSetKeyCommand(track->getName(), track->getKeyFrame(row));
+	}
+
+	void onKeyFrameChanged(int row, const SyncTrack::TrackKey &)
+	{
+		const SyncTrack *track = qobject_cast<SyncTrack *>(sender());
+		sendSetKeyCommand(track->getName(), track->getKeyFrame(row));
+	}
+
+	void onKeyFrameRemoved(int row, const SyncTrack::TrackKey &)
+	{
+		const SyncTrack *track = qobject_cast<SyncTrack *>(sender());
+		sendDeleteKeyCommand(track->getName(), row);
 	}
 
 protected slots:

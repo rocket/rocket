@@ -7,32 +7,24 @@
 #include <QPen>
 
 #include "synctrack.h"
+#include "syncpage.h"
 
 class QFontMetrics;
 class QLineEdit;
 class QStylePainter;
 class SyncDocument;
+class SyncPage;
 
 class TrackView : public QAbstractScrollArea
 {
 	Q_OBJECT
 public:
-	TrackView(QWidget *parent);
-	~TrackView();
-
-	void setDocument(SyncDocument *document)
-	{
-		this->document = document;
-		setupScrollBars();
-		setEditTrack(editTrack); // force the old edit-track to get clamped to new range
-	}
-
-	const SyncDocument *getDocument() const { return document; }
-	SyncDocument *getDocument() { return document; }
+	TrackView(SyncPage *page, QWidget *parent);
 
 	void setRows(int rows);
 	int getRows() const;
 
+	SyncDocument *getDocument();
 	SyncTrack *getTrack(int index);
 	int getTrackCount() const;
 
@@ -48,9 +40,8 @@ public:
 
 	void selectNone()
 	{
-		selectStartTrack = selectStopTrack = editTrack;
-		selectStartRow = selectStopRow = editRow;
-		update();
+		setSelection(QRect(QPoint(editTrack, editRow),
+		                   QPoint(editTrack, editRow)));
 	}
 
 	void dirtyCurrentValue()
@@ -76,6 +67,8 @@ private slots:
 	void onHScroll(int value);
 	void onVScroll(int value);
 	void onEditingFinished();
+	void onTrackHeaderChanged(int trackIndex);
+	void onTrackDataChanged(int trackIndex, int start, int stop);
 
 public slots:
 	void editUndo();
@@ -92,10 +85,10 @@ public slots:
 private:
 
 	/* paint helpers */
-	void paintTopMargin(QStylePainter &painter, const QRect &rcTracks);
-	void paintLeftMargin(QStylePainter &painter, const QRect &rcTracks);
-	void paintTracks(QStylePainter &painter, const QRect &rcTracks);
-	void paintTrack(QStylePainter &painter, const QRect &rcTracks, int track);
+	void paintTopMargin(QStylePainter &painter, const QRegion &region);
+	void paintLeftMargin(QStylePainter &painter, const QRegion &region);
+	void paintTracks(QStylePainter &painter, const QRegion &region);
+	void paintTrack(QStylePainter &painter, const QRegion &region, int track);
 
 	void paintEvent(QPaintEvent *);
 	void keyPressEvent(QKeyEvent *);
@@ -109,22 +102,6 @@ private:
 	void setScrollPos(int newScrollPosX, int newScrollPosY);
 	void scrollWindow(int newScrollPosX, int newScrollPosY);
 
-	void invalidateRange(int startTrack, int stopTrack, int startRow, int stopRow)
-	{
-		QRect rect(QPoint(getPhysicalX(qMin(startTrack, stopTrack)),
-		                  getPhysicalY(qMin(startRow, stopRow))),
-		           QPoint(getPhysicalX(qMax(startTrack, stopTrack) + 1) - 1,
-		                  getPhysicalY(qMax(startRow, stopRow) + 1) - 1));
-		viewport()->update(rect);
-	}
-
-	void invalidateTopMarginTrack(int track)
-	{
-		QRect rect(QPoint(getPhysicalX(track),         0),
-		           QPoint(getPhysicalX(track + 1) - 1, topMarginHeight));
-		viewport()->update(rect);
-	}
-
 	void invalidateLeftMarginRow(int row)
 	{
 		QRect rect(QPoint(0,               getPhysicalY(row)),
@@ -132,33 +109,13 @@ private:
 		viewport()->update(rect);
 	}
 
-	void invalidatePos(int track, int row)
-	{
-		invalidateRange(track, track, row, row);
-	}
-
-	void invalidateRow(int row)
-	{
-		invalidateRange(0, getTrackCount(), row, row);
-	}
-
-	void invalidateTrack(int track)
-	{
-		invalidateRange(track, track, 0, getRows());
-	}
-
-	void invalidateAll()
-	{
-		invalidateRange(0, getTrackCount(), 0, getRows());
-	}
-
 	QRect getSelection() const
 	{
-		return QRect(QPoint(qMin(selectStartTrack, selectStopTrack),
-		                    qMin(selectStartRow, selectStopRow)),
-		             QPoint(qMax(selectStartTrack, selectStopTrack),
-		                    qMax(selectStartRow, selectStopRow)));
+		return QRect(selectionStart, selectionStart).united(QRect(selectionEnd, selectionEnd));
 	}
+
+	void setSelection(const QRect &rect);
+	void updateSelection(const QPoint &pos, bool selecting);
 
 	QPen getInterpolationPen(SyncTrack::TrackKey::KeyType type);
 
@@ -170,8 +127,10 @@ private:
 	int getTrackFromLogicalX(int x) const;
 	int getTrackFromPhysicalX(int x) const;
 
-	int selectStartTrack, selectStopTrack;
-	int selectStartRow, selectStopRow;
+	SyncPage *page;
+
+	QPoint selectionStart;
+	QPoint selectionEnd;
 
 	int rowHeight;
 	int trackWidth;
@@ -192,8 +151,6 @@ private:
 
 	int scrollPosX,  scrollPosY;
 	int windowRows;
-
-	SyncDocument *document;
 
 	QLineEdit *lineEdit;
 

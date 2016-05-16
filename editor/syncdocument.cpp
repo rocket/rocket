@@ -11,6 +11,24 @@ SyncDocument::~SyncDocument()
 		delete tracks[i];
 }
 
+SyncTrack *SyncDocument::createTrack(const QString &name)
+{
+	QStringList parts = name.split(':');
+	SyncPage *page = defaultSyncPage;
+	QString visibleName = name;
+	if (parts.size() > 1) {
+		page = findSyncPage(parts[0]);
+		if (!page)
+			page = createSyncPage(parts[0]);
+		visibleName = name.right(name.length() - parts[0].length() - 1);
+	}
+
+	SyncTrack *t = new SyncTrack(name, visibleName);
+	tracks.append(t);
+	page->addTrack(t);
+	return t;
+}
+
 SyncDocument *SyncDocument::load(const QString &fileName)
 {
 	SyncDocument *ret = new SyncDocument;
@@ -127,12 +145,15 @@ bool SyncDocument::save(const QString &fileName)
 	rootNode.appendChild(doc.createTextNode("\n\t"));
 	QDomElement tracksNode =
 	    doc.createElement("tracks");
-	for (int i = 0; i < getTrackCount(); ++i) {
-		const SyncTrack *t = getTrack(trackOrder[i]);
-		QDomElement trackElem = serializeTrack(doc, t);
+	for (int i = 0; i < getSyncPageCount(); i++) {
+		SyncPage *page = getSyncPage(i);
+		for (int j = 0; j < page->getTrackCount(); ++j) {
+			const SyncTrack *t = page->getTrack(j);
+			QDomElement trackElem = serializeTrack(doc, t);
 
-		tracksNode.appendChild(doc.createTextNode("\n\t\t"));
-		tracksNode.appendChild(trackElem);
+			tracksNode.appendChild(doc.createTextNode("\n\t\t"));
+			tracksNode.appendChild(trackElem);
+		}
 	}
 	if (getTrackCount())
 		tracksNode.appendChild(doc.createTextNode("\n\t"));
@@ -170,19 +191,6 @@ bool SyncDocument::save(const QString &fileName)
 
 	undoStack.setClean();
 	return true;
-}
-
-int SyncDocument::getTrackIndexFromPos(int track) const
-{
-	Q_ASSERT(track < trackOrder.size());
-	return trackOrder[track];
-}
-
-void SyncDocument::swapTrackOrder(int t1, int t2)
-{
-	Q_ASSERT(t1 < trackOrder.size());
-	Q_ASSERT(t2 < trackOrder.size());
-	std::swap(trackOrder[t1], trackOrder[t2]);
 }
 
 bool SyncDocument::isRowBookmark(int row) const
