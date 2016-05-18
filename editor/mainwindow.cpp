@@ -350,7 +350,7 @@ void MainWindow::setDocument(SyncDocument *newDoc)
 	QObject::connect(newDoc, SIGNAL(modifiedChanged(bool)),
 	                 this, SLOT(setWindowModified(bool)));
 
-	currentTrackView->dirtyCurrentValue();
+	onCurrValDirty();
 }
 
 void MainWindow::fileNew()

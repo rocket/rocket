@@ -1,7 +1,9 @@
-*.o
 *.a
+*.db
 *.lib
 *.ncb
+*.o
+*.opendb
 *.pdb
 *.suo
 *.idb
