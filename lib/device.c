@@ -185,6 +185,7 @@ static SOCKET server_connect(const char *host, unsigned short nport)
 		}
 
 		closesocket(sock);
+		sock = INVALID_SOCKET;
 	}
 
 #ifdef USE_GETADDRINFO
