@@ -26,13 +26,17 @@ use the GNU Rocket API.
 Before compiling the example, you need to make sure you have recent [SDL](http://www.libsdl.org/)
 and [BASS](http://www.un4seen.com/) libraries and includes.
 
+If you're using VS2013 or above, this should happen automatically, as
+these libraries are consumed through NuGet.
+
 The header files and libraries can be installed local to the project by
 copying all .lib-files to the example\_bass/lib/, all .h files to
 example\_bass/include/, and all .dll files to the example\_bass/.
 
 Once the prerequisites are installed, the example can be compiled either by
 opening examples.sln and selecting "Build" -> "Build Solution" from Visual
-Studio 2008, or by doing `make examples/example_bass` on Unix-based systems.
+Studio 2008 or 2013, or by doing `make examples/example_bass` on Unix-based
+systems.
 
 JavaScript
 ----------
