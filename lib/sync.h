@@ -11,6 +11,14 @@ extern "C" {
 
 #include <stddef.h>
 
+#ifdef __GNUC__
+#define SYNC_DEPRECATED(msg) __attribute__ ((deprecated(msg)))
+#elif defined(_MSC_VER)
+#define SYNC_DEPRECATED(msg) __declspec(deprecated("is deprecated: " msg))
+#else
+#define SYNC_DEPRECATED(msg)
+#endif
+
 struct sync_device;
 struct sync_track;
 
