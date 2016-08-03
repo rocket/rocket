@@ -28,6 +28,7 @@ ui_*.h
 /editor/editor.sln
 /editor/debug/
 /editor/release/
+/editor/editor
 /editor/editor/
 /editor/editor.app/
 /examples/example_bass
