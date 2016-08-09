@@ -20,15 +20,6 @@ cache:
 
 install:
   - nuget restore examples.vs2013.sln
-  # download and install bass
-  - if not exist bass24.zip curl -fsS -o bass24.zip http://www.un4seen.com/files/bass24.zip
-  - 7z x -obass24 bass24.zip > NUL
-  - mkdir examples\lib
-  - mkdir examples\lib64
-  - mkdir examples\include
-  - copy bass24\c\bass.lib examples\lib
-  - copy bass24\c\x64\bass.lib examples\lib64
-  - copy bass24\c\bass.h examples\include
 
 before_build:
   - set PATH=%QTDIR%\bin;%PATH%
