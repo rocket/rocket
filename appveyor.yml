@@ -27,11 +27,11 @@ before_build:
   - if not defined APPVEYOR_REPO_TAG_NAME set VERSION_TAG=%APPVEYOR_REPO_BRANCH%
 
 build_script:
-  - msbuild examples.vs2013.sln
-  - msbuild examples.vs2013.sln /property:Configuration="Release Client"
+  - msbuild examples.vs2013.sln /v:minimal /nologo
+  - msbuild examples.vs2013.sln /v:minimal /nologo /property:Configuration="Release Client"
   - cd editor
   - qmake -tp vc editor.pro
-  - msbuild
+  - msbuild /v:minimal /nologo
 
 after_build:
   - mkdir staging
