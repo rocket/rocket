@@ -65,7 +65,7 @@ MainWindow::MainWindow() :
 		setStatusText(QString("Could not start server: %1").arg(tcpServer->errorString()));
 
 #ifdef QT_WEBSOCKETS_LIB
-	wsServer = new QWebSocketServer("GNU Rocket Editor", QWebSocketServer::NonSecureMode);
+	wsServer = new QWebSocketServer("Rocket Editor", QWebSocketServer::NonSecureMode);
 	connect(wsServer, SIGNAL(newConnection()),
 	        this, SLOT(onNewWsConnection()));
 
@@ -426,7 +426,7 @@ void MainWindow::fileQuit()
 {
 	if (doc->isModified()) {
 		QMessageBox::StandardButton res = QMessageBox::question(
-		    this, "GNU Rocket", "Save before exit?",
+		    this, "Rocket", "Save before exit?",
 		    QMessageBox::Yes | QMessageBox::No | QMessageBox::Cancel);
 		if (res == QMessageBox::Yes) {
 			fileSave();
