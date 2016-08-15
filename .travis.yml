@@ -11,7 +11,8 @@ before_script:
       brew update &&
       brew install qt5 &&
       brew install sdl &&
-      export QMAKE="`brew --prefix qt5`/bin/qmake";
+      export QT5_PREFIX="`brew --prefix qt5`";
+      export QMAKE="$QT5_PREFIX/bin/qmake";
     fi
   - if [ ! -f deps/bass24.zip ]; then
         mkdir -p deps && (
@@ -52,7 +53,7 @@ addons:
 before_deploy:
   - if [ "$TRAVIS_OS_NAME" = "osx" ]; then
       (cd editor &&
-      macdeployqt editor.app &&
+      "$QT5_PREFIX/bin/macdeployqt" editor.app &&
       zip -r rocket-editor-$VERSION_TAG-$TRAVIS_OS_NAME.zip editor.app)
     fi
 
