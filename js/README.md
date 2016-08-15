@@ -1,6 +1,6 @@
 jsRocket
 ========
-Lets you use GNU Rocket with your JavaScript / Browser demo.
+Lets you use Rocket with your JavaScript / Browser demo.
 
 js?
 ---
@@ -127,7 +127,7 @@ function render() {
 }
 ```
 
-**GNU Rocket**
+**Rocket**
 Has WebSocket support now, thanks kusma <3, no need for Websockify anymore.
 
 Demos
