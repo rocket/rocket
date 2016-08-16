@@ -2,7 +2,7 @@
   "name": "jsRocket",
   "description": "js connector for Rocket",
   "version": "0.0.1",
-  "homepage": "https://github.com/kusma/rocket",
+  "homepage": "https://github.com/rocket/rocket",
   "author": {
     "name": "mog",
     "email": "mog@trbl.at",
@@ -10,10 +10,10 @@
   },
   "repository": {
     "type": "git",
-    "url": "git://github.com/kusma/rocket.git"
+    "url": "git://github.com/rocket/rocket.git"
   },
   "bugs": {
-    "url": "https://github.com/kusma/rocket/issues"
+    "url": "https://github.com/rocket/rocket/issues"
   },
   "license": "MIT",
   "devDependencies": {
