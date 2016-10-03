@@ -4,6 +4,10 @@
 #include <QDomDocument>
 #include <QTextStream>
 
+#if (QT_VERSION >= QT_VERSION_CHECK(5, 1, 0))
+#include <QSaveFile>
+#define USE_QSAVEFILE
+#endif
 
 SyncDocument::~SyncDocument()
 {
@@ -178,7 +182,12 @@ bool SyncDocument::save(const QString &fileName)
 	rootNode.appendChild(bookmarksNode);
 	rootNode.appendChild(doc.createTextNode("\n"));
 
+#ifdef USE_QSAVEFILE
+	QSaveFile file(fileName);
+#else
 	QFile file(fileName);
+#endif
+
 	if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) {
 		QMessageBox::critical(NULL, "Error", file.errorString());
 		return false;
@@ -187,7 +196,12 @@ bool SyncDocument::save(const QString &fileName)
 	streamFileOut.setCodec("UTF-8");
 	streamFileOut << doc.toString();
 	streamFileOut.flush();
+
+#ifdef USE_QSAVEFILE
+	file.commit();
+#else
 	file.close();
+#endif
 
 	undoStack.setClean();
 	return true;
