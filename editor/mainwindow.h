@@ -10,7 +10,10 @@ class QLabel;
 class QAction;
 class QTabWidget;
 class QTcpServer;
+
+#ifdef QT_WEBSOCKETS_LIB
 class QWebSocketServer;
+#endif
 
 class SyncClient;
 class SyncDocument;
@@ -40,7 +43,9 @@ public:
 	TrackView *addTrackView(SyncPage *page);
 
 	QTcpServer *tcpServer;
+#ifdef QT_WEBSOCKETS_LIB
 	QWebSocketServer *wsServer;
+#endif
 
 	SyncClient *syncClient;
 
