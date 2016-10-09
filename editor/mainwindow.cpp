@@ -70,7 +70,7 @@ MainWindow::MainWindow() :
 	        this, SLOT(onNewWsConnection()));
 
 	if (!wsServer->listen(QHostAddress::Any, 1339))
-		statusBar()->showMessage(QString("Could not start server: %1").arg(tcpServer->errorString()));
+		statusBar()->showMessage(QString("Could not start server: %1").arg(wsServer->errorString()));
 #endif
 }
 
