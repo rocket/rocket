@@ -51,7 +51,7 @@ public:
 	TrackView *currentTrackView;
 
 	QLabel *statusPos, *statusValue, *statusKeyType;
-	QMenu *fileMenu, *recentFilesMenu, *editMenu;
+	QMenu *recentFilesMenu;
 	QAction *recentFileActions[5];
 
 private:
