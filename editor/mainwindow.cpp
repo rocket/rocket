@@ -176,7 +176,7 @@ void MainWindow::createStatusBar()
 	statusBar()->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Fixed);
 
 	statusBar()->showMessage("Not connected");
-	setStatusPosition(0, 0);
+	onPosChanged(0, 0);
 	setStatusValue(0.0f, false);
 	setStatusKeyType(SyncTrack::TrackKey::KEY_TYPE_COUNT);
 }
@@ -244,11 +244,6 @@ void MainWindow::setCurrentFileName(const QString &fileName)
 
 	updateRecentFiles();
 	setWindowFilePath(fileName);
-}
-
-void MainWindow::setStatusPosition(int col, int row)
-{
-	statusPos->setText(QString("Row %1, Col %2").arg(row).arg(col));
 }
 
 void MainWindow::setStatusValue(double val, bool valid)
@@ -520,7 +515,8 @@ void MainWindow::editNextBookmark()
 
 void MainWindow::onPosChanged(int col, int row)
 {
-	setStatusPosition(col, row);
+	statusPos->setText(QString("Row %1, Col %2").arg(row).arg(col));
+
 	if (syncClient && syncClient->isPaused())
 		syncClient->sendSetRowCommand(row);
 }
