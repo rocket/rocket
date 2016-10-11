@@ -62,7 +62,7 @@ MainWindow::MainWindow() :
 	        this, SLOT(onNewTcpConnection()));
 
 	if (!tcpServer->listen(QHostAddress::Any, 1338))
-		setStatusText(QString("Could not start server: %1").arg(tcpServer->errorString()));
+		statusBar()->showMessage(QString("Could not start server: %1").arg(tcpServer->errorString()));
 
 #ifdef QT_WEBSOCKETS_LIB
 	wsServer = new QWebSocketServer("Rocket Editor", QWebSocketServer::NonSecureMode);
@@ -70,7 +70,7 @@ MainWindow::MainWindow() :
 	        this, SLOT(onNewWsConnection()));
 
 	if (!wsServer->listen(QHostAddress::Any, 1339))
-		setStatusText(QString("Could not start server: %1").arg(tcpServer->errorString()));
+		statusBar()->showMessage(QString("Could not start server: %1").arg(tcpServer->errorString()));
 #endif
 }
 
@@ -175,7 +175,7 @@ void MainWindow::createStatusBar()
 
 	statusBar()->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Fixed);
 
-	setStatusText("Not connected");
+	statusBar()->showMessage("Not connected");
 	setStatusPosition(0, 0);
 	setStatusValue(0.0f, false);
 	setStatusKeyType(SyncTrack::TrackKey::KEY_TYPE_COUNT);
@@ -244,11 +244,6 @@ void MainWindow::setCurrentFileName(const QString &fileName)
 
 	updateRecentFiles();
 	setWindowFilePath(fileName);
-}
-
-void MainWindow::setStatusText(const QString &text)
-{
-	statusBar()->showMessage(text);
 }
 
 void MainWindow::setStatusPosition(int col, int row)
@@ -637,7 +632,7 @@ void MainWindow::onNewTcpConnection()
 {
 	QTcpSocket *pendingSocket = tcpServer->nextPendingConnection();
 	if (!syncClient) {
-		setStatusText("Accepting...");
+		statusBar()->showMessage("Accepting...");
 
 		QByteArray greeting = QString(CLIENT_GREET).toUtf8();
 		QByteArray response = QString(SERVER_GREET).toUtf8();
@@ -649,7 +644,7 @@ void MainWindow::onNewTcpConnection()
 		    pendingSocket->write(response) != response.length()) {
 			pendingSocket->close();
 
-			setStatusText(QString("Not Connected: %1").arg(tcpServer->errorString()));
+			statusBar()->showMessage(QString("Not Connected: %1").arg(tcpServer->errorString()));
 			return;
 		}
 
@@ -660,7 +655,7 @@ void MainWindow::onNewTcpConnection()
 		connect(client, SIGNAL(connected()), this, SLOT(onConnected()));
 		connect(client, SIGNAL(disconnected()), this, SLOT(onDisconnected()));
 
-		setStatusText(QString("Connected to %1").arg(pendingSocket->peerAddress().toString()));
+		statusBar()->showMessage(QString("Connected to %1").arg(pendingSocket->peerAddress().toString()));
 		syncClient = client;
 
 		onConnected();
@@ -675,10 +670,10 @@ void MainWindow::onNewWsConnection()
 	QWebSocket *pendingSocket = wsServer->nextPendingConnection();
 
 	if (!syncClient) {
-		setStatusText("Accepting...");
+		statusBar()->showMessage("Accepting...");
 
 		SyncClient *client = new WebSocketClient(pendingSocket);
-		setStatusText(QString("Connected to %1").arg(pendingSocket->peerAddress().toString()));
+		statusBar()->showMessage(QString("Connected to %1").arg(pendingSocket->peerAddress().toString()));
 		syncClient = client;
 
 		connect(client, SIGNAL(trackRequested(const QString &)), this, SLOT(onTrackRequested(const QString &)));
@@ -720,5 +715,5 @@ void MainWindow::onDisconnected()
 		syncClient = NULL;
 	}
 
-	setStatusText("Not Connected.");
+	statusBar()->showMessage("Not Connected.");
 }

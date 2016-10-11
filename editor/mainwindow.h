@@ -35,7 +35,6 @@ public:
 	void setDocument(SyncDocument *newDoc);
 
 	void setStatusPosition(int row, int col);
-	void setStatusText(const QString &text);
 	void setStatusValue(double val, bool valid);
 	void setStatusKeyType(const SyncTrack::TrackKey::KeyType keyType);
 
