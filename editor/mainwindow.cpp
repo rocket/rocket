@@ -177,8 +177,7 @@ void MainWindow::createStatusBar()
 
 	statusBar()->showMessage("Not connected");
 	onPosChanged(0, 0);
-	setStatusValue(0.0f, false);
-	setStatusKeyType(SyncTrack::TrackKey::KEY_TYPE_COUNT);
+	onCurrValDirty();
 }
 
 QStringList MainWindow::getRecentFiles() const
@@ -244,26 +243,6 @@ void MainWindow::setCurrentFileName(const QString &fileName)
 
 	updateRecentFiles();
 	setWindowFilePath(fileName);
-}
-
-void MainWindow::setStatusValue(double val, bool valid)
-{
-	if (valid)
-		statusValue->setText(QString::number(val, 'f', 3));
-	else
-		statusValue->setText("---");
-}
-
-void MainWindow::setStatusKeyType(const SyncTrack::TrackKey::KeyType keyType)
-{
-	switch (keyType) {
-	case SyncTrack::TrackKey::STEP:           statusKeyType->setText("step"); break;
-	case SyncTrack::TrackKey::LINEAR:         statusKeyType->setText("linear"); break;
-	case SyncTrack::TrackKey::SMOOTH:         statusKeyType->setText("smooth"); break;
-	case SyncTrack::TrackKey::RAMP:           statusKeyType->setText("ramp"); break;
-	case SyncTrack::TrackKey::KEY_TYPE_COUNT: statusKeyType->setText("---"); break;
-	default: Q_ASSERT(false);
-	}
 }
 
 void MainWindow::setDocument(SyncDocument *newDoc)
@@ -527,13 +506,22 @@ void MainWindow::onCurrValDirty()
 		const SyncTrack *t = currentTrackView->getTrack(currentTrackView->getEditTrack());
 		int row = currentTrackView->getEditRow();
 
-		setStatusValue(t->getValue(row), true);
+		statusValue->setText(QString::number(t->getValue(row), 'f', 3));
 
 		const SyncTrack::TrackKey *k = t->getPrevKeyFrame(row);
-		setStatusKeyType(k ? k->type : SyncTrack::TrackKey::KEY_TYPE_COUNT);
+		if (k) {
+			switch (k->type) {
+			case SyncTrack::TrackKey::STEP:   statusKeyType->setText("step"); break;
+			case SyncTrack::TrackKey::LINEAR: statusKeyType->setText("linear"); break;
+			case SyncTrack::TrackKey::SMOOTH: statusKeyType->setText("smooth"); break;
+			case SyncTrack::TrackKey::RAMP:   statusKeyType->setText("ramp"); break;
+			default: Q_ASSERT(false);
+			}
+		} else
+			statusKeyType->setText("---");
 	} else {
-		setStatusValue(0.0f, false);
-		setStatusKeyType(SyncTrack::TrackKey::KEY_TYPE_COUNT);
+		statusValue->setText("---");
+		statusKeyType->setText("---");
 	}
 }
 
