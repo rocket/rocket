@@ -62,7 +62,7 @@ MainWindow::MainWindow() :
 	        this, SLOT(onNewTcpConnection()));
 
 	if (!tcpServer->listen(QHostAddress::Any, 1338))
-		setStatusText(QString("Could not start server: %1").arg(tcpServer->errorString()));
+		statusBar()->showMessage(QString("Could not start server: %1").arg(tcpServer->errorString()));
 
 #ifdef QT_WEBSOCKETS_LIB
 	wsServer = new QWebSocketServer("Rocket Editor", QWebSocketServer::NonSecureMode);
@@ -70,7 +70,7 @@ MainWindow::MainWindow() :
 	        this, SLOT(onNewWsConnection()));
 
 	if (!wsServer->listen(QHostAddress::Any, 1339))
-		setStatusText(QString("Could not start server: %1").arg(tcpServer->errorString()));
+		statusBar()->showMessage(QString("Could not start server: %1").arg(tcpServer->errorString()));
 #endif
 }
 
@@ -175,10 +175,9 @@ void MainWindow::createStatusBar()
 
 	statusBar()->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Fixed);
 
-	setStatusText("Not connected");
-	setStatusPosition(0, 0);
-	setStatusValue(0.0f, false);
-	setStatusKeyType(SyncTrack::TrackKey::KEY_TYPE_COUNT);
+	statusBar()->showMessage("Not connected");
+	onPosChanged(0, 0);
+	onCurrValDirty();
 }
 
 QStringList MainWindow::getRecentFiles() const
@@ -244,36 +243,6 @@ void MainWindow::setCurrentFileName(const QString &fileName)
 
 	updateRecentFiles();
 	setWindowFilePath(fileName);
-}
-
-void MainWindow::setStatusText(const QString &text)
-{
-	statusBar()->showMessage(text);
-}
-
-void MainWindow::setStatusPosition(int col, int row)
-{
-	statusPos->setText(QString("Row %1, Col %2").arg(row).arg(col));
-}
-
-void MainWindow::setStatusValue(double val, bool valid)
-{
-	if (valid)
-		statusValue->setText(QString::number(val, 'f', 3));
-	else
-		statusValue->setText("---");
-}
-
-void MainWindow::setStatusKeyType(const SyncTrack::TrackKey::KeyType keyType)
-{
-	switch (keyType) {
-	case SyncTrack::TrackKey::STEP:           statusKeyType->setText("step"); break;
-	case SyncTrack::TrackKey::LINEAR:         statusKeyType->setText("linear"); break;
-	case SyncTrack::TrackKey::SMOOTH:         statusKeyType->setText("smooth"); break;
-	case SyncTrack::TrackKey::RAMP:           statusKeyType->setText("ramp"); break;
-	case SyncTrack::TrackKey::KEY_TYPE_COUNT: statusKeyType->setText("---"); break;
-	default: Q_ASSERT(false);
-	}
 }
 
 void MainWindow::setDocument(SyncDocument *newDoc)
@@ -525,7 +494,8 @@ void MainWindow::editNextBookmark()
 
 void MainWindow::onPosChanged(int col, int row)
 {
-	setStatusPosition(col, row);
+	statusPos->setText(QString("Row %1, Col %2").arg(row).arg(col));
+
 	if (syncClient && syncClient->isPaused())
 		syncClient->sendSetRowCommand(row);
 }
@@ -536,13 +506,22 @@ void MainWindow::onCurrValDirty()
 		const SyncTrack *t = currentTrackView->getTrack(currentTrackView->getEditTrack());
 		int row = currentTrackView->getEditRow();
 
-		setStatusValue(t->getValue(row), true);
+		statusValue->setText(QString::number(t->getValue(row), 'f', 3));
 
 		const SyncTrack::TrackKey *k = t->getPrevKeyFrame(row);
-		setStatusKeyType(k ? k->type : SyncTrack::TrackKey::KEY_TYPE_COUNT);
+		if (k) {
+			switch (k->type) {
+			case SyncTrack::TrackKey::STEP:   statusKeyType->setText("step"); break;
+			case SyncTrack::TrackKey::LINEAR: statusKeyType->setText("linear"); break;
+			case SyncTrack::TrackKey::SMOOTH: statusKeyType->setText("smooth"); break;
+			case SyncTrack::TrackKey::RAMP:   statusKeyType->setText("ramp"); break;
+			default: Q_ASSERT(false);
+			}
+		} else
+			statusKeyType->setText("---");
 	} else {
-		setStatusValue(0.0f, false);
-		setStatusKeyType(SyncTrack::TrackKey::KEY_TYPE_COUNT);
+		statusValue->setText("---");
+		statusKeyType->setText("---");
 	}
 }
 
@@ -637,7 +616,7 @@ void MainWindow::onNewTcpConnection()
 {
 	QTcpSocket *pendingSocket = tcpServer->nextPendingConnection();
 	if (!syncClient) {
-		setStatusText("Accepting...");
+		statusBar()->showMessage("Accepting...");
 
 		QByteArray greeting = QString(CLIENT_GREET).toUtf8();
 		QByteArray response = QString(SERVER_GREET).toUtf8();
@@ -649,7 +628,7 @@ void MainWindow::onNewTcpConnection()
 		    pendingSocket->write(response) != response.length()) {
 			pendingSocket->close();
 
-			setStatusText(QString("Not Connected: %1").arg(tcpServer->errorString()));
+			statusBar()->showMessage(QString("Not Connected: %1").arg(tcpServer->errorString()));
 			return;
 		}
 
@@ -660,7 +639,7 @@ void MainWindow::onNewTcpConnection()
 		connect(client, SIGNAL(connected()), this, SLOT(onConnected()));
 		connect(client, SIGNAL(disconnected()), this, SLOT(onDisconnected()));
 
-		setStatusText(QString("Connected to %1").arg(pendingSocket->peerAddress().toString()));
+		statusBar()->showMessage(QString("Connected to %1").arg(pendingSocket->peerAddress().toString()));
 		syncClient = client;
 
 		onConnected();
@@ -675,10 +654,10 @@ void MainWindow::onNewWsConnection()
 	QWebSocket *pendingSocket = wsServer->nextPendingConnection();
 
 	if (!syncClient) {
-		setStatusText("Accepting...");
+		statusBar()->showMessage("Accepting...");
 
 		SyncClient *client = new WebSocketClient(pendingSocket);
-		setStatusText(QString("Connected to %1").arg(pendingSocket->peerAddress().toString()));
+		statusBar()->showMessage(QString("Connected to %1").arg(pendingSocket->peerAddress().toString()));
 		syncClient = client;
 
 		connect(client, SIGNAL(trackRequested(const QString &)), this, SLOT(onTrackRequested(const QString &)));
@@ -720,5 +699,5 @@ void MainWindow::onDisconnected()
 		syncClient = NULL;
 	}
 
-	setStatusText("Not Connected.");
+	statusBar()->showMessage("Not Connected.");
 }
