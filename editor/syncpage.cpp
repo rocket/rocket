@@ -114,5 +114,6 @@ void SyncPage::onKeyFrameRemoved(int row, const SyncTrack::TrackKey &oldKey)
 	if (oldKey.type != startKey->type) {
 		int endRow = endKey != NULL ? endKey->row - 1 : document->getRows();
 		invalidateTrackData(*track, startKey->row, endRow);
-	}
+	} else
+		invalidateTrackData(*track, row, row);
 }
