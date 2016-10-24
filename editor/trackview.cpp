@@ -409,7 +409,7 @@ void TrackView::editCopy()
 	data.append((char *)&buffer_width, sizeof(int));
 	data.append((char *)&buffer_height, sizeof(int));
 	data.append((char *)&buffer_size, sizeof(size_t));
-	data.append((char *)&copyEntries[0], sizeof(CopyEntry) * copyEntries.size());
+	data.append((char *)copyEntries.data(), sizeof(CopyEntry) * copyEntries.size());
 
 	QMimeData *mimeData = new QMimeData;
 	mimeData->setData("application/x-gnu-rocket", data);
