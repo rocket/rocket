@@ -9,7 +9,6 @@ os:
 before_script:
   - if [ "$TRAVIS_OS_NAME" = "osx" ]; then
       brew update &&
-      brew install coreutils &&
       brew install qt5 &&
       brew install sdl &&
       export QT5_PREFIX="`brew --prefix qt5`";
