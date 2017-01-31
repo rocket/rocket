@@ -314,13 +314,15 @@ static int save_track(const struct sync_track *t, const char *path)
 	return 0;
 }
 
-void sync_save_tracks(const struct sync_device *d)
+int sync_save_tracks(const struct sync_device *d)
 {
 	int i;
 	for (i = 0; i < (int)d->num_tracks; ++i) {
 		const struct sync_track *t = d->tracks[i];
-		save_track(t, sync_track_path(d->base, t->name));
+		if (save_track(t, sync_track_path(d->base, t->name)))
+			return -1;
 	}
+	return 0;
 }
 
 #ifndef SYNC_PLAYER
