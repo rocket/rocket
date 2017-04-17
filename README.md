@@ -111,6 +111,8 @@ Alternatives and ports
 * [Moonlander](https://github.com/anttihirvonen/moonlander), a Java
   implementation of the client and player, for integration with
   [Processing](https://processing.org/).
+* [pyrocket](https://github.com/Contraz/pyrocket), a Python 3
+  implementation of the client and player.
 
 Bugs and feedback
 -----------------
