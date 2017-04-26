@@ -485,17 +485,26 @@ sockerr:
 
 static int create_track(struct sync_device *d, const char *name)
 {
+	void *tmp;
 	struct sync_track *t;
 	assert(find_track(d, name) < 0);
 
 	t = malloc(sizeof(*t));
+	if (!t)
+		return -1;
+
 	t->name = strdup(name);
 	t->keys = NULL;
 	t->num_keys = 0;
 
-	d->num_tracks++;
-	d->tracks = realloc(d->tracks, sizeof(d->tracks[0]) * d->num_tracks);
-	d->tracks[d->num_tracks - 1] = t;
+	tmp = realloc(d->tracks, sizeof(d->tracks[0]) * (d->num_tracks + 1));
+	if (!tmp) {
+		free(t);
+		return -1;
+	}
+
+	d->tracks = tmp;
+	d->tracks[d->num_tracks++] = t;
 
 	return (int)d->num_tracks - 1;
 }
@@ -509,6 +518,9 @@ const struct sync_track *sync_get_track(struct sync_device *d,
 		return d->tracks[idx];
 
 	idx = create_track(d, name);
+	if (idx < 0)
+		return NULL;
+
 	t = d->tracks[idx];
 
 #ifndef SYNC_PLAYER
