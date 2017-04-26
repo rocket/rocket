@@ -368,8 +368,9 @@ static int handle_set_key_cmd(SOCKET sock, struct sync_device *data)
 	key.row = ntohl(row);
 	key.value = v.f;
 
-	assert(type < KEY_TYPE_COUNT);
-	assert(track < data->num_tracks);
+	if (type >= KEY_TYPE_COUNT || track >= data->num_tracks)
+		return -1;
+
 	key.type = (enum key_type)type;
 	return sync_set_key(data->tracks[track], &key);
 }
@@ -385,7 +386,9 @@ static int handle_del_key_cmd(SOCKET sock, struct sync_device *data)
 	track = ntohl(track);
 	row = ntohl(row);
 
-	assert(track < data->num_tracks);
+	if (track >= data->num_tracks)
+		return -1;
+
 	return sync_del_key(data->tracks[track], row);
 }
 
