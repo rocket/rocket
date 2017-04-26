@@ -368,8 +368,9 @@ static int handle_set_key_cmd(SOCKET sock, struct sync_device *data)
 	key.row = ntohl(row);
 	key.value = v.f;
 
-	assert(type < KEY_TYPE_COUNT);
-	assert(track < data->num_tracks);
+	if (type >= KEY_TYPE_COUNT || track >= data->num_tracks)
+		return -1;
+
 	key.type = (enum key_type)type;
 	return sync_set_key(data->tracks[track], &key);
 }
@@ -385,7 +386,9 @@ static int handle_del_key_cmd(SOCKET sock, struct sync_device *data)
 	track = ntohl(track);
 	row = ntohl(row);
 
-	assert(track < data->num_tracks);
+	if (track >= data->num_tracks)
+		return -1;
+
 	return sync_del_key(data->tracks[track], row);
 }
 
@@ -485,17 +488,26 @@ sockerr:
 
 static int create_track(struct sync_device *d, const char *name)
 {
+	void *tmp;
 	struct sync_track *t;
 	assert(find_track(d, name) < 0);
 
 	t = malloc(sizeof(*t));
+	if (!t)
+		return -1;
+
 	t->name = strdup(name);
 	t->keys = NULL;
 	t->num_keys = 0;
 
-	d->num_tracks++;
-	d->tracks = realloc(d->tracks, sizeof(d->tracks[0]) * d->num_tracks);
-	d->tracks[d->num_tracks - 1] = t;
+	tmp = realloc(d->tracks, sizeof(d->tracks[0]) * (d->num_tracks + 1));
+	if (!tmp) {
+		free(t);
+		return -1;
+	}
+
+	d->tracks = tmp;
+	d->tracks[d->num_tracks++] = t;
 
 	return (int)d->num_tracks - 1;
 }
@@ -509,6 +521,9 @@ const struct sync_track *sync_get_track(struct sync_device *d,
 		return d->tracks[idx];
 
 	idx = create_track(d, name);
+	if (idx < 0)
+		return NULL;
+
 	t = d->tracks[idx];
 
 #ifndef SYNC_PLAYER
