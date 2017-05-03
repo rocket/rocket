@@ -102,7 +102,7 @@ Alternatives and ports
 ----------------------
 * [PBRocket](https://github.com/dartcode/pbrocket), a PureBasic port of the
   Rocket editor, client and player.
-* [RocketEditor](https://github.com/emoon/rocket/tree/master/ogl_editor), an
+* [RocketEditor](https://github.com/emoon/rocket), an
   alternative editor written in pure C using OpenGL for the GUI.
 * [GroundControl](https://github.com/edoreshef/ground-control), an alternative
   editor written in C# using WPF for the GUI.
