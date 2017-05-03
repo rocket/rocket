@@ -612,6 +612,18 @@ void MainWindow::setPaused(bool pause)
 		trackViews[i]->setReadOnly(!pause);
 }
 
+void MainWindow::setSyncClient(SyncClient *client)
+{
+	Q_ASSERT(syncClient == NULL);
+	Q_ASSERT(client != NULL);
+
+	connect(client, SIGNAL(trackRequested(const QString &)), this, SLOT(onTrackRequested(const QString &)));
+	connect(client, SIGNAL(rowChanged(int)), this, SLOT(onRowChanged(int)));
+	connect(client, SIGNAL(connected()), this, SLOT(onConnected()));
+	connect(client, SIGNAL(disconnected()), this, SLOT(onDisconnected()));
+	syncClient = client;
+}
+
 void MainWindow::onNewTcpConnection()
 {
 	QTcpSocket *pendingSocket = tcpServer->nextPendingConnection();
@@ -632,17 +644,12 @@ void MainWindow::onNewTcpConnection()
 			return;
 		}
 
-		SyncClient *client = new AbstractSocketClient(pendingSocket);
-
-		connect(client, SIGNAL(trackRequested(const QString &)), this, SLOT(onTrackRequested(const QString &)));
-		connect(client, SIGNAL(rowChanged(int)), this, SLOT(onRowChanged(int)));
-		connect(client, SIGNAL(connected()), this, SLOT(onConnected()));
-		connect(client, SIGNAL(disconnected()), this, SLOT(onDisconnected()));
-
+		AbstractSocketClient *client = new AbstractSocketClient(pendingSocket);
 		statusBar()->showMessage(QString("Connected to %1").arg(pendingSocket->peerAddress().toString()));
-		syncClient = client;
 
-		onConnected();
+		setSyncClient(client);
+
+		client->notifyConnected(); // we already performed the hand-shake, unlike the WebSocket client
 	} else
 		pendingSocket->close();
 }
@@ -658,12 +665,8 @@ void MainWindow::onNewWsConnection()
 
 		SyncClient *client = new WebSocketClient(pendingSocket);
 		statusBar()->showMessage(QString("Connected to %1").arg(pendingSocket->peerAddress().toString()));
-		syncClient = client;
 
-		connect(client, SIGNAL(trackRequested(const QString &)), this, SLOT(onTrackRequested(const QString &)));
-		connect(client, SIGNAL(rowChanged(int)), this, SLOT(onRowChanged(int)));
-		connect(client, SIGNAL(connected()), this, SLOT(onConnected()));
-		connect(client, SIGNAL(disconnected()), this, SLOT(onDisconnected()));
+		setSyncClient(client);
 	} else
 		pendingSocket->close();
 }

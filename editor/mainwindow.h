@@ -57,6 +57,7 @@ public:
 
 private:
 	void setPaused(bool pause);
+	void setSyncClient(SyncClient *syncClient);
 
 public slots:
 	void fileNew();
