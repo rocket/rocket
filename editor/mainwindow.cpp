@@ -564,10 +564,8 @@ void MainWindow::onTabChanged(int index)
 
 	setTrackView(index < 0 ? NULL : trackViews[index]);
 
-	if (currentTrackView) {
-		currentTrackView->setEditRow(row);
+	if (currentTrackView)
 		currentTrackView->setFocus();
-	}
 }
 
 void MainWindow::onTrackRequested(const QString &trackName)
@@ -596,7 +594,8 @@ void MainWindow::onTrackRequested(const QString &trackName)
 
 void MainWindow::onClientRowChanged(int row)
 {
-	currentTrackView->setEditRow(row);
+	for (int i = 0; i < trackViews.count(); ++i)
+		trackViews[i]->setEditRow(row);
 }
 
 void MainWindow::setPaused(bool pause)
