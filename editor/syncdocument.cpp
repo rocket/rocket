@@ -242,7 +242,7 @@ int SyncDocument::prevRowBookmark(int row) const
 
 int SyncDocument::nextRowBookmark(int row) const
 {
-	QList<int>::const_iterator it = qLowerBound(rowBookmarks.begin(), rowBookmarks.end(), row);
+	QList<int>::const_iterator it = qLowerBound(rowBookmarks.begin(), rowBookmarks.end(), row + 1);
 	if (it == rowBookmarks.end())
 		return -1;
 	return *it;
