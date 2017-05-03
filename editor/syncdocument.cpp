@@ -225,25 +225,15 @@ void SyncDocument::toggleRowBookmark(int row)
 int SyncDocument::prevRowBookmark(int row) const
 {
 	QList<int>::const_iterator it = qLowerBound(rowBookmarks.begin(), rowBookmarks.end(), row);
-	if (it == rowBookmarks.end()) {
-
-		// this can only really happen if the list is empty
-		if (it == rowBookmarks.begin())
-			return -1;
-
-		// reached the end, pick the last bookmark if it's after the current row
-		it--;
-		return *it < row ? *it : -1;
-	}
-
-	// pick the previous key (if any)
-	return it != rowBookmarks.begin() ? *(--it) : -1;
+	if (it == rowBookmarks.constBegin())
+		return -1;
+	return *--it;
 }
 
 int SyncDocument::nextRowBookmark(int row) const
 {
-	QList<int>::const_iterator it = qLowerBound(rowBookmarks.begin(), rowBookmarks.end(), row + 1);
-	if (it == rowBookmarks.end())
+	QList<int>::const_iterator it = qLowerBound(rowBookmarks.constBegin(), rowBookmarks.constEnd(), row + 1);
+	if (it == rowBookmarks.constEnd())
 		return -1;
 	return *it;
 }
