@@ -480,16 +480,12 @@ void MainWindow::editSetFont()
 
 void MainWindow::editPreviousBookmark()
 {
-	int row = doc->prevRowBookmark(currentTrackView->getEditRow());
-	if (row >= 0)
-		currentTrackView->setEditRow(row);
+	currentTrackView->editPreviousBookmark();
 }
 
 void MainWindow::editNextBookmark()
 {
-	int row = doc->nextRowBookmark(currentTrackView->getEditRow());
-	if (row >= 0)
-		currentTrackView->setEditRow(row);
+	currentTrackView->editNextBookmark();
 }
 
 void MainWindow::onPosChanged(int col, int row)

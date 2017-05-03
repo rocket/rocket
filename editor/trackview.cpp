@@ -523,6 +523,25 @@ void TrackView::editRedo()
 		doc->redo();
 }
 
+void TrackView::editPreviousBookmark()
+{
+	SyncDocument *doc = getDocument();
+
+	int row = doc->prevRowBookmark(getEditRow());
+	if (row >= 0)
+		setEditRow(row);
+}
+
+void TrackView::editNextBookmark()
+{
+	SyncDocument *doc = getDocument();
+
+	int row = doc->nextRowBookmark(getEditRow());
+	if (row >= 0)
+		setEditRow(row);
+}
+
+
 void TrackView::setSelection(const QRect &rect)
 {
 	QRect oldRect = getSelection();

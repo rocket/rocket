@@ -77,6 +77,9 @@ public slots:
 	void editPaste();
 	void editClear();
 
+	void editPreviousBookmark();
+	void editNextBookmark();
+
 	void selectAll();
 	void selectTrack();
 	void selectRow();
