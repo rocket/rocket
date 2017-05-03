@@ -222,14 +222,6 @@ void SyncDocument::toggleRowBookmark(int row)
 		rowBookmarks.erase(it);
 }
 
-int SyncDocument::nextRowBookmark(int row) const
-{
-	QList<int>::const_iterator it = qLowerBound(rowBookmarks.begin(), rowBookmarks.end(), row);
-	if (it == rowBookmarks.end())
-		return -1;
-	return *it;
-}
-
 int SyncDocument::prevRowBookmark(int row) const
 {
 	QList<int>::const_iterator it = qLowerBound(rowBookmarks.begin(), rowBookmarks.end(), row);
@@ -246,6 +238,14 @@ int SyncDocument::prevRowBookmark(int row) const
 
 	// pick the previous key (if any)
 	return it != rowBookmarks.begin() ? *(--it) : -1;
+}
+
+int SyncDocument::nextRowBookmark(int row) const
+{
+	QList<int>::const_iterator it = qLowerBound(rowBookmarks.begin(), rowBookmarks.end(), row);
+	if (it == rowBookmarks.end())
+		return -1;
+	return *it;
 }
 
 class InsertCommand : public QUndoCommand

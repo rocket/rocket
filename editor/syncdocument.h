@@ -68,8 +68,8 @@ public:
 
 	QString fileName;
 
-	int nextRowBookmark(int row) const;
 	int prevRowBookmark(int row) const;
+	int nextRowBookmark(int row) const;
 
 	SyncPage *findSyncPage(const QString &name)
 	{
