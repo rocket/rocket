@@ -35,7 +35,6 @@ public:
 	void setEditRow(int newEditRow, bool selecting = false);
 	int  getEditRow() const { return editRow; }
 
-	void setEditTrack(int newEditTrack, bool autoscroll = true, bool selecting = false);
 	int  getEditTrack() const { return editTrack; }
 
 	void selectNone()
@@ -83,6 +82,8 @@ public slots:
 	void selectRow();
 
 private:
+
+	void setEditTrack(int newEditTrack, bool selecting);
 
 	/* paint helpers */
 	void paintTopMargin(QStylePainter &painter, const QRegion &region);

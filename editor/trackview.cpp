@@ -348,12 +348,12 @@ void TrackView::mouseMoveEvent(QMouseEvent *event)
 			for (int i = anchorTrack; i < track; ++i)
 				page->swapTrackOrder(i, i + 1);
 			anchorTrack = track;
-			setEditTrack(track);
+			setEditTrack(track, false);
 		} else if (track < anchorTrack) {
 			for (int i = anchorTrack; i > track; --i)
 				page->swapTrackOrder(i, i - 1);
 			anchorTrack = track;
-			setEditTrack(track);
+			setEditTrack(track, false);
 		}
 	} else {
 		if (event->pos().y() < topMarginHeight &&
@@ -380,7 +380,7 @@ void TrackView::mouseReleaseEvent(QMouseEvent *event)
 	if (event->button() == Qt::LeftButton) {
 		dragging = false;
 		setCursor(QCursor(Qt::ArrowCursor));
-		setEditTrack(editTrack);
+		setEditTrack(editTrack, false);
 	}
 }
 
@@ -634,7 +634,7 @@ void TrackView::setEditRow(int newEditRow, bool selecting)
 	setScrollPos(scrollPosX, (editRow * rowHeight) - ((viewport()->height() - topMarginHeight) / 2) + rowHeight / 2);
 }
 
-void TrackView::setEditTrack(int newEditTrack, bool autoscroll, bool selecting)
+void TrackView::setEditTrack(int newEditTrack, bool selecting)
 {
 	if (0 == getTrackCount()) return;
 
@@ -652,7 +652,7 @@ void TrackView::setEditTrack(int newEditTrack, bool autoscroll, bool selecting)
 		dirtyCurrentValue();
 	}
 
-	if (autoscroll && viewport()->width() > 0) {
+	if (viewport()->width() > 0) {
 		int viewportWidth = viewport()->width() - leftMarginWidth;
 		int minX = getLogicalX(editTrack);
 		int maxX = getLogicalX(editTrack + 1);
@@ -864,7 +864,7 @@ void TrackView::keyPressEvent(QKeyEvent *event)
 					QApplication::beep();
 			}
 			if (0 != getTrackCount())
-				setEditTrack(editTrack - 1, true, selecting);
+				setEditTrack(editTrack - 1, selecting);
 			else
 				QApplication::beep();
 			return;
@@ -885,7 +885,7 @@ void TrackView::keyPressEvent(QKeyEvent *event)
 					QApplication::beep();
 			}
 			if (0 != getTrackCount())
-				setEditTrack(editTrack + 1, true, selecting);
+				setEditTrack(editTrack + 1, selecting);
 			else
 				QApplication::beep();
 			return;
@@ -930,14 +930,14 @@ void TrackView::keyPressEvent(QKeyEvent *event)
 
 		case Qt::Key_Home:
 			if (ctrlDown)
-				setEditTrack(0);
+				setEditTrack(0, false);
 			else
 				setEditRow(0, selecting);
 			return;
 
 		case Qt::Key_End:
 			if (ctrlDown)
-				setEditTrack(getTrackCount() - 1);
+				setEditTrack(getTrackCount() - 1, false);
 			else
 				setEditRow(getRows() - 1, selecting);
 			return;
