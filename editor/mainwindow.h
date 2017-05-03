@@ -91,7 +91,7 @@ public slots:
 
 private slots:
 	void onTrackRequested(const QString &trackName);
-	void onRowChanged(int row);
+	void onClientRowChanged(int row);
 	void onNewTcpConnection();
 #ifdef QT_WEBSOCKETS_LIB
 	void onNewWsConnection();

@@ -598,7 +598,7 @@ void MainWindow::onTrackRequested(const QString &trackName)
 	t->setActive(true);
 }
 
-void MainWindow::onRowChanged(int row)
+void MainWindow::onClientRowChanged(int row)
 {
 	currentTrackView->setEditRow(row);
 }
@@ -618,7 +618,7 @@ void MainWindow::setSyncClient(SyncClient *client)
 	Q_ASSERT(client != NULL);
 
 	connect(client, SIGNAL(trackRequested(const QString &)), this, SLOT(onTrackRequested(const QString &)));
-	connect(client, SIGNAL(rowChanged(int)), this, SLOT(onRowChanged(int)));
+	connect(client, SIGNAL(rowChanged(int)), this, SLOT(onClientRowChanged(int)));
 	connect(client, SIGNAL(connected()), this, SLOT(onConnected()));
 	connect(client, SIGNAL(disconnected()), this, SLOT(onDisconnected()));
 	syncClient = client;
