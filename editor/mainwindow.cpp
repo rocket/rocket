@@ -491,7 +491,10 @@ void MainWindow::editNextBookmark()
 void MainWindow::onPosChanged(int col, int row)
 {
 	statusPos->setText(QString("Row %1, Col %2").arg(row).arg(col));
+}
 
+void MainWindow::onEditRowChanged(int row)
+{
 	if (syncClient && syncClient->isPaused())
 		syncClient->sendSetRowCommand(row);
 }
@@ -537,6 +540,8 @@ void MainWindow::setTrackView(TrackView *newTrackView)
 	if (currentTrackView) {
 		disconnect(currentTrackView, SIGNAL(posChanged(int, int)),
 		           this,             SLOT(onPosChanged(int, int)));
+		disconnect(currentTrackView, SIGNAL(editRowChanged(int)),
+		           this,             SLOT(onEditRowChanged(int)));
 		disconnect(currentTrackView, SIGNAL(currValDirty()),
 		           this,             SLOT(onCurrValDirty()));
 	}
@@ -546,6 +551,8 @@ void MainWindow::setTrackView(TrackView *newTrackView)
 	if (currentTrackView) {
 		connect(currentTrackView, SIGNAL(posChanged(int, int)),
 		        this,             SLOT(onPosChanged(int, int)));
+		connect(currentTrackView, SIGNAL(editRowChanged(int)),
+		        this,             SLOT(onEditRowChanged(int)));
 		connect(currentTrackView, SIGNAL(currValDirty()),
 		        this,             SLOT(onCurrValDirty()));
 	}
@@ -595,7 +602,7 @@ void MainWindow::onTrackRequested(const QString &trackName)
 void MainWindow::onClientRowChanged(int row)
 {
 	for (int i = 0; i < trackViews.count(); ++i)
-		trackViews[i]->setEditRow(row);
+		trackViews[i]->updateRow(row);
 }
 
 void MainWindow::setPaused(bool pause)

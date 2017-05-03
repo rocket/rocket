@@ -86,6 +86,7 @@ public slots:
 	void editPreviousBookmark();
 	void editNextBookmark();
 
+	void onEditRowChanged(int row);
 	void onPosChanged(int col, int row);
 	void onCurrValDirty();
 

@@ -529,7 +529,7 @@ void TrackView::editPreviousBookmark()
 
 	int row = doc->prevRowBookmark(getEditRow());
 	if (row >= 0)
-		setEditRow(row);
+		setEditRow(row, false);
 }
 
 void TrackView::editNextBookmark()
@@ -538,7 +538,7 @@ void TrackView::editNextBookmark()
 
 	int row = doc->nextRowBookmark(getEditRow());
 	if (row >= 0)
-		setEditRow(row);
+		setEditRow(row, false);
 }
 
 
@@ -633,7 +633,7 @@ void TrackView::setScrollPos(int newScrollPosX, int newScrollPosY)
 	verticalScrollBar()->setValue(editRow);
 }
 
-void TrackView::setEditRow(int newEditRow, bool selecting)
+bool TrackView::internalSetEditRow(int newEditRow, bool selecting)
 {
 	int oldEditRow = editRow;
 	editRow = newEditRow;
@@ -641,7 +641,8 @@ void TrackView::setEditRow(int newEditRow, bool selecting)
 	// clamp to document
 	editRow = qBound(0, editRow, getRows() - 1);
 
-	if (oldEditRow != editRow) {
+	bool change = oldEditRow != editRow;
+	if (change) {
 		updateSelection(QPoint(editTrack, editRow), selecting);
 		dirtyPosition();
 		dirtyCurrentValue();
@@ -651,6 +652,7 @@ void TrackView::setEditRow(int newEditRow, bool selecting)
 	}
 
 	setScrollPos(scrollPosX, (editRow * rowHeight) - ((viewport()->height() - topMarginHeight) / 2) + rowHeight / 2);
+	return change;
 }
 
 void TrackView::setEditTrack(int newEditTrack, bool selecting)
@@ -690,7 +692,7 @@ void TrackView::setRows(int rows)
 
 	doc->setRows(rows);
 	viewport()->update();
-	setEditRow(qMin(editRow, rows - 1));
+	setEditRow(qMin(editRow, rows - 1), false);
 }
 
 int TrackView::getRows() const
@@ -715,7 +717,7 @@ SyncDocument *TrackView::getDocument()
 
 void TrackView::onVScroll(int value)
 {
-	setEditRow(value);
+	setEditRow(value, false);
 }
 
 void TrackView::onHScroll(int value)
@@ -1008,7 +1010,7 @@ void TrackView::keyPressEvent(QKeyEvent *event)
 void TrackView::resizeEvent(QResizeEvent *event)
 {
 	windowRows   = (event->size().height() - topMarginHeight) / rowHeight;
-	setEditRow(editRow);
+	setEditRow(editRow, false);
 	setupScrollBars();
 }
 
