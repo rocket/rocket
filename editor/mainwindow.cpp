@@ -495,7 +495,7 @@ void MainWindow::onPosChanged(int col, int row)
 
 void MainWindow::onEditRowChanged(int row)
 {
-	if (syncClient && syncClient->isPaused())
+	if (syncClient)
 		syncClient->sendSetRowCommand(row);
 }
 

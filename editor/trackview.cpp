@@ -913,40 +913,48 @@ void TrackView::keyPressEvent(QKeyEvent *event)
 		}
 	}
 
-	if (!readOnly && lineEdit->isHidden()) {
-		switch (event->key()) {
-		case Qt::Key_Up:
-			if (ctrlDown) {
+	if (lineEdit->isHidden()) {
+		if (!readOnly && ctrlDown) {
+			switch (event->key()) {
+			case Qt::Key_Up:
 				if (getTrackCount() > editTrack)
 					editBiasValue(shiftDown ? 0.1f : 1.0f);
 				else
 					QApplication::beep();
-			} else
-				setEditRow(editRow - 1, selecting);
-			return;
+				return;
 
-		case Qt::Key_Down:
-			if (ctrlDown) {
+			case Qt::Key_Down:
 				if (getTrackCount() > editTrack)
 					editBiasValue(shiftDown ? -0.1f : -1.0f);
 				else
 					QApplication::beep();
-			} else
-				setEditRow(editRow + 1, selecting);
+				return;
+
+			case Qt::Key_PageUp:
+				editBiasValue(shiftDown ? 100.0f : 10.0f);
+				return;
+
+			case Qt::Key_PageDown:
+				editBiasValue(shiftDown ? -100.0f : -10.0f);
+				return;
+			}
+		}
+
+		switch (event->key()) {
+		case Qt::Key_Up:
+			setEditRow(editRow - 1, selecting);
+			return;
+
+		case Qt::Key_Down:
+			setEditRow(editRow + 1, selecting);
 			return;
 
 		case Qt::Key_PageUp:
-			if (ctrlDown)
-				editBiasValue(shiftDown ? 100.0f : 10.0f);
-			else
-				setEditRow(editRow - 0x10, selecting);
+			setEditRow(editRow - 0x10, selecting);
 			return;
 
 		case Qt::Key_PageDown:
-			if (ctrlDown)
-				editBiasValue(shiftDown ? -100.0f : -10.0f);
-			else
-				setEditRow(editRow + 0x10, selecting);
+			setEditRow(editRow + 0x10, selecting);
 			return;
 
 		case Qt::Key_Home:
