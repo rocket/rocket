@@ -100,6 +100,11 @@ public:
 		return ret;
 	}
 
+	void notifyConnected()
+	{
+		emit connected();
+	}
+
 private:
 	QAbstractSocket *socket;
 	bool recv(char *buffer, qint64 length);

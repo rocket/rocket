@@ -480,23 +480,22 @@ void MainWindow::editSetFont()
 
 void MainWindow::editPreviousBookmark()
 {
-	int row = doc->prevRowBookmark(currentTrackView->getEditRow());
-	if (row >= 0)
-		currentTrackView->setEditRow(row);
+	currentTrackView->editPreviousBookmark();
 }
 
 void MainWindow::editNextBookmark()
 {
-	int row = doc->nextRowBookmark(currentTrackView->getEditRow());
-	if (row >= 0)
-		currentTrackView->setEditRow(row);
+	currentTrackView->editNextBookmark();
 }
 
 void MainWindow::onPosChanged(int col, int row)
 {
 	statusPos->setText(QString("Row %1, Col %2").arg(row).arg(col));
+}
 
-	if (syncClient && syncClient->isPaused())
+void MainWindow::onEditRowChanged(int row)
+{
+	if (syncClient)
 		syncClient->sendSetRowCommand(row);
 }
 
@@ -541,6 +540,8 @@ void MainWindow::setTrackView(TrackView *newTrackView)
 	if (currentTrackView) {
 		disconnect(currentTrackView, SIGNAL(posChanged(int, int)),
 		           this,             SLOT(onPosChanged(int, int)));
+		disconnect(currentTrackView, SIGNAL(editRowChanged(int)),
+		           this,             SLOT(onEditRowChanged(int)));
 		disconnect(currentTrackView, SIGNAL(currValDirty()),
 		           this,             SLOT(onCurrValDirty()));
 	}
@@ -550,6 +551,8 @@ void MainWindow::setTrackView(TrackView *newTrackView)
 	if (currentTrackView) {
 		connect(currentTrackView, SIGNAL(posChanged(int, int)),
 		        this,             SLOT(onPosChanged(int, int)));
+		connect(currentTrackView, SIGNAL(editRowChanged(int)),
+		        this,             SLOT(onEditRowChanged(int)));
 		connect(currentTrackView, SIGNAL(currValDirty()),
 		        this,             SLOT(onCurrValDirty()));
 	}
@@ -568,10 +571,8 @@ void MainWindow::onTabChanged(int index)
 
 	setTrackView(index < 0 ? NULL : trackViews[index]);
 
-	if (currentTrackView) {
-		currentTrackView->setEditRow(row);
+	if (currentTrackView)
 		currentTrackView->setFocus();
-	}
 }
 
 void MainWindow::onTrackRequested(const QString &trackName)
@@ -598,9 +599,10 @@ void MainWindow::onTrackRequested(const QString &trackName)
 	t->setActive(true);
 }
 
-void MainWindow::onRowChanged(int row)
+void MainWindow::onClientRowChanged(int row)
 {
-	currentTrackView->setEditRow(row);
+	for (int i = 0; i < trackViews.count(); ++i)
+		trackViews[i]->updateRow(row);
 }
 
 void MainWindow::setPaused(bool pause)
@@ -610,6 +612,18 @@ void MainWindow::setPaused(bool pause)
 
 	for (int i = 0; i < trackViews.count(); ++i)
 		trackViews[i]->setReadOnly(!pause);
+}
+
+void MainWindow::setSyncClient(SyncClient *client)
+{
+	Q_ASSERT(syncClient == NULL);
+	Q_ASSERT(client != NULL);
+
+	connect(client, SIGNAL(trackRequested(const QString &)), this, SLOT(onTrackRequested(const QString &)));
+	connect(client, SIGNAL(rowChanged(int)), this, SLOT(onClientRowChanged(int)));
+	connect(client, SIGNAL(connected()), this, SLOT(onConnected()));
+	connect(client, SIGNAL(disconnected()), this, SLOT(onDisconnected()));
+	syncClient = client;
 }
 
 void MainWindow::onNewTcpConnection()
@@ -632,17 +646,12 @@ void MainWindow::onNewTcpConnection()
 			return;
 		}
 
-		SyncClient *client = new AbstractSocketClient(pendingSocket);
-
-		connect(client, SIGNAL(trackRequested(const QString &)), this, SLOT(onTrackRequested(const QString &)));
-		connect(client, SIGNAL(rowChanged(int)), this, SLOT(onRowChanged(int)));
-		connect(client, SIGNAL(connected()), this, SLOT(onConnected()));
-		connect(client, SIGNAL(disconnected()), this, SLOT(onDisconnected()));
-
+		AbstractSocketClient *client = new AbstractSocketClient(pendingSocket);
 		statusBar()->showMessage(QString("Connected to %1").arg(pendingSocket->peerAddress().toString()));
-		syncClient = client;
 
-		onConnected();
+		setSyncClient(client);
+
+		client->notifyConnected(); // we already performed the hand-shake, unlike the WebSocket client
 	} else
 		pendingSocket->close();
 }
@@ -658,12 +667,8 @@ void MainWindow::onNewWsConnection()
 
 		SyncClient *client = new WebSocketClient(pendingSocket);
 		statusBar()->showMessage(QString("Connected to %1").arg(pendingSocket->peerAddress().toString()));
-		syncClient = client;
 
-		connect(client, SIGNAL(trackRequested(const QString &)), this, SLOT(onTrackRequested(const QString &)));
-		connect(client, SIGNAL(rowChanged(int)), this, SLOT(onRowChanged(int)));
-		connect(client, SIGNAL(connected()), this, SLOT(onConnected()));
-		connect(client, SIGNAL(disconnected()), this, SLOT(onDisconnected()));
+		setSyncClient(client);
 	} else
 		pendingSocket->close();
 }

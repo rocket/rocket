@@ -348,12 +348,12 @@ void TrackView::mouseMoveEvent(QMouseEvent *event)
 			for (int i = anchorTrack; i < track; ++i)
 				page->swapTrackOrder(i, i + 1);
 			anchorTrack = track;
-			setEditTrack(track);
+			setEditTrack(track, false);
 		} else if (track < anchorTrack) {
 			for (int i = anchorTrack; i > track; --i)
 				page->swapTrackOrder(i, i - 1);
 			anchorTrack = track;
-			setEditTrack(track);
+			setEditTrack(track, false);
 		}
 	} else {
 		if (event->pos().y() < topMarginHeight &&
@@ -380,7 +380,7 @@ void TrackView::mouseReleaseEvent(QMouseEvent *event)
 	if (event->button() == Qt::LeftButton) {
 		dragging = false;
 		setCursor(QCursor(Qt::ArrowCursor));
-		setEditTrack(editTrack);
+		setEditTrack(editTrack, false);
 	}
 }
 
@@ -523,6 +523,25 @@ void TrackView::editRedo()
 		doc->redo();
 }
 
+void TrackView::editPreviousBookmark()
+{
+	SyncDocument *doc = getDocument();
+
+	int row = doc->prevRowBookmark(getEditRow());
+	if (row >= 0)
+		setEditRow(row, false);
+}
+
+void TrackView::editNextBookmark()
+{
+	SyncDocument *doc = getDocument();
+
+	int row = doc->nextRowBookmark(getEditRow());
+	if (row >= 0)
+		setEditRow(row, false);
+}
+
+
 void TrackView::setSelection(const QRect &rect)
 {
 	QRect oldRect = getSelection();
@@ -614,7 +633,7 @@ void TrackView::setScrollPos(int newScrollPosX, int newScrollPosY)
 	verticalScrollBar()->setValue(editRow);
 }
 
-void TrackView::setEditRow(int newEditRow, bool selecting)
+bool TrackView::internalSetEditRow(int newEditRow, bool selecting)
 {
 	int oldEditRow = editRow;
 	editRow = newEditRow;
@@ -622,7 +641,8 @@ void TrackView::setEditRow(int newEditRow, bool selecting)
 	// clamp to document
 	editRow = qBound(0, editRow, getRows() - 1);
 
-	if (oldEditRow != editRow) {
+	bool change = oldEditRow != editRow;
+	if (change) {
 		updateSelection(QPoint(editTrack, editRow), selecting);
 		dirtyPosition();
 		dirtyCurrentValue();
@@ -632,9 +652,10 @@ void TrackView::setEditRow(int newEditRow, bool selecting)
 	}
 
 	setScrollPos(scrollPosX, (editRow * rowHeight) - ((viewport()->height() - topMarginHeight) / 2) + rowHeight / 2);
+	return change;
 }
 
-void TrackView::setEditTrack(int newEditTrack, bool autoscroll, bool selecting)
+void TrackView::setEditTrack(int newEditTrack, bool selecting)
 {
 	if (0 == getTrackCount()) return;
 
@@ -652,7 +673,7 @@ void TrackView::setEditTrack(int newEditTrack, bool autoscroll, bool selecting)
 		dirtyCurrentValue();
 	}
 
-	if (autoscroll && viewport()->width() > 0) {
+	if (viewport()->width() > 0) {
 		int viewportWidth = viewport()->width() - leftMarginWidth;
 		int minX = getLogicalX(editTrack);
 		int maxX = getLogicalX(editTrack + 1);
@@ -671,7 +692,7 @@ void TrackView::setRows(int rows)
 
 	doc->setRows(rows);
 	viewport()->update();
-	setEditRow(qMin(editRow, rows - 1));
+	setEditRow(qMin(editRow, rows - 1), false);
 }
 
 int TrackView::getRows() const
@@ -696,7 +717,7 @@ SyncDocument *TrackView::getDocument()
 
 void TrackView::onVScroll(int value)
 {
-	setEditRow(value);
+	setEditRow(value, false);
 }
 
 void TrackView::onHScroll(int value)
@@ -864,7 +885,7 @@ void TrackView::keyPressEvent(QKeyEvent *event)
 					QApplication::beep();
 			}
 			if (0 != getTrackCount())
-				setEditTrack(editTrack - 1, true, selecting);
+				setEditTrack(editTrack - 1, selecting);
 			else
 				QApplication::beep();
 			return;
@@ -885,59 +906,67 @@ void TrackView::keyPressEvent(QKeyEvent *event)
 					QApplication::beep();
 			}
 			if (0 != getTrackCount())
-				setEditTrack(editTrack + 1, true, selecting);
+				setEditTrack(editTrack + 1, selecting);
 			else
 				QApplication::beep();
 			return;
 		}
 	}
 
-	if (!readOnly && lineEdit->isHidden()) {
-		switch (event->key()) {
-		case Qt::Key_Up:
-			if (ctrlDown) {
+	if (lineEdit->isHidden()) {
+		if (!readOnly && ctrlDown) {
+			switch (event->key()) {
+			case Qt::Key_Up:
 				if (getTrackCount() > editTrack)
 					editBiasValue(shiftDown ? 0.1f : 1.0f);
 				else
 					QApplication::beep();
-			} else
-				setEditRow(editRow - 1, selecting);
-			return;
+				return;
 
-		case Qt::Key_Down:
-			if (ctrlDown) {
+			case Qt::Key_Down:
 				if (getTrackCount() > editTrack)
 					editBiasValue(shiftDown ? -0.1f : -1.0f);
 				else
 					QApplication::beep();
-			} else
-				setEditRow(editRow + 1, selecting);
+				return;
+
+			case Qt::Key_PageUp:
+				editBiasValue(shiftDown ? 100.0f : 10.0f);
+				return;
+
+			case Qt::Key_PageDown:
+				editBiasValue(shiftDown ? -100.0f : -10.0f);
+				return;
+			}
+		}
+
+		switch (event->key()) {
+		case Qt::Key_Up:
+			setEditRow(editRow - 1, selecting);
+			return;
+
+		case Qt::Key_Down:
+			setEditRow(editRow + 1, selecting);
 			return;
 
 		case Qt::Key_PageUp:
-			if (ctrlDown)
-				editBiasValue(shiftDown ? 100.0f : 10.0f);
-			else
-				setEditRow(editRow - 0x10, selecting);
+			setEditRow(editRow - 0x10, selecting);
 			return;
 
 		case Qt::Key_PageDown:
-			if (ctrlDown)
-				editBiasValue(shiftDown ? -100.0f : -10.0f);
-			else
-				setEditRow(editRow + 0x10, selecting);
+			setEditRow(editRow + 0x10, selecting);
 			return;
 
 		case Qt::Key_Home:
 			if (ctrlDown)
-				setEditTrack(0);
+				setEditTrack(0, false);
 			else
 				setEditRow(0, selecting);
 			return;
 
 		case Qt::Key_End:
 			if (ctrlDown)
-				setEditTrack(getTrackCount() - 1);
+				setEditTrack(getTrackCount() - 1, false);
 			else
 				setEditRow(getRows() - 1, selecting);
 			return;
@@ -989,7 +1018,7 @@ void TrackView::keyPressEvent(QKeyEvent *event)
 void TrackView::resizeEvent(QResizeEvent *event)
 {
 	windowRows   = (event->size().height() - topMarginHeight) / rowHeight;
-	setEditRow(editRow);
+	setEditRow(editRow, false);
 	setupScrollBars();
 }
 

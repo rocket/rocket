@@ -32,11 +32,13 @@ public:
 	void editBiasValue(float amount);
 	void editToggleInterpolationType();
 
-	void setEditRow(int newEditRow, bool selecting = false);
-	int  getEditRow() const { return editRow; }
+	int getEditRow() const { return editRow; }
+	int getEditTrack() const { return editTrack; }
 
-	void setEditTrack(int newEditTrack, bool autoscroll = true, bool selecting = false);
-	int  getEditTrack() const { return editTrack; }
+	void updateRow(int row)
+	{
+		internalSetEditRow(row, false);
+	}
 
 	void selectNone()
 	{
@@ -60,6 +62,7 @@ public:
 	}
 
 signals:
+	void editRowChanged(int row);
 	void posChanged(int col, int row);
 	void currValDirty();
 
@@ -78,11 +81,23 @@ public slots:
 	void editPaste();
 	void editClear();
 
+	void editPreviousBookmark();
+	void editNextBookmark();
+
 	void selectAll();
 	void selectTrack();
 	void selectRow();
 
 private:
+
+	void setEditTrack(int newEditTrack, bool selecting);
+	void setEditRow(int newEditRow, bool selecting)
+	{
+		if (internalSetEditRow(newEditRow, selecting))
+			emit editRowChanged(editRow);
+	}
+
+	bool internalSetEditRow(int row, bool selecting);
 
 	/* paint helpers */
 	void paintTopMargin(QStylePainter &painter, const QRegion &region);

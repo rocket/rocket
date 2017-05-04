@@ -57,6 +57,7 @@ public:
 
 private:
 	void setPaused(bool pause);
+	void setSyncClient(SyncClient *syncClient);
 
 public slots:
 	void fileNew();
@@ -85,12 +86,13 @@ public slots:
 	void editPreviousBookmark();
 	void editNextBookmark();
 
+	void onEditRowChanged(int row);
 	void onPosChanged(int col, int row);
 	void onCurrValDirty();
 
 private slots:
 	void onTrackRequested(const QString &trackName);
-	void onRowChanged(int row);
+	void onClientRowChanged(int row);
 	void onNewTcpConnection();
 #ifdef QT_WEBSOCKETS_LIB
 	void onNewWsConnection();
