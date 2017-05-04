@@ -1,6 +1,5 @@
 #include "syncpage.h"
-
-#include <syncdocument.h>
+#include "syncdocument.h"
 
 SyncPage::SyncPage(SyncDocument *document, const QString &name) :
     QObject(document),

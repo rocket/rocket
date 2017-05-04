@@ -1,7 +1,6 @@
 TEMPLATE = app
 TARGET = editor
 DEPENDPATH += .
-INCLUDEPATH += .
 
 QT = core gui xml network
 
