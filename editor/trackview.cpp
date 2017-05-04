@@ -693,6 +693,7 @@ void TrackView::setRows(int rows)
 	doc->setRows(rows);
 	viewport()->update();
 	setEditRow(qMin(editRow, rows - 1), false);
+	setupScrollBars();
 }
 
 int TrackView::getRows() const
