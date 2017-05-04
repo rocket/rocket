@@ -573,10 +573,6 @@ void MainWindow::onSyncPageAdded(SyncPage *page)
 
 void MainWindow::onTabChanged(int index)
 {
-	int row = 0;
-	if (currentTrackView)
-		row = currentTrackView->getEditRow();
-
 	setTrackView(index < 0 ? NULL : trackViews[index]);
 
 	if (currentTrackView)
