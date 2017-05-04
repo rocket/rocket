@@ -497,6 +497,11 @@ void MainWindow::onEditRowChanged(int row)
 {
 	if (syncClient)
 		syncClient->sendSetRowCommand(row);
+
+	for (int i = 0; i < trackViews.size(); ++i) {
+		if (trackViews[i] != QObject::sender())
+			trackViews[i]->updateRow(row);
+	}
 }
 
 void MainWindow::onCurrValDirty()
