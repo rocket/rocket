@@ -463,8 +463,11 @@ void MainWindow::editSetRows()
 {
 	bool ok = false;
 	int rows = QInputDialog::getInt(this, "Set Rows", "", currentTrackView->getRows(), 0, INT_MAX, 1, &ok);
-	if (ok)
-		currentTrackView->setRows(rows);
+	if (ok) {
+		for (int i = 0; i < trackViews.size(); ++i)
+			trackViews[i]->setRows(rows);
+		doc->setRows(rows);
+	}
 }
 
 void MainWindow::editSetFont()

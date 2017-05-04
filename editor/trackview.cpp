@@ -688,9 +688,6 @@ void TrackView::setEditTrack(int newEditTrack, bool selecting)
 
 void TrackView::setRows(int rows)
 {
-	SyncDocument *doc = getDocument();
-
-	doc->setRows(rows);
 	viewport()->update();
 	setEditRow(qMin(editRow, rows - 1), false);
 	setupScrollBars();
