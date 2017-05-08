@@ -1,0 +1,3 @@
+option('editor', type: 'feature', value: 'enabled')
+option('examples', type: 'feature', value: 'auto')
+option('bass-sdk', type: 'string')
