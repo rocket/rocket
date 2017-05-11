@@ -113,8 +113,8 @@ Alternatives and ports
   [Processing](https://processing.org/).
 * [pyrocket](https://github.com/Contraz/pyrocket), a Python 3
   implementation of the client and player.
-* [Rust Rocket](https://github.com/darksecond/rust-rocket), a rust
-  implementation of the client. Crate available
+* [Rust Rocket](https://github.com/darksecond/rust-rocket), a Rust
+  implementation of the client and player. Crate available
   [here](https://crates.io/crates/rust-rocket).
 
 Bugs and feedback
