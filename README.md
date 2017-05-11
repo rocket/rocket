@@ -4,7 +4,7 @@ Rocket
 [![Build status](https://ci.appveyor.com/api/projects/status/dfq8qaedc6mtsefg/branch/master?svg=true)](https://ci.appveyor.com/project/kusma/rocket/branch/master)
 [![Build status](https://travis-ci.org/rocket/rocket.svg?branch=master)](https://travis-ci.org/rocket/rocket)
 [![Gitter](https://badges.gitter.im/rocket/rocket.svg)](https://gitter.im/rocket/rocket?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
-[![license: Zlib](https://img.shields.io/github/license/rocket/rocket.svg)](https://github.com/kusma/rocket/blob/master/LICENSE.txt)
+[![license: Zlib](https://img.shields.io/github/license/rocket/rocket.svg)](LICENSE.txt)
 
 Rocket is an intuitive new way of... bah, whatever. It's a sync-tracker, a
 tool for synchronizing music and visuals in demoscene productions. It
