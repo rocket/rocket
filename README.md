@@ -84,8 +84,8 @@ keyboard shortcut. Here's a list of the supported keyboard shortcuts:
 | Enter                    | Enter key frame value        |
 | Del                      | Delete key frame             |
 | i                        | Enumerate interpolation mode |
-| k                        | Toggle bookmark              |
-| Alt+PgUp/PgDn            | Go to prev/next bookmark     |
+| k                        | Toggle row-bookmark          |
+| Alt+PgUp/PgDn            | Go to prev/next row-bookmark |
 | Space                    | Pause/Resume demo            |
 | Shift+Up/Down/Left/Right | Select                       |
 | Ctrl+C                   | Copy                         |
