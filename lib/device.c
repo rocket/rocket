@@ -18,6 +18,11 @@ static int find_track(struct sync_device *d, const char *name)
 static const char *path_encode(const char *path)
 {
 	static char temp[FILENAME_MAX];
+
+#ifdef ALLOW_NON_PORTABLE_PATH_CHARACTERS
+	strncpy(temp, path, sizeof(temp) - 1);
+	temp[sizeof(temp) - 1] = '\0';
+#else
 	int i, pos = 0;
 	int path_len = (int)strlen(path);
 	for (i = 0; i < path_len; ++i) {
@@ -38,6 +43,8 @@ static const char *path_encode(const char *path)
 	}
 
 	temp[pos] = '\0';
+#endif
+
 	return temp;
 }
 
