@@ -49,7 +49,7 @@ struct sync_device {
 	SOCKET sock;
 #endif
 	struct sync_io_cb io_cb;
-    const char *(*path_encode_cb)(const char *path);
+	const char *(*path_encode_cb)(const char *path);
 };
 
 #endif /* SYNC_DEVICE_H */
