@@ -45,6 +45,8 @@ struct sync_io_cb {
 };
 void sync_set_io_cb(struct sync_device *d, struct sync_io_cb *cb);
 
+void sync_set_path_encode_cb(struct sync_device *d, const char *(*path_encode_cb)(const char *path));
+
 const struct sync_track *sync_get_track(struct sync_device *, const char *);
 double sync_get_val(const struct sync_track *, double);
 
