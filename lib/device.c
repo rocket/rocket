@@ -174,7 +174,7 @@ static SOCKET server_connect(const char *host, unsigned short nport)
 			char greet[128];
 
 			if (xsend(sock, CLIENT_GREET, strlen(CLIENT_GREET), 0) ||
-				xrecv(sock, greet, strlen(SERVER_GREET), 0)) {
+			    xrecv(sock, greet, strlen(SERVER_GREET), 0)) {
 				closesocket(sock);
 				sock = INVALID_SOCKET;
 				continue;
@@ -195,7 +195,7 @@ static SOCKET server_connect(const char *host, unsigned short nport)
 	return sock;
 }
 
-#else /* defined(SYNC_PLAYER) */
+#else
 
 void sync_set_io_cb(struct sync_device *d, struct sync_io_cb *cb)
 {
@@ -343,8 +343,8 @@ static int fetch_track_data(struct sync_device *d, struct sync_track *t)
 
 	/* send request data */
 	if (xsend(d->sock, (char *)&cmd, 1, 0) ||
-		xsend(d->sock, (char *)&name_len, sizeof(name_len), 0) ||
-		xsend(d->sock, t->name, (int)strlen(t->name), 0))
+	    xsend(d->sock, (char *)&name_len, sizeof(name_len), 0) ||
+	    xsend(d->sock, t->name, (int)strlen(t->name), 0))
 	{
 		closesocket(d->sock);
 		d->sock = INVALID_SOCKET;
@@ -365,9 +365,9 @@ static int handle_set_key_cmd(SOCKET sock, struct sync_device *data)
 	unsigned char type;
 
 	if (xrecv(sock, (char *)&track, sizeof(track), 0) ||
-		xrecv(sock, (char *)&row, sizeof(row), 0) ||
-		xrecv(sock, (char *)&v.i, sizeof(v.i), 0) ||
-		xrecv(sock, (char *)&type, 1, 0))
+	    xrecv(sock, (char *)&row, sizeof(row), 0) ||
+	    xrecv(sock, (char *)&v.i, sizeof(v.i), 0) ||
+	    xrecv(sock, (char *)&type, 1, 0))
 		return -1;
 
 	track = ntohl(track);
@@ -388,7 +388,7 @@ static int handle_del_key_cmd(SOCKET sock, struct sync_device *data)
 	uint32_t track, row;
 
 	if (xrecv(sock, (char *)&track, sizeof(track), 0) ||
-		xrecv(sock, (char *)&row, sizeof(row), 0))
+	    xrecv(sock, (char *)&row, sizeof(row), 0))
 		return -1;
 
 	track = ntohl(track);
@@ -432,7 +432,7 @@ int sync_connect(struct sync_device *d, const char *host, unsigned short port)
 }
 
 int sync_update(struct sync_device *d, int row, struct sync_cb *cb,
-	void *cb_param)
+    void *cb_param)
 {
 	if (d->sock == INVALID_SOCKET)
 		return -1;
@@ -479,7 +479,7 @@ int sync_update(struct sync_device *d, int row, struct sync_cb *cb,
 			unsigned char cmd = SET_ROW;
 			uint32_t nrow = htonl(row);
 			if (xsend(d->sock, (char*)&cmd, 1, 0) ||
-				xsend(d->sock, (char*)&nrow, sizeof(nrow), 0))
+			    xsend(d->sock, (char*)&nrow, sizeof(nrow), 0))
 				goto sockerr;
 			d->row = row;
 		}
@@ -521,7 +521,7 @@ static int create_track(struct sync_device *d, const char *name)
 }
 
 const struct sync_track *sync_get_track(struct sync_device *d,
-	const char *name)
+    const char *name)
 {
 	struct sync_track *t;
 	int idx = find_track(d, name);

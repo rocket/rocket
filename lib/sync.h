@@ -25,12 +25,6 @@ struct sync_track;
 struct sync_device *sync_create_device(const char *);
 void sync_destroy_device(struct sync_device *);
 
-struct sync_io_cb {
-    void *(*open)(const char *filename, const char *mode);
-    size_t (*read)(void *ptr, size_t size, size_t nitems, void *stream);
-    int (*close)(void *stream);
-};
-
 #ifndef SYNC_PLAYER
 struct sync_cb {
 	void (*pause)(void *, int);
@@ -42,12 +36,14 @@ int sync_tcp_connect(struct sync_device *, const char *, unsigned short);
 int SYNC_DEPRECATED("use sync_tcp_connect instead") sync_connect(struct sync_device *, const char *, unsigned short);
 int sync_update(struct sync_device *, int, struct sync_cb *, void *);
 int sync_save_tracks(const struct sync_device *);
+#endif /* defined(SYNC_PLAYER) */
 
-#else /* defined(SYNC_PLAYER) */
-
+struct sync_io_cb {
+	void *(*open)(const char *filename, const char *mode);
+	size_t (*read)(void *ptr, size_t size, size_t nitems, void *stream);
+	int (*close)(void *stream);
+};
 void sync_set_io_cb(struct sync_device *d, struct sync_io_cb *cb);
-
-#endif
 
 void sync_set_path_encode_cb(struct sync_device *d, const char *(*path_encode_cb)(const char *path));
 
