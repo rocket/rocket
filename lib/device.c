@@ -17,7 +17,15 @@ static int find_track(struct sync_device *d, const char *name)
 
 static int valid_path_char(char ch)
 {
-	return isalnum(ch) || ch == '.' || ch == '_';
+	switch (ch) {
+	case '.':
+	case '_':
+	case '/':
+		return 1;
+
+	default:
+		return isalnum(ch);
+	}
 }
 
 static const char *path_encode(const char *path)
