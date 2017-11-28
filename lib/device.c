@@ -15,6 +15,11 @@ static int find_track(struct sync_device *d, const char *name)
 	return -1; /* not found */
 }
 
+static int valid_path_char(char ch)
+{
+	return isalnum(ch) || ch == '.' || ch == '_';
+}
+
 static const char *path_encode(const char *path)
 {
 	static char temp[FILENAME_MAX];
@@ -22,7 +27,7 @@ static const char *path_encode(const char *path)
 	int path_len = (int)strlen(path);
 	for (i = 0; i < path_len; ++i) {
 		int ch = path[i];
-		if (isalnum(ch) || ch == '.' || ch == '_') {
+		if (valid_path_char(ch)) {
 			if (pos >= sizeof(temp) - 1)
 				break;
 
