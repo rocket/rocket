@@ -19,10 +19,6 @@ static const char *path_encode(const char *path)
 {
 	static char temp[FILENAME_MAX];
 
-#ifdef ALLOW_NON_PORTABLE_PATH_CHARACTERS
-	strncpy(temp, path, sizeof(temp) - 1);
-	temp[sizeof(temp) - 1] = '\0';
-#else
 	int i, pos = 0;
 	int path_len = (int)strlen(path);
 	for (i = 0; i < path_len; ++i) {
@@ -43,20 +39,19 @@ static const char *path_encode(const char *path)
 	}
 
 	temp[pos] = '\0';
-#endif
 
 	return temp;
 }
 
-static const char *sync_track_path(const char *base, const char *name)
+static const char *sync_track_path(const struct sync_device *d, const char *name)
 {
 	static char temp[FILENAME_MAX];
-	strncpy(temp, base, sizeof(temp) - 1);
+	strncpy(temp, d->base, sizeof(temp) - 1);
 	temp[sizeof(temp) - 1] = '\0';
 	strncat(temp, "_", sizeof(temp) - strlen(temp) - 1);
-	strncat(temp, path_encode(name), sizeof(temp) - strlen(temp) - 1);
+	strncat(temp, name, sizeof(temp) - strlen(temp) - 1);
 	strncat(temp, ".track", sizeof(temp) - strlen(temp) - 1);
-	return temp;
+	return d->path_encode_cb(temp);
 }
 
 #ifndef SYNC_PLAYER
@@ -230,7 +225,7 @@ struct sync_device *sync_create_device(const char *base)
 	if (!d)
 		return NULL;
 
-	d->base = strdup(path_encode(base));
+	d->base = strdup(base);
 	if (!d->base) {
 		free(d);
 		return NULL;
@@ -247,6 +242,7 @@ struct sync_device *sync_create_device(const char *base)
 	d->io_cb.open = (void *(*)(const char *, const char *))fopen;
 	d->io_cb.read = (size_t (*)(void *, size_t, size_t, void *))fread;
 	d->io_cb.close = (int (*)(void *))fclose;
+	d->path_encode_cb = (const char *(*)(const char *path))path_encode;
 
 	return d;
 }
@@ -280,7 +276,7 @@ void sync_destroy_device(struct sync_device *d)
 static int read_track_data(struct sync_device *d, struct sync_track *t)
 {
 	int i;
-	void *fp = d->io_cb.open(sync_track_path(d->base, t->name), "rb");
+	void *fp = d->io_cb.open(sync_track_path(d, t->name), "rb");
 	if (!fp)
 		return -1;
 
@@ -326,7 +322,7 @@ int sync_save_tracks(const struct sync_device *d)
 	int i;
 	for (i = 0; i < (int)d->num_tracks; ++i) {
 		const struct sync_track *t = d->tracks[i];
-		if (save_track(t, sync_track_path(d->base, t->name)))
+		if (save_track(t, sync_track_path(d, t->name)))
 			return -1;
 	}
 	return 0;
