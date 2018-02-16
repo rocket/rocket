@@ -120,4 +120,4 @@ Alternatives and ports
 Bugs and feedback
 -----------------
 Please report bugs or other feedback to the Rocket mailing list:
-<gnu-rocket@googlegroups.com>
+<rocket-dev@googlegroups.com>
