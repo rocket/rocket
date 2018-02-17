@@ -7,15 +7,16 @@
 
 Rocket is an intuitive new way of... bah, whatever. It's a sync-tracker, a
 tool for synchronizing music and visuals in demoscene productions. It
-consists of a GUI editor (using Qt), and an ANSI C library that can either
-communicate with the editor over a network socket, or play back an exported
-data-set.
+consists of a GUI editor (using [Qt](https://www.qt.io/)), and an ANSI C
+library that can either communicate with the editor over a network socket,
+or play back an exported data-set.
 
 ## Compile Editor
 
 The Rocket editor uses qmake as a build-system abstraction, which can be
-used to output Makefiles, Visual Studio project files or can be built
-directly from QtCreator. See the qmake documentation for details.
+used to output Makefiles, Microsoft Visual Studio project files or can be
+built directly from QtCreator. See the [qmake
+documentation](http://doc.qt.io/qt-5/qmake-manual.html) for details.
 
 ## Compile Example
 
@@ -27,8 +28,8 @@ Before compiling the example, you need to make sure you have recent
 [SDL](http://www.libsdl.org/) and [BASS](http://www.un4seen.com/) libraries
 and includes.
 
-If you're using VS2013 or above, this should happen automatically, as
-these libraries are consumed through NuGet.
+If you're using Microsoft Visual Studio 2013 or above, this should happen
+automatically, as these libraries are consumed through NuGet.
 
 The header files and libraries can be installed local to the project by
 copying all .lib-files to the `example_bass/lib/`, all .h files to
