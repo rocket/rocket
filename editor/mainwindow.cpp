@@ -542,29 +542,6 @@ TrackView *MainWindow::addTrackView(SyncPage *page)
 	return trackView;
 }
 
-void MainWindow::setTrackView(TrackView *newTrackView)
-{
-	if (currentTrackView) {
-		disconnect(currentTrackView, SIGNAL(posChanged(int, int)),
-		           this,             SLOT(onPosChanged(int, int)));
-		disconnect(currentTrackView, SIGNAL(editRowChanged(int)),
-		           this,             SLOT(onEditRowChanged(int)));
-		disconnect(currentTrackView, SIGNAL(currValDirty()),
-		           this,             SLOT(onCurrValDirty()));
-	}
-
-	currentTrackView = newTrackView;
-
-	if (currentTrackView) {
-		connect(currentTrackView, SIGNAL(posChanged(int, int)),
-		        this,             SLOT(onPosChanged(int, int)));
-		connect(currentTrackView, SIGNAL(editRowChanged(int)),
-		        this,             SLOT(onEditRowChanged(int)));
-		connect(currentTrackView, SIGNAL(currValDirty()),
-		        this,             SLOT(onCurrValDirty()));
-	}
-}
-
 void MainWindow::onSyncPageAdded(SyncPage *page)
 {
 	addTrackView(page);
@@ -572,10 +549,31 @@ void MainWindow::onSyncPageAdded(SyncPage *page)
 
 void MainWindow::onTabChanged(int index)
 {
-	setTrackView(index < 0 ? NULL : trackViews[index]);
+	Q_ASSERT(trackViews.size() == tabWidget->count());
 
-	if (currentTrackView)
+	if (currentTrackView != NULL) {
+		disconnect(currentTrackView, SIGNAL(posChanged(int, int)),
+		           this,             SLOT(onPosChanged(int, int)));
+		disconnect(currentTrackView, SIGNAL(editRowChanged(int)),
+		           this,             SLOT(onEditRowChanged(int)));
+		disconnect(currentTrackView, SIGNAL(currValDirty()),
+		           this,             SLOT(onCurrValDirty()));
+
+		currentTrackView = NULL;
+	}
+
+	if (index >= 0) {
+		currentTrackView = trackViews[index];
+
+		connect(currentTrackView, SIGNAL(posChanged(int, int)),
+		        this,             SLOT(onPosChanged(int, int)));
+		connect(currentTrackView, SIGNAL(editRowChanged(int)),
+		        this,             SLOT(onEditRowChanged(int)));
+		connect(currentTrackView, SIGNAL(currValDirty()),
+		        this,             SLOT(onCurrValDirty()));
+
 		currentTrackView->setFocus();
+	}
 }
 
 void MainWindow::onTrackRequested(const QString &trackName)
