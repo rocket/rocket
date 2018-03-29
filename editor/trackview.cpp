@@ -461,21 +461,10 @@ void TrackView::editPaste()
 		memcpy(&buffer_size,   clipbuf + 2 * sizeof(int), sizeof(int));
 
 		doc->beginMacro("paste");
-		for (int i = 0; i < buffer_width; ++i) {
-			int trackPos = editTrack + i;
-			if (trackPos >= getTrackCount()) continue;
-
-			SyncTrack *t = getTrack(trackPos);
-			for (int j = 0; j < buffer_height; ++j) {
-				int row = editRow + j;
-				if (t->isKeyFrame(row))
-					doc->deleteKeyFrame(t, row);
-			}
-		}
 
 		const char *src = clipbuf + 2 * sizeof(int) + sizeof(size_t);
-		for (int i = 0; i < buffer_size; ++i)
-		{
+		QMap<QPair<int, int>, CopyEntry> copyEntries;
+		for (int i = 0; i < buffer_size; ++i) {
 			struct CopyEntry ce;
 			memcpy(&ce, src, sizeof(CopyEntry));
 			src += sizeof(CopyEntry);
@@ -485,13 +474,26 @@ void TrackView::editPaste()
 			Q_ASSERT(ce.keyFrame.row >= 0);
 			Q_ASSERT(ce.keyFrame.row < buffer_height);
 
-			int trackPos = editTrack + ce.track;
-			if (trackPos < getTrackCount()) {
-				SyncTrack::TrackKey key = ce.keyFrame;
-				key.row += editRow;
+			copyEntries.insert(QPair<int, int>(editTrack + ce.track, editRow + ce.keyFrame.row), ce);
+		}
 
-				// since we deleted all keyframes in the edit-box already, we can just insert this one.
-				doc->setKeyFrame(getTrack(trackPos), key);
+		for (int i = 0; i < buffer_width; ++i) {
+			int trackPos = editTrack + i;
+			if (trackPos >= getTrackCount())
+				continue;
+
+			SyncTrack *t = getTrack(trackPos);
+			for (int j = 0; j < buffer_height; ++j) {
+				int row = editRow + j;
+
+				QMap<QPair<int, int>, CopyEntry>::const_iterator copyEntry =
+				    copyEntries.constFind(QPair<int, int>(trackPos, row));
+				if (copyEntry != copyEntries.constEnd()) {
+					SyncTrack::TrackKey key = copyEntry->keyFrame;
+					key.row += editRow;
+					doc->setKeyFrame(t, key);
+				} else if (t->isKeyFrame(row))
+					doc->deleteKeyFrame(t, row);
 			}
 		}
 		doc->endMacro();
