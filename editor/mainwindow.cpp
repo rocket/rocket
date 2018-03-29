@@ -299,7 +299,6 @@ void MainWindow::setDocument(SyncDocument *newDoc)
 	}
 
 	// recreate empty set of trackViews
-	setTrackView(NULL);
 	while (trackViews.count() > 0) {
 		TrackView *trackView = trackViews.front();
 		trackViews.removeFirst();
