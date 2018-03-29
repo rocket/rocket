@@ -334,6 +334,7 @@ bool MainWindow::loadDocument(const QString &path)
 		// set new document
 		setDocument(newDoc);
 		setCurrentFileName(path);
+		setWindowModified(false);
 		return true;
 	}
 	return false;
