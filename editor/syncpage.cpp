@@ -67,13 +67,12 @@ void SyncPage::onKeyFrameAdded(int row)
 
 	Q_ASSERT(track->isKeyFrame(row));
 	SyncTrack::TrackKey newKey = track->getKeyFrame(row);
-	const SyncTrack::TrackKey *startKey = track->getPrevKeyFrame(row);
-	Q_ASSERT(startKey != NULL);
-	const SyncTrack::TrackKey *endKey = track->getNextKeyFrame(row);
 
-	int endRow = endKey != NULL ? endKey->row - 1 : document->getRows();
-	if (newKey.type != startKey->type)
-		invalidateTrackData(*track, startKey->row, endRow);
+	if (newKey.type != SyncTrack::TrackKey::STEP) {
+		const SyncTrack::TrackKey *endKey = track->getNextKeyFrame(row);
+		int endRow = endKey != NULL ? endKey->row - 1 : document->getRows();
+		invalidateTrackData(*track, row, endRow);
+	}
 
 	invalidateTrackData(*track, row, row);
 }

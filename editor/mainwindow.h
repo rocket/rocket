@@ -38,7 +38,6 @@ public:
 	QFont trackViewFont;
 
 	TrackView *addTrackView(SyncPage *page);
-	void setTrackView(TrackView *trackView);
 
 	QTcpServer *tcpServer;
 	QWebSocketServer *wsServer;
