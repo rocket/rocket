@@ -637,8 +637,9 @@ void MainWindow::onNewTcpConnection()
 		QByteArray greeting = QString(CLIENT_GREET).toUtf8();
 		QByteArray response = QString(SERVER_GREET).toUtf8();
 
-		if (pendingSocket->bytesAvailable() < 1)
-			pendingSocket->waitForReadyRead();
+		while (pendingSocket->bytesAvailable() < greeting.length() &&
+				pendingSocket->waitForReadyRead())
+			; // wait until we have the message or got an error
 		QByteArray line = pendingSocket->read(greeting.length());
 		if (line != greeting ||
 		    pendingSocket->write(response) != response.length()) {
