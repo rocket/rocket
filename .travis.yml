@@ -75,7 +75,7 @@ deploy:
   provider: releases
   skip_cleanup: true
   api_key:
-    secure: aCUNNh7Gevkxjjw6RE6xf1JpWPIHFrmmTGBsOgJ9J0hLDanxZRVZM0f4xgK3PArIFjL/9l3ollGlTjZuvkpiU7SieIpfbA5XJHwl/P1Kyw7lTu81e+CWttVDfL9r/x3JTT42lSM6ICLOJLuvZryrnNxRGTcntxebm7+g2vmh8nQ=
+    secure: "smP4y0yIKofqJSWDx+gR+LcEulk027oI/FSXJYWz1x345tFV+s3ASRIwdlFxxiqJnOTbcmvI1jK0Un1w5f2o6/QWBNx8f3YXSONHE+BozN6bvM55iADPWDAvsVI/XOlMJ0Tzd+Tek1DwfJsewPmCmBWuSrRhOOA+lkP9deV0mqk="
   file: editor/rocket-editor-$VERSION_TAG-$TRAVIS_OS_NAME.zip
   on:
     tags: true
