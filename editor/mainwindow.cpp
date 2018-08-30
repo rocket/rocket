@@ -123,7 +123,7 @@ void MainWindow::keyPressEvent(QKeyEvent *event)
 
 void MainWindow::createMenuBar()
 {
-	fileMenu = menuBar()->addMenu("&File");
+	QMenu *fileMenu = menuBar()->addMenu("&File");
 	fileMenu->addAction(QIcon::fromTheme("document-new"), "New", this, SLOT(fileNew()), QKeySequence::New);
 	fileMenu->addAction(QIcon::fromTheme("document-open"), "&Open", this, SLOT(fileOpen()), QKeySequence::Open);
 	fileMenu->addAction(QIcon::fromTheme("document-save"), "&Save", this, SLOT(fileSave()), QKeySequence::Save);
@@ -140,7 +140,7 @@ void MainWindow::createMenuBar()
 	fileMenu->addSeparator();
 	fileMenu->addAction(QIcon::fromTheme("application-exit"), "E&xit", this, SLOT(fileQuit()), QKeySequence::Quit);
 
-	editMenu = menuBar()->addMenu("&Edit");
+	QMenu *editMenu = menuBar()->addMenu("&Edit");
 	editMenu->addAction(QIcon::fromTheme("edit-undo"), "Undo", this, SLOT(editUndo()), QKeySequence::Undo);
 	editMenu->addAction(QIcon::fromTheme("edit-redo"), "Redo", this, SLOT(editRedo()), QKeySequence::Redo);
 	editMenu->addSeparator();

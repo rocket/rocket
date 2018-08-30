@@ -51,7 +51,7 @@ public:
 	TrackView *currentTrackView;
 
 	QLabel *statusPos, *statusValue, *statusKeyType;
-	QMenu *fileMenu, *recentFilesMenu, *editMenu;
+	QMenu *recentFilesMenu;
 	QAction *recentFileActions[5];
 
 private:
@@ -60,6 +60,8 @@ private:
 
 public slots:
 	void fileNew();
+
+private slots:
 	void fileOpen();
 	void fileSave();
 	void fileSaveAs();
@@ -89,7 +91,6 @@ public slots:
 	void onPosChanged(int col, int row);
 	void onCurrValDirty();
 
-private slots:
 	void onTrackRequested(const QString &trackName);
 	void onClientRowChanged(int row);
 	void onNewTcpConnection();
