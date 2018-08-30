@@ -70,7 +70,7 @@ MainWindow::MainWindow() :
 	        this, SLOT(onNewWsConnection()));
 
 	if (!wsServer->listen(QHostAddress::Any, 1339))
-		statusBar()->showMessage(QString("Could not start server: %1").arg(tcpServer->errorString()));
+		statusBar()->showMessage(QString("Could not start server: %1").arg(wsServer->errorString()));
 #endif
 }
 
@@ -624,7 +624,7 @@ void MainWindow::setSyncClient(SyncClient *client)
 	connect(client, SIGNAL(trackRequested(const QString &)), this, SLOT(onTrackRequested(const QString &)));
 	connect(client, SIGNAL(rowChanged(int)), this, SLOT(onClientRowChanged(int)));
 	connect(client, SIGNAL(connected()), this, SLOT(onConnected()));
-	connect(client, SIGNAL(disconnected()), this, SLOT(onDisconnected()));
+	connect(client, SIGNAL(disconnected(const QString &)), this, SLOT(onDisconnected(const QString &)));
 	syncClient = client;
 }
 
@@ -684,7 +684,7 @@ void MainWindow::onConnected()
 	syncClient->sendSetRowCommand(currentTrackView->getEditRow());
 }
 
-void MainWindow::onDisconnected()
+void MainWindow::onDisconnected(const QString &error)
 {
 	setPaused(true);
 
@@ -707,5 +707,5 @@ void MainWindow::onDisconnected()
 		syncClient = NULL;
 	}
 
-	statusBar()->showMessage("Not Connected.");
+	statusBar()->showMessage("Disconnected: " + error);
 }

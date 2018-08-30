@@ -40,7 +40,7 @@ public:
 
 signals:
 	void connected();
-	void disconnected();
+	void disconnected(const QString &reason);
 	void trackRequested(const QString &trackName);
 	void rowChanged(int row);
 
@@ -61,12 +61,6 @@ public slots:
 	{
 		const SyncTrack *track = qobject_cast<SyncTrack *>(sender());
 		sendDeleteKeyCommand(track->getName(), row);
-	}
-
-protected slots:
-	void onDisconnected()
-	{
-		emit disconnected();
 	}
 
 protected:
@@ -115,6 +109,7 @@ private:
 
 private slots:
 	void onReadyRead();
+	void onDisconnected();
 };
 
 #ifdef QT_WEBSOCKETS_LIB
@@ -128,9 +123,10 @@ public:
 	void close();
 	qint64 sendData(const QByteArray &data);
 
-public slots:
+private slots:
 	void processTextMessage(const QString &message);
 	void onMessageReceived(const QByteArray &data);
+	void onDisconnected();
 
 private:
 	QWebSocket *socket;
