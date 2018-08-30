@@ -53,7 +53,10 @@ public:
 
 	QTabWidget *tabWidget;
 	QList<TrackView *> trackViews;
+
 	TrackView *currentTrackView;
+	QMetaObject::Connection posChangedConnection, editRowChangedConnection,
+	                        currValDirtyConnection;
 
 	QLabel *statusPos, *statusValue, *statusKeyType;
 	QMenu *recentFilesMenu;
