@@ -48,6 +48,7 @@ cache:
 addons:
   apt:
     packages:
+      - qt5-default
       - libsdl1.2-dev
 
 before_deploy:
