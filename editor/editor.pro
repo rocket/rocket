@@ -2,13 +2,9 @@ TEMPLATE = app
 TARGET = editor
 DEPENDPATH += .
 
-QT = core gui xml network
+QT = core gui xml network widgets
 
-greaterThan(QT_MAJOR_VERSION, 4) {
-    QT += widgets
-
-    qtHaveModule(websockets): QT += websockets
-}
+qtHaveModule(websockets): QT += websockets
 
 !contains(QT, websockets): message("QWebSockets module not found, disabling websocket support...")
 
