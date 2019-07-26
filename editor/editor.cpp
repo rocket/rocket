@@ -11,6 +11,10 @@ int main(int argc, char *argv[])
 
 	MainWindow mainWindow;
 
+#if (QT_VERSION >= QT_VERSION_CHECK(5, 6, 0))
+	qSetGlobalQHashSeed(0);
+#endif
+
 	if (app.arguments().size() > 1) {
 		if (app.arguments().size() > 2) {
 			QMessageBox::critical(&mainWindow, NULL, QString("usage: %1 [filename.rocket]").arg(argv[0]), QMessageBox::Ok);
