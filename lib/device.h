@@ -26,6 +26,22 @@
  #define INVALID_SOCKET -1
  #define select(n,r,w,e,t) WaitSelect(n,r,w,e,t,0)
  #define closesocket(x) CloseSocket(x)
+#elif defined(GEKKO)
+ #include <gccore.h>
+ #include <network.h>
+ #define SOCKET s32
+ #ifndef INVALID_SOCKET
+  #define INVALID_SOCKET (-1)
+ #endif
+ #define closesocket(x) net_close(x)
+ #define send(s,b,l,f) net_send(s,b,l,f)
+ #define recv(s,b,l,f) net_recv(s,b,l,f)
+ #ifdef USE_GETADDRINFO
+  #error "getaddrinfo and libogc are incompatible with each other!"
+ #endif
+ #define gethostbyname(h) net_gethostbyname(h)
+ #define socket(f,t,x) net_socket(f,t,x)
+ #define connect(s,a,l) net_connect(s,a,l)
 #else
  #include <sys/socket.h>
  #include <sys/time.h>
