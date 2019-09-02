@@ -46,6 +46,14 @@ Thanks to the excellent work of [mog](http://github.com/mog), there's now
 JavaScript support. Have a look at [js/README.md](js/README.md) for more
 information.
 
+## GameCube, Wii
+
+Rocket should work out-of-the-box using
+[devkitPPC](https://devkitpro.org/wiki/Getting_Started). However, before
+calling `sync_create_device`, you should init the FAT filesystem and the
+network interface, eg. by calling respectively `fatInitDefault` and `if_config`.
+Make sure DNS is also set up correctly when testing on real hardware.
+
 ## Using the editor
 
 The Rocket editor is laid out like a music-tracker; tracks (or columns) and

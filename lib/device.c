@@ -9,9 +9,11 @@
 #include <sys/stat.h>
 
 #ifdef WIN32
-#include <direct.h>
-#define S_ISDIR(m) (((m)& S_IFMT) == S_IFDIR)
-#define mkdir(pathname, mode) _mkdir(pathname)
+ #include <direct.h>
+ #define S_ISDIR(m) (((m)& S_IFMT) == S_IFDIR)
+ #define mkdir(pathname, mode) _mkdir(pathname)
+#elif defined(GEKKO)
+ #include <network.h>
 #endif
 
 static int find_track(struct sync_device *d, const char *name)
@@ -89,6 +91,15 @@ enum {
 
 static inline int socket_poll(SOCKET socket)
 {
+#ifdef GEKKO
+	// libogc doesn't impmelent select()...
+	struct pollsd sds[1];
+	sds[0].socket  = socket;
+	sds[0].events  = POLLIN;
+	sds[0].revents = 0;
+	if (net_poll(sds, 1, 0) < 0) return 0;
+	return (sds[0].revents & POLLIN) && !(sds[0].revents & (POLLERR|POLLHUP|POLLNVAL));
+#else
 	struct timeval to = { 0, 0 };
 	fd_set fds;
 
@@ -104,6 +115,7 @@ static inline int socket_poll(SOCKET socket)
 #endif
 
 	return select((int)socket + 1, &fds, NULL, NULL, &to) > 0;
+#endif
 }
 
 static inline int xsend(SOCKET s, const void *buf, size_t len, int flags)
