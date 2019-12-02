@@ -16,7 +16,7 @@
  #include <network.h>
 #endif
 
-static int find_track(struct sync_device *d, const char *name)
+static int find_track(const struct sync_device *d, const char *name)
 {
 	int i;
 	for (i = 0; i < (int)d->num_tracks; ++i)
