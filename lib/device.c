@@ -399,6 +399,34 @@ int sync_save_tracks(const struct sync_device *d)
 
 #ifndef SYNC_PLAYER
 
+static int send_set_key_cmd(const struct sync_device *d, const struct sync_track *t, int row, float val, enum key_type type)
+{
+	unsigned char cmd = SET_KEY, ntype = type;
+	uint32_t ntrack, nrow;
+	union {
+		float f;
+		uint32_t i;
+	} v;
+
+	v.f = val;
+	v.i = htonl(v.i);
+
+	ntrack = find_track(d, t->name);
+	assert(ntrack >= 0);
+
+	ntrack = htonl(ntrack);
+	nrow = htonl(row);
+
+	if (xsend(d->sock, (char *)&cmd, sizeof(cmd), 0) ||
+	    xsend(d->sock, (char *)&ntrack, sizeof(ntrack), 0) ||
+	    xsend(d->sock, (char *)&nrow, sizeof(nrow), 0) ||
+	    xsend(d->sock, (char *)&v.i, sizeof(v.i), 0) ||
+	    xsend(d->sock, (char *)&ntype, sizeof(ntype), 0))
+		return -1;
+
+	return 0;
+}
+
 static int fetch_track_data(struct sync_device *d, struct sync_track *t)
 {
 	unsigned char cmd = GET_TRACK;
@@ -556,6 +584,11 @@ sockerr:
 	closesocket(d->sock);
 	d->sock = INVALID_SOCKET;
 	return -1;
+}
+
+int sync_set_val(const struct sync_device *d, const struct sync_track *t, int row, float val, enum key_type type)
+{
+	return send_set_key_cmd(d, t, row, val, type);
 }
 
 #endif /* !defined(SYNC_PLAYER) */
