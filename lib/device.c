@@ -578,15 +578,13 @@ int sync_update(struct sync_device *d, int row, struct sync_cb *cb,
 		}
 	}
 
-	if (cb && cb->is_playing && cb->is_playing(cb_param)) {
-		if (d->row != row && d->sock != INVALID_SOCKET) {
-			unsigned char cmd = SET_ROW;
-			uint32_t nrow = htonl(row);
-			if (xsend(d->sock, (char*)&cmd, 1, 0) ||
-			    xsend(d->sock, (char*)&nrow, sizeof(nrow), 0))
-				goto sockerr;
-			d->row = row;
-		}
+	if (d->row != row && d->sock != INVALID_SOCKET) {
+		unsigned char cmd = SET_ROW;
+		uint32_t nrow = htonl(row);
+		if (xsend(d->sock, (char*)&cmd, 1, 0) ||
+		    xsend(d->sock, (char*)&nrow, sizeof(nrow), 0))
+			goto sockerr;
+		d->row = row;
 	}
 	return 0;
 
