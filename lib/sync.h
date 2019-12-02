@@ -50,6 +50,7 @@ void sync_set_io_cb(struct sync_device *d, struct sync_io_cb *cb);
 const struct sync_track *sync_get_track(struct sync_device *, const char *);
 double sync_get_val(const struct sync_track *, double);
 int sync_set_val(const struct sync_device *d, const struct sync_track *t, int row, float val, enum key_type type);
+int sync_pause(const struct sync_device *d);
 
 #ifdef __cplusplus
 }

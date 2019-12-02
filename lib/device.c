@@ -428,6 +428,16 @@ static int send_set_key_cmd(const struct sync_device *d, const struct sync_track
 	return 0;
 }
 
+static int send_pause_cmd(const struct sync_device *d)
+{
+	unsigned char cmd = PAUSE;
+
+	if (xsend(d->sock, (char *)&cmd, sizeof(cmd), 0))
+		return -1;
+
+	return 0;
+}
+
 static int fetch_track_data(struct sync_device *d, struct sync_track *t)
 {
 	unsigned char cmd = GET_TRACK;
@@ -590,6 +600,11 @@ sockerr:
 int sync_set_val(const struct sync_device *d, const struct sync_track *t, int row, float val, enum key_type type)
 {
 	return send_set_key_cmd(d, t, row, val, type);
+}
+
+int sync_pause(const struct sync_device *d)
+{
+	return send_pause_cmd(d);
 }
 
 #endif /* !defined(SYNC_PLAYER) */
