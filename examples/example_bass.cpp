@@ -244,6 +244,14 @@ int main(int argc, char *argv[])
 			if (e.type == SDL_KEYDOWN &&
 			    e.key.keysym.sym == SDLK_LEFT)
 				bass_set_row(&stream, row - 1);
+
+			if (e.type == SDL_KEYDOWN &&
+			    e.key.keysym.sym == SDLK_UP)
+				sync_set_val(rocket, cam_dist, row, dist + .05f, KEY_STEP);
+
+			if (e.type == SDL_KEYDOWN &&
+			    e.key.keysym.sym == SDLK_DOWN)
+				sync_set_val(rocket, cam_dist, row, dist + -.05f, KEY_STEP);
 #endif
 		}
 	}
