@@ -228,6 +228,12 @@ int main(int argc, char *argv[])
 			    (e.type == SDL_KEYDOWN &&
 			    e.key.keysym.sym == SDLK_ESCAPE))
 				done = true;
+
+#ifndef SYNC_PLAYER
+			if (e.type == SDL_KEYDOWN &&
+			    e.key.keysym.sym == SDLK_SPACE)
+				sync_pause(rocket);
+#endif
 		}
 	}
 
