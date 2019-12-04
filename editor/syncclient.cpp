@@ -107,6 +107,14 @@ void AbstractSocketClient::processCommand()
 		case SET_ROW:
 			processSetRow();
 			break;
+
+		case SET_KEY:
+			processSetKey();
+			break;
+
+		case PAUSE:
+			processPause();
+			break;
 		}
 	}
 }
@@ -143,6 +151,33 @@ void AbstractSocketClient::processSetRow()
 	quint32 newRow;
 	if (recv((char *)&newRow, sizeof(newRow)))
 		emit rowChanged(qFromBigEndian(newRow));
+}
+
+void AbstractSocketClient::processSetKey()
+{
+	unsigned char type;
+	quint32 track, row;
+	union {
+		float f;
+		quint32 i;
+	} v;
+
+	if (recv((char *)&track, sizeof(track)) &&
+	    recv((char *)&row, sizeof(row)) &&
+	    recv((char *)&v.i, sizeof(v.i)) &&
+	    recv((char *)&type, sizeof(type))) {
+
+		track = qFromBigEndian(track);
+		row = qFromBigEndian(row);
+		v.i = qFromBigEndian(v.i);
+
+		emit keyChanged(track, row, v.f, (SyncTrack::TrackKey::KeyType)type);
+	}
+}
+
+void AbstractSocketClient::processPause()
+{
+	emit pauseToggled();
 }
 
 void AbstractSocketClient::onReadyRead()

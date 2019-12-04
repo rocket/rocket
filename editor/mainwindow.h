@@ -98,6 +98,8 @@ private slots:
 
 	void onTrackRequested(const QString &trackName);
 	void onClientRowChanged(int row);
+	void onClientKeyChanged(int track, int row, float value, SyncTrack::TrackKey::KeyType type);
+	void onClientPauseToggled();
 	void onNewTcpConnection();
 #ifdef QT_WEBSOCKETS_LIB
 	void onNewWsConnection();
