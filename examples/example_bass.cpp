@@ -98,6 +98,8 @@ void setup_sdl()
 
 	if (!SDL_SetVideoMode(width, height, 32, SDL_OPENGL))
 		die("%s", SDL_GetError());
+
+	SDL_EnableKeyRepeat(SDL_DEFAULT_REPEAT_DELAY, SDL_DEFAULT_REPEAT_INTERVAL);
 }
 
 void draw_cube()
