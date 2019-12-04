@@ -233,6 +233,17 @@ int main(int argc, char *argv[])
 			if (e.type == SDL_KEYDOWN &&
 			    e.key.keysym.sym == SDLK_SPACE)
 				sync_pause(rocket);
+
+			/* SDL 1.2 doesn't have mousewheel events, so just
+			 * hooking this up to left/right keys for now.
+			 */
+			if (e.type == SDL_KEYDOWN &&
+			    e.key.keysym.sym == SDLK_RIGHT)
+				bass_set_row(&stream, row + 1);
+
+			if (e.type == SDL_KEYDOWN &&
+			    e.key.keysym.sym == SDLK_LEFT)
+				bass_set_row(&stream, row - 1);
 #endif
 		}
 	}
