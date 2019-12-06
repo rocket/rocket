@@ -237,12 +237,16 @@ int main(int argc, char *argv[])
 			/* SDL 1.2 doesn't have mousewheel events, so just
 			 * hooking this up to left/right keys for now.
 			 */
-			if (e.type == SDL_KEYDOWN &&
-			    e.key.keysym.sym == SDLK_RIGHT)
+			if ((e.type == SDL_KEYDOWN &&
+			     e.key.keysym.sym == SDLK_RIGHT) ||
+			    (e.type == SDL_MOUSEBUTTONDOWN &&
+			     e.button.button == SDL_BUTTON_WHEELDOWN))
 				bass_set_row(&stream, row + 1);
 
-			if (e.type == SDL_KEYDOWN &&
-			    e.key.keysym.sym == SDLK_LEFT)
+			if ((e.type == SDL_KEYDOWN &&
+			     e.key.keysym.sym == SDLK_LEFT) ||
+			    (e.type == SDL_MOUSEBUTTONDOWN &&
+			     e.button.button == SDL_BUTTON_WHEELUP))
 				bass_set_row(&stream, row - 1);
 
 			if (e.type == SDL_KEYDOWN &&
