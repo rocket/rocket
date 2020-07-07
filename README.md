@@ -32,8 +32,8 @@ If you're using Microsoft Visual Studio 2013 or above, this should happen
 automatically, as these libraries are consumed through NuGet.
 
 The header files and libraries can be installed local to the project by
-copying all .lib-files to the `example_bass/lib/`, all .h files to
-`example_bass/include/`, and all .dll files to the `example_bass/`.
+copying all .lib-files to `examples/lib/`, all .h files to
+`examples/include/`, and all .dll files to `examples/`.
 
 Once the prerequisites are installed, the example can be compiled either by
 opening examples.sln and selecting `Build` -> `Build Solution` from Visual
