@@ -7,7 +7,7 @@
 
 Rocket is an intuitive new way of... bah, whatever. It's a sync-tracker, a
 tool for synchronizing music and visuals in demoscene productions. It
-consists of a GUI editor (using [Qt](https://www.qt.io/)), and an ANSI C
+consists of a GUI editor (using [Qt5](https://www.qt.io/)), and an ANSI C
 library that can either communicate with the editor over a network socket,
 or play back an exported data-set.
 
