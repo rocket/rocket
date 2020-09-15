@@ -553,25 +553,24 @@ void MainWindow::onTabChanged(int index)
 	Q_ASSERT(trackViews.size() == tabWidget->count());
 
 	if (currentTrackView != NULL) {
-		disconnect(currentTrackView, SIGNAL(posChanged(int, int)),
-		           this,             SLOT(onPosChanged(int, int)));
-		disconnect(currentTrackView, SIGNAL(editRowChanged(int)),
-		           this,             SLOT(onEditRowChanged(int)));
-		disconnect(currentTrackView, SIGNAL(currValDirty()),
-		           this,             SLOT(onCurrValDirty()));
-
+		disconnect(posChangedConnection);
+		disconnect(editRowChangedConnection);
+		disconnect(editRowChangedConnection);
 		currentTrackView = NULL;
 	}
 
 	if (index >= 0) {
 		currentTrackView = trackViews[index];
 
-		connect(currentTrackView, SIGNAL(posChanged(int, int)),
-		        this,             SLOT(onPosChanged(int, int)));
-		connect(currentTrackView, SIGNAL(editRowChanged(int)),
-		        this,             SLOT(onEditRowChanged(int)));
-		connect(currentTrackView, SIGNAL(currValDirty()),
-		        this,             SLOT(onCurrValDirty()));
+		posChangedConnection = connect(
+			currentTrackView, SIGNAL(posChanged(int, int)),
+			this,             SLOT(onPosChanged(int, int)));
+		editRowChangedConnection = connect(
+			currentTrackView, SIGNAL(editRowChanged(int)),
+			this,             SLOT(onEditRowChanged(int)));
+		currValDirtyConnection = connect(
+			currentTrackView, SIGNAL(currValDirty()),
+			this,             SLOT(onCurrValDirty()));
 
 		currentTrackView->setFocus();
 	}
