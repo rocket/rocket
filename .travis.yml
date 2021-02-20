@@ -13,7 +13,8 @@ before_script:
       brew update &&
       brew install qt5 &&
       brew install sdl &&
-      brew link --force qt5;
+      brew link --force qt5 &&
+      export CPPFLAGS=-DGL_SILENCE_DEPRECATION;
     fi
   - if [ ! -f deps/bass24.zip ]; then
         mkdir -p deps && (
