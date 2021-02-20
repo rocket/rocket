@@ -13,8 +13,7 @@ before_script:
       brew update &&
       brew install qt5 &&
       brew install sdl &&
-      export QT5_PREFIX="`brew --prefix qt5`";
-      export QMAKE="$QT5_PREFIX/bin/qmake";
+      brew link --force qt5;
     fi
   - if [ ! -f deps/bass24.zip ]; then
         mkdir -p deps && (
