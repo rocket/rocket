@@ -1,0 +1,30 @@
+name: Continuous Integration
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+
+jobs:
+  build-linux:
+    name: Build (Linux)
+    runs-on: ubuntu-20.04
+    steps:
+      - name: Install Dependencies
+        run: sudo apt-get install -y qt5-default libsdl1.2-dev
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Build
+        run: make
+  build-macos:
+    name: Build (macOS)
+    runs-on: macos-12
+    env:
+      CPPFLAGS: -DGL_SILENCE_DEPRECATION
+    steps:
+      - name: Install Dependencies
+        run: brew update && brew install qt5 sdl && brew link --force qt5
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Build
+        run: make
