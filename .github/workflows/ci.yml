@@ -23,8 +23,34 @@ jobs:
       CPPFLAGS: -DGL_SILENCE_DEPRECATION
     steps:
       - name: Install Dependencies
-        run: brew update && brew install qt5 sdl && brew link --force qt5
+        run: |
+          brew update &&
+          brew install coreutils qt5 sdl &&
+          brew link --force qt5
       - name: Checkout
         uses: actions/checkout@v2
       - name: Build
         run: make
+      - name: Fixup Framework Paths
+        run: |
+          cd editor &&
+          QT5_PREFIX="`brew --prefix qt5`" &&
+          macdeployqt editor.app &&
+          prefix="`grealpath $QT5_PREFIX`";
+          frameworks=(editor.app/Contents/Frameworks/Qt*.framework) &&
+          frameworks=("${frameworks[@]#editor.app/Contents/Frameworks/}") &&
+          frameworks=("${frameworks[@]%.framework}") &&
+          for framework in "${frameworks[@]}"; do
+            for target in "${frameworks[@]}"; do
+              install_name_tool -change $prefix/lib/$target.framework/Versions/5/$target @executable_path/../Frameworks/$target.framework/Versions/5/$target editor.app/Contents/Frameworks/$framework.framework/$framework;
+            done;
+          done;
+          for plugin in editor.app/Contents/PlugIns/*/*.dylib; do
+            for target in "${frameworks[@]}"; do
+              install_name_tool -change $prefix/lib/$target.framework/Versions/5/$target @executable_path/../Frameworks/$target.framework/Versions/5/$target $plugin;
+            done;
+          done;
+      - uses: actions/upload-artifact@v2
+        with:
+          name: rocket-editor
+          path: editor/editor.app
