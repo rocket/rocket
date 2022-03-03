@@ -96,10 +96,10 @@ void TrackView::updatePalette()
 void TrackView::updateFont(const QFontMetrics &fontMetrics)
 {
 	rowHeight = fontMetrics.lineSpacing();
-	trackWidth = fontMetrics.width('0') * 16;
+	trackWidth = fontMetrics.maxWidth() * 16;
 
 	topMarginHeight = rowHeight + 4;
-	leftMarginWidth = fontMetrics.width('0') * 8;
+	leftMarginWidth = fontMetrics.maxWidth() * 8;
 }
 
 int TrackView::getLogicalX(int track) const

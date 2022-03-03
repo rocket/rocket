@@ -193,7 +193,9 @@ bool SyncDocument::save(const QString &fileName)
 		return false;
 	}
 	QTextStream streamFileOut(&file);
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
 	streamFileOut.setCodec("UTF-8");
+#endif
 	streamFileOut << doc.toString();
 	streamFileOut.flush();
 
@@ -209,13 +211,13 @@ bool SyncDocument::save(const QString &fileName)
 
 bool SyncDocument::isRowBookmark(int row) const
 {
-	QList<int>::const_iterator it = qLowerBound(rowBookmarks.begin(), rowBookmarks.end(), row);
+	QList<int>::const_iterator it = std::lower_bound(rowBookmarks.begin(), rowBookmarks.end(), row);
 	return it != rowBookmarks.end() && *it == row;
 }
 
 void SyncDocument::toggleRowBookmark(int row)
 {
-	QList<int>::iterator it = qLowerBound(rowBookmarks.begin(), rowBookmarks.end(), row);
+	QList<int>::iterator it = std::lower_bound(rowBookmarks.begin(), rowBookmarks.end(), row);
 	if (it == rowBookmarks.end() || *it != row)
 		rowBookmarks.insert(it, row);
 	else
@@ -224,7 +226,7 @@ void SyncDocument::toggleRowBookmark(int row)
 
 int SyncDocument::prevRowBookmark(int row) const
 {
-	QList<int>::const_iterator it = qLowerBound(rowBookmarks.begin(), rowBookmarks.end(), row);
+	QList<int>::const_iterator it = std::lower_bound(rowBookmarks.begin(), rowBookmarks.end(), row);
 	if (it == rowBookmarks.constBegin())
 		return -1;
 	return *--it;
@@ -232,7 +234,7 @@ int SyncDocument::prevRowBookmark(int row) const
 
 int SyncDocument::nextRowBookmark(int row) const
 {
-	QList<int>::const_iterator it = qLowerBound(rowBookmarks.constBegin(), rowBookmarks.constEnd(), row + 1);
+	QList<int>::const_iterator it = std::lower_bound(rowBookmarks.constBegin(), rowBookmarks.constEnd(), row + 1);
 	if (it == rowBookmarks.constEnd())
 		return -1;
 	return *it;
