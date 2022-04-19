@@ -16,7 +16,7 @@
  #include <network.h>
 #endif
 
-static int find_track(struct sync_device *d, const char *name)
+static int find_track(const struct sync_device *d, const char *name)
 {
 	int i;
 	for (i = 0; i < (int)d->num_tracks; ++i)
@@ -399,6 +399,45 @@ int sync_save_tracks(const struct sync_device *d)
 
 #ifndef SYNC_PLAYER
 
+static int send_set_key_cmd(const struct sync_device *d, const struct sync_track *t, int row, float val, enum key_type type)
+{
+	unsigned char cmd = SET_KEY, ntype = type;
+	uint32_t ntrack, nrow;
+	union {
+		float f;
+		uint32_t i;
+	} v;
+
+	v.f = val;
+	v.i = htonl(v.i);
+
+	ntrack = find_track(d, t->name);
+	if (ntrack < 0)
+		return -1;
+
+	ntrack = htonl(ntrack);
+	nrow = htonl(row);
+
+	if (xsend(d->sock, (char *)&cmd, sizeof(cmd), 0) ||
+	    xsend(d->sock, (char *)&ntrack, sizeof(ntrack), 0) ||
+	    xsend(d->sock, (char *)&nrow, sizeof(nrow), 0) ||
+	    xsend(d->sock, (char *)&v.i, sizeof(v.i), 0) ||
+	    xsend(d->sock, (char *)&ntype, sizeof(ntype), 0))
+		return -1;
+
+	return 0;
+}
+
+static int send_pause_cmd(const struct sync_device *d)
+{
+	unsigned char cmd = PAUSE;
+
+	if (xsend(d->sock, (char *)&cmd, sizeof(cmd), 0))
+		return -1;
+
+	return 0;
+}
+
 static int fetch_track_data(struct sync_device *d, struct sync_track *t)
 {
 	unsigned char cmd = GET_TRACK;
@@ -540,15 +579,13 @@ int sync_update(struct sync_device *d, int row, struct sync_cb *cb,
 		}
 	}
 
-	if (cb && cb->is_playing && cb->is_playing(cb_param)) {
-		if (d->row != row && d->sock != INVALID_SOCKET) {
-			unsigned char cmd = SET_ROW;
-			uint32_t nrow = htonl(row);
-			if (xsend(d->sock, (char*)&cmd, 1, 0) ||
-			    xsend(d->sock, (char*)&nrow, sizeof(nrow), 0))
-				goto sockerr;
-			d->row = row;
-		}
+	if (d->row != row && d->sock != INVALID_SOCKET) {
+		unsigned char cmd = SET_ROW;
+		uint32_t nrow = htonl(row);
+		if (xsend(d->sock, (char*)&cmd, 1, 0) ||
+		    xsend(d->sock, (char*)&nrow, sizeof(nrow), 0))
+			goto sockerr;
+		d->row = row;
 	}
 	return 0;
 
@@ -556,6 +593,16 @@ sockerr:
 	closesocket(d->sock);
 	d->sock = INVALID_SOCKET;
 	return -1;
+}
+
+int sync_set_val(const struct sync_device *d, const struct sync_track *t, int row, float val, enum key_type type)
+{
+	return send_set_key_cmd(d, t, row, val, type);
+}
+
+int sync_pause(const struct sync_device *d)
+{
+	return send_pause_cmd(d);
 }
 
 #endif /* !defined(SYNC_PLAYER) */

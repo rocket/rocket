@@ -43,6 +43,8 @@ signals:
 	void disconnected(const QString &reason);
 	void trackRequested(const QString &trackName);
 	void rowChanged(int row);
+	void keyChanged(int track, int row, float value, SyncTrack::TrackKey::KeyType type);
+	void pauseToggled();
 
 public slots:
 	void onKeyFrameAdded(int row)
@@ -106,6 +108,8 @@ private:
 	void processCommand();
 	void processGetTrack();
 	void processSetRow();
+	void processSetKey();
+	void processPause();
 
 private slots:
 	void onReadyRead();
