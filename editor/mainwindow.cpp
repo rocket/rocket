@@ -606,6 +606,34 @@ void MainWindow::onClientRowChanged(int row)
 		trackViews[i]->updateRow(row);
 }
 
+void MainWindow::onClientKeyChanged(int track, int row, float value, SyncTrack::TrackKey::KeyType type)
+{
+	if (track < doc->getTrackCount()) {
+		SyncTrack::TrackKey newKey;
+		SyncTrack *t = doc->getTrack(track);
+
+		/* ensure the editor is on the row being changed by the demo */
+		onClientRowChanged(row);
+
+		newKey.type = type;
+		newKey.row = row;
+		if (t->isKeyFrame(row))
+			newKey = t->getKeyFrame(row);
+
+		newKey.value = value;
+
+		doc->setKeyFrame(t, newKey);
+		onCurrValDirty();
+	} else
+		QApplication::beep();
+}
+
+void MainWindow::onClientPauseToggled()
+{
+	if (syncClient)
+		setPaused(!syncClient->isPaused());
+}
+
 void MainWindow::setPaused(bool pause)
 {
 	if (syncClient)
@@ -622,6 +650,8 @@ void MainWindow::setSyncClient(SyncClient *client)
 
 	connect(client, SIGNAL(trackRequested(const QString &)), this, SLOT(onTrackRequested(const QString &)));
 	connect(client, SIGNAL(rowChanged(int)), this, SLOT(onClientRowChanged(int)));
+	connect(client, SIGNAL(keyChanged(int, int, float, SyncTrack::TrackKey::KeyType)), this, SLOT(onClientKeyChanged(int, int, float, SyncTrack::TrackKey::KeyType)));
+	connect(client, SIGNAL(pauseToggled()), this, SLOT(onClientPauseToggled()));
 	connect(client, SIGNAL(connected()), this, SLOT(onConnected()));
 	connect(client, SIGNAL(disconnected(const QString &)), this, SLOT(onDisconnected(const QString &)));
 	syncClient = client;

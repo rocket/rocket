@@ -98,6 +98,8 @@ void setup_sdl()
 
 	if (!SDL_SetVideoMode(width, height, 32, SDL_OPENGL))
 		die("%s", SDL_GetError());
+
+	SDL_EnableKeyRepeat(SDL_DEFAULT_REPEAT_DELAY, SDL_DEFAULT_REPEAT_INTERVAL);
 }
 
 void draw_cube()
@@ -226,6 +228,35 @@ int main(int argc, char *argv[])
 			    (e.type == SDL_KEYDOWN &&
 			    e.key.keysym.sym == SDLK_ESCAPE))
 				done = true;
+
+#ifndef SYNC_PLAYER
+			if (e.type == SDL_KEYDOWN &&
+			    e.key.keysym.sym == SDLK_SPACE)
+				sync_pause(rocket);
+
+			/* SDL 1.2 doesn't have mousewheel events, so just
+			 * hooking this up to left/right keys for now.
+			 */
+			if ((e.type == SDL_KEYDOWN &&
+			     e.key.keysym.sym == SDLK_RIGHT) ||
+			    (e.type == SDL_MOUSEBUTTONDOWN &&
+			     e.button.button == SDL_BUTTON_WHEELDOWN))
+				bass_set_row(&stream, row + 1);
+
+			if ((e.type == SDL_KEYDOWN &&
+			     e.key.keysym.sym == SDLK_LEFT) ||
+			    (e.type == SDL_MOUSEBUTTONDOWN &&
+			     e.button.button == SDL_BUTTON_WHEELUP))
+				bass_set_row(&stream, row - 1);
+
+			if (e.type == SDL_KEYDOWN &&
+			    e.key.keysym.sym == SDLK_UP)
+				sync_set_val(rocket, cam_dist, row, dist + .05f, KEY_STEP);
+
+			if (e.type == SDL_KEYDOWN &&
+			    e.key.keysym.sym == SDLK_DOWN)
+				sync_set_val(rocket, cam_dist, row, dist + -.05f, KEY_STEP);
+#endif
 		}
 	}
 
