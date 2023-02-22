@@ -13,6 +13,9 @@
  #ifndef NOMINMAX
   #define NOMINMAX
  #endif
+ /* TODO/FIXME: verify setsockopt(TCP_NODELAY) works w/WIN32 using just these headers,
+  * or add the necessary headers if possible, and add #define USE_NODELAY.
+  */
  #include <winsock2.h>
  #include <ws2tcpip.h>
  #include <windows.h>
@@ -46,6 +49,9 @@
  #include <sys/socket.h>
  #include <sys/time.h>
  #include <netinet/in.h>
+ #ifdef USE_NODELAY
+  #include <netinet/tcp.h>
+ #endif
  #include <netdb.h>
  #include <unistd.h>
  #define SOCKET int
