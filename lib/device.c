@@ -206,6 +206,15 @@ static SOCKET server_connect(const char *host, unsigned short nport)
 		if (connect(sock, sa, sa_len) >= 0) {
 			char greet[128];
 
+#ifdef USE_NODELAY
+			int yes = 1;
+
+			/* Try disabling Nagle since we're latency-sensitive, UDP would
+			 * really be more appropriate but that's a much bigger change.
+			 */
+			(void) setsockopt(sock, IPPROTO_TCP, TCP_NODELAY, (void *)&yes, sizeof(yes));
+#endif
+
 			if (xsend(sock, CLIENT_GREET, strlen(CLIENT_GREET), 0) ||
 			    xrecv(sock, greet, strlen(SERVER_GREET), 0)) {
 				closesocket(sock);
