@@ -54,5 +54,5 @@ jobs:
           done;
       - uses: actions/upload-artifact@v3
         with:
-          name: rocket-editor
+          name: rocket-editor-macos
           path: editor/editor.app
