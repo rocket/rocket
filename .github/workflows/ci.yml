@@ -15,7 +15,7 @@ jobs:
       - name: Install Dependencies
         run: sudo apt-get install -y qt5-default libsdl1.2-dev
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
       - name: Build
         run: make
   build-macos:
@@ -30,7 +30,7 @@ jobs:
           brew install coreutils qt5 sdl &&
           brew link --force qt5
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
       - name: Build
         run: make
       - name: Fixup Framework Paths
@@ -52,7 +52,7 @@ jobs:
               install_name_tool -change $prefix/lib/$target.framework/Versions/5/$target @executable_path/../Frameworks/$target.framework/Versions/5/$target $plugin;
             done;
           done;
-      - uses: actions/upload-artifact@v2
+      - uses: actions/upload-artifact@v3
         with:
           name: rocket-editor
           path: editor/editor.app
