@@ -27,3 +27,6 @@ RESOURCES += editor.qrc
 
 RC_FILE = editor.rc
 ICON = appicon.icns
+
+target.path = $${PREFIX}/bin/
+INSTALLS += target
