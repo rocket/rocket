@@ -4,7 +4,7 @@ First of all, thanks for reading this. We greatly apprechiate any help! :tada:
 
 Secondly, this document is by no means perfect. So if you find something
 wrong here, or disagree in some way, please
-[propose a change](https://github.com/rocket/rocket/edit/master/CONTRIBUTING.md).
+[propose a change](https://github.com/rocket/rocket/edit/main/CONTRIBUTING.md).
 
 ## Reporting a bug
 
@@ -19,5 +19,5 @@ as possible.
 ## Submitting changes
 
 Please send proposed changes as a
-[GitHub Pull Request](https://github.com/rocket/rocket/pull/new/master). Read more
+[GitHub Pull Request](https://github.com/rocket/rocket/pull/new/main). Read more
 about using pull requests [here](http://help.github.com/pull-requests/).

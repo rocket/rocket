@@ -9,7 +9,7 @@ You work in two modes:
 **edit mode**
 - - - - - - -
 Rocket takes control over your demo, and you're able to set various values, interpolate between them - and even move them around.
-For how to use <a href="https://github.com/rocket/rocket/">Rocket</a> check their <a href="https://github.com/rocket/rocket/blob/master/README.md">description</a>
+For how to use <a href="https://github.com/rocket/rocket/">Rocket</a> check their <a href="https://github.com/rocket/rocket/blob/main/README.md">description</a>
 
 ```js
 //This is the API you'll use
