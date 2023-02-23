@@ -52,10 +52,12 @@ jobs:
               install_name_tool -change $prefix/lib/$target.framework/Versions/5/$target @executable_path/../Frameworks/$target.framework/Versions/5/$target $plugin;
             done;
           done;
+      - name: Create DMG file
+        run: hdiutil create -format UDZO -srcfolder editor/editor.app editor/editor.dmg
       - uses: actions/upload-artifact@v3
         with:
           name: rocket-editor-macos
-          path: editor/editor.app
+          path: editor/editor.dmg
   build-windows:
     name: Build (Windows)
     runs-on: windows-2022
