@@ -54,5 +54,23 @@ jobs:
           done;
       - uses: actions/upload-artifact@v3
         with:
-          name: rocket-editor
+          name: rocket-editor-macos
           path: editor/editor.app
+  build-windows:
+    name: Build (Windows)
+    runs-on: windows-2022
+    steps:
+      - name: Install Qt
+        uses: jurplel/install-qt-action@v3
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Setup MSVC devenv
+        uses: ilammy/msvc-dev-cmd@v1
+      - name: Build Editor
+        run: |
+          qmake -tp vc editor/editor.pro
+          msbuild editor.vcxproj /v:minimal /property:Configuration=Release /nologo
+      - uses: actions/upload-artifact@v3
+        with:
+          name: rocket-editor-windows
+          path: release/editor.exe
