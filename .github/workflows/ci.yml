@@ -62,6 +62,9 @@ jobs:
     steps:
       - name: Install Qt
         uses: jurplel/install-qt-action@v3
+        with:
+          cache: true
+          tools: ''
       - name: Checkout
         uses: actions/checkout@v3
       - name: Setup MSVC devenv
