@@ -20,6 +20,8 @@
  #include <ws2tcpip.h>
  #include <windows.h>
  #include <limits.h>
+ #include <fcntl.h>
+ #include <errno.h>
 #elif defined(USE_AMITCP)
  #include <sys/socket.h>
  #include <proto/exec.h>
@@ -54,6 +56,8 @@
  #endif
  #include <netdb.h>
  #include <unistd.h>
+ #include <fcntl.h>
+ #include <errno.h>
  #define SOCKET int
  #define INVALID_SOCKET -1
  #define closesocket(x) close(x)
@@ -69,6 +73,20 @@ struct sync_device {
 #ifndef SYNC_PLAYER
 	int row;
 	SOCKET sock;
+	struct {
+		unsigned short nport;
+#ifdef USE_GETADDRINFO
+		struct addrinfo *addr;
+		struct addrinfo *curr;
+#else
+		struct hostent *he;
+		char **ap;
+#endif
+		int setup:1;
+		int connecting:1;
+		int connected:1;
+		int ready:1;
+	} server;
 #endif
 	struct sync_io_cb io_cb;
 };

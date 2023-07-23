@@ -168,8 +168,8 @@ int main(int argc, char *argv[])
 		die("out of memory?");
 
 #ifndef SYNC_PLAYER
-	if (sync_tcp_connect(rocket, "localhost", SYNC_DEFAULT_PORT))
-		die("failed to connect to host");
+	if (sync_server_setup_tcp(rocket, "localhost", SYNC_DEFAULT_PORT))
+		die("failed to setup sync device for use with server via tcp");
 #endif
 
 	/* get tracks */
@@ -187,8 +187,7 @@ int main(int argc, char *argv[])
 	while (!done) {
 		double row = bass_get_row(stream);
 #ifndef SYNC_PLAYER
-		if (sync_update(rocket, (int)floor(row), &bass_cb, (void *)&stream))
-			sync_tcp_connect(rocket, "localhost", SYNC_DEFAULT_PORT);
+		sync_update(rocket, (int)floor(row), &bass_cb, (void *)&stream);
 #endif
 
 		/* draw */
