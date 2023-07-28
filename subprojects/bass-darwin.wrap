@@ -1,0 +1,6 @@
+[wrap-file]
+lead_directory_missing = true
+source_url = http://web.archive.org/web/20230425204235if_/https://www.un4seen.com/files/bass24-osx.zip
+source_filename = bass24-osx.zip
+source_hash = 797fafe11b62dc086ba6f6c724c94e3d736134ba50bac8870dd00ba11c15b461
+patch_directory = bass

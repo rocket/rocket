@@ -30,18 +30,7 @@ if qt5_dep.found()
 endif
 
 # find bass
-bass_sdk = get_option('bass-sdk')
-if bass_sdk == ''
-  bass_dep = cpp.find_library('bass', required: false, disabler: true)
-else
-  bass_inc = include_directories(bass_sdk)
-  bass_lib = cpp.find_library('bass', dirs: [
-    join_paths(bass_sdk, 'x64'),
-    bass_sdk
-  ])
-  bass_dep = declare_dependency(dependencies: bass_lib,
-    include_directories: bass_inc)
-endif
+bass_dep = dependency('bass', fallback: 'bass-' + host_machine.system())
 
 if cc.has_function('getaddrinfo', prefix: '#include <netdb.h>')
   add_project_arguments('-DUSE_GETADDRINFO', language: 'c')
