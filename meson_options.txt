@@ -1,3 +1,4 @@
 option('editor', type: 'feature', value: 'enabled')
+option('websockets', type: 'feature', value: 'auto')
 option('examples', type: 'feature', value: 'auto')
 option('bass-sdk', type: 'string')

@@ -19,7 +19,15 @@ m_dep = cc.find_library('m', required : false)
 qt5 = import('qt5')
 qt5_modules = ['Core', 'Gui', 'Widgets', 'Network', 'Xml']
 qt5_dep = dependency('qt5', modules: qt5_modules, required: with_editor)
-# TODO: enable WebSockets
+if qt5_dep.found()
+  qt5_websockets_dep = dependency('qt5',
+    modules: qt5_modules + ['WebSockets'],
+    required: get_option('websockets'))
+  if qt5_websockets_dep.found()
+    qt5_dep = qt5_websockets_dep
+    add_project_arguments('-DQT_WEBSOCKETS_LIB', language: 'cpp')
+  endif
+endif
 
 # find bass
 bass_sdk = get_option('bass-sdk')
