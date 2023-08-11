@@ -94,11 +94,12 @@ static inline int socket_poll(SOCKET socket, int out)
 #ifdef GEKKO
 	// libogc doesn't impmelent select()...
 	struct pollsd sds[1];
+	int events = out ? POLLOUT : POLLIN;
 	sds[0].socket  = socket;
-	sds[0].events  = out ? POLLOUT : POLLIN;
+	sds[0].events  = events;
 	sds[0].revents = 0;
 	if (net_poll(sds, 1, 0) < 0) return 0;
-	return (sds[0].revents & (out ? POLLOUT : POLLIN)) && !(sds[0].revents & (POLLERR|POLLHUP|POLLNVAL));
+	return (sds[0].revents & events) && !(sds[0].revents & (POLLERR|POLLHUP|POLLNVAL));
 #else
 	struct timeval to = { 0, 0 };
 	fd_set fds, xfds;
@@ -148,14 +149,18 @@ static struct Library *socket_base = NULL;
 
 static int nbsocket(int socket, int nb)
 {
-#ifndef WIN32
+
+#ifdef USE_NONBLOCKING
+ #ifndef WIN32
 	if (fcntl(socket, F_SETFL, nb ? (int)O_NONBLOCK : 0) == -1)
 		return -1;
-#else
+ #else
 	u_long	_nb = nb;
 	if (ioctlsocket(socket, FIONBIO, &_nb) != 0)
 		return -1;
-#endif /* TODO: AMITCP? */
+ #endif /* TODO: can AMITCP or any others support non-blocking connects? */
+#endif
+
 	return 0;
 }
 
@@ -295,7 +300,7 @@ static int server_next_connect(struct sync_device *d)
 
 #ifndef WIN32
 		if (errno == EINPROGRESS || errno == EAGAIN) {
-#else /* TODO: AMITCP? */
+#else /* TODO: can AMITCP or any others support non-blocking connects? */
 		if (WSAGetLastError() == WSAEINPROGRESS || WSAGetLastError() == WSAEWOULDBLOCK) {
 #endif
 			d->sock = sock;
@@ -315,7 +320,7 @@ static int server_next_connect(struct sync_device *d)
 /* Poll d->sock for its connect progress, detecting either error or completion
  * Returns:
  * -1 on errors (with d->server.connecting = 0 and d->sock = INVALID_SOCKET
- * 0 when still connceting but no error
+ * 0 when still connecting but no error
  * 1 when finished connecting (with d->server.connected = 1 and d->sock blocking again)
  */
 static int server_finish_connecting(struct sync_device *d)
@@ -407,44 +412,41 @@ static int server_greet(struct sync_device *d)
 	return 0;
 }
 
-/* Maintain the server connection
+/* Maintain a non-blocking server connection
  * Returns:
- * -1 on error (includes not setup at all, which is arguably more a program error)
- * 0 on not ready
- * 1 on ready
+ *  -1 on disconnected/error (reconnect needed)
+ *   0 on ready
+ *   1 on not ready (either connect-in-progress, or greet pending)
  */
 static int server_ready(struct sync_device *d)
 {
-	if (!d->server.setup) /* setup is required beforehand, there's nothing to connect to. */
-		return -1;
-
 	if (d->sock == INVALID_SOCKET) {
 		d->server.connecting = 0;
 		d->server.connected = 0;
 		d->server.ready = 0;
 	}
 
+	if (!d->server.setup) /* setup is required beforehand, there's nothing to connect to. */
+		return -1;
+
 	if (d->server.ready)
-		return 1;
+		return 0;
 
 	if (d->server.connected) {
 		if (server_greet(d) < 0)
 			return -1;
 
-		return 1; /* greet successful, ready! */
+		return 0; /* greet successful, ready! */
 	}
 
 	if (d->server.connecting) {
 		if (server_finish_connecting(d) < 0)
 			return -1;
 
-		return 0; /* still needs to greet, OK, not ready */
+		return 1; /* still needs to either finish connecting, or greet; OK, but not ready */
 	}
 
-	if (server_next_connect(d) < 0) /* not even connecting, start one */
-		return -1;
-
-	return 0; /* connecting, OK, but not ready */
+	return -1; /* not connected, not connecting. */
 }
 
 #else
@@ -676,17 +678,20 @@ int sync_server_setup_tcp(struct sync_device *d, const char *host, unsigned shor
 	return server_setup(d, host, port);
 }
 
+/* Update server with row and process any received commands.
+ * Returns:
+ *  -1 on disconnected/error (reconnect needed)
+ *   0 on success
+ *   1 on connection in progress, but no update performed
+ */
 int sync_update(struct sync_device *d, int row, struct sync_cb *cb,
     void *cb_param)
 {
 	int	r;
 
 	r = server_ready(d);
-	if (r <= 0)
-		return -1;	/* TODO: it would be better to propagate out the server_ready()
-				 * return values from sync_update() so the demo can know if it's
-				 * currently EINPROGRESS vs. proper errors
-				 */
+	if (r)
+		return r;
 
 	/* look for new commands */
 	while (socket_poll(d->sock, 0)) {
@@ -741,6 +746,25 @@ sockerr:
 	closesocket(d->sock);
 	d->sock = INVALID_SOCKET;
 	return -1;
+}
+
+/* Initiate a connect to the server, non-blocking when supported
+ * Returns:
+ * -1 on error, no connect initiated
+ *  0 on connect initiated
+ */
+int sync_connect(struct sync_device *d)
+{
+	int	r;
+
+	do {
+		r = server_next_connect(d);
+	} while (r == 0); /* restarts iterating on end */
+
+	if (r < 0)
+		return -1;
+
+	return 0;
 }
 
 #endif /* !defined(SYNC_PLAYER) */

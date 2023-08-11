@@ -82,10 +82,10 @@ struct sync_device {
 		struct hostent *he;
 		char **ap;
 #endif
-		int setup:1;
-		int connecting:1;
-		int connected:1;
-		int ready:1;
+		int setup:1;		/* server has been setup successfuly (addr/he+nport) */
+		int connecting:1;	/* a non-blocking connect is in-progress */
+		int connected:1;	/* a connection is established */
+		int ready:1;		/* the server's greeting has been received */
 	} server;
 #endif
 	struct sync_io_cb io_cb;

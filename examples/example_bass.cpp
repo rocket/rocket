@@ -170,6 +170,9 @@ int main(int argc, char *argv[])
 #ifndef SYNC_PLAYER
 	if (sync_server_setup_tcp(rocket, "localhost", SYNC_DEFAULT_PORT))
 		die("failed to setup sync device for use with server via tcp");
+
+	if (sync_connect(rocket) < 0)
+		die("failed to initiate connect on sync device");
 #endif
 
 	/* get tracks */
@@ -187,7 +190,8 @@ int main(int argc, char *argv[])
 	while (!done) {
 		double row = bass_get_row(stream);
 #ifndef SYNC_PLAYER
-		sync_update(rocket, (int)floor(row), &bass_cb, (void *)&stream);
+		if (sync_update(rocket, (int)floor(row), &bass_cb, (void *)&stream) < 0)
+			sync_connect(rocket);
 #endif
 
 		/* draw */

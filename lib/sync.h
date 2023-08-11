@@ -32,8 +32,8 @@ struct sync_cb {
 	int (*is_playing)(void *);
 };
 #define SYNC_DEFAULT_PORT 1338
-int SYNC_DEPRECATED("use sync_server_setup_tcp instead") sync_tcp_connect(struct sync_device *, const char *, unsigned short);
-int SYNC_DEPRECATED("use sync_server_setup_tcp instead") sync_connect(struct sync_device *, const char *, unsigned short);
+int SYNC_DEPRECATED("use sync_server_setup_tcp and sync_connect instead") sync_tcp_connect(struct sync_device *, const char *, unsigned short);
+int sync_connect(struct sync_device *);
 int sync_server_setup_tcp(struct sync_device *d, const char *host, unsigned short port);
 int sync_update(struct sync_device *, int, struct sync_cb *, void *);
 int sync_save_tracks(const struct sync_device *);
