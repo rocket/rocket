@@ -483,16 +483,9 @@ static int handle_del_key_cmd(SOCKET sock, struct sync_device *data)
 	return sync_del_key(data->tracks[track], row);
 }
 
-int sync_tcp_connect(struct sync_device *d, const char *host, unsigned short port)
+int update_tracks(struct sync_device *d)
 {
 	int i;
-	if (d->sock != INVALID_SOCKET)
-		closesocket(d->sock);
-
-	d->sock = server_connect(d, host, port);
-	if (d->sock == INVALID_SOCKET)
-		return -1;
-
 	for (i = 0; i < (int)d->num_tracks; ++i) {
 		free(d->tracks[i]->keys);
 		d->tracks[i]->keys = NULL;
@@ -507,6 +500,18 @@ int sync_tcp_connect(struct sync_device *d, const char *host, unsigned short por
 		}
 	}
 	return 0;
+}
+
+int sync_tcp_connect(struct sync_device *d, const char *host, unsigned short port)
+{
+	if (d->sock != INVALID_SOCKET)
+		closesocket(d->sock);
+
+	d->sock = server_connect(d, host, port);
+	if (d->sock == INVALID_SOCKET)
+		return -1;
+
+	return update_tracks(d);
 }
 
 int sync_connect(struct sync_device *d, const char *host, unsigned short port)
