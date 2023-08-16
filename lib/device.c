@@ -174,7 +174,9 @@ static SOCKET sock_connect(struct sockaddr *sa, int sa_len)
 	return sock;
 }
 
-static SOCKET server_connect(const char *host, unsigned short nport)
+static SOCKET server_connect(struct sync_device *d,
+                             const char *host,
+                             unsigned short nport)
 {
 	SOCKET sock = INVALID_SOCKET;
 #ifdef USE_GETADDRINFO
@@ -208,10 +210,12 @@ static SOCKET server_connect(const char *host, unsigned short nport)
 		return INVALID_SOCKET;
 
 	for (curr = addr; curr; curr = curr->ai_next) {
-		int sa_len = (int)curr->ai_addrlen;
-		sock = sock_connect(curr->ai_addr, sa_len);
-		if (sock != INVALID_SOCKET)
+		sock = sock_connect(curr->ai_addr, (int)curr->ai_addrlen);
+		if (sock != INVALID_SOCKET) {
+			memcpy(&d->server.addr, curr->ai_addr, curr->ai_addrlen);
+			d->server.addrlen = curr->ai_addrlen;
 			break;
+		}
 	}
 
 #else
@@ -221,13 +225,13 @@ static SOCKET server_connect(const char *host, unsigned short nport)
 		return INVALID_SOCKET;
 
 	for (ap = he->h_addr_list; *ap; ++ap) {
-		struct sockaddr_in sin;
-		sin.sin_family = he->h_addrtype;
-		sin.sin_port = htons(nport);
-		memcpy(&sin.sin_addr, *ap, he->h_length);
-		memset(&sin.sin_zero, 0, sizeof(sin.sin_zero));
+		d->server.sin.sin_family = he->h_addrtype;
+		d->server.sin.sin_port = htons(nport);
+		memcpy(&d->server.sin.sin_addr, *ap, he->h_length);
+		memset(&d->server.sin.sin_zero, 0, sizeof(d->server.sin.sin_zero));
 
-		sock = sock_connect((struct sockaddr *)&sin, sizeof(struct sockaddr));
+		sock = sock_connect((struct sockaddr *)&d->server.sin,
+		                    sizeof(struct sockaddr));
 		if (sock != INVALID_SOCKET)
 			break;
 	}
@@ -485,7 +489,7 @@ int sync_tcp_connect(struct sync_device *d, const char *host, unsigned short por
 	if (d->sock != INVALID_SOCKET)
 		closesocket(d->sock);
 
-	d->sock = server_connect(host, port);
+	d->sock = server_connect(d, host, port);
 	if (d->sock == INVALID_SOCKET)
 		return -1;
 

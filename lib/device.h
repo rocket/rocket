@@ -69,6 +69,14 @@ struct sync_device {
 #ifndef SYNC_PLAYER
 	int row;
 	SOCKET sock;
+	struct {
+#ifdef USE_GETADDRINFO
+		struct sockaddr_storage addr;
+		int addrlen;
+#else
+		struct sockaddr_in sin;
+#endif
+	} server;
 #endif
 	struct sync_io_cb io_cb;
 };
