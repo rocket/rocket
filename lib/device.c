@@ -142,6 +142,38 @@ static inline int xrecv(SOCKET s, void *buf, size_t len, int flags)
 static struct Library *socket_base = NULL;
 #endif
 
+static SOCKET sock_connect(struct sockaddr *sa, int sa_len)
+{
+	char greet[128];
+
+	SOCKET sock = socket(sa->sa_family, SOCK_STREAM, 0);
+	if (sock == INVALID_SOCKET)
+		return INVALID_SOCKET;
+
+	if (connect(sock, sa, sa_len) < 0) {
+		closesocket(sock);
+		return INVALID_SOCKET;
+	}
+
+#ifdef USE_NODELAY
+	int yes = 1;
+
+	/* Try disabling Nagle since we're latency-sensitive, UDP would
+		* really be more appropriate but that's a much bigger change.
+		*/
+	(void) setsockopt(sock, IPPROTO_TCP, TCP_NODELAY, (void *)&yes, sizeof(yes));
+#endif
+
+	if (xsend(sock, CLIENT_GREET, strlen(CLIENT_GREET), 0) ||
+		xrecv(sock, greet, strlen(SERVER_GREET), 0) ||
+		strncmp(SERVER_GREET, greet, strlen(SERVER_GREET))) {
+		closesocket(sock);
+		return INVALID_SOCKET;
+	}
+
+	return sock;
+}
+
 static SOCKET server_connect(const char *host, unsigned short nport)
 {
 	SOCKET sock = INVALID_SOCKET;
@@ -176,9 +208,11 @@ static SOCKET server_connect(const char *host, unsigned short nport)
 		return INVALID_SOCKET;
 
 	for (curr = addr; curr; curr = curr->ai_next) {
-		int family = curr->ai_family;
-		struct sockaddr *sa = curr->ai_addr;
 		int sa_len = (int)curr->ai_addrlen;
+		sock = sock_connect(curr->ai_addr, sa_len);
+		if (sock != INVALID_SOCKET)
+			break;
+	}
 
 #else
 
@@ -187,48 +221,18 @@ static SOCKET server_connect(const char *host, unsigned short nport)
 		return INVALID_SOCKET;
 
 	for (ap = he->h_addr_list; *ap; ++ap) {
-		int family = he->h_addrtype;
 		struct sockaddr_in sin;
-		struct sockaddr *sa = (struct sockaddr *)&sin;
-		int sa_len = sizeof(*sa);
-
 		sin.sin_family = he->h_addrtype;
 		sin.sin_port = htons(nport);
 		memcpy(&sin.sin_addr, *ap, he->h_length);
 		memset(&sin.sin_zero, 0, sizeof(sin.sin_zero));
 
-#endif
-
-		sock = socket(family, SOCK_STREAM, 0);
-		if (sock == INVALID_SOCKET)
-			continue;
-
-		if (connect(sock, sa, sa_len) >= 0) {
-			char greet[128];
-
-#ifdef USE_NODELAY
-			int yes = 1;
-
-			/* Try disabling Nagle since we're latency-sensitive, UDP would
-			 * really be more appropriate but that's a much bigger change.
-			 */
-			(void) setsockopt(sock, IPPROTO_TCP, TCP_NODELAY, (void *)&yes, sizeof(yes));
-#endif
-
-			if (xsend(sock, CLIENT_GREET, strlen(CLIENT_GREET), 0) ||
-			    xrecv(sock, greet, strlen(SERVER_GREET), 0)) {
-				closesocket(sock);
-				sock = INVALID_SOCKET;
-				continue;
-			}
-
-			if (!strncmp(SERVER_GREET, greet, strlen(SERVER_GREET)))
-				break;
-		}
-
-		closesocket(sock);
-		sock = INVALID_SOCKET;
+		sock = sock_connect((struct sockaddr *)&sin, sizeof(struct sockaddr));
+		if (sock != INVALID_SOCKET)
+			break;
 	}
+
+#endif
 
 #ifdef USE_GETADDRINFO
 	freeaddrinfo(addr);
