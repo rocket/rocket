@@ -514,6 +514,26 @@ int sync_tcp_connect(struct sync_device *d, const char *host, unsigned short por
 	return update_tracks(d);
 }
 
+int sync_tcp_reconnect(struct sync_device *d)
+{
+	if (d->sock != INVALID_SOCKET)
+		closesocket(d->sock);
+
+
+#ifdef USE_GETADDRINFO
+	d->sock = sock_connect((struct sockaddr *)&d->server.addr,
+	                       d->server.addrlen);
+#else
+	d->sock = sock_connect((struct sockaddr *)&d->server.sin,
+		                    sizeof(struct sockaddr));
+#endif
+
+	if (d->sock == INVALID_SOCKET)
+		return -1;
+
+	return update_tracks(d);
+}
+
 int sync_connect(struct sync_device *d, const char *host, unsigned short port)
 {
 	return sync_tcp_connect(d, host, port);
