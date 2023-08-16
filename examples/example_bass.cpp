@@ -188,7 +188,7 @@ int main(int argc, char *argv[])
 		double row = bass_get_row(stream);
 #ifndef SYNC_PLAYER
 		if (sync_update(rocket, (int)floor(row), &bass_cb, (void *)&stream))
-			sync_tcp_connect(rocket, "localhost", SYNC_DEFAULT_PORT);
+			sync_tcp_reconnect(rocket);
 #endif
 
 		/* draw */
