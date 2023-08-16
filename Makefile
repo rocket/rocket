@@ -29,8 +29,8 @@ else
 		OPENGL_LIBS = -lGL -lGLU
 	endif
 
-	SDL_CFLAGS = $(shell sdl-config --cflags)
-	SDL_LIBS = $(shell sdl-config --libs)
+	SDL_CFLAGS = $(shell sdl2-config --cflags)
+	SDL_LIBS = $(shell sdl2-config --libs)
 	LDLIBS += -lm
 endif
 
