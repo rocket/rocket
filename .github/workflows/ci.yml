@@ -41,8 +41,18 @@ jobs:
           brew link --force qt5
       - name: Checkout
         uses: actions/checkout@v3
+      - name: Install BASS
+        run: |
+          mkdir -p examples/include &&
+          mkdir -p examples/lib &&
+          curl -O http://web.archive.org/web/20230425204235if_/https://www.un4seen.com/files/bass24-osx.zip &&
+          unzip -d bass24-osx bass24-osx.zip &&
+          cp bass24-osx/bass.h examples/include/ &&
+          cp bass24-osx/libbass.dylib examples/lib/
       - name: Build
         run: make
+      - name: Build example_bass
+        run: make examples/example_bass examples/example_bass-player
       - name: Fixup Framework Paths
         run: |
           cd editor &&
