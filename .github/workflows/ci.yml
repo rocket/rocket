@@ -10,10 +10,10 @@ on:
 jobs:
   build-linux:
     name: Build (Linux)
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     steps:
       - name: Install Dependencies
-        run: sudo apt-get install -y qt5-default libsdl1.2-dev
+        run: sudo apt-get install -y qtbase5-dev libqt5websockets5-dev qt5-qmake libsdl1.2-dev
       - name: Checkout
         uses: actions/checkout@v3
       - name: Install BASS
