@@ -16,6 +16,7 @@ ifdef COMSPEC
 	OPENGL_LIBS = -lopengl32 -lglu32
 	SDL_LIBS = -lSDL
 	LDLIBS += -lws2_32
+	LIB_CPPFLAGS += -DUSE_NODELAY
 else
 	UNAME_S := $(shell uname -s)
 
