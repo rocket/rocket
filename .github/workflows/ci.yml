@@ -16,8 +16,18 @@ jobs:
         run: sudo apt-get install -y qt5-default libsdl1.2-dev
       - name: Checkout
         uses: actions/checkout@v3
+      - name: Install BASS
+        run: |
+          mkdir -p examples/include &&
+          mkdir -p examples/lib &&
+          curl -O https://web.archive.org/web/20230426183337if_/https://www.un4seen.com/files/bass24-linux.zip &&
+          unzip -d bass24-linux bass24-linux.zip &&
+          cp bass24-linux/bass.h examples/include/ &&
+          cp bass24-linux/libs/x86_64/libbass.so examples/lib/
       - name: Build
         run: make
+      - name: Build example_bass
+        run: make examples/example_bass examples/example_bass-player
   build-macos:
     name: Build (macOS)
     runs-on: macos-12
