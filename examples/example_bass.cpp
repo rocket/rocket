@@ -3,19 +3,19 @@
 #include <windows.h>
 #endif
 #include <SDL.h>
-#ifdef WIN32
-#undef main /* avoid SDL's nasty SDLmain hack */
-#endif
 #include <SDL_opengl.h>
 #include <bass.h>
 #include <stdio.h>
 #include <stdarg.h>
+#include <stdlib.h>
 #include <math.h>
 
 #if defined(__APPLE__) && defined(__MACH__)
 #include <GLKit/GLKMatrix4.h>
 #define gluPerspective(f, a, zn, zf) glMultMatrixf(GLKMatrix4MakePerspective((f) * M_PI / 180, a, zn, zf).m)
 #define gluLookAt(ex, ey, ez, cx, cy, cz, ux, uy, uz) glMultMatrixf(GLKMatrix4MakeLookAt(ex, ey, ez, cx, cy, cz, ux, uy, uz).m)
+#else
+#include <GL/glu.h>
 #endif
 
 #include "../lib/sync.h"
@@ -82,6 +82,7 @@ static void die(const char *fmt, ...)
 
 static const unsigned int width  = 800;
 static const unsigned int height = 600;
+SDL_Window *win;
 
 void setup_sdl()
 {
@@ -94,9 +95,18 @@ void setup_sdl()
 	SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE, 8);
 	SDL_GL_SetAttribute(SDL_GL_ALPHA_SIZE, 8);
 	SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 16);
-	SDL_GL_SetAttribute(SDL_GL_SWAP_CONTROL, 1);
+	SDL_GL_SetSwapInterval(1);
 
-	if (!SDL_SetVideoMode(width, height, 32, SDL_OPENGL))
+	win = SDL_CreateWindow("example_bass",
+	                          SDL_WINDOWPOS_UNDEFINED,
+	                          SDL_WINDOWPOS_UNDEFINED,
+	                          width, height,
+	                          SDL_WINDOW_OPENGL);
+	if (!win)
+		die("%s", SDL_GetError());
+
+	SDL_GLContext context = SDL_GL_CreateContext(win);
+	if (!context)
 		die("%s", SDL_GetError());
 }
 
@@ -216,7 +226,7 @@ int main(int argc, char *argv[])
 		draw_cube();
 
 		glPopMatrix();
-		SDL_GL_SwapBuffers();
+		SDL_GL_SwapWindow(win);
 
 		BASS_Update(0); /* decrease the chance of missing vsync */
 
