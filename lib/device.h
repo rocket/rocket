@@ -66,6 +66,8 @@ struct sync_device {
 #ifndef SYNC_PLAYER
 	int row;
 	SOCKET sock;
+	struct sync_sockio_cb sockio_cb;
+	void *sockio_ctxt;
 #endif
 	struct sync_io_cb io_cb;
 };

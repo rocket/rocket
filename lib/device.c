@@ -138,6 +138,30 @@ static inline int xrecv(SOCKET s, void *buf, size_t len, int flags)
 #endif
 }
 
+static inline int sockio_poll(struct sync_device *d, int *res_readable, int *res_writeable)
+{
+	assert(res_readable || res_writeable);
+	return d->sockio_cb.poll(d->sockio_ctxt, res_readable, res_writeable);
+}
+
+static inline int sockio_send(struct sync_device *d, const void *buf, int len)
+{
+	assert(len > 0);
+	return d->sockio_cb.send(d->sockio_ctxt, buf, len) != len;
+}
+
+static inline int sockio_recv(struct sync_device *d, void *buf, int len)
+{
+	assert(len > 0);
+	return d->sockio_cb.recv(d->sockio_ctxt, buf, len) != len;
+}
+
+static inline void sockio_close(struct sync_device *d)
+{
+	d->sockio_cb.close(d->sockio_ctxt);
+	d->sockio_ctxt = NULL;
+}
+
 #ifdef USE_AMITCP
 static struct Library *socket_base = NULL;
 #endif
@@ -237,6 +261,48 @@ static SOCKET server_connect(const char *host, unsigned short nport)
 	return sock;
 }
 
+static int server_greet(struct sync_device *d)
+{
+	char greet[128];
+
+	if (sockio_send(d, CLIENT_GREET, (int)strlen(CLIENT_GREET)) ||
+	    sockio_recv(d, greet, (int)strlen(SERVER_GREET)) ||
+	    strncmp(SERVER_GREET, greet, strlen(SERVER_GREET))) {
+		sockio_close(d);
+		return -1;
+	}
+
+	return 0;
+}
+
+/* Setting a new cb+ctxt establishes a new abstract connection represented by ctxt.
+ * How the connection communicates is implemented by the .recv()/.send() members.
+ * How the connection ends and cleans itself up is implemented by .close().
+ * ctxt must already be allocated, connected, and ready to be used with the provided methods.
+ * The device takes ownership of ctxt, to be cleaned up by the .close() method to disconnect.
+ *
+ * Returns 0 on success, -1 on error, which may occur since this performs the
+ * initial Rocket handshake.  Even in error ctxt will be closed.
+ *
+ * This is the low-level communications api, only use this if the sync_tcp_connect() style
+ * helper is insufficient for your needs.  They are mutually exclusive.
+ */
+int sync_set_sockio_cb(struct sync_device *d, struct sync_sockio_cb *cb, void *ctxt)
+{
+	assert(ctxt);
+	assert(cb->send);
+	assert(cb->recv);
+	assert(cb->close);
+
+	if (d->sockio_ctxt)
+		sockio_close(d);
+
+	d->sockio_cb = *cb;
+	d->sockio_ctxt = ctxt;
+
+	return server_greet(d);
+}
+
 #else
 
 void sync_set_io_cb(struct sync_device *d, struct sync_io_cb *cb)
@@ -280,6 +346,7 @@ struct sync_device *sync_create_device(const char *base)
 #ifndef SYNC_PLAYER
 	d->row = -1;
 	d->sock = INVALID_SOCKET;
+	d->sockio_ctxt = NULL;
 #endif
 
 	d->io_cb.open = (void *(*)(const char *, const char *))fopen;
