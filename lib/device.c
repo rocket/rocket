@@ -25,7 +25,7 @@ static int find_track(struct sync_device *d, const char *name)
 	return -1; /* not found */
 }
 
-static int valid_path_char(char ch)
+static int valid_path_char(int ch)
 {
 	switch (ch) {
 	case '.':
