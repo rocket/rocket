@@ -37,7 +37,8 @@ endif
 
 LIB_OBJS = \
 	lib/device.o \
-	lib/track.o
+	lib/track.o \
+	lib/tcp.o
 
 all: lib/librocket.a lib/librocket-player.a editor
 

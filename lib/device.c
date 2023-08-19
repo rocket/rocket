@@ -12,9 +12,9 @@
  #include <direct.h>
  #define S_ISDIR(m) (((m)& S_IFMT) == S_IFDIR)
  #define mkdir(pathname, mode) _mkdir(pathname)
-#elif defined(GEKKO)
- #include <network.h>
 #endif
+
+void sync_tcp_device_dtor(void); /* not worth adding a tcp.h for */
 
 static int find_track(struct sync_device *d, const char *name)
 {
@@ -89,55 +89,6 @@ enum {
 	SAVE_TRACKS = 5
 };
 
-static inline int socket_poll(SOCKET socket)
-{
-#ifdef GEKKO
-	// libogc doesn't impmelent select()...
-	struct pollsd sds[1];
-	sds[0].socket  = socket;
-	sds[0].events  = POLLIN;
-	sds[0].revents = 0;
-	if (net_poll(sds, 1, 0) < 0) return 0;
-	return (sds[0].revents & POLLIN) && !(sds[0].revents & (POLLERR|POLLHUP|POLLNVAL));
-#else
-	struct timeval to = { 0, 0 };
-	fd_set fds;
-
-	FD_ZERO(&fds);
-
-#ifdef _MSC_VER
-#pragma warning(push)
-#pragma warning(disable: 4127)
-#endif
-	FD_SET(socket, &fds);
-#ifdef _MSC_VER
-#pragma warning(pop)
-#endif
-
-	return select((int)socket + 1, &fds, NULL, NULL, &to) > 0;
-#endif
-}
-
-static inline int xsend(SOCKET s, const void *buf, size_t len, int flags)
-{
-#ifdef WIN32
-	assert(len <= INT_MAX);
-	return send(s, (const char *)buf, (int)len, flags) != (int)len;
-#else
-	return send(s, (const char *)buf, len, flags) != (int)len;
-#endif
-}
-
-static inline int xrecv(SOCKET s, void *buf, size_t len, int flags)
-{
-#ifdef WIN32
-	assert(len <= INT_MAX);
-	return recv(s, (char *)buf, (int)len, flags) != (int)len;
-#else
-	return recv(s, (char *)buf, len, flags) != (int)len;
-#endif
-}
-
 static inline int sockio_poll(struct sync_device *d, int *res_readable, int *res_writeable)
 {
 	assert(res_readable || res_writeable);
@@ -160,147 +111,6 @@ static inline void sockio_close(struct sync_device *d)
 {
 	d->sockio_cb.close(d->sockio_ctxt);
 	d->sockio_ctxt = NULL;
-}
-
-#ifdef USE_AMITCP
-static struct Library *socket_base = NULL;
-#endif
-
-static SOCKET server_connect(const char *host, unsigned short nport)
-{
-	SOCKET sock = INVALID_SOCKET;
-#ifdef USE_GETADDRINFO
-	struct addrinfo *addr, *curr;
-	char port[6];
-#else
-	struct hostent *he;
-	char **ap;
-#endif
-
-#ifdef WIN32
-	static int need_init = 1;
-	if (need_init) {
-		WSADATA wsa;
-		if (WSAStartup(MAKEWORD(2, 0), &wsa))
-			return INVALID_SOCKET;
-		need_init = 0;
-	}
-#elif defined(USE_AMITCP)
-	if (!socket_base) {
-		socket_base = OpenLibrary("bsdsocket.library", 4);
-		if (!socket_base)
-			return INVALID_SOCKET;
-	}
-#endif
-
-#ifdef USE_GETADDRINFO
-
-	snprintf(port, sizeof(port), "%u", nport);
-	if (getaddrinfo(host, port, 0, &addr) != 0)
-		return INVALID_SOCKET;
-
-	for (curr = addr; curr; curr = curr->ai_next) {
-		int family = curr->ai_family;
-		struct sockaddr *sa = curr->ai_addr;
-		int sa_len = (int)curr->ai_addrlen;
-
-#else
-
-	he = gethostbyname(host);
-	if (!he)
-		return INVALID_SOCKET;
-
-	for (ap = he->h_addr_list; *ap; ++ap) {
-		int family = he->h_addrtype;
-		struct sockaddr_in sin;
-		struct sockaddr *sa = (struct sockaddr *)&sin;
-		int sa_len = sizeof(*sa);
-
-		sin.sin_family = he->h_addrtype;
-		sin.sin_port = htons(nport);
-		memcpy(&sin.sin_addr, *ap, he->h_length);
-		memset(&sin.sin_zero, 0, sizeof(sin.sin_zero));
-
-#endif
-
-		sock = socket(family, SOCK_STREAM, 0);
-		if (sock == INVALID_SOCKET)
-			continue;
-
-		if (connect(sock, sa, sa_len) >= 0) {
-			char greet[128];
-
-#ifdef USE_NODELAY
-			int yes = 1;
-
-			/* Try disabling Nagle since we're latency-sensitive, UDP would
-			 * really be more appropriate but that's a much bigger change.
-			 */
-			(void) setsockopt(sock, IPPROTO_TCP, TCP_NODELAY, (void *)&yes, sizeof(yes));
-#endif
-
-			if (xsend(sock, CLIENT_GREET, strlen(CLIENT_GREET), 0) ||
-			    xrecv(sock, greet, strlen(SERVER_GREET), 0)) {
-				closesocket(sock);
-				sock = INVALID_SOCKET;
-				continue;
-			}
-
-			if (!strncmp(SERVER_GREET, greet, strlen(SERVER_GREET)))
-				break;
-		}
-
-		closesocket(sock);
-		sock = INVALID_SOCKET;
-	}
-
-#ifdef USE_GETADDRINFO
-	freeaddrinfo(addr);
-#endif
-
-	return sock;
-}
-
-static int server_greet(struct sync_device *d)
-{
-	char greet[128];
-
-	if (sockio_send(d, CLIENT_GREET, (int)strlen(CLIENT_GREET)) ||
-	    sockio_recv(d, greet, (int)strlen(SERVER_GREET)) ||
-	    strncmp(SERVER_GREET, greet, strlen(SERVER_GREET))) {
-		sockio_close(d);
-		return -1;
-	}
-
-	return 0;
-}
-
-/* Setting a new cb+ctxt establishes a new abstract connection represented by ctxt.
- * How the connection communicates is implemented by the .recv()/.send() members.
- * How the connection ends and cleans itself up is implemented by .close().
- * ctxt must already be allocated, connected, and ready to be used with the provided methods.
- * The device takes ownership of ctxt, to be cleaned up by the .close() method to disconnect.
- *
- * Returns 0 on success, -1 on error, which may occur since this performs the
- * initial Rocket handshake.  Even in error ctxt will be closed.
- *
- * This is the low-level communications api, only use this if the sync_tcp_connect() style
- * helper is insufficient for your needs.  They are mutually exclusive.
- */
-int sync_set_sockio_cb(struct sync_device *d, struct sync_sockio_cb *cb, void *ctxt)
-{
-	assert(ctxt);
-	assert(cb->send);
-	assert(cb->recv);
-	assert(cb->close);
-
-	if (d->sockio_ctxt)
-		sockio_close(d);
-
-	d->sockio_cb = *cb;
-	d->sockio_ctxt = ctxt;
-
-	return server_greet(d);
 }
 
 #else
@@ -345,7 +155,6 @@ struct sync_device *sync_create_device(const char *base)
 
 #ifndef SYNC_PLAYER
 	d->row = -1;
-	d->sock = INVALID_SOCKET;
 	d->sockio_ctxt = NULL;
 #endif
 
@@ -361,8 +170,10 @@ void sync_destroy_device(struct sync_device *d)
 	int i;
 
 #ifndef SYNC_PLAYER
-	if (d->sock != INVALID_SOCKET)
-		closesocket(d->sock);
+	if (!d->sockio_ctxt)
+		sockio_close(d);
+
+	sync_tcp_device_dtor();
 #endif
 
 	for (i = 0; i < (int)d->num_tracks; ++i) {
@@ -373,13 +184,6 @@ void sync_destroy_device(struct sync_device *d)
 	free(d->tracks);
 	free(d->base);
 	free(d);
-
-#if defined(USE_AMITCP) && !defined(SYNC_PLAYER)
-	if (socket_base) {
-		CloseLibrary(socket_base);
-		socket_base = NULL;
-	}
-#endif
 }
 
 static int read_track_data(struct sync_device *d, struct sync_track *t)
@@ -484,19 +288,18 @@ static int fetch_track_data(struct sync_device *d, struct sync_track *t)
 	name_len = htonl((uint32_t)strlen(t->name));
 
 	/* send request data */
-	if (xsend(d->sock, (char *)&cmd, 1, 0) ||
-	    xsend(d->sock, (char *)&name_len, sizeof(name_len), 0) ||
-	    xsend(d->sock, t->name, (int)strlen(t->name), 0))
+	if (sockio_send(d, (char *)&cmd, 1) ||
+	    sockio_send(d, (char *)&name_len, sizeof(name_len)) ||
+	    sockio_send(d, t->name, (int)strlen(t->name)))
 	{
-		closesocket(d->sock);
-		d->sock = INVALID_SOCKET;
+		sockio_close(d);
 		return -1;
 	}
 
 	return 0;
 }
 
-static int handle_set_key_cmd(SOCKET sock, struct sync_device *data)
+static int handle_set_key_cmd(struct sync_device *d)
 {
 	uint32_t track, row;
 	union {
@@ -506,10 +309,10 @@ static int handle_set_key_cmd(SOCKET sock, struct sync_device *data)
 	struct track_key key;
 	unsigned char type;
 
-	if (xrecv(sock, (char *)&track, sizeof(track), 0) ||
-	    xrecv(sock, (char *)&row, sizeof(row), 0) ||
-	    xrecv(sock, (char *)&v.i, sizeof(v.i), 0) ||
-	    xrecv(sock, (char *)&type, 1, 0))
+	if (sockio_recv(d, (char *)&track, sizeof(track)) ||
+	    sockio_recv(d, (char *)&row, sizeof(row)) ||
+	    sockio_recv(d, (char *)&v.i, sizeof(v.i)) ||
+	    sockio_recv(d, (char *)&type, 1))
 		return -1;
 
 	track = ntohl(track);
@@ -518,39 +321,41 @@ static int handle_set_key_cmd(SOCKET sock, struct sync_device *data)
 	key.row = ntohl(row);
 	key.value = v.f;
 
-	if (type >= KEY_TYPE_COUNT || track >= data->num_tracks)
+	if (type >= KEY_TYPE_COUNT || track >= d->num_tracks)
 		return -1;
 
 	key.type = (enum key_type)type;
-	return sync_set_key(data->tracks[track], &key);
+	return sync_set_key(d->tracks[track], &key);
 }
 
-static int handle_del_key_cmd(SOCKET sock, struct sync_device *data)
+static int handle_del_key_cmd(struct sync_device *d)
 {
 	uint32_t track, row;
 
-	if (xrecv(sock, (char *)&track, sizeof(track), 0) ||
-	    xrecv(sock, (char *)&row, sizeof(row), 0))
+	if (sockio_recv(d, (char *)&track, sizeof(track)) ||
+	    sockio_recv(d, (char *)&row, sizeof(row)))
 		return -1;
 
 	track = ntohl(track);
 	row = ntohl(row);
 
-	if (track >= data->num_tracks)
+	if (track >= d->num_tracks)
 		return -1;
 
-	return sync_del_key(data->tracks[track], row);
+	return sync_del_key(d->tracks[track], row);
 }
 
-int sync_tcp_connect(struct sync_device *d, const char *host, unsigned short port)
+static int server_greet(struct sync_device *d)
 {
+	char greet[128];
 	int i;
-	if (d->sock != INVALID_SOCKET)
-		closesocket(d->sock);
 
-	d->sock = server_connect(host, port);
-	if (d->sock == INVALID_SOCKET)
+	if (sockio_send(d, CLIENT_GREET, (int)strlen(CLIENT_GREET)) ||
+	    sockio_recv(d, greet, (int)strlen(SERVER_GREET)) ||
+	    strncmp(SERVER_GREET, greet, strlen(SERVER_GREET))) {
+		sockio_close(d);
 		return -1;
+	}
 
 	for (i = 0; i < (int)d->num_tracks; ++i) {
 		free(d->tracks[i]->keys);
@@ -560,49 +365,75 @@ int sync_tcp_connect(struct sync_device *d, const char *host, unsigned short por
 
 	for (i = 0; i < (int)d->num_tracks; ++i) {
 		if (fetch_track_data(d, d->tracks[i])) {
-			closesocket(d->sock);
-			d->sock = INVALID_SOCKET;
+			sockio_close(d);
 			return -1;
 		}
 	}
+
 	return 0;
 }
 
-int sync_connect(struct sync_device *d, const char *host, unsigned short port)
+/* Setting a new cb+ctxt establishes a new abstract connection represented by ctxt.
+ * How the connection communicates is implemented by the .recv()/.send() members.
+ * How the connection ends and cleans itself up is implemented by .close().
+ * ctxt must already be allocated, connected, and ready to be used with the provided methods.
+ * The device takes ownership of ctxt, to be cleaned up by the .close() method to disconnect.
+ *
+ * Returns 0 on success, -1 on error, which may occur since this performs the
+ * initial Rocket handshake.  Even in error ctxt will be closed.
+ *
+ * This is the low-level communications api, only use this if the sync_tcp_connect() style
+ * helper is insufficient for your needs.  They are mutually exclusive.
+ */
+int sync_set_sockio_cb(struct sync_device *d, struct sync_sockio_cb *cb, void *ctxt)
 {
-	return sync_tcp_connect(d, host, port);
+	assert(ctxt);
+	assert(cb->send);
+	assert(cb->recv);
+	assert(cb->close);
+
+	if (d->sockio_ctxt)
+		sockio_close(d);
+
+	d->sockio_cb = *cb;
+	d->sockio_ctxt = ctxt;
+
+	return server_greet(d);
 }
 
 int sync_update(struct sync_device *d, int row, struct sync_cb *cb,
     void *cb_param)
 {
-	if (d->sock == INVALID_SOCKET)
+	int readable;
+
+	if (!d->sockio_ctxt)
 		return -1;
 
 	/* look for new commands */
-	while (socket_poll(d->sock)) {
+	while (sockio_poll(d, &readable, NULL) > 0) {
 		unsigned char cmd = 0, flag;
 		uint32_t new_row;
-		if (xrecv(d->sock, (char *)&cmd, 1, 0))
+
+		if (sockio_recv(d, (char *)&cmd, 1))
 			goto sockerr;
 
 		switch (cmd) {
 		case SET_KEY:
-			if (handle_set_key_cmd(d->sock, d))
+			if (handle_set_key_cmd(d))
 				goto sockerr;
 			break;
 		case DELETE_KEY:
-			if (handle_del_key_cmd(d->sock, d))
+			if (handle_del_key_cmd(d))
 				goto sockerr;
 			break;
 		case SET_ROW:
-			if (xrecv(d->sock, (char *)&new_row, sizeof(new_row), 0))
+			if (sockio_recv(d, (char *)&new_row, sizeof(new_row)))
 				goto sockerr;
 			if (cb && cb->set_row)
 				cb->set_row(cb_param, ntohl(new_row));
 			break;
 		case PAUSE:
-			if (xrecv(d->sock, (char *)&flag, 1, 0))
+			if (sockio_recv(d, (char *)&flag, 1))
 				goto sockerr;
 			if (cb && cb->pause)
 				cb->pause(cb_param, flag);
@@ -617,11 +448,11 @@ int sync_update(struct sync_device *d, int row, struct sync_cb *cb,
 	}
 
 	if (cb && cb->is_playing && cb->is_playing(cb_param)) {
-		if (d->row != row && d->sock != INVALID_SOCKET) {
+		if (d->row != row && d->sockio_ctxt) {
 			unsigned char cmd = SET_ROW;
 			uint32_t nrow = htonl(row);
-			if (xsend(d->sock, (char*)&cmd, 1, 0) ||
-			    xsend(d->sock, (char*)&nrow, sizeof(nrow), 0))
+			if (sockio_send(d, (char*)&cmd, 1) ||
+			    sockio_send(d, (char*)&nrow, sizeof(nrow)))
 				goto sockerr;
 			d->row = row;
 		}
@@ -629,8 +460,7 @@ int sync_update(struct sync_device *d, int row, struct sync_cb *cb,
 	return 0;
 
 sockerr:
-	closesocket(d->sock);
-	d->sock = INVALID_SOCKET;
+	sockio_close(d);
 	return -1;
 }
 
@@ -677,7 +507,7 @@ const struct sync_track *sync_get_track(struct sync_device *d,
 	t = d->tracks[idx];
 
 #ifndef SYNC_PLAYER
-	if (d->sock != INVALID_SOCKET)
+	if (d->sockio_ctxt)
 		fetch_track_data(d, t);
 	else
 #endif

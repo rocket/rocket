@@ -278,6 +278,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="device.c" />
+    <ClCompile Include="tcp.c" />
     <ClCompile Include="track.c" />
   </ItemGroup>
   <ItemGroup>
