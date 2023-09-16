@@ -13,7 +13,9 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - name: Install Dependencies
-        run: sudo apt-get install -y qtbase5-dev libqt5websockets5-dev qt5-qmake libsdl2-dev
+        run: |
+          sudo apt-get update &&
+          sudo apt-get install -y qtbase5-dev libqt5websockets5-dev qt5-qmake libsdl2-dev
       - name: Checkout
         uses: actions/checkout@v3
       - name: Install BASS
