@@ -33,6 +33,7 @@ struct sync_cb {
 };
 #define SYNC_DEFAULT_PORT 1338
 int sync_tcp_connect(struct sync_device *, const char *, unsigned short);
+int sync_tcp_reconnect(struct sync_device *);
 int SYNC_DEPRECATED("use sync_tcp_connect instead") sync_connect(struct sync_device *, const char *, unsigned short);
 int sync_update(struct sync_device *, int, struct sync_cb *, void *);
 int sync_save_tracks(const struct sync_device *);
