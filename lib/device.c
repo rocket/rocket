@@ -170,7 +170,7 @@ void sync_destroy_device(struct sync_device *d)
 	int i;
 
 #ifndef SYNC_PLAYER
-	if (!d->sockio_ctxt)
+	if (d->sockio_ctxt)
 		sockio_close(d);
 
 	sync_tcp_device_dtor();
