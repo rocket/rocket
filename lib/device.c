@@ -20,7 +20,7 @@ static int find_track(struct sync_device *d, const char *name)
 {
 	int i;
 	for (i = 0; i < (int)d->num_tracks; ++i)
-		if (!strcmp(name, d->tracks[i]->name))
+		if (d->tracks[i] && !strcmp(name, d->tracks[i]->name))
 			return i;
 	return -1; /* not found */
 }
@@ -86,7 +86,8 @@ enum {
 	GET_TRACK = 2,
 	SET_ROW = 3,
 	PAUSE = 4,
-	SAVE_TRACKS = 5
+	SAVE_TRACKS = 5,
+	RETIRE_TRACK = 6,
 };
 
 static inline int sockio_poll(struct sync_device *d, int *res_readable, int *res_writeable)
@@ -177,6 +178,9 @@ void sync_destroy_device(struct sync_device *d)
 #endif
 
 	for (i = 0; i < (int)d->num_tracks; ++i) {
+		if (!d->tracks[i])
+			continue;
+
 		free(d->tracks[i]->name);
 		free(d->tracks[i]->keys);
 		free(d->tracks[i]);
@@ -271,6 +275,8 @@ int sync_save_tracks(const struct sync_device *d)
 	int i;
 	for (i = 0; i < (int)d->num_tracks; ++i) {
 		const struct sync_track *t = d->tracks[i];
+		if (!t)
+			continue;
 		if (save_track(t, sync_track_path(d->base, t->name)))
 			return -1;
 	}
@@ -291,6 +297,27 @@ static int fetch_track_data(struct sync_device *d, struct sync_track *t)
 	if (sockio_send(d, (char *)&cmd, 1) ||
 	    sockio_send(d, (char *)&name_len, sizeof(name_len)) ||
 	    sockio_send(d, t->name, (int)strlen(t->name)))
+	{
+		sockio_close(d);
+		return -1;
+	}
+
+	return 0;
+}
+
+static int send_retire_track(struct sync_device *d, int idx)
+{
+	unsigned char cmd = RETIRE_TRACK;
+	uint32_t i;
+
+	assert(idx < d->num_tracks);
+	assert(!d->tracks[idx]);
+
+	i = htonl((uint32_t)idx);
+
+	/* send retire track */
+	if (sockio_send(d, (char *)&cmd, 1) ||
+	    sockio_send(d, (char *)&i, sizeof(i)))
 	{
 		sockio_close(d);
 		return -1;
@@ -324,6 +351,10 @@ static int handle_set_key_cmd(struct sync_device *d)
 	if (type >= KEY_TYPE_COUNT || track >= d->num_tracks)
 		return -1;
 
+	/* simply drop sets for "forgotten" tracks */
+	if (!d->tracks[track])
+		return 0;
+
 	key.type = (enum key_type)type;
 	return sync_set_key(d->tracks[track], &key);
 }
@@ -342,19 +373,52 @@ static int handle_del_key_cmd(struct sync_device *d)
 	if (track >= d->num_tracks)
 		return -1;
 
+	/* simply drop dels for "forgotten" tracks */
+	if (!d->tracks[track])
+		return 0;
+
 	return sync_del_key(d->tracks[track], row);
 }
 
 static int server_greet(struct sync_device *d)
 {
 	char greet[128];
-	int i;
+	int i, num_forgotten = 0;
 
 	if (sockio_send(d, CLIENT_GREET, (int)strlen(CLIENT_GREET)) ||
 	    sockio_recv(d, greet, (int)strlen(SERVER_GREET)) ||
 	    strncmp(SERVER_GREET, greet, strlen(SERVER_GREET))) {
 		sockio_close(d);
 		return -1;
+	}
+
+	/* if reconnecting a previously used device, discard all forgotten tracks */
+	for (i = 0; i < (int)d->num_tracks; ++i) {
+		if (!d->tracks[i])
+			num_forgotten++;
+	}
+
+	if (num_forgotten) {
+		struct sync_track **tracks = NULL;
+		int j;
+
+		if (num_forgotten != d->num_tracks) {
+			tracks = malloc(sizeof(*tracks) * (d->num_tracks - num_forgotten));
+			if (!tracks)
+				return -1;
+		}
+
+		for (i = 0, j = 0; i < (int)d->num_tracks; ++i) {
+			if (!d->tracks[i])
+				continue;
+
+			tracks[j] = d->tracks[i];
+			j++;
+		}
+
+		free(d->tracks);
+		d->tracks = tracks;
+		d->num_tracks -= num_forgotten;
 	}
 
 	for (i = 0; i < (int)d->num_tracks; ++i) {
@@ -514,4 +578,43 @@ const struct sync_track *sync_get_track(struct sync_device *d,
 		read_track_data(d, t);
 
 	return t;
+}
+
+static void sync_free_track(struct sync_track *t)
+{
+	free(t->name);
+	t->name = NULL;
+	free(t->keys);
+	t->keys = NULL;
+	t->num_keys = 0;
+	free(t);
+}
+
+int sync_retire_track(struct sync_device *d, const struct sync_track *t)
+{
+	struct sync_track *tt = NULL;
+	int idx;
+
+	assert(d);
+	assert(t);
+
+	for (idx = 0; idx < (int)d->num_tracks; idx++) {
+		if (d->tracks[idx] == t) {
+			tt = d->tracks[idx];
+			d->tracks[idx] = NULL;
+			break;
+		}
+	}
+
+	if (!tt)
+		return -1;
+
+	sync_free_track(tt);
+
+#ifndef SYNC_PLAYER
+	if (d->sockio_ctxt)
+		send_retire_track(d, idx);
+#endif
+
+	return 0;
 }
