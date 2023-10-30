@@ -48,3 +48,5 @@ ui_*.h
 /packages/
 /x64/
 build-*
+subprojects/bass-*/
+subprojects/packagecache/
