@@ -1,0 +1,6 @@
+[wrap-file]
+lead_directory_missing = true
+source_url = https://web.archive.org/web/20230426214320if_/https://www.un4seen.com/files/bass24.zip
+source_filename = bass24.zip
+source_hash = 906dee15e357669b646c9a6bcb225e817203ba34ad921c627f7546237fec93b5
+patch_directory = bass
