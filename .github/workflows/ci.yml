@@ -3,6 +3,8 @@ on:
   push:
     branches:
       - main
+    tags:
+      - v*
   pull_request:
     branches:
       - main
@@ -76,9 +78,12 @@ jobs:
           done;
       - name: Create DMG file
         run: hdiutil create -format UDZO -srcfolder editor/editor.app editor/editor.dmg
+      - name: Get the version
+        run: echo "VERSION=${GITHUB_REF_NAME#v}" >> $GITHUB_ENV
       - uses: actions/upload-artifact@v3
+        if: startsWith(github.ref, 'refs/tags/v')
         with:
-          name: rocket-editor-macos
+          name: rocket-editor-${{ env.VERSION }}-macos
           path: editor/editor.dmg
   build-windows:
     name: Build (Windows)
@@ -97,7 +102,10 @@ jobs:
         run: |
           qmake -tp vc editor/editor.pro
           msbuild editor.vcxproj /v:minimal /property:Configuration=Release /nologo
+      - name: Get the version
+        run: echo "version=$($env:GITHUB_REF_NAME.trimstart("v"))" >> $env:GITHUB_ENV
       - uses: actions/upload-artifact@v3
+        if: startsWith(github.ref, 'refs/tags/v')
         with:
-          name: rocket-editor-windows
+          name: rocket-editor-${{ env.VERSION }}-windows
           path: release/editor.exe
